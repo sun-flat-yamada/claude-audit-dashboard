@@ -1,0 +1,143 @@
+name: Collect Audit Data
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      full_sync:
+        description: 'Perform full historical sync'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  ANTHROPIC_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_ADMIN_API_KEY }}
+  ANTHROPIC_COMPLIANCE_API_KEY: ${{ secrets.ANTHROPIC_COMPLIANCE_API_KEY }}
+
+jobs:
+  collect:
+    name: Collect & Check
+    runs-on: ubuntu-latest
+    # Scheduled runs are opt-in: set repository variable ENABLE_SCHEDULED_JOBS=true
+    # once API secrets are configured (see docs/SETUP.md). Manual runs always work.
+    if: github.event_name != 'schedule' || vars.ENABLE_SCHEDULED_JOBS == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:collector
+
+      # --- Restore previous data from orphan branch ---
+      - name: Restore audit data from data/audit branch
+        run: |
+          git fetch origin data/audit || true
+          if git rev-parse --verify origin/data/audit >/dev/null 2>&1; then
+            echo "Restoring data from data/audit branch..."
+            git checkout origin/data/audit -- data/ 2>/dev/null || true
+          else
+            echo "No data/audit branch found. Using sample data for first run."
+            cp -r data/sample/* data/ 2>/dev/null || true
+          fi
+
+      - name: Collect Audit Activities
+        run: pnpm collect:audit
+        env:
+          FULL_SYNC: ${{ github.event.inputs.full_sync || 'false' }}
+
+      - name: Collect Usage Report
+        run: pnpm collect:usage
+
+      - name: Run Compliance Checks
+        run: pnpm check:compliance
+
+      # --- Commit data to orphan branch (fork-safe) ---
+      - name: Commit data to orphan branch
+        run: |
+          # Save collected data to temp
+          cp -r data/ /tmp/audit-data/
+
+          # Switch to (or create) orphan data branch
+          git fetch origin data/audit || true
+          if git rev-parse --verify origin/data/audit >/dev/null 2>&1; then
+            git checkout data/audit
+          else
+            echo "Creating orphan branch data/audit..."
+            git switch --orphan data/audit
+            git commit --allow-empty -m "chore: initialize audit data branch"
+          fi
+
+          # Copy data back and commit
+          cp -r /tmp/audit-data/* data/ 2>/dev/null || true
+          mkdir -p data/snapshots data/reports data/archive
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "chore: update audit data $(date -u +%Y-%m-%dT%H:%M:%SZ) [skip ci]"
+          git push origin data/audit
+
+      # --- Archive old data for long-term retention ---
+      - name: Archive old snapshots
+        run: |
+          if [ -d "data/snapshots" ]; then
+            RETENTION_DAYS=${RETENTION_DAYS:-365}
+            find data/snapshots/ -name "*.json" -mtime +${RETENTION_DAYS} -print0 | while IFS= read -r -d '' file; do
+              ARCHIVE_DIR="data/archive/$(date -r "$file" +%Y)"
+              mkdir -p "$ARCHIVE_DIR"
+              gzip -c "$file" > "$ARCHIVE_DIR/$(basename "$file").gz"
+              rm "$file"
+              echo "Archived: $file -> $ARCHIVE_DIR/"
+            done
+          fi
+        env:
+          RETENTION_DAYS: 365
+
+  notify:
+    name: Send Notifications
+    needs: collect
+    runs-on: ubuntu-latest
+    if: always() && needs.collect.result != 'skipped'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:collector
+
+      # Restore data for notification context
+      - name: Restore audit data
+        run: |
+          git fetch origin data/audit || true
+          if git rev-parse --verify origin/data/audit >/dev/null 2>&1; then
+            git checkout origin/data/audit -- data/ 2>/dev/null || true
+          fi
+
+      - name: Send Alert Notifications
+        run: pnpm notify
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+          COLLECT_STATUS: ${{ needs.collect.result }}

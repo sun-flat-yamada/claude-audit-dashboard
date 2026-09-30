@@ -1,0 +1,40 @@
+{
+  "name": "@claude-audit/collector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/index.js",
+    "start:audit": "node dist/commands/collect-audit.js",
+    "start:usage": "node dist/commands/collect-usage.js",
+    "start:compliance-check": "node dist/commands/compliance-check.js",
+    "start:notify": "node dist/commands/send-notifications.js",
+    "start:weekly-report": "node dist/commands/weekly-report.js",
+    "dev": "tsx watch src/index.ts",
+    "clean": "rimraf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:unit": "vitest run --passWithNoTests",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "start:monthly-usage": "node dist/commands/monthly-usage.js",
+    "start:monthly-cost": "node dist/commands/monthly-cost.js",
+    "start:monthly-billing-report": "node dist/commands/monthly-billing-report.js",
+    "start:send-monthly-report": "node dist/commands/send-monthly-report.js"
+  },
+  "dependencies": {
+    "@claude-audit/shared": "workspace:*",
+    "nodemailer": "^7.0.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.0",
+    "@types/node": "^22.0.0",
+    "rimraf": "^6.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0"
+  }
+}

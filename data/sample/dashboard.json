@@ -1,0 +1,193 @@
+{
+  "last_updated": "2026-09-29T12:00:00Z",
+  "organization": {
+    "id": "org_sample_001",
+    "name": "Sample Organization",
+    "member_count": 47,
+    "workspace_count": 8,
+    "active_api_key_count": 12,
+    "members": [
+      { "id": "usr_001", "email": "admin@example.com", "name": "Admin User", "role": "primary_owner", "created_at": "2025-01-15T10:00:00Z", "last_active_at": "2026-09-29T11:30:00Z" },
+      { "id": "usr_002", "email": "dev1@example.com", "name": "Developer One", "role": "developer", "created_at": "2025-03-20T14:00:00Z", "last_active_at": "2026-09-28T16:00:00Z" },
+      { "id": "usr_003", "email": "dev2@example.com", "name": "Developer Two", "role": "developer", "created_at": "2025-06-10T09:00:00Z", "last_active_at": "2026-09-29T08:00:00Z" },
+      { "id": "usr_004", "email": "manager@example.com", "name": "Manager", "role": "admin", "created_at": "2025-02-01T12:00:00Z", "last_active_at": "2026-09-27T10:00:00Z" },
+      { "id": "usr_005", "email": "inactive@example.com", "name": "Inactive User", "role": "user", "created_at": "2025-04-15T08:00:00Z", "last_active_at": "2026-05-01T12:00:00Z" }
+    ],
+    "workspaces": [
+      { "id": "ws_001", "name": "Engineering", "created_at": "2025-01-15T10:00:00Z", "archived_at": null, "member_count": 20 },
+      { "id": "ws_002", "name": "Research", "created_at": "2025-02-01T12:00:00Z", "archived_at": null, "member_count": 12 },
+      { "id": "ws_003", "name": "Marketing", "created_at": "2025-03-10T09:00:00Z", "archived_at": null, "member_count": 8 },
+      { "id": "ws_004", "name": "Legacy Project", "created_at": "2025-01-20T14:00:00Z", "archived_at": null, "member_count": 0 }
+    ],
+    "api_keys": [
+      { "id": "key_001", "name": "Production API", "type": "workspace", "status": "active", "created_at": "2025-06-01T10:00:00Z", "last_used_at": "2026-09-29T11:00:00Z", "created_by": { "id": "usr_001", "name": "Admin User" }, "workspace_id": "ws_001", "scopes": ["messages:write"] },
+      { "id": "key_002", "name": "Dev Testing", "type": "workspace", "status": "active", "created_at": "2026-01-15T14:00:00Z", "last_used_at": "2026-09-28T09:00:00Z", "created_by": { "id": "usr_002", "name": "Developer One" }, "workspace_id": "ws_001", "scopes": ["messages:write"] },
+      { "id": "key_003", "name": "Unscoped Key", "type": "admin", "status": "active", "created_at": "2025-03-01T08:00:00Z", "last_used_at": "2026-09-20T12:00:00Z", "created_by": { "id": "usr_001", "name": "Admin User" }, "workspace_id": null, "scopes": [] },
+      { "id": "key_004", "name": "Old Unused Key", "type": "workspace", "status": "active", "created_at": "2025-02-01T10:00:00Z", "last_used_at": "2026-07-15T08:00:00Z", "created_by": { "id": "usr_004", "name": "Manager" }, "workspace_id": "ws_002", "scopes": ["messages:write"] }
+    ]
+  },
+  "compliance": {
+    "current_score": 82,
+    "trend": [
+      { "date": "2026-09-22", "value": 78 },
+      { "date": "2026-09-23", "value": 80 },
+      { "date": "2026-09-24", "value": 80 },
+      { "date": "2026-09-25", "value": 82 },
+      { "date": "2026-09-26", "value": 85 },
+      { "date": "2026-09-27", "value": 82 },
+      { "date": "2026-09-28", "value": 82 },
+      { "date": "2026-09-29", "value": 82 }
+    ],
+    "critical_findings": 0,
+    "latest_report": {
+      "report_id": "rpt_2026-09-29",
+      "generated_at": "2026-09-29T12:00:00Z",
+      "organization_id": "org_sample_001",
+      "summary": {
+        "total_checks": 10,
+        "passed": 6,
+        "failed": 3,
+        "warnings": 1,
+        "errors": 0,
+        "skipped": 0,
+        "by_severity": { "critical": 0, "high": 2, "medium": 1, "low": 0, "info": 0 },
+        "by_category": { "access-control": 1, "api-key-management": 2, "usage-anomaly": 0, "data-governance": 0, "configuration": 0, "operational": 0 },
+        "compliance_score": 82
+      },
+      "results": [
+        { "rule_id": "AC-001", "rule_name": "Inactive Members", "status": "fail", "severity": "medium", "category": "access-control", "message": "Found 1 member inactive for over 90 days", "details": { "inactive_count": 1 }, "evidence": [{ "type": "member", "id": "usr_005", "description": "Inactive User - last active 2026-05-01", "data": {} }], "remediation": "Review and remove or reactivate inactive members", "checked_at": "2026-09-29T12:00:00Z" },
+        { "rule_id": "AC-002", "rule_name": "Excessive Admin Roles", "status": "pass", "severity": "high", "category": "access-control", "message": "Admin role ratio is 8.5%, within threshold", "details": { "admin_percentage": 8.5 }, "evidence": [], "remediation": null, "checked_at": "2026-09-29T12:00:00Z" },
+        { "rule_id": "AC-003", "rule_name": "Single Primary Owner", "status": "pass", "severity": "critical", "category": "access-control", "message": "Exactly one primary owner confirmed", "details": { "primary_owner_count": 1 }, "evidence": [], "remediation": null, "checked_at": "2026-09-29T12:00:00Z" },
+        { "rule_id": "AK-001", "rule_name": "Unused API Keys", "status": "fail", "severity": "medium", "category": "api-key-management", "message": "Found 1 API key unused for over 30 days", "details": { "unused_count": 1 }, "evidence": [{ "type": "api_key", "id": "key_004", "description": "Old Unused Key - last used 2026-07-15", "data": {} }], "remediation": "Disable or rotate unused API keys", "checked_at": "2026-09-29T12:00:00Z" },
+        { "rule_id": "AK-002", "rule_name": "Unscoped API Keys", "status": "fail", "severity": "high", "category": "api-key-management", "message": "Found 1 API key not scoped to a workspace", "details": { "unscoped_count": 1 }, "evidence": [{ "type": "api_key", "id": "key_003", "description": "Unscoped Key - no workspace assignment", "data": {} }], "remediation": "Scope API keys to specific workspaces", "checked_at": "2026-09-29T12:00:00Z" },
+        { "rule_id": "AK-003", "rule_name": "API Key Age", "status": "warning", "severity": "medium", "category": "api-key-management", "message": "Found 1 API key older than 180 days", "details": { "old_count": 1 }, "evidence": [{ "type": "api_key", "id": "key_003", "description": "Unscoped Key - created 2025-03-01 (575 days ago)", "data": {} }], "remediation": "Rotate API keys older than 180 days", "checked_at": "2026-09-29T12:00:00Z" },
+        { "rule_id": "UA-001", "rule_name": "Usage Spike Detection", "status": "pass", "severity": "high", "category": "usage-anomaly", "message": "No usage spikes detected", "details": {}, "evidence": [], "remediation": null, "checked_at": "2026-09-29T12:00:00Z" },
+        { "rule_id": "UA-002", "rule_name": "Cost Budget Threshold", "status": "pass", "severity": "critical", "category": "usage-anomaly", "message": "Monthly cost $4,230 is within budget of $10,000", "details": { "current_cost": 4230, "budget": 10000 }, "evidence": [], "remediation": null, "checked_at": "2026-09-29T12:00:00Z" },
+        { "rule_id": "DG-001", "rule_name": "Empty Workspaces", "status": "fail", "severity": "low", "category": "data-governance", "message": "Found 1 workspace with no members", "details": { "empty_count": 1 }, "evidence": [{ "type": "workspace", "id": "ws_004", "description": "Legacy Project - 0 members", "data": {} }], "remediation": "Archive or delete empty workspaces", "checked_at": "2026-09-29T12:00:00Z" },
+        { "rule_id": "OP-001", "rule_name": "Collection Freshness", "status": "pass", "severity": "high", "category": "operational", "message": "Data collected 0.5 hours ago", "details": { "hours_since_collection": 0.5 }, "evidence": [], "remediation": null, "checked_at": "2026-09-29T12:00:00Z" }
+      ],
+      "snapshot_id": "snap_2026-09-29T12-00",
+      "metadata": { "rules_evaluated": 10, "duration_ms": 245, "collector_version": "0.1.0" }
+    },
+    "summary": {
+      "total_checks": 10,
+      "passed": 6,
+      "failed": 3,
+      "warnings": 1,
+      "errors": 0,
+      "skipped": 0,
+      "by_severity": { "critical": 0, "high": 2, "medium": 1, "low": 0, "info": 0 },
+      "by_category": { "access-control": 1, "api-key-management": 2, "usage-anomaly": 0, "data-governance": 0, "configuration": 0, "operational": 0 },
+      "compliance_score": 82
+    },
+    "history": [
+      { "date": "2026-09-22", "score": 78, "passed": 5, "failed": 4, "warnings": 1 },
+      { "date": "2026-09-23", "score": 80, "passed": 6, "failed": 3, "warnings": 1 },
+      { "date": "2026-09-24", "score": 80, "passed": 6, "failed": 3, "warnings": 1 },
+      { "date": "2026-09-25", "score": 82, "passed": 6, "failed": 3, "warnings": 1 },
+      { "date": "2026-09-26", "score": 85, "passed": 7, "failed": 2, "warnings": 1 },
+      { "date": "2026-09-27", "score": 82, "passed": 6, "failed": 3, "warnings": 1 },
+      { "date": "2026-09-28", "score": 82, "passed": 6, "failed": 3, "warnings": 1 },
+      { "date": "2026-09-29", "score": 82, "passed": 6, "failed": 3, "warnings": 1 }
+    ]
+  },
+  "usage": {
+    "current_period": {
+      "period_start": "2026-09-01T00:00:00Z",
+      "period_end": "2026-09-29T23:59:59Z",
+      "total_input_tokens": 125000000,
+      "total_output_tokens": 42000000,
+      "total_cost_usd": 4230.50,
+      "by_workspace": [
+        { "workspace_id": "ws_001", "workspace_name": "Engineering", "input_tokens": 80000000, "output_tokens": 28000000, "cost_usd": 2750.00 },
+        { "workspace_id": "ws_002", "workspace_name": "Research", "input_tokens": 30000000, "output_tokens": 10000000, "cost_usd": 1050.50 },
+        { "workspace_id": "ws_003", "workspace_name": "Marketing", "input_tokens": 15000000, "output_tokens": 4000000, "cost_usd": 430.00 }
+      ],
+      "by_model": [
+        { "model": "claude-sonnet-4-20250514", "input_tokens": 95000000, "output_tokens": 32000000, "cost_usd": 2850.00 },
+        { "model": "claude-opus-4-20250514", "input_tokens": 20000000, "output_tokens": 7000000, "cost_usd": 1050.50 },
+        { "model": "claude-haiku-3-20250714", "input_tokens": 10000000, "output_tokens": 3000000, "cost_usd": 330.00 }
+      ]
+    },
+    "daily_trend": [
+      { "date": "2026-09-22", "input_tokens": 4500000, "output_tokens": 1500000, "cost_usd": 152.00 },
+      { "date": "2026-09-23", "input_tokens": 4800000, "output_tokens": 1600000, "cost_usd": 160.00 },
+      { "date": "2026-09-24", "input_tokens": 5200000, "output_tokens": 1700000, "cost_usd": 172.00 },
+      { "date": "2026-09-25", "input_tokens": 4600000, "output_tokens": 1550000, "cost_usd": 155.00 },
+      { "date": "2026-09-26", "input_tokens": 5100000, "output_tokens": 1650000, "cost_usd": 168.00 },
+      { "date": "2026-09-27", "input_tokens": 3200000, "output_tokens": 1100000, "cost_usd": 108.00 },
+      { "date": "2026-09-28", "input_tokens": 3500000, "output_tokens": 1200000, "cost_usd": 118.00 },
+      { "date": "2026-09-29", "input_tokens": 4900000, "output_tokens": 1580000, "cost_usd": 162.00 }
+    ],
+    "cost_trend": [
+      { "date": "2026-09-22", "value": 152.00 },
+      { "date": "2026-09-23", "value": 160.00 },
+      { "date": "2026-09-24", "value": 172.00 },
+      { "date": "2026-09-25", "value": 155.00 },
+      { "date": "2026-09-26", "value": 168.00 },
+      { "date": "2026-09-27", "value": 108.00 },
+      { "date": "2026-09-28", "value": 118.00 },
+      { "date": "2026-09-29", "value": 162.00 }
+    ],
+    "top_workspaces": [
+      { "workspace_id": "ws_001", "workspace_name": "Engineering", "total_tokens": 108000000, "cost_usd": 2750.00, "percentage": 65.0 },
+      { "workspace_id": "ws_002", "workspace_name": "Research", "total_tokens": 40000000, "cost_usd": 1050.50, "percentage": 24.8 },
+      { "workspace_id": "ws_003", "workspace_name": "Marketing", "total_tokens": 19000000, "cost_usd": 430.00, "percentage": 10.2 }
+    ],
+    "top_models": [
+      { "model": "claude-sonnet-4-20250514", "total_tokens": 127000000, "cost_usd": 2850.00, "percentage": 67.4 },
+      { "model": "claude-opus-4-20250514", "total_tokens": 27000000, "cost_usd": 1050.50, "percentage": 24.8 },
+      { "model": "claude-haiku-3-20250714", "total_tokens": 13000000, "cost_usd": 330.00, "percentage": 7.8 }
+    ]
+  },
+  "activities": {
+    "recent_activities": [
+      { "id": "act_001", "type": "member.added", "category": "admin", "actor": { "type": "user", "id": "usr_001", "name": "Admin User", "email": "admin@example.com" }, "target": { "type": "user", "id": "usr_010", "name": "New Developer" }, "details": { "role": "developer", "workspace": "Engineering" }, "timestamp": "2026-09-29T10:30:00Z", "organization_id": "org_sample_001", "workspace_id": "ws_001" },
+      { "id": "act_002", "type": "api_key.created", "category": "access", "actor": { "type": "user", "id": "usr_002", "name": "Developer One", "email": "dev1@example.com" }, "target": { "type": "api_key", "id": "key_005", "name": "New Service Key" }, "details": { "workspace": "Engineering" }, "timestamp": "2026-09-29T09:15:00Z", "organization_id": "org_sample_001", "workspace_id": "ws_001" },
+      { "id": "act_003", "type": "workspace.config_updated", "category": "configuration", "actor": { "type": "user", "id": "usr_004", "name": "Manager", "email": "manager@example.com" }, "target": { "type": "workspace", "id": "ws_002", "name": "Research" }, "details": { "setting": "model_access", "old_value": "restricted", "new_value": "open" }, "timestamp": "2026-09-28T16:45:00Z", "organization_id": "org_sample_001", "workspace_id": "ws_002" },
+      { "id": "act_004", "type": "member.role_changed", "category": "admin", "actor": { "type": "user", "id": "usr_001", "name": "Admin User", "email": "admin@example.com" }, "target": { "type": "user", "id": "usr_006", "name": "Team Lead" }, "details": { "old_role": "developer", "new_role": "admin" }, "timestamp": "2026-09-28T14:00:00Z", "organization_id": "org_sample_001", "workspace_id": null },
+      { "id": "act_005", "type": "file.downloaded", "category": "resource", "actor": { "type": "user", "id": "usr_003", "name": "Developer Two", "email": "dev2@example.com" }, "target": { "type": "file", "id": "file_001", "name": "project_data.csv" }, "details": {}, "timestamp": "2026-09-28T11:20:00Z", "organization_id": "org_sample_001", "workspace_id": "ws_001" }
+    ],
+    "activity_count_by_category": {
+      "admin": 15,
+      "access": 8,
+      "configuration": 5,
+      "resource": 12,
+      "identity": 3,
+      "security": 1
+    },
+    "activity_trend": [
+      { "date": "2026-09-22", "value": 8 },
+      { "date": "2026-09-23", "value": 12 },
+      { "date": "2026-09-24", "value": 6 },
+      { "date": "2026-09-25", "value": 9 },
+      { "date": "2026-09-26", "value": 11 },
+      { "date": "2026-09-27", "value": 4 },
+      { "date": "2026-09-28", "value": 7 },
+      { "date": "2026-09-29", "value": 5 }
+    ],
+    "notable_events": [
+      { "id": "ne_001", "type": "member.role_changed", "severity": "medium", "title": "Role Elevation Detected", "description": "Team Lead was promoted from developer to admin", "timestamp": "2026-09-28T14:00:00Z", "actor": "Admin User" },
+      { "id": "ne_002", "type": "workspace.config_updated", "severity": "low", "title": "Workspace Config Changed", "description": "Research workspace model access changed to open", "timestamp": "2026-09-28T16:45:00Z", "actor": "Manager" }
+    ]
+  },
+  "alerts": {
+    "active_alerts": [
+      { "id": "alert_001", "severity": "high", "title": "Unscoped API Key Detected", "message": "API key 'Unscoped Key' is not scoped to any workspace", "source": "AK-002", "created_at": "2026-09-29T12:00:00Z", "resolved_at": null, "acknowledged": false },
+      { "id": "alert_002", "severity": "medium", "title": "Inactive Member Found", "message": "Inactive User has not been active for 151 days", "source": "AC-001", "created_at": "2026-09-29T12:00:00Z", "resolved_at": null, "acknowledged": true }
+    ],
+    "resolved_alerts": [
+      { "id": "alert_003", "severity": "high", "title": "Usage Spike Detected", "message": "Token usage was 3.2x the 7-day average", "source": "UA-001", "created_at": "2026-09-25T06:00:00Z", "resolved_at": "2026-09-26T06:00:00Z", "acknowledged": true }
+    ],
+    "alert_trend": [
+      { "date": "2026-09-22", "value": 3 },
+      { "date": "2026-09-23", "value": 3 },
+      { "date": "2026-09-24", "value": 3 },
+      { "date": "2026-09-25", "value": 4 },
+      { "date": "2026-09-26", "value": 3 },
+      { "date": "2026-09-27", "value": 2 },
+      { "date": "2026-09-28", "value": 2 },
+      { "date": "2026-09-29", "value": 2 }
+    ]
+  }
+}

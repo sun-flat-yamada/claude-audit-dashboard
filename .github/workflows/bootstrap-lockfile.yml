@@ -1,0 +1,42 @@
+# TEMPORARY: one-off workflow used during initial repository setup to generate
+# pnpm-lock.yaml and apply Prettier formatting. Removed right after use.
+name: Bootstrap lockfile (temporary)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm format
+      - run: pnpm lint:fix || true
+      - name: Quality gate (report only)
+        run: |
+          set +e
+          for c in "fork:verify" "secret-scan" "lint" "typecheck" "build" "test:unit" "format:check"; do
+            echo "::group::pnpm $c"; pnpm $c; rc=$?; echo "::endgroup::"
+            echo "$c=$rc" | tee -a gate.txt
+          done
+          exit 0
+      - name: Export patch
+        run: |
+          rm -rf packages/*/dist packages/dashboard/public/data
+          git add -A -- . ':!gate.txt'
+          git diff --cached --binary > bootstrap.patch
+          git diff --cached --stat
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap
+          path: |
+            bootstrap.patch
+            gate.txt

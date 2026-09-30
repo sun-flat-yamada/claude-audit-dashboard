@@ -1,0 +1,90 @@
+name: Deploy Dashboard to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/dashboard/**'
+      - 'packages/shared/**'
+      - 'data/sample/**'
+  workflow_run:
+    workflows: ['Collect Audit Data', 'Monthly Billing & Usage Report']
+    types: [completed]
+    # workflow_run filters on the branch the triggering workflow ran on (main),
+    # not the branch it pushed data to.
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Dashboard
+    runs-on: ubuntu-latest
+    # Only build if collect/report succeeded (for workflow_run triggers)
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # --- Load live data from orphan branch (if available) ---
+      - name: Load audit data
+        run: |
+          git fetch origin data/audit || true
+          if git rev-parse --verify origin/data/audit >/dev/null 2>&1; then
+            echo "Loading live data from data/audit branch..."
+            # Overlay live data onto data/ directory
+            git checkout origin/data/audit -- data/dashboard.json data/reports/ 2>/dev/null || true
+            echo "DATA_SOURCE=live" >> $GITHUB_ENV
+          else
+            echo "No data/audit branch found. Using sample data."
+            # Copy sample data as fallback
+            cp data/sample/dashboard.json data/dashboard.json 2>/dev/null || true
+            echo "DATA_SOURCE=sample" >> $GITHUB_ENV
+          fi
+
+      # --- Stage data for dashboard build ---
+      - name: Stage data for dashboard
+        run: |
+          mkdir -p packages/dashboard/public/data
+          cp data/dashboard.json packages/dashboard/public/data/ 2>/dev/null || \
+            cp data/sample/dashboard.json packages/dashboard/public/data/dashboard.json
+          echo "{\"source\":\"$DATA_SOURCE\",\"built_at\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" \
+            > packages/dashboard/public/data/meta.json
+
+      - name: Build dashboard
+        run: pnpm build:dashboard
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./packages/dashboard/dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

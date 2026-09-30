@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+
+# Data — Live audit data MUST NEVER be on main branch (fork-safe)
+# Live data lives only on the data/audit orphan branch
+data/*.json
+data/*.csv
+data/snapshots/
+data/reports/
+data/archive/
+data/state.json
+data/dashboard.json
+!data/.gitkeep
+!data/sample/
+!data/sample/**
+
+# Dashboard data staged at build/dev time (from data/sample or data/audit)
+packages/dashboard/public/data/
+
+# Logs
+logs/
+*.log

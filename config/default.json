@@ -1,0 +1,54 @@
+{
+  "organization": {
+    "name": "My Organization",
+    "id": ""
+  },
+  "collection": {
+    "interval_hours": 6,
+    "retention_days": 90,
+    "full_sync_on_first_run": true,
+    "page_size": 100,
+    "request_timeout_ms": 30000,
+    "max_retries": 3
+  },
+  "compliance": {
+    "enabled_rules": ["AC-001", "AC-002", "AC-003", "AK-001", "AK-002", "AK-003", "UA-001", "UA-002", "DG-001", "OP-001"],
+    "custom_rules_path": "./config/custom-rules.json",
+    "score_threshold_warning": 80,
+    "score_threshold_critical": 60
+  },
+  "notifications": {
+    "channels": [
+      {
+        "type": "slack",
+        "enabled": false,
+        "config": {
+          "username": "Claude Audit Bot",
+          "icon_emoji": ":shield:"
+        }
+      },
+      {
+        "type": "discord",
+        "enabled": false,
+        "config": {
+          "username": "Claude Audit Bot"
+        }
+      },
+      {
+        "type": "email",
+        "enabled": false,
+        "config": {
+          "smtp_secure": true,
+          "from": "audit@example.com"
+        }
+      }
+    ],
+    "cooldown_minutes": 60
+  },
+  "dashboard": {
+    "base_url": "/claude-audit-dashboard/",
+    "title": "Claude Enterprise Audit Dashboard",
+    "theme": "system",
+    "locale": "en"
+  }
+}

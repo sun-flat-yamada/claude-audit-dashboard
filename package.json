@@ -1,0 +1,72 @@
+{
+  "name": "claude-audit-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Enterprise Organization audit data collector, compliance checker, and dashboard for GitHub Pages",
+  "license": "MIT",
+  "author": "@sun-flat-yamada (Youhei Yamada)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sun-flat-yamada/claude-audit-dashboard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sun-flat-yamada/claude-audit-dashboard/issues"
+  },
+  "homepage": "https://github.com/sun-flat-yamada/claude-audit-dashboard#readme",
+  "keywords": [
+    "claude",
+    "anthropic",
+    "audit-logs",
+    "compliance",
+    "security",
+    "github-pages",
+    "dashboard",
+    "analytics"
+  ],
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "pnpm --filter @claude-audit/dashboard dev",
+    "build": "pnpm build:shared && pnpm build:collector && pnpm build:dashboard",
+    "build:dashboard": "pnpm --filter @claude-audit/dashboard build",
+    "build:collector": "pnpm --filter @claude-audit/collector build",
+    "test": "pnpm -r test",
+    "test:unit": "pnpm -r test:unit",
+    "test:integration": "pnpm -r test:integration",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm build:shared && pnpm -r typecheck",
+    "collect": "pnpm --filter @claude-audit/collector start",
+    "collect:audit": "pnpm --filter @claude-audit/collector start:audit",
+    "collect:usage": "pnpm --filter @claude-audit/collector start:usage",
+    "check:compliance": "pnpm --filter @claude-audit/collector start:compliance-check",
+    "notify": "pnpm --filter @claude-audit/collector start:notify",
+    "report:weekly": "pnpm --filter @claude-audit/collector start:weekly-report",
+    "report:monthly": "pnpm --filter @claude-audit/collector start:monthly-billing-report",
+    "secret-scan": "tsx scripts/secret-scan.ts",
+    "fork:verify": "tsx scripts/fork-verify.ts",
+    "clean": "pnpm -r clean && rimraf node_modules",
+    "build:shared": "pnpm --filter @claude-audit/shared build",
+    "worktree:add": "tsx scripts/worktree-manage.ts add",
+    "worktree:list": "tsx scripts/worktree-manage.ts list",
+    "worktree:clean": "tsx scripts/worktree-manage.ts clean"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "typescript-eslint": "^8.0.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.0.0",
+    "prettier-plugin-tailwindcss": "^0.6.0",
+    "rimraf": "^6.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "@types/node": "^22.0.0"
+  },
+  "type": "module"
+}

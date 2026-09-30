@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Security Vulnerability Reporting
+    url: https://github.com/sun-flat-yamada/claude-audit-dashboard/security/policy
+    about: Please report security vulnerabilities privately and securely according to our Security Policy.
+  - name: 💬 Questions & Community Support
+    url: https://github.com/sun-flat-yamada/claude-audit-dashboard/discussions
+    about: Please ask questions and discuss ideas in GitHub Discussions.

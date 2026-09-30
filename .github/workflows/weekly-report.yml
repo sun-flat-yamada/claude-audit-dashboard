@@ -1,0 +1,40 @@
+name: Weekly Audit Report
+
+on:
+  schedule:
+    # Every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ANTHROPIC_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_ADMIN_API_KEY }}
+
+jobs:
+  report:
+    name: Generate & Send Report
+    runs-on: ubuntu-latest
+    # Scheduled runs are opt-in: set repository variable ENABLE_SCHEDULED_JOBS=true
+    # once API secrets are configured (see docs/SETUP.md). Manual runs always work.
+    if: github.event_name != 'schedule' || vars.ENABLE_SCHEDULED_JOBS == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:collector
+      - name: Generate Weekly Report
+        run: pnpm report:weekly
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}

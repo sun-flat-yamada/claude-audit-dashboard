@@ -1,0 +1,72 @@
+name: 🐛 Bug Report
+description: Create a report to help us improve claude-audit-dashboard
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please check existing issues before submitting.
+        **Security Notice**: NEVER include personal identifiable information (PII), Anthropic API Keys (`sk-ant-...`), or enterprise secrets in this issue.
+  - type: input
+    id: version
+    attributes:
+      label: Version / Commit SHA
+      description: What version or commit SHA of claude-audit-dashboard are you using?
+      placeholder: "e.g., v0.1.0 or commit abc1234"
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Deployment Environment
+      description: Where is the dashboard or collector running?
+      options:
+        - GitHub Pages (Automated via GitHub Actions)
+        - Local Development (pnpm / Vite)
+        - Self-hosted Runner
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what the bug is.
+      placeholder: "When running compliance checks or viewing the dashboard..."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior.
+      value: |
+        1. Run `pnpm collect:audit`
+        2. Execute `pnpm check:compliance`
+        3. Open dashboard at '...'
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs or Screenshots
+      description: Please paste any relevant console logs, workflow logs, or attach screenshots. (Redact any proprietary tokens/names!)
+      render: shell
+  - type: checkboxes
+    id: checklists
+    attributes:
+      label: Checklist
+      options:
+        - label: I have verified that no secrets, API keys, or internal user emails are exposed in this report.
+          required: true
+        - label: I have searched the existing issues to ensure this is not a duplicate.
+          required: true

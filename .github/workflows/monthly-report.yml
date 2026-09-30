@@ -1,0 +1,97 @@
+name: Monthly Billing & Usage Report
+
+on:
+  schedule:
+    # First day of each month at 3:00 AM UTC
+    - cron: '0 3 1 * *'
+  workflow_dispatch:
+    inputs:
+      target_month:
+        description: 'Target month (YYYY-MM format, e.g., 2026-09)'
+        required: false
+        type: string
+      include_analysis:
+        description: 'Include AI model usage analysis'
+        required: false
+        default: 'true'
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  ANTHROPIC_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_ADMIN_API_KEY }}
+  ANTHROPIC_COMPLIANCE_API_KEY: ${{ secrets.ANTHROPIC_COMPLIANCE_API_KEY }}
+
+jobs:
+  generate-report:
+    name: Generate Monthly Report
+    runs-on: ubuntu-latest
+    # Scheduled runs are opt-in: set repository variable ENABLE_SCHEDULED_JOBS=true
+    # once API secrets are configured (see docs/SETUP.md). Manual runs always work.
+    if: github.event_name != 'schedule' || vars.ENABLE_SCHEDULED_JOBS == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:collector
+
+      - name: Fetch Monthly Usage Data
+        run: pnpm --filter @claude-audit/collector start:monthly-usage
+        env:
+          TARGET_MONTH: ${{ github.event.inputs.target_month || '' }}
+
+      - name: Fetch Monthly Cost Data
+        run: pnpm --filter @claude-audit/collector start:monthly-cost
+        env:
+          TARGET_MONTH: ${{ github.event.inputs.target_month || '' }}
+
+      - name: Generate Billing Report
+        run: pnpm report:monthly
+        env:
+          TARGET_MONTH: ${{ github.event.inputs.target_month || '' }}
+
+      - name: Commit Report Data
+        run: |
+          # Checkout or create orphan data branch
+          git fetch origin data/audit || true
+          git checkout data/audit 2>/dev/null || git switch --orphan data/audit
+
+          # Copy report files
+          mkdir -p data/reports/monthly
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/reports/monthly/
+          git diff --staged --quiet || git commit -m "chore: add monthly report [skip ci]"
+          git push origin data/audit
+
+  send-report:
+    name: Distribute Report
+    needs: generate-report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:collector
+
+      - name: Send Billing Report Notifications
+        run: pnpm --filter @claude-audit/collector start:send-monthly-report
+        env:
+          TARGET_MONTH: ${{ github.event.inputs.target_month || '' }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
