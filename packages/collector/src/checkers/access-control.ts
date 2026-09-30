@@ -2,9 +2,24 @@ import type { ComplianceRulePlugin } from '@claude-audit/shared';
 import { ageDays, makeResult, num } from './helpers.js';
 
 const meta = {
-  inactive: { id: 'AC-001', name: 'Inactive Members', category: 'access-control', severity: 'medium' },
-  admins: { id: 'AC-002', name: 'Excessive Admin Roles', category: 'access-control', severity: 'high' },
-  owner: { id: 'AC-003', name: 'Single Primary Owner', category: 'access-control', severity: 'critical' },
+  inactive: {
+    id: 'AC-001',
+    name: 'Inactive Members',
+    category: 'access-control',
+    severity: 'medium',
+  },
+  admins: {
+    id: 'AC-002',
+    name: 'Excessive Admin Roles',
+    category: 'access-control',
+    severity: 'high',
+  },
+  owner: {
+    id: 'AC-003',
+    name: 'Single Primary Owner',
+    category: 'access-control',
+    severity: 'critical',
+  },
 } as const;
 
 export const inactiveMembers: ComplianceRulePlugin = {
@@ -18,15 +33,20 @@ export const inactiveMembers: ComplianceRulePlugin = {
     );
     if (stale.length === 0) return [makeResult(meta.inactive, 'pass', 'No inactive members')];
     return [
-      makeResult(meta.inactive, 'fail', `${stale.length} member(s) inactive for over ${days} days`, {
-        evidence: stale.map((m) => ({
-          type: 'member' as const,
-          id: m.id,
-          description: `Last active ${m.last_active_at ?? 'never'}`,
-          data: { role: m.role },
-        })),
-        remediation: 'Review and remove members who no longer need access.',
-      }),
+      makeResult(
+        meta.inactive,
+        'fail',
+        `${stale.length} member(s) inactive for over ${days} days`,
+        {
+          evidence: stale.map((m) => ({
+            type: 'member' as const,
+            id: m.id,
+            description: `Last active ${m.last_active_at ?? 'never'}`,
+            data: { role: m.role },
+          })),
+          remediation: 'Review and remove members who no longer need access.',
+        },
+      ),
     ];
   },
 };

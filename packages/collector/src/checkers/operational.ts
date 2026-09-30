@@ -18,9 +18,14 @@ export const collectionFreshness: ComplianceRulePlugin = {
     const staleHours = (now - Date.parse(snapshot.collected_at)) / 3_600_000;
     if (staleHours > maxHours) {
       return [
-        makeResult(meta, 'fail', `Last collection ${staleHours.toFixed(1)}h ago (max ${maxHours}h)`, {
-          remediation: 'Check the collect-audit workflow for failures.',
-        }),
+        makeResult(
+          meta,
+          'fail',
+          `Last collection ${staleHours.toFixed(1)}h ago (max ${maxHours}h)`,
+          {
+            remediation: 'Check the collect-audit workflow for failures.',
+          },
+        ),
       ];
     }
     return [makeResult(meta, 'pass', 'Audit data is fresh')];

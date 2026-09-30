@@ -2,8 +2,18 @@ import type { ApiKeyInfo, ComplianceEvidence, ComplianceRulePlugin } from '@clau
 import { ageDays, makeResult, num } from './helpers.js';
 
 const meta = {
-  unused: { id: 'AK-001', name: 'Unused API Keys', category: 'api-key-management', severity: 'medium' },
-  unscoped: { id: 'AK-002', name: 'Unscoped API Keys', category: 'api-key-management', severity: 'high' },
+  unused: {
+    id: 'AK-001',
+    name: 'Unused API Keys',
+    category: 'api-key-management',
+    severity: 'medium',
+  },
+  unscoped: {
+    id: 'AK-002',
+    name: 'Unscoped API Keys',
+    category: 'api-key-management',
+    severity: 'high',
+  },
   age: { id: 'AK-003', name: 'API Key Age', category: 'api-key-management', severity: 'medium' },
 } as const;
 
@@ -41,7 +51,8 @@ export const unscopedApiKeys: ComplianceRulePlugin = {
   defaultParams: {},
   async check(snapshot) {
     const unscoped = active(snapshot.api_keys).filter((k) => k.workspace_id === null);
-    if (unscoped.length === 0) return [makeResult(meta.unscoped, 'pass', 'All API keys are scoped')];
+    if (unscoped.length === 0)
+      return [makeResult(meta.unscoped, 'pass', 'All API keys are scoped')];
     return [
       makeResult(meta.unscoped, 'fail', `${unscoped.length} API key(s) not scoped to a workspace`, {
         evidence: unscoped.map((k) => keyEvidence(k, 'No workspace restriction')),

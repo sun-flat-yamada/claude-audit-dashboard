@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_AUDIT_RULES, type AuditSnapshot, type ComplianceRulePlugin } from '@claude-audit/shared';
+import {
+  DEFAULT_AUDIT_RULES,
+  type AuditSnapshot,
+  type ComplianceRulePlugin,
+} from '@claude-audit/shared';
 import { PluginRegistry } from '../../plugins/registry.js';
 import { calculateScore, createBuiltinRegistry, runComplianceChecks } from '../index.js';
 
@@ -13,18 +17,71 @@ function snapshot(overrides: Partial<AuditSnapshot> = {}): AuditSnapshot {
     organization_id: 'org1',
     activities: [],
     members: [
-      { id: 'u1', email: 'a@example.com', name: 'A', role: 'primary_owner', created_at: daysAgo(400), last_active_at: daysAgo(1) },
-      { id: 'u2', email: 'b@example.com', name: 'B', role: 'user', created_at: daysAgo(400), last_active_at: daysAgo(2) },
-      { id: 'u3', email: 'c@example.com', name: 'C', role: 'user', created_at: daysAgo(400), last_active_at: daysAgo(3) },
-      { id: 'u4', email: 'd@example.com', name: 'D', role: 'user', created_at: daysAgo(400), last_active_at: daysAgo(3) },
-      { id: 'u5', email: 'e@example.com', name: 'E', role: 'user', created_at: daysAgo(400), last_active_at: daysAgo(3) },
+      {
+        id: 'u1',
+        email: 'a@example.com',
+        name: 'A',
+        role: 'primary_owner',
+        created_at: daysAgo(400),
+        last_active_at: daysAgo(1),
+      },
+      {
+        id: 'u2',
+        email: 'b@example.com',
+        name: 'B',
+        role: 'user',
+        created_at: daysAgo(400),
+        last_active_at: daysAgo(2),
+      },
+      {
+        id: 'u3',
+        email: 'c@example.com',
+        name: 'C',
+        role: 'user',
+        created_at: daysAgo(400),
+        last_active_at: daysAgo(3),
+      },
+      {
+        id: 'u4',
+        email: 'd@example.com',
+        name: 'D',
+        role: 'user',
+        created_at: daysAgo(400),
+        last_active_at: daysAgo(3),
+      },
+      {
+        id: 'u5',
+        email: 'e@example.com',
+        name: 'E',
+        role: 'user',
+        created_at: daysAgo(400),
+        last_active_at: daysAgo(3),
+      },
     ],
-    workspaces: [{ id: 'w1', name: 'Eng', created_at: daysAgo(100), archived_at: null, member_count: 3 }],
+    workspaces: [
+      { id: 'w1', name: 'Eng', created_at: daysAgo(100), archived_at: null, member_count: 3 },
+    ],
     api_keys: [
-      { id: 'k1', name: 'ci', type: 'api', status: 'active', created_at: daysAgo(10), last_used_at: daysAgo(1), created_by: { id: 'u1', name: null }, workspace_id: 'w1', scopes: [] },
+      {
+        id: 'k1',
+        name: 'ci',
+        type: 'api',
+        status: 'active',
+        created_at: daysAgo(10),
+        last_used_at: daysAgo(1),
+        created_by: { id: 'u1', name: null },
+        workspace_id: 'w1',
+        scopes: [],
+      },
     ],
     usage: null,
-    metadata: { collector_version: '0.1.0', duration_ms: 1, activity_count: 0, sync_type: 'full', last_activity_id: null },
+    metadata: {
+      collector_version: '0.1.0',
+      duration_ms: 1,
+      activity_count: 0,
+      sync_type: 'full',
+      last_activity_id: null,
+    },
     ...overrides,
   };
 }
@@ -37,9 +94,12 @@ const run = async (id: string, snap: AuditSnapshot, extra: Record<string, unknow
 
 describe('builtin registry', () => {
   it('registers exactly the rules defined in shared DEFAULT_AUDIT_RULES', () => {
-    expect(createBuiltinRegistry().list().map((r) => r.id).sort()).toEqual(
-      DEFAULT_AUDIT_RULES.map((r) => r.id).sort(),
-    );
+    expect(
+      createBuiltinRegistry()
+        .list()
+        .map((r) => r.id)
+        .sort(),
+    ).toEqual(DEFAULT_AUDIT_RULES.map((r) => r.id).sort());
   });
 
   it('matches shared defaults for params, category and severity', () => {
@@ -95,7 +155,15 @@ describe('rules', () => {
   });
 
   it('UA-001 detects spike and skips without history', async () => {
-    const usage = { period_start: '', period_end: '', total_input_tokens: 900, total_output_tokens: 100, total_cost_usd: 1, by_workspace: [], by_model: [] };
+    const usage = {
+      period_start: '',
+      period_end: '',
+      total_input_tokens: 900,
+      total_output_tokens: 100,
+      total_cost_usd: 1,
+      by_workspace: [],
+      by_model: [],
+    };
     const s = snapshot({ usage });
     expect((await run('UA-001', s)).status).toBe('skipped');
     expect((await run('UA-001', s, { baselineTokens: [100, 100, 100] })).status).toBe('fail');
@@ -103,15 +171,31 @@ describe('rules', () => {
   });
 
   it('UA-002 compares cost with budget', async () => {
-    const usage = { period_start: '', period_end: '', total_input_tokens: 0, total_output_tokens: 0, total_cost_usd: 12000, by_workspace: [], by_model: [] };
+    const usage = {
+      period_start: '',
+      period_end: '',
+      total_input_tokens: 0,
+      total_output_tokens: 0,
+      total_cost_usd: 12000,
+      by_workspace: [],
+      by_model: [],
+    };
     expect((await run('UA-002', snapshot({ usage }))).status).toBe('fail');
-    expect((await run('UA-002', snapshot({ usage }), { monthlyBudgetUsd: 20000 })).status).toBe('pass');
+    expect((await run('UA-002', snapshot({ usage }), { monthlyBudgetUsd: 20000 })).status).toBe(
+      'pass',
+    );
     expect((await run('UA-002', snapshot())).status).toBe('skipped');
   });
 
   it('DG-001 detects empty workspaces', async () => {
     const s = snapshot();
-    s.workspaces.push({ id: 'w2', name: 'Empty', created_at: daysAgo(1), archived_at: null, member_count: 0 });
+    s.workspaces.push({
+      id: 'w2',
+      name: 'Empty',
+      created_at: daysAgo(1),
+      archived_at: null,
+      member_count: 0,
+    });
     expect((await run('DG-001', s)).status).toBe('fail');
     expect((await run('DG-001', snapshot())).status).toBe('pass');
   });
