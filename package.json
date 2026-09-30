@@ -57,7 +57,7 @@
     "worktree:clean": "tsx scripts/worktree-manage.ts clean"
   },
   "devDependencies": {
-    "@eslint/js": "^9.0.0",
+    "@eslint/js": "^10.0.1",
     "eslint": "^9.0.0",
     "typescript-eslint": "^8.0.0",
     "globals": "^16.0.0",
