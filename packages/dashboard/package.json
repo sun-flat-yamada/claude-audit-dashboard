@@ -19,7 +19,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.0.0",
-    "recharts": "^2.15.0",
+    "recharts": "^3.10.1",
     "lucide-react": "^0.470.0",
     "clsx": "^2.1.0",
     "tailwind-merge": "^3.0.0",
