@@ -937,14 +937,14 @@ claude-audit-dashboard/
 
 ### Phase 2: Collector (Week 3-4)
 
-- [ ] Anthropic API クライアント実装
+- [x] Anthropic API クライアント実装
 - [ ] Compliance API データ収集
 - [ ] Admin API データ収集 (usage_report/messages, cost_report 含む)
-- [ ] ファイルストレージ・状態管理
-- [ ] Plugin Registry 実装
-- [ ] コンプライアンスチェッカー実装 (10 ルール)
+- [x] ファイルストレージ (FileStore) ※状態管理 (state-manager) は未実装
+- [x] Plugin Registry 実装
+- [x] コンプライアンスチェッカー実装 (10 ルール)
 - [ ] 月次請求レポート生成コマンド
-- [ ] ユニットテスト
+- [ ] ユニットテスト (API client / storage / registry / checkers 実装済み。collectors・報告系は未)
 
 ### Phase 3: Dashboard (Week 5-6)
 
