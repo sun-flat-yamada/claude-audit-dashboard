@@ -4,9 +4,16 @@ import { ApiRequestError, HttpClient } from '../client.js';
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), { status, headers });
 
-function client(responses: Response[], sleep = vi.fn(async (_ms: number) => {})) {
+function client(
+  responses: Response[],
+  sleep = vi.fn<(ms: number) => Promise<void>>(async () => {}),
+) {
   const fetchImpl = vi.fn(async () => responses.shift()!) as unknown as typeof fetch;
-  return { http: new HttpClient({ apiKey: 'test-key', fetchImpl, sleep, retryBaseMs: 10 }), fetchImpl, sleep };
+  return {
+    http: new HttpClient({ apiKey: 'test-key', fetchImpl, sleep, retryBaseMs: 10 }),
+    fetchImpl,
+    sleep,
+  };
 }
 
 describe('HttpClient', () => {
@@ -26,7 +33,12 @@ describe('HttpClient', () => {
   });
 
   it('retries 5xx with exponential backoff then throws structured error', async () => {
-    const { http, sleep } = client([json({}, 500), json({}, 500), json({}, 500), json({ e: 1 }, 500)]);
+    const { http, sleep } = client([
+      json({}, 500),
+      json({}, 500),
+      json({}, 500),
+      json({ e: 1 }, 500),
+    ]);
     await expect(http.get('/v1/x')).rejects.toBeInstanceOf(ApiRequestError);
     expect(sleep.mock.calls.map((c) => c[0])).toEqual([10, 20, 40]);
   });

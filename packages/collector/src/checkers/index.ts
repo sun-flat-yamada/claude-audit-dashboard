@@ -66,7 +66,13 @@ export async function runComplianceChecks(
 
   const count = (status: ComplianceCheckResult['status']) =>
     results.filter((r) => r.status === status).length;
-  const by_severity: Record<Severity, number> = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+  const by_severity: Record<Severity, number> = {
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    info: 0,
+  };
   const by_category = {
     'access-control': 0,
     'api-key-management': 0,

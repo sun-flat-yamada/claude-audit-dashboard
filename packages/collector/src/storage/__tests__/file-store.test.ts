@@ -5,8 +5,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { FileStore } from '../file-store.js';
 
 let dir: string;
-beforeEach(async () => { dir = await mkdtemp(join(tmpdir(), 'store-')); });
-afterEach(async () => { await rm(dir, { recursive: true, force: true }); });
+beforeEach(async () => {
+  dir = await mkdtemp(join(tmpdir(), 'store-'));
+});
+afterEach(async () => {
+  await rm(dir, { recursive: true, force: true });
+});
 
 describe('FileStore', () => {
   it('round-trips JSON and lists sorted files', async () => {
