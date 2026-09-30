@@ -28,7 +28,7 @@ jobs:
     if: github.event_name != 'schedule' || vars.ENABLE_SCHEDULED_JOBS == 'true'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
 
@@ -111,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     if: always() && needs.collect.result != 'skipped'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
       - uses: pnpm/action-setup@v4

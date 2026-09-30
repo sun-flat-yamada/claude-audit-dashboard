@@ -20,7 +20,7 @@ jobs:
     # once API secrets are configured (see docs/SETUP.md). Manual runs always work.
     if: github.event_name != 'schedule' || vars.ENABLE_SCHEDULED_JOBS == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
