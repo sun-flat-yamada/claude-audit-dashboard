@@ -73,7 +73,7 @@ jobs:
       - name: Build dashboard
         run: pnpm build:dashboard
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: ./packages/dashboard/dist
 
