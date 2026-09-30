@@ -19,9 +19,5 @@
     "exactOptionalPropertyTypes": true,
     "types": []
   },
-  "exclude": [
-    "node_modules",
-    "dist",
-    "coverage"
-  ]
+  "exclude": ["node_modules", "dist", "coverage"]
 }

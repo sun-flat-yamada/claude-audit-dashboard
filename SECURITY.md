@@ -2,8 +2,8 @@
 
 ## Supported Versions
 
-| Version | Supported          | Security Fixes |
-| ------- | ------------------ | -------------- |
+| Version             | Supported          | Security Fixes |
+| ------------------- | ------------------ | -------------- |
 | 0.1.x (2026.09 LTS) | :white_check_mark: | Active         |
 
 ---
@@ -19,6 +19,7 @@ If you believe you have discovered a security vulnerability or credential leak i
 3. Alternatively, contact the maintainers directly via security advisory channels.
 
 ### Information to Include
+
 - Detailed steps to reproduce the issue.
 - Impact assessment (e.g., potential unauthorized access, data leakage).
 - Remediation suggestions or proof of concept (if available).

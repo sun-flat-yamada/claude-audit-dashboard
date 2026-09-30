@@ -1,7 +1,7 @@
 name: 🐛 Bug Report
 description: Create a report to help us improve claude-audit-dashboard
-title: "[Bug]: "
-labels: ["bug", "triage"]
+title: '[Bug]: '
+labels: ['bug', 'triage']
 body:
   - type: markdown
     attributes:
@@ -13,7 +13,7 @@ body:
     attributes:
       label: Version / Commit SHA
       description: What version or commit SHA of claude-audit-dashboard are you using?
-      placeholder: "e.g., v0.1.0 or commit abc1234"
+      placeholder: 'e.g., v0.1.0 or commit abc1234'
     validations:
       required: true
   - type: dropdown
@@ -33,7 +33,7 @@ body:
     attributes:
       label: Describe the Bug
       description: A clear and concise description of what the bug is.
-      placeholder: "When running compliance checks or viewing the dashboard..."
+      placeholder: 'When running compliance checks or viewing the dashboard...'
     validations:
       required: true
   - type: textarea

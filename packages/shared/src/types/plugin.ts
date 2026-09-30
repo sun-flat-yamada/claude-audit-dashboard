@@ -31,10 +31,7 @@ export interface ComplianceRulePlugin {
    * Execute the compliance check against the current snapshot.
    * @returns One or more check results
    */
-  check(
-    snapshot: AuditSnapshot,
-    params: Record<string, unknown>,
-  ): Promise<ComplianceCheckResult[]>;
+  check(snapshot: AuditSnapshot, params: Record<string, unknown>): Promise<ComplianceCheckResult[]>;
 }
 
 // ─── Alert Trigger Plugin ─────────────────────────────────────────

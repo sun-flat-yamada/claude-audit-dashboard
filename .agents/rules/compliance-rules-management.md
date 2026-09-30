@@ -14,14 +14,14 @@ When compliance rules are added, updated, or removed, the following files MUST b
 
 ## Rule ID Convention
 
-| Prefix | Category | Examples |
-|--------|----------|----------|
-| AC-xxx | Access Control | AC-001, AC-002 |
+| Prefix | Category           | Examples       |
+| ------ | ------------------ | -------------- |
+| AC-xxx | Access Control     | AC-001, AC-002 |
 | AK-xxx | API Key Management | AK-001, AK-002 |
-| UA-xxx | Usage Anomaly | UA-001, UA-002 |
-| DG-xxx | Data Governance | DG-001, DG-002 |
-| OP-xxx | Operational | OP-001, OP-002 |
-| BL-xxx | Billing | BL-001, BL-002 |
+| UA-xxx | Usage Anomaly      | UA-001, UA-002 |
+| DG-xxx | Data Governance    | DG-001, DG-002 |
+| OP-xxx | Operational        | OP-001, OP-002 |
+| BL-xxx | Billing            | BL-001, BL-002 |
 
 ## Adding a Custom Rule
 

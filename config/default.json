@@ -12,7 +12,18 @@
     "max_retries": 3
   },
   "compliance": {
-    "enabled_rules": ["AC-001", "AC-002", "AC-003", "AK-001", "AK-002", "AK-003", "UA-001", "UA-002", "DG-001", "OP-001"],
+    "enabled_rules": [
+      "AC-001",
+      "AC-002",
+      "AC-003",
+      "AK-001",
+      "AK-002",
+      "AK-003",
+      "UA-001",
+      "UA-002",
+      "DG-001",
+      "OP-001"
+    ],
     "custom_rules_path": "./config/custom-rules.json",
     "score_threshold_warning": 80,
     "score_threshold_critical": 60

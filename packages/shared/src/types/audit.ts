@@ -4,12 +4,7 @@
 
 /** Activity event categories */
 export type ActivityCategory =
-  | 'admin'
-  | 'identity'
-  | 'configuration'
-  | 'resource'
-  | 'access'
-  | 'security';
+  'admin' | 'identity' | 'configuration' | 'resource' | 'access' | 'security';
 
 /** Activity event from GET /v1/compliance/activities */
 export interface AuditActivity {
@@ -51,12 +46,7 @@ export interface OrganizationMember {
 
 /** Organization roles */
 export type OrganizationRole =
-  | 'primary_owner'
-  | 'owner'
-  | 'admin'
-  | 'developer'
-  | 'billing'
-  | 'user';
+  'primary_owner' | 'owner' | 'admin' | 'developer' | 'billing' | 'user';
 
 /** Workspace info from Admin API */
 export interface Workspace {

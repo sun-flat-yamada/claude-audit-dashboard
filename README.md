@@ -11,14 +11,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![Blueprint: Spec-Driven](https://img.shields.io/badge/Blueprint-Spec--Driven-blueviolet?style=flat-square)](docs/BLUEPRINT.md)
 [![Anthropic API](https://img.shields.io/badge/Anthropic%20API-2026.09%20LTS-orange?style=flat-square)](https://docs.anthropic.com)
-[![Zero Infra](https://img.shields.io/badge/Infrastructure-Zero%20(Pages%20%2B%20Actions)-emerald?style=flat-square)](https://pages.github.com)
+[![Zero Infra](<https://img.shields.io/badge/Infrastructure-Zero%20(Pages%20%2B%20Actions)-emerald?style=flat-square>)](https://pages.github.com)
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/sun.flat.yamada)
 
 An enterprise-grade **Claude Enterprise Organization Audit, Compliance Checking & Analytics Platform** fully compliant with the latest Anthropic specifications as of September 2026 (Compliance API, Admin API, Workspace Hygiene, and Token Cost Monitoring).
 
 Continuously ingests organization audit activities, verifies 10+ built-in compliance rules across 5 security domains, and delivers real-time notifications (Slack, Discord, Email) alongside an auto-updating **GitHub Pages** dashboard.
-
 
 > [!IMPORTANT]
 > **Project status: Phase 1 (Foundation) complete — implementation in progress.**
@@ -31,39 +30,47 @@ Continuously ingests organization audit activities, verifies 10+ built-in compli
 ## 🌟 Key Features
 
 ### 1. Automated Audit Ingestion & Event Stream Tracking
+
 - **Anthropic Compliance API**: Scheduled collection of Organization audit events (`/v1/compliance/activities`) with cursor-based pagination and automatic rate-limit backoff.
 - **Anthropic Admin API**: Full synchronization of members, workspaces, API key inventories, and workspace assignments.
 
 ### 2. 10+ Built-in Compliance Rules & Posture Scoring
+
 - Continuously audits organizational risks across **5 Security Domains**: Access Control (`AC-*`), API Key Management (`AK-*`), Usage Anomalies (`UA-*`), Data Governance (`DG-*`), and Operational Health (`OP-*`).
 - Computes overall Organization Compliance Score (0–100) with category-level breakdowns and severity tagging (`critical`, `high`, `medium`, `low`, `info`).
 
 ### 3. Usage Anomaly Detection & Cost Budget Monitoring
+
 - Identifies sudden token consumption spikes (>3x trailing average) and warns on monthly cost budget thresholds.
 - Provides daily, monthly, and scope-based activity aggregation across organizations and workspaces.
 
 ### 4. Interactive GitHub Pages Dashboard (React 19 + Tailwind + Recharts)
+
 - Zero-server static Single Page Application (SPA) deployed automatically via GitHub Actions.
 - Visual compliance score gauge, interactive activity timeline charts, workspace breakdown tables, and dark/light mode support.
 
 ### 5. Multi-Channel Alert & Digest Dispatching
+
 - **Slack**: Rich Block Kit notifications with severity color bands, score metrics, and quick remediation links.
 - **Discord**: Color-coded embed cards.
 - **Email**: Responsive HTML executive reports via SMTP (Nodemailer).
 - **Weekly Executive Digest**: Automated Monday morning compliance digests summarizing 7-day risk trends.
 
 ### 6. Defense-in-Depth Secret & PII Leak Prevention
+
 - **OWASP / GitGuardian Compliant `.gitignore`**: Strictly excludes private keys, `.env*`, and live snapshot dumps.
 - **AI Agent Guardrails (`.agents/rules/`, `GEMINI.md`, `AGENTS.md`)**: Continuously prevents AI coding assistants from hardcoding tokens or employee identities.
 - **Agent Audit Skill (`.agents/skills/secret-guard/`) & Scanner (`npm run secret-scan`)**: Autonomous pre-commit self-checks.
 - **CI/CD Automated Inspection (`.github/workflows/secret-scan.yml`)**: Gitleaks and built-in secret scanners enforcing zero-leakage branch protection.
 
 ### 7. Fork-Safe Storage Architecture & Maintenance Platform
+
 - Zero production data files committed to `main`; all snapshots and compliance reports remain decoupled and gitignored.
 - Guaranteed conflict-free `Sync Fork` and Pull Request operations when forks are deployed across internal enterprise teams.
 - Equipped with **Fork Health Verification Tool (`npm run fork:verify`)** and automated synchronization skill (`.agents/skills/fork-sync-ops/`).
 
 ### 8. Worktree-Isolated Multi-Agent Change Lifecycle
+
 - Supports concurrent multi-agent development using sibling git worktrees (`../claude-audit-dashboard-worktrees/<branch>`) to prevent file collisions.
 - Built-in management scripts (`npm run worktree:add`, `npm run worktree:list`, `npm run worktree:clean`) and comprehensive change skills (`.agents/skills/change-workflow/`).
 
@@ -158,24 +165,25 @@ claude-audit-dashboard/
 
 ## 🔍 Built-in Compliance Rules
 
-| ID | Domain | Rule Title | Default Threshold | Severity |
-| :--- | :--- | :--- | :--- | :--- |
-| **AC-001** | Access Control | Inactive Organization Members | 90+ days without login | Medium |
-| **AC-002** | Access Control | Excessive Admin Role Ratio | > 20% of total members | High |
-| **AC-003** | Access Control | Primary Owner Verification | Must be verified active | Critical |
-| **AK-001** | API Keys | Inactive API Keys | 30+ days without usage | Medium |
-| **AK-002** | API Keys | Unscoped API Keys | Unrestricted workspace scope | High |
-| **AK-003** | API Keys | API Key Age | 180+ days old | Medium |
-| **UA-001** | Usage Anomaly | Token Consumption Spike | > 3x trailing 7-day average | High |
-| **UA-002** | Usage Anomaly | Monthly Cost Budget Threshold | > 100% monthly budget limit | Critical |
-| **DG-001** | Data Governance| Empty Workspaces | 0 members or 0 projects | Low |
-| **OP-001** | Operations | Collection Freshness | > 24 hours without sync | High |
+| ID         | Domain          | Rule Title                    | Default Threshold            | Severity |
+| :--------- | :-------------- | :---------------------------- | :--------------------------- | :------- |
+| **AC-001** | Access Control  | Inactive Organization Members | 90+ days without login       | Medium   |
+| **AC-002** | Access Control  | Excessive Admin Role Ratio    | > 20% of total members       | High     |
+| **AC-003** | Access Control  | Primary Owner Verification    | Must be verified active      | Critical |
+| **AK-001** | API Keys        | Inactive API Keys             | 30+ days without usage       | Medium   |
+| **AK-002** | API Keys        | Unscoped API Keys             | Unrestricted workspace scope | High     |
+| **AK-003** | API Keys        | API Key Age                   | 180+ days old                | Medium   |
+| **UA-001** | Usage Anomaly   | Token Consumption Spike       | > 3x trailing 7-day average  | High     |
+| **UA-002** | Usage Anomaly   | Monthly Cost Budget Threshold | > 100% monthly budget limit  | Critical |
+| **DG-001** | Data Governance | Empty Workspaces              | 0 members or 0 projects      | Low      |
+| **OP-001** | Operations      | Collection Freshness          | > 24 hours without sync      | High     |
 
 ---
 
 ## 🤖 Supported Models & Audit Scope
 
 The platform is **model-agnostic**: usage, cost and activity are attributed to whatever model IDs the Anthropic Admin API reports for your organization, so newly released Claude models appear automatically without code changes.
+
 - **Data sources**: Anthropic Admin API (members, workspaces, API keys, usage & cost reports) and Compliance API (organization audit activities).
 - Model IDs in `data/sample/` are illustrative only.
 
@@ -186,24 +194,29 @@ The platform is **model-agnostic**: usage, cost and activity are attributed to w
 Deploy your auto-updating audit dashboard to GitHub Pages in 4 steps:
 
 ### Step 1: Fork or Mirror the Repository
+
 - Click **Fork** to copy this repository to your enterprise organization.
 
 ### Step 2: Configure GitHub Pages
+
 1. Go to **Settings** > **Pages** in your repository.
 2. Under **Build and deployment** > **Source**, select **"GitHub Actions"**.
 
 ### Step 3: Enable Actions Permissions
+
 1. Navigate to **Settings** > **Actions** > **General**.
 2. Under **Workflow permissions**, select **"Read and write permissions"** and check **"Allow GitHub Actions to create and approve pull requests"**.
 
 ### Step 4: Configure Credentials in Secrets
+
 Register your configuration under **Settings** > **Secrets and variables** > **Actions**:
+
 - **Secrets**:
   - `ANTHROPIC_ADMIN_API_KEY`: Organization Admin API Key (`sk-ant-admin...`).
   - `ANTHROPIC_COMPLIANCE_API_KEY`: Organization Compliance Access Key (`sk-ant-api...`).
-  - `SLACK_WEBHOOK_URL`: *(Optional)* Slack Incoming Webhook for instant alerts.
-  - `DISCORD_WEBHOOK_URL`: *(Optional)* Discord Webhook for alert notifications.
-  - `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `ALERT_EMAIL_TO`: *(Optional)* SMTP credentials for email alerts.
+  - `SLACK_WEBHOOK_URL`: _(Optional)_ Slack Incoming Webhook for instant alerts.
+  - `DISCORD_WEBHOOK_URL`: _(Optional)_ Discord Webhook for alert notifications.
+  - `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `ALERT_EMAIL_TO`: _(Optional)_ SMTP credentials for email alerts.
 
 > [!NOTE]
 > For advanced setup options — including rule customization via `config/default.json`, private GitHub Pages configuration, and detailed API permissions — refer to the **[🚀 Complete Setup Guide (docs/SETUP.md)](docs/SETUP.md)**.

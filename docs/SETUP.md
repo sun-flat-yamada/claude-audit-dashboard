@@ -55,22 +55,22 @@ For automated collection via GitHub Actions, add secrets to your repository:
 1. Go to **Settings > Secrets and variables > Actions**
 2. Add the following secrets:
 
-| Secret | Value |
-|--------|-------|
-| `ANTHROPIC_ADMIN_API_KEY` | Your Admin API Key |
+| Secret                         | Value                      |
+| ------------------------------ | -------------------------- |
+| `ANTHROPIC_ADMIN_API_KEY`      | Your Admin API Key         |
 | `ANTHROPIC_COMPLIANCE_API_KEY` | Your Compliance Access Key |
 
 ### Optional: Notification Secrets
 
-| Secret | Value |
-|--------|-------|
-| `SLACK_WEBHOOK_URL` | Slack Incoming Webhook URL |
-| `DISCORD_WEBHOOK_URL` | Discord Webhook URL |
-| `SMTP_HOST` | SMTP server hostname |
-| `SMTP_PORT` | SMTP port (usually 587) |
-| `SMTP_USER` | SMTP username |
-| `SMTP_PASS` | SMTP password |
-| `ALERT_EMAIL_TO` | Alert recipient email |
+| Secret                | Value                      |
+| --------------------- | -------------------------- |
+| `SLACK_WEBHOOK_URL`   | Slack Incoming Webhook URL |
+| `DISCORD_WEBHOOK_URL` | Discord Webhook URL        |
+| `SMTP_HOST`           | SMTP server hostname       |
+| `SMTP_PORT`           | SMTP port (usually 587)    |
+| `SMTP_USER`           | SMTP username              |
+| `SMTP_PASS`           | SMTP password              |
+| `ALERT_EMAIL_TO`      | Alert recipient email      |
 
 ## Step 5: Enable GitHub Pages
 

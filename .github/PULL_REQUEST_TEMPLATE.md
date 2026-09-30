@@ -16,12 +16,13 @@ Briefly describe the intent of this pull request and what problem it solves.
 
 ## Key Changes
 
-- 
-- 
+-
+-
 
 ## Verification & Quality Gate (Mandatory)
 
 All checks must pass before merging:
+
 - [ ] `npm run fork:verify` passes (Code-Data Decoupling confirmed)
 - [ ] `npm run typecheck` passes with zero errors
 - [ ] `npm test` passes with all tests green

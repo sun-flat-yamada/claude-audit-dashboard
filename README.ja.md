@@ -11,14 +11,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![Blueprint: Spec-Driven](https://img.shields.io/badge/Blueprint-Spec--Driven-blueviolet?style=flat-square)](docs/BLUEPRINT.md)
 [![Anthropic API](https://img.shields.io/badge/Anthropic%20API-2026.09%20LTS-orange?style=flat-square)](https://docs.anthropic.com)
-[![Zero Infra](https://img.shields.io/badge/Infrastructure-Zero%20(Pages%20%2B%20Actions)-emerald?style=flat-square)](https://pages.github.com)
+[![Zero Infra](<https://img.shields.io/badge/Infrastructure-Zero%20(Pages%20%2B%20Actions)-emerald?style=flat-square>)](https://pages.github.com)
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/sun.flat.yamada)
 
 2026年9月時点の最新Anthropic仕様（Compliance API, Admin API, Workspace Hygiene, Token Cost Monitoring）に完全準拠した、エンタープライズ品質の **Claude Enterprise 監査ログ収集・コンプライアンス自動監査・分析基盤** です。
 
 Anthropic Organization の監査アクティビティを定期収集し、5つのセキュリティ領域にわたる10+の組み込みルールで継続的にコンプライアンス検証を実施。リアルタイム通知（Slack, Discord, Email）とともに、自動更新される **GitHub Pages** ダッシュボードとして美しく可視化します。
-
 
 > [!IMPORTANT]
 > **開発状況: Phase 1（基盤）完了 — 実装進行中**
@@ -31,39 +30,47 @@ Anthropic Organization の監査アクティビティを定期収集し、5つ�
 ## 🌟 主な特徴 (Key Features)
 
 ### 1. 監査ログ自動収集 & イベントストリーム追跡
+
 - **Anthropic Compliance API**: カーソル型ページネーションとHTTP 429レートリミット自動制御を備えた監査イベント（`/v1/compliance/activities`）の定期自動収集。
 - **Anthropic Admin API**: 組織メンバー、ワークスペース、APIキー一覧、権限マッピングを完全同期。
 
 ### 2. 10+ 組み込みコンプライアンスルール & ポスチャースコアリング
+
 - **5つのセキュリティドメイン**: アクセス制御 (`AC-*`)、APIキー管理 (`AK-*`)、使用量異常 (`UA-*`)、データガバナンス (`DG-*`)、運用健全性 (`OP-*`) にわたる継続的監査。
 - 組織全体の総合コンプライアンススコア（0〜100点）およびカテゴリ別スコアを算出し、重要度（`critical`, `high`, `medium`, `low`, `info`）ごとにリスクを即時トリアージ。
 
 ### 3. 使用量異常検知 & コスト予算モニタリング
+
 - トークン消費急増（直近7日間平均の3倍超過）を検出し、月次コスト予算に対する警告・超過アラートを発報。
 - 組織全体およびワークスペースごとの日次・月次アクティビティ推移を集計。
 
 ### 4. インタラクティブな GitHub Pages ダッシュボード (React 19 + Tailwind + Recharts)
+
 - GitHub Actions により自動デプロイされる完全サーバーレスの静的シングルページアプリケーション（SPA）。
 - コンプライアンススコアゲージ、時系列アクティビティ推移グラフ、ワークスペース別内訳テーブル、ダークモード/ライトモード対応。
 
 ### 5. マルチチャネル通知 & 週次エグゼクティブダイジェスト
+
 - **Slack**: 重要度別のカラーバンド、スコア推移、対応手順リンクを含む Block Kit リッチメッセージ。
 - **Discord**: カラーコード化された埋め込みカード。
 - **Email**: Nodemailer によるレスポンシブな HTML エグゼクティブレポート配信。
 - **週次エグゼクティブダイジェスト**: 毎週月曜朝に直近7日間のコンプライアンス動向とリスク改善状況を自動配信。
 
 ### 6. 多層防御 (Defense-in-Depth) シークレット & PII 流出防止機構
+
 - **OWASP / GitGuardian 準拠の `.gitignore`**: 秘密鍵、`.env*`、生スナップショットを Git 管理から徹底除外。
 - **AI Agent ガードレール (`.agents/rules/`, `GEMINI.md`, `AGENTS.md`)**: AI エージェントによるトークンや個人情報のコード混入を常時抑止。
 - **エージェント監査スキル (`.agents/skills/secret-guard/`) & スキャナー (`npm run secret-scan`)**: コミット前の自律セルフチェック。
 - **CI/CD 自動検査 (`.github/workflows/secret-scan.yml`)**: Gitleaks と独自スキャナーによる PR/Push 時の二重遮断ゲート。
 
 ### 7. Fork非競合ストレージアーキテクチャ & 運用保守基盤 (Fork-Safe Storage & Ops)
+
 - メインブランチ（`main`）に監査本番データをコミットせず、スナップショットとレポートを完全分離・gitignored化。
 - Upstream（本家）との `Sync Fork` や Pull Request においてマージ競合が一切発生しません。
 - **Fork健全性診断ツール (`npm run fork:verify`)** および本家同期専用スキル（`.agents/skills/fork-sync-ops/`）を完備。
 
 ### 8. Worktree分離によるマルチエージェント開発ライフサイクル
+
 - 複数AIエージェントの並行実行時における衝突やファイルロックを防ぐ Sibling Git Worktree 方式（`../claude-audit-dashboard-worktrees/<branch>`）をサポート。
 - ワークツリー管理スクリプト（`npm run worktree:add`, `npm run worktree:list`, `npm run worktree:clean`）および運用スキル（`.agents/skills/change-workflow/`）を完備。
 
@@ -158,24 +165,25 @@ claude-audit-dashboard/
 
 ## 🔍 組み込みコンプライアンスルール
 
-| ルールID | 分野 | ルール名 | デフォルトしきい値 | 重要度 |
-| :--- | :--- | :--- | :--- | :--- |
-| **AC-001** | アクセス制御 | 長期未利用メンバーの検出 | 90日以上ログインなし | Medium |
-| **AC-002** | アクセス制御 | Admin権限保持率の過多 | 全メンバー中 20% 超過 | High |
-| **AC-003** | アクセス制御 | プライマリオーナーの稼働検証 | 有効かつアクティブであること | Critical |
-| **AK-001** | APIキー管理 | 未使用APIキーの検出 | 30日以上リクエストなし | Medium |
-| **AK-002** | APIキー管理 | スコープ無制限APIキーの検出 | ワークスペース制限なし | High |
-| **AK-003** | APIキー管理 | APIキー経過日数 | 作成から180日以上経過 | Medium |
-| **UA-001** | 使用量異常 | トークン消費急増の検知 | 直近7日平均の 3倍 超過 | High |
-| **UA-002** | 使用量異常 | 月次コスト予算しきい値 | 月次上限予算の 100% 超過 | Critical |
-| **DG-001** | ガバナンス | 空ワークスペースの検出 | メンバー0名 または プロジェクト0件 | Low |
-| **OP-001** | 運用健全性 | データ収集の鮮度確認 | 最終収集から 24時間 超過 | High |
+| ルールID   | 分野         | ルール名                     | デフォルトしきい値                 | 重要度   |
+| :--------- | :----------- | :--------------------------- | :--------------------------------- | :------- |
+| **AC-001** | アクセス制御 | 長期未利用メンバーの検出     | 90日以上ログインなし               | Medium   |
+| **AC-002** | アクセス制御 | Admin権限保持率の過多        | 全メンバー中 20% 超過              | High     |
+| **AC-003** | アクセス制御 | プライマリオーナーの稼働検証 | 有効かつアクティブであること       | Critical |
+| **AK-001** | APIキー管理  | 未使用APIキーの検出          | 30日以上リクエストなし             | Medium   |
+| **AK-002** | APIキー管理  | スコープ無制限APIキーの検出  | ワークスペース制限なし             | High     |
+| **AK-003** | APIキー管理  | APIキー経過日数              | 作成から180日以上経過              | Medium   |
+| **UA-001** | 使用量異常   | トークン消費急増の検知       | 直近7日平均の 3倍 超過             | High     |
+| **UA-002** | 使用量異常   | 月次コスト予算しきい値       | 月次上限予算の 100% 超過           | Critical |
+| **DG-001** | ガバナンス   | 空ワークスペースの検出       | メンバー0名 または プロジェクト0件 | Low      |
+| **OP-001** | 運用健全性   | データ収集の鮮度確認         | 最終収集から 24時間 超過           | High     |
 
 ---
 
 ## 🤖 対応モデル & 監査スコープ
 
 本基盤は**特定モデルに依存しません**。Anthropic Admin API が返すモデル ID 単位で利用量・コスト・アクティビティを集計するため、新しい Claude モデルが提供されてもコード変更なしで反映されます。
+
 - **データソース**: Anthropic Admin API（メンバー、ワークスペース、API キー、利用量・コストレポート）および Compliance API（Organization 監査アクティビティ）
 - `data/sample/` 内のモデル ID は説明用のダミー値です。
 
@@ -186,24 +194,29 @@ claude-audit-dashboard/
 4ステップで GitHub Pages へ自動更新ダッシュボードを展開できます:
 
 ### ステップ 1: リポジトリの Fork
+
 - 本リポジトリ右上の **Fork** をクリックし、社内 Organization へコピーします。
 
 ### ステップ 2: GitHub Pages の有効化
+
 1. リポジトリの **Settings** > **Pages** に移動します。
 2. **Build and deployment** > **Source** で **"GitHub Actions"** を選択します。
 
 ### ステップ 3: Actions 実行権限の付与
+
 1. **Settings** > **Actions** > **General** に移動します。
 2. **Workflow permissions** で **"Read and write permissions"** を選択し、**"Allow GitHub Actions to create and approve pull requests"** をチェックします。
 
 ### ステップ 4: 認証情報の登録 (Secrets)
+
 **Settings** > **Secrets and variables** > **Actions** に必要なキーを登録します:
+
 - **Secrets**:
   - `ANTHROPIC_ADMIN_API_KEY`: 組織 Admin API キー (`sk-ant-admin...`).
   - `ANTHROPIC_COMPLIANCE_API_KEY`: 組織 Compliance Access キー (`sk-ant-api...`).
-  - `SLACK_WEBHOOK_URL`: *(任意)* Slack アラート通知用 Incoming Webhook URL.
-  - `DISCORD_WEBHOOK_URL`: *(任意)* Discord 通知用 Webhook URL.
-  - `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `ALERT_EMAIL_TO`: *(任意)* メール通知用 SMTP 設定.
+  - `SLACK_WEBHOOK_URL`: _(任意)_ Slack アラート通知用 Incoming Webhook URL.
+  - `DISCORD_WEBHOOK_URL`: _(任意)_ Discord 通知用 Webhook URL.
+  - `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `ALERT_EMAIL_TO`: _(任意)_ メール通知用 SMTP 設定.
 
 > [!NOTE]
 > ルールのしきい値カスタマイズ（`config/default.json`）、GitHub Pages プライベート公開設定、詳細な権限設定については、**[🚀 詳細セットアップガイド (docs/SETUP.md)](docs/SETUP.md)** を参照してください。

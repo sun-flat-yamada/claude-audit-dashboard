@@ -3,7 +3,13 @@
  */
 
 import type { ComplianceReport, ComplianceSummary, Severity } from './compliance.js';
-import type { AuditActivity, UsageReport, OrganizationMember, Workspace, ApiKeyInfo } from './audit.js';
+import type {
+  AuditActivity,
+  UsageReport,
+  OrganizationMember,
+  Workspace,
+  ApiKeyInfo,
+} from './audit.js';
 
 /** Dashboard overview data loaded by the frontend */
 export interface DashboardData {
