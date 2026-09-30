@@ -8,7 +8,7 @@
 
 import type { Severity, ComplianceCategory, ComplianceCheckResult } from './compliance.js';
 import type { NotificationChannel, NotificationPriority, Notification } from './notification.js';
-import type { AuditSnapshot, UsageReport } from './audit.js';
+import type { AuditSnapshot } from './audit.js';
 
 // ─── Compliance Rule Plugin ───────────────────────────────────────
 
