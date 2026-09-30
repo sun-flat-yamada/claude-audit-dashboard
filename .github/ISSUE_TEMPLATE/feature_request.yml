@@ -1,7 +1,7 @@
 name: 🚀 Feature Request
 description: Suggest an idea or enhancement for claude-audit-dashboard
-title: "[Feature]: "
-labels: ["enhancement"]
+title: '[Feature]: '
+labels: ['enhancement']
 body:
   - type: markdown
     attributes:
@@ -20,7 +20,7 @@ body:
     attributes:
       label: Proposed Solution / Feature
       description: Describe the solution you'd like to see implemented.
-      placeholder: "Add rule AC-004 to verify multi-factor authentication or..."
+      placeholder: 'Add rule AC-004 to verify multi-factor authentication or...'
     validations:
       required: true
   - type: textarea

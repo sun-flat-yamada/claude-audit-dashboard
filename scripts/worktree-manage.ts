@@ -19,7 +19,11 @@ const ROOT = resolve(import.meta.dirname, '..');
 const WORKTREE_ROOT = resolve(ROOT, '..', `${basename(ROOT)}-worktrees`);
 
 function git(args: string[], opts: { cwd?: string } = {}): string {
-  return execFileSync('git', args, { cwd: opts.cwd ?? ROOT, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'inherit'] }).trim();
+  return execFileSync('git', args, {
+    cwd: opts.cwd ?? ROOT,
+    encoding: 'utf-8',
+    stdio: ['ignore', 'pipe', 'inherit'],
+  }).trim();
 }
 
 function slug(branch: string): string {

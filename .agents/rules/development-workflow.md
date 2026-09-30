@@ -9,6 +9,7 @@ Issue → Sibling Worktree → Quality Gate → PR → Rebase Merge → Clean
 ## Multi-Agent Isolation
 
 When multiple AI agents work concurrently:
+
 1. Provision sibling worktree: `../claude-audit-dashboard-worktrees/<branch>`
 2. Never edit directly on root workspace
 3. Each agent operates on its own branch

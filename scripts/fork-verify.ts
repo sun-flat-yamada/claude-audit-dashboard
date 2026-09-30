@@ -115,7 +115,10 @@ const SECRET_PATTERNS = [
   { name: 'GitHub Token', pattern: /gh[ps]_[A-Za-z0-9_]{30,}/ },
   { name: 'GitHub PAT', pattern: /github_pat_[A-Za-z0-9_]{30,}/ },
   { name: 'Slack Webhook', pattern: /https:\/\/hooks\.slack\.com\/services\/[A-Za-z0-9/]+/ },
-  { name: 'Discord Webhook', pattern: /https:\/\/discord\.com\/api\/webhooks\/\d+\/[A-Za-z0-9_-]+/ },
+  {
+    name: 'Discord Webhook',
+    pattern: /https:\/\/discord\.com\/api\/webhooks\/\d+\/[A-Za-z0-9_-]+/,
+  },
 ];
 
 function scanFile(filePath: string): void {
@@ -199,7 +202,12 @@ if (!existsSync(envExampleFile)) {
   const lines = content.split('\n').filter((l) => l.includes('=') && !l.startsWith('#'));
   for (const line of lines) {
     const [, value] = line.split('=', 2);
-    if (value && value.trim().length > 20 && !value.includes('example') && !value.includes('mock')) {
+    if (
+      value &&
+      value.trim().length > 20 &&
+      !value.includes('example') &&
+      !value.includes('mock')
+    ) {
       warn(`Suspicious value in .env.example: ${line.split('=')[0]}`);
     }
   }

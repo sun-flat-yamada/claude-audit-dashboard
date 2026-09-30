@@ -11,6 +11,7 @@ description: >
 ## Purpose
 
 Generate monthly billing reports that can be used for:
+
 1. Internal charge-back to teams/departments (by workspace)
 2. Budget tracking and forecasting
 3. Executive summary reporting
@@ -47,27 +48,27 @@ Generate monthly billing reports that can be used for:
     "name": "My Organization"
   },
   "summary": {
-    "total_cost_usd": 4230.50,
+    "total_cost_usd": 4230.5,
     "total_input_tokens": 125000000,
     "total_output_tokens": 42000000,
     "total_cached_tokens": 15000000,
     "total_cache_creation_tokens": 5000000,
     "average_daily_cost_usd": 141.02,
-    "projected_annual_cost_usd": 50766.00,
+    "projected_annual_cost_usd": 50766.0,
     "month_over_month_change_pct": 5.2
   },
   "by_workspace": [
     {
       "workspace_id": "ws_001",
       "workspace_name": "Engineering",
-      "cost_usd": 2750.00,
+      "cost_usd": 2750.0,
       "percentage_of_total": 65.0,
       "input_tokens": 80000000,
       "output_tokens": 28000000,
       "by_model": [
         {
           "model": "claude-sonnet-4-20250514",
-          "cost_usd": 1800.00,
+          "cost_usd": 1800.0,
           "input_tokens": 55000000,
           "output_tokens": 20000000
         }
@@ -77,18 +78,18 @@ Generate monthly billing reports that can be used for:
   "by_model": [
     {
       "model": "claude-sonnet-4-20250514",
-      "cost_usd": 2850.00,
+      "cost_usd": 2850.0,
       "percentage_of_total": 67.4,
       "input_tokens": 95000000,
       "output_tokens": 32000000,
-      "cost_per_million_input": 3.00,
-      "cost_per_million_output": 15.00
+      "cost_per_million_input": 3.0,
+      "cost_per_million_output": 15.0
     }
   ],
   "daily_breakdown": [
     {
       "date": "2026-09-01",
-      "cost_usd": 145.20,
+      "cost_usd": 145.2,
       "input_tokens": 4800000,
       "output_tokens": 1600000
     }
@@ -116,6 +117,7 @@ Generate monthly billing reports that can be used for:
 ## Notification Format
 
 ### Slack Summary
+
 ```
 📊 Monthly Billing Report — September 2026
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

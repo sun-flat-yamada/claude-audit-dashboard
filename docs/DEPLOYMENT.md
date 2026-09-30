@@ -6,11 +6,11 @@
 
 ## Repository Visibility Requirements
 
-| Visibility | GitHub Pages Access | Recommended For |
-|-----------|-------------------|-----------------|
-| **Private** | ⚠️ Pages are public by default (see below) | Single-org use |
-| **Internal** | Enterprise Cloud only, Pages can be restricted | Enterprise use |
-| **Public** | Pages are public | ❌ Not recommended (audit data exposure risk) |
+| Visibility   | GitHub Pages Access                            | Recommended For                               |
+| ------------ | ---------------------------------------------- | --------------------------------------------- |
+| **Private**  | ⚠️ Pages are public by default (see below)     | Single-org use                                |
+| **Internal** | Enterprise Cloud only, Pages can be restricted | Enterprise use                                |
+| **Public**   | Pages are public                               | ❌ Not recommended (audit data exposure risk) |
 
 ---
 
@@ -28,6 +28,7 @@ GitHub Enterprise Cloud supports **private GitHub Pages** that are only accessib
 4. Only users with repository access can view the dashboard
 
 ### Characteristics
+
 - ✅ Native GitHub Pages with access control
 - ✅ No additional infrastructure needed
 - ✅ SSO integration (if Enterprise Managed Users)
@@ -55,11 +56,13 @@ Configure the dashboard to use **sample/demo data** for the public Pages site, w
 ```
 
 This ensures:
+
 - ✅ Dashboard UI is visible as a demo/showcase
 - ✅ No real audit data exposed
 - ❌ Live data not viewable in Pages (only in the repo itself)
 
 ### Accessing Live Data (Private Repo Owners)
+
 - Clone the repo and run `pnpm dev` locally with real data from the orphan branch
 - Or access via GitHub's file browser on the `data/audit` branch
 
@@ -148,6 +151,7 @@ Instead of hosting a live website, generate the dashboard as an artifact:
 ```
 
 Users download the artifact and open `index.html` locally:
+
 - ✅ No public exposure whatsoever
 - ✅ Works with any GitHub plan
 - ❌ Less convenient (manual download required)
@@ -156,12 +160,12 @@ Users download the artifact and open `index.html` locally:
 
 ## Recommended Configuration by Scenario
 
-| Scenario | Repository | Pages | Data |
-|----------|-----------|-------|------|
-| Enterprise (full featured) | Internal | Private Pages (Enterprise Cloud) | Orphan branch |
-| Team (secure) | Private | Demo-only Pages + Local dev | Orphan branch |
-| Personal/Demo | Private | Sample data Pages | Sample data only |
-| Maximum security | Private | No Pages (artifact download) | Orphan branch |
+| Scenario                   | Repository | Pages                            | Data             |
+| -------------------------- | ---------- | -------------------------------- | ---------------- |
+| Enterprise (full featured) | Internal   | Private Pages (Enterprise Cloud) | Orphan branch    |
+| Team (secure)              | Private    | Demo-only Pages + Local dev      | Orphan branch    |
+| Personal/Demo              | Private    | Sample data Pages                | Sample data only |
+| Maximum security           | Private    | No Pages (artifact download)     | Orphan branch    |
 
 ---
 

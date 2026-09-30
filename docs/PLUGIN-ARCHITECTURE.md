@@ -41,10 +41,7 @@ export interface ComplianceRulePlugin {
    * @param params - Merged default + user-overridden parameters
    * @returns One or more check results
    */
-  check(
-    snapshot: AuditSnapshot,
-    params: Record<string, unknown>,
-  ): Promise<ComplianceCheckResult[]>;
+  check(snapshot: AuditSnapshot, params: Record<string, unknown>): Promise<ComplianceCheckResult[]>;
 }
 ```
 
@@ -70,9 +67,7 @@ export interface AlertTriggerPlugin {
    * @param context - Current and historical data for evaluation
    * @returns Alert notifications to send, or empty array if no alert
    */
-  evaluate(
-    context: AlertContext,
-  ): Promise<Notification[]>;
+  evaluate(context: AlertContext): Promise<Notification[]>;
 }
 
 export interface AlertContext {
@@ -221,9 +216,9 @@ packages/collector/src/
 import { registry } from './registry.js';
 
 // 1. Load built-in plugins
-import '../rules/index.js';       // Registers all built-in rules
-import '../triggers/index.js';    // Registers all built-in triggers
-import '../channels/index.js';    // Registers all built-in channels
+import '../rules/index.js'; // Registers all built-in rules
+import '../triggers/index.js'; // Registers all built-in triggers
+import '../channels/index.js'; // Registers all built-in channels
 
 // 2. Load custom plugins from config
 export async function loadCustomPlugins(configPath: string): Promise<void> {
@@ -258,18 +253,20 @@ const myRule: ComplianceRulePlugin = {
   async check(snapshot, params) {
     const max = params.maxMembers as number;
     const count = snapshot.members.length;
-    return [{
-      rule_id: 'CUSTOM-001',
-      rule_name: 'Maximum Members',
-      status: count > max ? 'fail' : 'pass',
-      severity: 'medium',
-      category: 'access-control',
-      message: `Organization has ${count} members (limit: ${max})`,
-      details: { count, max },
-      evidence: [],
-      remediation: count > max ? 'Review and remove unused accounts' : null,
-      checked_at: new Date().toISOString(),
-    }];
+    return [
+      {
+        rule_id: 'CUSTOM-001',
+        rule_name: 'Maximum Members',
+        status: count > max ? 'fail' : 'pass',
+        severity: 'medium',
+        category: 'access-control',
+        message: `Organization has ${count} members (limit: ${max})`,
+        details: { count, max },
+        evidence: [],
+        remediation: count > max ? 'Review and remove unused accounts' : null,
+        checked_at: new Date().toISOString(),
+      },
+    ];
   },
 };
 
@@ -295,8 +292,7 @@ const myTrigger: AlertTriggerPlugin = {
 
   async evaluate(context) {
     const adminEvents = context.currentSnapshot.activities.filter(
-      (a) => a.type === 'member.role_changed' &&
-             a.details?.new_role === 'admin'
+      (a) => a.type === 'member.role_changed' && a.details?.new_role === 'admin',
     );
 
     return adminEvents.map((event) => ({
@@ -322,14 +318,14 @@ registry.registerTrigger(myTrigger);
 
 The plugin system ensures:
 
-| Concern | Complexity |
-|---------|------------|
-| Adding a new rule | **O(1)** — one file, self-registering |
-| Adding a new trigger | **O(1)** — one file, self-registering |
-| Adding a new channel | **O(1)** — one file, self-registering |
-| Core orchestration changes | **O(0)** — never needed |
-| Type safety | Compile-time — TypeScript interfaces |
-| Testing | Unit-testable in isolation |
+| Concern                    | Complexity                            |
+| -------------------------- | ------------------------------------- |
+| Adding a new rule          | **O(1)** — one file, self-registering |
+| Adding a new trigger       | **O(1)** — one file, self-registering |
+| Adding a new channel       | **O(1)** — one file, self-registering |
+| Core orchestration changes | **O(0)** — never needed               |
+| Type safety                | Compile-time — TypeScript interfaces  |
+| Testing                    | Unit-testable in isolation            |
 
 No `switch` statements, no `if/else` chains, no modification of existing files.
 The Registry Pattern + self-registration ensures **additive-only extensibility**.

@@ -15,16 +15,16 @@ data/audit        ← Orphan branch. Audit snapshots & reports (per-fork)
 
 ### Data Storage Locations
 
-| Data Type | Storage | Branch | Committed to main? |
-|-----------|---------|--------|--------------------|
-| Source code | `packages/` | `main` | ✅ Yes |
-| Sample/demo data | `data/sample/` | `main` | ✅ Yes |
-| Live audit snapshots | `data/snapshots/` | `data/audit` (orphan) | ❌ Never |
-| Compliance reports | `data/reports/` | `data/audit` (orphan) | ❌ Never |
-| Dashboard JSON | `data/dashboard.json` | `data/audit` (orphan) | ❌ Never |
-| Collector state | `data/state.json` | `data/audit` (orphan) | ❌ Never |
-| Monthly reports | `data/reports/monthly/` | `data/audit` (orphan) | ❌ Never |
-| Archived data | `data/archive/` | `data/audit` (orphan) | ❌ Never |
+| Data Type            | Storage                 | Branch                | Committed to main? |
+| -------------------- | ----------------------- | --------------------- | ------------------ |
+| Source code          | `packages/`             | `main`                | ✅ Yes             |
+| Sample/demo data     | `data/sample/`          | `main`                | ✅ Yes             |
+| Live audit snapshots | `data/snapshots/`       | `data/audit` (orphan) | ❌ Never           |
+| Compliance reports   | `data/reports/`         | `data/audit` (orphan) | ❌ Never           |
+| Dashboard JSON       | `data/dashboard.json`   | `data/audit` (orphan) | ❌ Never           |
+| Collector state      | `data/state.json`       | `data/audit` (orphan) | ❌ Never           |
+| Monthly reports      | `data/reports/monthly/` | `data/audit` (orphan) | ❌ Never           |
+| Archived data        | `data/archive/`         | `data/audit` (orphan) | ❌ Never           |
 
 ### Why Orphan Branch?
 
@@ -47,6 +47,7 @@ git push origin data/audit
 ### Dashboard Build Pipeline
 
 During dashboard build, the CI:
+
 1. Checks out `main` for code
 2. Checks out `data/audit` branch into `./data/` overlay
 3. Builds dashboard with live data
@@ -64,6 +65,7 @@ If the `data/audit` branch doesn't exist (fresh fork), sample data from `data/sa
 ### fork:verify Script
 
 The `npm run fork:verify` script ensures:
+
 1. No live data files exist on `main` branch
 2. `data/sample/` contains valid demo data
 3. No secrets in tracked files

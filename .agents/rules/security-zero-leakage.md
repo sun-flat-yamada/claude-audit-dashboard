@@ -52,6 +52,7 @@ All AI agents operating in this workspace **MUST** adhere to the following non-n
 ## 4. Mandatory Pre-Commit / Pre-PR Self-Review
 
 Before concluding any implementation or proposing commits:
+
 1. Run the local automated secret scanner:
    ```bash
    npm run secret-scan

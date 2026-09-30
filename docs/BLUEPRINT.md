@@ -53,24 +53,24 @@
 
 ### Goals
 
-| # | Goal | Priority |
-|---|------|----------|
-| G1 | Compliance API からの監査アクティビティ自動収集 | **P0** |
-| G2 | Admin API からの組織メンバー・ワークスペース・API キー情報の収集 | **P0** |
-| G3 | 組み込みコンプライアンスルールによる自動監査チェック | **P0** |
-| G4 | GitHub Pages での静的ダッシュボード表示 | **P0** |
-| G5 | Slack / Discord / Email によるアラート通知 | **P0** |
-| G6 | GitHub Actions による定期実行（6時間ごと） | **P0** |
-| G7 | **Fork-Safe 設計** — Orphan ブランチによるデータ分離 | **P0** |
-| G8 | **Private/Internal リポジトリ前提** の GitHub Pages デプロイ対応 | **P0** |
-| G9 | 週次サマリーレポートの自動生成・配信 | **P1** |
-| G10 | **月次請求レポート** — Workspace 別コスト配分・モデル別内訳・Raw データ付き | **P1** |
-| G11 | **AIモデル使用分析** — モデル偏り検出・コスト最適化提案の自動生成 | **P1** |
-| G12 | 使用量異常検知（スパイク検出、予算超過） | **P1** |
-| G13 | **プラグインアーキテクチャ** — ルール・トリガー・通知チャネルの拡張 | **P1** |
-| G14 | **長期データ保持** — Anthropic の保証期間を超えた独立した監査データ保存 | **P1** |
-| G15 | カスタムコンプライアンスルールの追加サポート | **P2** |
-| G16 | 多言語対応（日本語 / 英語） | **P2** |
+| #   | Goal                                                                        | Priority |
+| --- | --------------------------------------------------------------------------- | -------- |
+| G1  | Compliance API からの監査アクティビティ自動収集                             | **P0**   |
+| G2  | Admin API からの組織メンバー・ワークスペース・API キー情報の収集            | **P0**   |
+| G3  | 組み込みコンプライアンスルールによる自動監査チェック                        | **P0**   |
+| G4  | GitHub Pages での静的ダッシュボード表示                                     | **P0**   |
+| G5  | Slack / Discord / Email によるアラート通知                                  | **P0**   |
+| G6  | GitHub Actions による定期実行（6時間ごと）                                  | **P0**   |
+| G7  | **Fork-Safe 設計** — Orphan ブランチによるデータ分離                        | **P0**   |
+| G8  | **Private/Internal リポジトリ前提** の GitHub Pages デプロイ対応            | **P0**   |
+| G9  | 週次サマリーレポートの自動生成・配信                                        | **P1**   |
+| G10 | **月次請求レポート** — Workspace 別コスト配分・モデル別内訳・Raw データ付き | **P1**   |
+| G11 | **AIモデル使用分析** — モデル偏り検出・コスト最適化提案の自動生成           | **P1**   |
+| G12 | 使用量異常検知（スパイク検出、予算超過）                                    | **P1**   |
+| G13 | **プラグインアーキテクチャ** — ルール・トリガー・通知チャネルの拡張         | **P1**   |
+| G14 | **長期データ保持** — Anthropic の保証期間を超えた独立した監査データ保存     | **P1**   |
+| G15 | カスタムコンプライアンスルールの追加サポート                                | **P2**   |
+| G16 | 多言語対応（日本語 / 英語）                                                 | **P2**   |
 
 ### Non-Goals
 
@@ -152,16 +152,16 @@ data/audit        ← Orphan ブランチ。監査スナップショット・レ
 
 ### 4.2 データ保存場所
 
-| データ種別 | 保存場所 | ブランチ | main にコミット? |
-|-----------|---------|--------|-----------------|
-| ソースコード | `packages/` | `main` | ✅ Yes |
-| サンプル/DEMOデータ | `data/sample/` | `main` | ✅ Yes |
-| ライブ監査スナップショット | `data/snapshots/` | `data/audit` (orphan) | ❌ Never |
-| コンプライアンスレポート | `data/reports/` | `data/audit` (orphan) | ❌ Never |
-| ダッシュボード JSON | `data/dashboard.json` | `data/audit` (orphan) | ❌ Never |
-| コレクター状態 | `data/state.json` | `data/audit` (orphan) | ❌ Never |
-| 月次レポート | `data/reports/monthly/` | `data/audit` (orphan) | ❌ Never |
-| アーカイブデータ | `data/archive/` | `data/audit` (orphan) | ❌ Never |
+| データ種別                 | 保存場所                | ブランチ              | main にコミット? |
+| -------------------------- | ----------------------- | --------------------- | ---------------- |
+| ソースコード               | `packages/`             | `main`                | ✅ Yes           |
+| サンプル/DEMOデータ        | `data/sample/`          | `main`                | ✅ Yes           |
+| ライブ監査スナップショット | `data/snapshots/`       | `data/audit` (orphan) | ❌ Never         |
+| コンプライアンスレポート   | `data/reports/`         | `data/audit` (orphan) | ❌ Never         |
+| ダッシュボード JSON        | `data/dashboard.json`   | `data/audit` (orphan) | ❌ Never         |
+| コレクター状態             | `data/state.json`       | `data/audit` (orphan) | ❌ Never         |
+| 月次レポート               | `data/reports/monthly/` | `data/audit` (orphan) | ❌ Never         |
+| アーカイブデータ           | `data/archive/`         | `data/audit` (orphan) | ❌ Never         |
 
 ### 4.3 Orphan ブランチを選択した理由
 
@@ -173,13 +173,13 @@ data/audit        ← Orphan ブランチ。監査スナップショット・レ
 
 ### 4.4 DEMOデータ vs 本番データの分離
 
-| | DEMO データ | 本番データ |
-|---|------------|----------|
-| **保存場所** | `data/sample/` (main ブランチ) | `data/` (data/audit orphan ブランチ) |
-| **目的** | 開発・テスト・ショーケース | 実際の組織監査 |
-| **内容** | 合成データ（架空の名前・ID） | API から収集した実データ |
-| **Git 追跡** | ✅ 追跡対象 | ❌ main では追跡しない |
-| **Dashboard での利用** | data/audit 未作成時のフォールバック | 通常運用時のデータソース |
+|                        | DEMO データ                         | 本番データ                           |
+| ---------------------- | ----------------------------------- | ------------------------------------ |
+| **保存場所**           | `data/sample/` (main ブランチ)      | `data/` (data/audit orphan ブランチ) |
+| **目的**               | 開発・テスト・ショーケース          | 実際の組織監査                       |
+| **内容**               | 合成データ（架空の名前・ID）        | API から収集した実データ             |
+| **Git 追跡**           | ✅ 追跡対象                         | ❌ main では追跡しない               |
+| **Dashboard での利用** | data/audit 未作成時のフォールバック | 通常運用時のデータソース             |
 
 ### 4.5 fork:verify スクリプト
 
@@ -196,9 +196,9 @@ data/audit        ← Orphan ブランチ。監査スナップショット・レ
 
 ### 5.1 Compliance API
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/compliance/activities` | GET | 監査アクティビティフィードの取得 |
+| Endpoint                    | Method | Description                      |
+| --------------------------- | ------ | -------------------------------- |
+| `/v1/compliance/activities` | GET    | 監査アクティビティフィードの取得 |
 
 **認証:** `x-api-key` ヘッダーに Compliance Access Key  
 **バージョン:** `anthropic-version: 2023-06-01`  
@@ -206,25 +206,25 @@ data/audit        ← Orphan ブランチ。監査スナップショット・レ
 
 **取得可能なアクティビティカテゴリ:**
 
-| Category | Events |
-|----------|--------|
-| Admin | ユーザー管理、ロール変更 |
-| Identity | SSO/SCIM プロビジョニング |
-| Configuration | 設定変更、ワークスペース管理 |
-| Resource | ファイル作成・ダウンロード・削除 |
-| Access | API キー作成・無効化 |
-| Security | セキュリティ関連イベント |
+| Category      | Events                           |
+| ------------- | -------------------------------- |
+| Admin         | ユーザー管理、ロール変更         |
+| Identity      | SSO/SCIM プロビジョニング        |
+| Configuration | 設定変更、ワークスペース管理     |
+| Resource      | ファイル作成・ダウンロード・削除 |
+| Access        | API キー作成・無効化             |
+| Security      | セキュリティ関連イベント         |
 
 ### 5.2 Admin API
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/organizations/users` | GET | 組織メンバー一覧の取得 |
-| `/v1/organizations/workspaces` | GET | ワークスペース一覧の取得 |
-| `/v1/organizations/api_keys` | GET | API キー一覧の取得 |
-| `/v1/organizations/invites` | GET | 招待一覧の取得 |
-| `/v1/organizations/usage_report/messages` | GET | 使用量レポート (group_by: workspace, model) |
-| `/v1/organizations/cost_report` | GET | コストレポート (USD cents, group_by: workspace, model) |
+| Endpoint                                  | Method | Description                                            |
+| ----------------------------------------- | ------ | ------------------------------------------------------ |
+| `/v1/organizations/users`                 | GET    | 組織メンバー一覧の取得                                 |
+| `/v1/organizations/workspaces`            | GET    | ワークスペース一覧の取得                               |
+| `/v1/organizations/api_keys`              | GET    | API キー一覧の取得                                     |
+| `/v1/organizations/invites`               | GET    | 招待一覧の取得                                         |
+| `/v1/organizations/usage_report/messages` | GET    | 使用量レポート (group_by: workspace, model)            |
+| `/v1/organizations/cost_report`           | GET    | コストレポート (USD cents, group_by: workspace, model) |
 
 **認証:** `x-api-key` ヘッダーに Admin API Key (`sk-ant-admin...`)  
 **バージョン:** `anthropic-version: 2023-06-01`
@@ -277,39 +277,39 @@ data/sample/                       # main branch (DEMO data)
 
 ### 6.2 Core Types
 
-| Type | Package | Description |
-|------|---------|-------------|
-| `AuditActivity` | shared | Compliance API のアクティビティイベント |
-| `OrganizationMember` | shared | 組織メンバー情報 |
-| `Workspace` | shared | ワークスペース情報 |
-| `ApiKeyInfo` | shared | API キー情報 |
-| `UsageReport` | shared | 使用量レポート |
-| `AuditSnapshot` | shared | 収集したデータのスナップショット |
-| `ComplianceRule` | shared | コンプライアンスルール定義 |
-| `ComplianceCheckResult` | shared | チェック結果 |
-| `ComplianceReport` | shared | コンプライアンスレポート |
-| `DashboardData` | shared | ダッシュボード表示用データ |
-| `Notification` | shared | 通知メッセージ |
-| `AlertRule` | shared | アラートルール定義 |
-| `MonthlyBillingReport` | shared | 月次請求レポート |
-| `ModelUsageAnalysis` | shared | AIモデル使用分析結果 |
-| `ComplianceRulePlugin` | shared | プラグイン: コンプライアンスルール |
-| `AlertTriggerPlugin` | shared | プラグイン: アラートトリガー |
-| `NotificationChannelPlugin` | shared | プラグイン: 通知チャネル |
+| Type                        | Package | Description                             |
+| --------------------------- | ------- | --------------------------------------- |
+| `AuditActivity`             | shared  | Compliance API のアクティビティイベント |
+| `OrganizationMember`        | shared  | 組織メンバー情報                        |
+| `Workspace`                 | shared  | ワークスペース情報                      |
+| `ApiKeyInfo`                | shared  | API キー情報                            |
+| `UsageReport`               | shared  | 使用量レポート                          |
+| `AuditSnapshot`             | shared  | 収集したデータのスナップショット        |
+| `ComplianceRule`            | shared  | コンプライアンスルール定義              |
+| `ComplianceCheckResult`     | shared  | チェック結果                            |
+| `ComplianceReport`          | shared  | コンプライアンスレポート                |
+| `DashboardData`             | shared  | ダッシュボード表示用データ              |
+| `Notification`              | shared  | 通知メッセージ                          |
+| `AlertRule`                 | shared  | アラートルール定義                      |
+| `MonthlyBillingReport`      | shared  | 月次請求レポート                        |
+| `ModelUsageAnalysis`        | shared  | AIモデル使用分析結果                    |
+| `ComplianceRulePlugin`      | shared  | プラグイン: コンプライアンスルール      |
+| `AlertTriggerPlugin`        | shared  | プラグイン: アラートトリガー            |
+| `NotificationChannelPlugin` | shared  | プラグイン: 通知チャネル                |
 
 ### 6.3 Long-Term Data Retention
 
 > Anthropic Compliance API は **6年間** の監査ログ保持を保証。
 > 本システムはそれに加え、**独立した永続保持**を実現する。
 
-| データ | デフォルト保持期間 | 保持場所 | アーカイブ |
-|--------|------------------|---------|-----------|
-| Raw スナップショット | 365 日 | `data/snapshots/` | 期限後に `data/archive/` へ gzip 圧縮 |
-| コンプライアンスレポート | 無期限 | `data/reports/` | 圧縮なし |
-| 月次請求レポート | 無期限 | `data/reports/monthly/` | 圧縮なし |
-| アーカイブデータ | 無期限 | `data/archive/` | gzip 圧縮済み |
-| Dashboard JSON | 最新のみ | `data/dashboard.json` | N/A |
-| Collector 状態 | 最新のみ | `data/state.json` | N/A |
+| データ                   | デフォルト保持期間 | 保持場所                | アーカイブ                            |
+| ------------------------ | ------------------ | ----------------------- | ------------------------------------- |
+| Raw スナップショット     | 365 日             | `data/snapshots/`       | 期限後に `data/archive/` へ gzip 圧縮 |
+| コンプライアンスレポート | 無期限             | `data/reports/`         | 圧縮なし                              |
+| 月次請求レポート         | 無期限             | `data/reports/monthly/` | 圧縮なし                              |
+| アーカイブデータ         | 無期限             | `data/archive/`         | gzip 圧縮済み                         |
+| Dashboard JSON           | 最新のみ           | `data/dashboard.json`   | N/A                                   |
+| Collector 状態           | 最新のみ           | `data/state.json`       | N/A                                   |
 
 **アーカイブプロセス:**
 
@@ -322,6 +322,7 @@ done
 ```
 
 これにより:
+
 - Anthropic の 6 年保証とは独立してデータを永続保持
 - 古いスナップショットは圧縮してストレージを節約
 - 月次レポートは無期限保持で監査証跡を確保
@@ -332,18 +333,18 @@ done
 
 ### 7.1 組み込みルール一覧
 
-| ID | Name | Category | Severity | Description |
-|----|------|----------|----------|-------------|
-| AC-001 | Inactive Members | access-control | Medium | 90日以上非アクティブなメンバーを検出 |
-| AC-002 | Excessive Admin Roles | access-control | High | 管理者ロール比率が20%超を警告 |
-| AC-003 | Single Primary Owner | access-control | Critical | Primary Owner の一意性確認 |
-| AK-001 | Unused API Keys | api-key-management | Medium | 30日以上未使用の API キーを検出 |
-| AK-002 | Unscoped API Keys | api-key-management | High | ワークスペース非限定の API キーを検出 |
-| AK-003 | API Key Age | api-key-management | Medium | 180日超の API キーのローテーション推奨 |
-| UA-001 | Usage Spike Detection | usage-anomaly | High | 7日平均の3倍超のトークン使用を検出 |
-| UA-002 | Cost Budget Threshold | usage-anomaly | Critical | 月次コスト予算超過アラート |
-| DG-001 | Empty Workspaces | data-governance | Low | メンバーのいないワークスペースを検出 |
-| OP-001 | Collection Freshness | operational | High | 24時間以上データ収集がない場合に警告 |
+| ID     | Name                  | Category           | Severity | Description                            |
+| ------ | --------------------- | ------------------ | -------- | -------------------------------------- |
+| AC-001 | Inactive Members      | access-control     | Medium   | 90日以上非アクティブなメンバーを検出   |
+| AC-002 | Excessive Admin Roles | access-control     | High     | 管理者ロール比率が20%超を警告          |
+| AC-003 | Single Primary Owner  | access-control     | Critical | Primary Owner の一意性確認             |
+| AK-001 | Unused API Keys       | api-key-management | Medium   | 30日以上未使用の API キーを検出        |
+| AK-002 | Unscoped API Keys     | api-key-management | High     | ワークスペース非限定の API キーを検出  |
+| AK-003 | API Key Age           | api-key-management | Medium   | 180日超の API キーのローテーション推奨 |
+| UA-001 | Usage Spike Detection | usage-anomaly      | High     | 7日平均の3倍超のトークン使用を検出     |
+| UA-002 | Cost Budget Threshold | usage-anomaly      | Critical | 月次コスト予算超過アラート             |
+| DG-001 | Empty Workspaces      | data-governance    | Low      | メンバーのいないワークスペースを検出   |
+| OP-001 | Collection Freshness  | operational        | High     | 24時間以上データ収集がない場合に警告   |
 
 ### 7.2 コンプライアンススコア計算
 
@@ -394,11 +395,11 @@ Severity Weights:
 
 ### 8.2 プラグインタイプ
 
-| Type | Interface | 用途 | 追加の複雑度 |
-|------|-----------|------|-------------|
-| **Compliance Rule** | `ComplianceRulePlugin` | 監査ルールの追加 | **O(1)** — 1ファイル、自己登録 |
-| **Alert Trigger** | `AlertTriggerPlugin` | アラート条件の追加 | **O(1)** — 1ファイル、自己登録 |
-| **Notification Channel** | `NotificationChannelPlugin` | 通知先の追加 | **O(1)** — 1ファイル、自己登録 |
+| Type                     | Interface                   | 用途               | 追加の複雑度                   |
+| ------------------------ | --------------------------- | ------------------ | ------------------------------ |
+| **Compliance Rule**      | `ComplianceRulePlugin`      | 監査ルールの追加   | **O(1)** — 1ファイル、自己登録 |
+| **Alert Trigger**        | `AlertTriggerPlugin`        | アラート条件の追加 | **O(1)** — 1ファイル、自己登録 |
+| **Notification Channel** | `NotificationChannelPlugin` | 通知先の追加       | **O(1)** — 1ファイル、自己登録 |
 
 ### 8.3 ファイル配置
 
@@ -498,23 +499,23 @@ switch 文なし、if/else チェーンなし、既存ファイルの変更な�
 
 ### 10.1 通知チャネル
 
-| Channel | Protocol | Use Case |
-|---------|----------|----------|
-| **Slack** | Incoming Webhook | チーム向けリアルタイムアラート |
-| **Discord** | Webhook | 開発チーム向け通知 |
-| **Email** | SMTP (Nodemailer) | 管理者向け公式レポート |
+| Channel     | Protocol          | Use Case                       |
+| ----------- | ----------------- | ------------------------------ |
+| **Slack**   | Incoming Webhook  | チーム向けリアルタイムアラート |
+| **Discord** | Webhook           | 開発チーム向け通知             |
+| **Email**   | SMTP (Nodemailer) | 管理者向け公式レポート         |
 
 ### 10.2 通知トリガー
 
-| Trigger | Priority | Channels | Description |
-|---------|----------|----------|-------------|
-| Critical Finding | Urgent | All | コンプライアンスの Critical 検出時 |
-| High Finding | High | Slack, Discord | High severity の検出時 |
-| Collection Failure | High | All | データ収集の失敗時 |
-| Weekly Report | Normal | Email, Slack | 週次サマリーレポート |
-| **Monthly Billing Report** | Normal | Email, Slack | 月次請求レポート |
-| Budget Alert | Urgent | All | 予算超過検知時 |
-| Usage Spike | High | Slack, Discord | 異常使用量検知時 |
+| Trigger                    | Priority | Channels       | Description                        |
+| -------------------------- | -------- | -------------- | ---------------------------------- |
+| Critical Finding           | Urgent   | All            | コンプライアンスの Critical 検出時 |
+| High Finding               | High     | Slack, Discord | High severity の検出時             |
+| Collection Failure         | High     | All            | データ収集の失敗時                 |
+| Weekly Report              | Normal   | Email, Slack   | 週次サマリーレポート               |
+| **Monthly Billing Report** | Normal   | Email, Slack   | 月次請求レポート                   |
+| Budget Alert               | Urgent   | All            | 予算超過検知時                     |
+| Usage Spike                | High     | Slack, Discord | 異常使用量検知時                   |
 
 ### 10.3 Slack メッセージフォーマット
 
@@ -542,15 +543,17 @@ switch 文なし、if/else チェーンなし、既存ファイルの変更な�
 
 ```json
 {
-  "embeds": [{
-    "title": "🔴 Critical: API Key Security Alert",
-    "color": 14495300,
-    "fields": [
-      { "name": "Rule", "value": "AK-002 Unscoped API Keys", "inline": true },
-      { "name": "Score", "value": "72/100", "inline": true }
-    ],
-    "timestamp": "2026-09-29T12:00:00Z"
-  }]
+  "embeds": [
+    {
+      "title": "🔴 Critical: API Key Security Alert",
+      "color": 14495300,
+      "fields": [
+        { "name": "Rule", "value": "AK-002 Unscoped API Keys", "inline": true },
+        { "name": "Score", "value": "72/100", "inline": true }
+      ],
+      "timestamp": "2026-09-29T12:00:00Z"
+    }
+  ]
 }
 ```
 
@@ -567,20 +570,20 @@ switch 文なし、if/else チェーンなし、既存ファイルの変更な�
 
 **Admin API エンドポイント:**
 
-| Endpoint | Purpose |
-|----------|---------|
+| Endpoint                                      | Purpose                                   |
+| --------------------------------------------- | ----------------------------------------- |
 | `GET /v1/organizations/usage_report/messages` | Workspace × モデル × 日次のトークン使用量 |
-| `GET /v1/organizations/cost_report` | Workspace × モデル × 日次のコスト (USD) |
+| `GET /v1/organizations/cost_report`           | Workspace × モデル × 日次のコスト (USD)   |
 
 **レポート内容:**
 
-| セクション | 内容 |
-|-----------|------|
-| サマリー | 総コスト、総トークン数、日平均、年間予測、前月比 |
-| Workspace 別集計 | Workspace ごとのコスト・トークン内訳 (Group 分類での請求配分) |
-| モデル別集計 | モデルごとのコスト・トークン内訳 |
-| 日次明細 | 日別のコスト・トークン推移 |
-| **全 Raw 内訳データ** | 全レコードの完全な生データ (CSV/JSON エクスポート対応) |
+| セクション            | 内容                                                          |
+| --------------------- | ------------------------------------------------------------- |
+| サマリー              | 総コスト、総トークン数、日平均、年間予測、前月比              |
+| Workspace 別集計      | Workspace ごとのコスト・トークン内訳 (Group 分類での請求配分) |
+| モデル別集計          | モデルごとのコスト・トークン内訳                              |
+| 日次明細              | 日別のコスト・トークン推移                                    |
+| **全 Raw 内訳データ** | 全レコードの完全な生データ (CSV/JSON エクスポート対応)        |
 
 ### 11.2 AIモデル使用分析
 
@@ -588,11 +591,11 @@ switch 文なし、if/else チェーンなし、既存ファイルの変更な�
 
 **検出パターン:**
 
-| パターン | 基準 | 推奨アクション |
-|---------|------|---------------|
-| 高額モデル偏重 | Opus 使用率 >60% | Sonnet への切り替え検討 |
-| キャッシュ未活用 | Cache hit rate <30% | System prompt のキャッシュ化 |
-| Haiku 未活用 | Haiku 使用率 <5% | 分類・抽出タスクへの Haiku 適用 |
+| パターン         | 基準                 | 推奨アクション                     |
+| ---------------- | -------------------- | ---------------------------------- |
+| 高額モデル偏重   | Opus 使用率 >60%     | Sonnet への切り替え検討            |
+| キャッシュ未活用 | Cache hit rate <30%  | System prompt のキャッシュ化       |
+| Haiku 未活用     | Haiku 使用率 <5%     | 分類・抽出タスクへの Haiku 適用    |
 | Workspace 不均衡 | 1 WS が総予算の >80% | 使用量の見直し・チーム配分の最適化 |
 
 **出力:**
@@ -600,13 +603,13 @@ switch 文なし、if/else チェーンなし、既存ファイルの変更な�
 ```json
 {
   "month": "2026-09",
-  "total_cost_usd": 4230.50,
+  "total_cost_usd": 4230.5,
   "recommendations": [
     {
       "id": "REC-001",
       "type": "model-optimization",
       "title": "Engineering workspace: Opus → Sonnet 切り替え提案",
-      "impact_estimate_usd": 850.00,
+      "impact_estimate_usd": 850.0,
       "priority": "high"
     }
   ]
@@ -615,10 +618,10 @@ switch 文なし、if/else チェーンなし、既存ファイルの変更な�
 
 ### 11.3 Claude 組み込みコマンド活用
 
-| コマンド/ツール | 用途 |
-|---------------|------|
-| `/plan` | 複雑な使用パターン分析の多段階推論 |
-| `/boost` | コスト最適化分析の深掘り・多角的検証 |
+| コマンド/ツール         | 用途                                         |
+| ----------------------- | -------------------------------------------- |
+| `/plan`                 | 複雑な使用パターン分析の多段階推論           |
+| `/boost`                | コスト最適化分析の深掘り・多角的検証         |
 | Sequential Thinking MCP | モデル使用トレンドのステップバイステップ分析 |
 
 ---
@@ -627,28 +630,28 @@ switch 文なし、if/else チェーンなし、既存ファイルの変更な�
 
 ### 12.1 ワークフロー一覧
 
-| Workflow | Trigger | Description |
-|----------|---------|-------------|
-| `ci.yml` | Push / PR to main | Lint, TypeCheck, Test, Build |
-| `deploy-pages.yml` | Push to main + workflow_run | Dashboard の GitHub Pages デプロイ (data/audit からデータ取得) |
-| `collect-audit.yml` | Cron (6h) / Manual | 監査データ収集 → orphan ブランチにコミット → 通知 |
-| `weekly-report.yml` | Cron (月曜 9:00 UTC) / Manual | 週次レポート生成・配信 |
-| `monthly-report.yml` | Cron (毎月1日 3:00 UTC) / Manual | **月次請求レポート生成・モデル分析・配信** |
-| `secret-scan.yml` | Push / PR | シークレットスキャン |
+| Workflow             | Trigger                          | Description                                                    |
+| -------------------- | -------------------------------- | -------------------------------------------------------------- |
+| `ci.yml`             | Push / PR to main                | Lint, TypeCheck, Test, Build                                   |
+| `deploy-pages.yml`   | Push to main + workflow_run      | Dashboard の GitHub Pages デプロイ (data/audit からデータ取得) |
+| `collect-audit.yml`  | Cron (6h) / Manual               | 監査データ収集 → orphan ブランチにコミット → 通知              |
+| `weekly-report.yml`  | Cron (月曜 9:00 UTC) / Manual    | 週次レポート生成・配信                                         |
+| `monthly-report.yml` | Cron (毎月1日 3:00 UTC) / Manual | **月次請求レポート生成・モデル分析・配信**                     |
+| `secret-scan.yml`    | Push / PR                        | シークレットスキャン                                           |
 
 ### 12.2 必要な GitHub Secrets
 
-| Secret | Required | Description |
-|--------|----------|-------------|
-| `ANTHROPIC_ADMIN_API_KEY` | ✅ | Admin API キー (`sk-ant-admin...`) |
-| `ANTHROPIC_COMPLIANCE_API_KEY` | ✅ | Compliance Access Key |
-| `SLACK_WEBHOOK_URL` | ⬜ | Slack Incoming Webhook URL |
-| `DISCORD_WEBHOOK_URL` | ⬜ | Discord Webhook URL |
-| `SMTP_HOST` | ⬜ | SMTP サーバーホスト |
-| `SMTP_PORT` | ⬜ | SMTP ポート (587) |
-| `SMTP_USER` | ⬜ | SMTP ユーザー名 |
-| `SMTP_PASS` | ⬜ | SMTP パスワード |
-| `ALERT_EMAIL_TO` | ⬜ | アラート送信先メールアドレス |
+| Secret                         | Required | Description                        |
+| ------------------------------ | -------- | ---------------------------------- |
+| `ANTHROPIC_ADMIN_API_KEY`      | ✅       | Admin API キー (`sk-ant-admin...`) |
+| `ANTHROPIC_COMPLIANCE_API_KEY` | ✅       | Compliance Access Key              |
+| `SLACK_WEBHOOK_URL`            | ⬜       | Slack Incoming Webhook URL         |
+| `DISCORD_WEBHOOK_URL`          | ⬜       | Discord Webhook URL                |
+| `SMTP_HOST`                    | ⬜       | SMTP サーバーホスト                |
+| `SMTP_PORT`                    | ⬜       | SMTP ポート (587)                  |
+| `SMTP_USER`                    | ⬜       | SMTP ユーザー名                    |
+| `SMTP_PASS`                    | ⬜       | SMTP パスワード                    |
+| `ALERT_EMAIL_TO`               | ⬜       | アラート送信先メールアドレス       |
 
 ### 12.3 GitHub Pages 設定
 
@@ -664,20 +667,20 @@ switch 文なし、if/else チェーンなし、既存ファイルの変更な�
 
 ### 13.1 リポジトリ可視性の前提
 
-| 可視性 | GitHub Pages アクセス | 推奨用途 |
-|--------|---------------------|---------|
-| **Private** | ⚠️ Pages はデフォルトで公開 (下記参照) | 単一組織利用 |
-| **Internal** | Enterprise Cloud のみ、Pages 制限可能 | エンタープライズ利用 |
-| **Public** | Pages は公開 | ❌ 本番運用には非推奨 |
+| 可視性       | GitHub Pages アクセス                  | 推奨用途              |
+| ------------ | -------------------------------------- | --------------------- |
+| **Private**  | ⚠️ Pages はデフォルトで公開 (下記参照) | 単一組織利用          |
+| **Internal** | Enterprise Cloud のみ、Pages 制限可能  | エンタープライズ利用  |
+| **Public**   | Pages は公開                           | ❌ 本番運用には非推奨 |
 
 ### 13.2 デプロイオプション
 
-| シナリオ | リポジトリ | Pages | データ |
-|---------|-----------|-------|------|
-| Enterprise (フル機能) | Internal | Private Pages (Enterprise Cloud) | Orphan ブランチ |
-| Team (セキュア) | Private | DEMO データのみ Pages + ローカル dev | Orphan ブランチ |
-| 個人/デモ | Private | サンプルデータ Pages | サンプルデータのみ |
-| 最大セキュリティ | Private | Pages なし (Artifact ダウンロード) | Orphan ブランチ |
+| シナリオ              | リポジトリ | Pages                                | データ             |
+| --------------------- | ---------- | ------------------------------------ | ------------------ |
+| Enterprise (フル機能) | Internal   | Private Pages (Enterprise Cloud)     | Orphan ブランチ    |
+| Team (セキュア)       | Private    | DEMO データのみ Pages + ローカル dev | Orphan ブランチ    |
+| 個人/デモ             | Private    | サンプルデータ Pages                 | サンプルデータのみ |
+| 最大セキュリティ      | Private    | Pages なし (Artifact ダウンロード)   | Orphan ブランチ    |
 
 ### 13.3 Private リポジトリでの GitHub Pages 注意点
 
@@ -873,44 +876,44 @@ claude-audit-dashboard/
 
 ### Core
 
-| Layer | Technology | Version | Rationale |
-|-------|-----------|---------|-----------|
-| **Language** | TypeScript | 5.8 | 型安全性、DX |
-| **Runtime** | Node.js | 22 LTS | 最新 LTS |
-| **Package Manager** | pnpm | 9.x | 高速、ディスク効率 |
-| **Monorepo** | pnpm workspaces | — | シンプル、追加ツール不要 |
+| Layer               | Technology      | Version | Rationale                |
+| ------------------- | --------------- | ------- | ------------------------ |
+| **Language**        | TypeScript      | 5.8     | 型安全性、DX             |
+| **Runtime**         | Node.js         | 22 LTS  | 最新 LTS                 |
+| **Package Manager** | pnpm            | 9.x     | 高速、ディスク効率       |
+| **Monorepo**        | pnpm workspaces | —       | シンプル、追加ツール不要 |
 
 ### Dashboard (Frontend)
 
-| Library | Version | Purpose |
-|---------|---------|---------|
-| React | 19 | UI フレームワーク |
-| Vite | 7 | ビルドツール |
-| Tailwind CSS | 4 | スタイリング |
-| Recharts | 2.15 | チャート |
-| React Router | 7 | ルーティング |
-| Lucide React | 0.470 | アイコン |
-| clsx + tailwind-merge | — | クラス名ユーティリティ |
-| date-fns | 4 | 日付処理 |
+| Library               | Version | Purpose                |
+| --------------------- | ------- | ---------------------- |
+| React                 | 19      | UI フレームワーク      |
+| Vite                  | 7       | ビルドツール           |
+| Tailwind CSS          | 4       | スタイリング           |
+| Recharts              | 2.15    | チャート               |
+| React Router          | 7       | ルーティング           |
+| Lucide React          | 0.470   | アイコン               |
+| clsx + tailwind-merge | —       | クラス名ユーティリティ |
+| date-fns              | 4       | 日付処理               |
 
 ### Collector (Backend)
 
-| Library | Version | Purpose |
-|---------|---------|---------|
-| Zod | 3.24 | ランタイムバリデーション |
-| Nodemailer | 7 | Email 送信 |
+| Library    | Version | Purpose                  |
+| ---------- | ------- | ------------------------ |
+| Zod        | 3.24    | ランタイムバリデーション |
+| Nodemailer | 7       | Email 送信               |
 
 ### DevOps / Quality
 
-| Tool | Purpose |
-|------|---------|
-| GitHub Actions | CI/CD、定期実行 |
-| GitHub Pages | ダッシュボードホスティング |
-| Vitest | テスト |
-| ESLint | Linting |
-| Prettier | フォーマッティング |
-| Husky | Git hooks |
-| Dependabot | 依存関係の自動更新 |
+| Tool           | Purpose                    |
+| -------------- | -------------------------- |
+| GitHub Actions | CI/CD、定期実行            |
+| GitHub Pages   | ダッシュボードホスティング |
+| Vitest         | テスト                     |
+| ESLint         | Linting                    |
+| Prettier       | フォーマッティング         |
+| Husky          | Git hooks                  |
+| Dependabot     | 依存関係の自動更新         |
 
 ---
 
@@ -1010,11 +1013,11 @@ packages/collector/src/notifiers/__specs__/
 
 ### 18.3 テスト戦略
 
-| Level | Tool | Scope | Coverage Target |
-|-------|------|-------|----------------|
-| Unit | Vitest | 個別関数・クラス | 80%+ |
-| Integration | Vitest | API Client + Storage | 70%+ |
-| E2E | Playwright | Dashboard UI | Key flows |
+| Level       | Tool       | Scope                | Coverage Target |
+| ----------- | ---------- | -------------------- | --------------- |
+| Unit        | Vitest     | 個別関数・クラス     | 80%+            |
+| Integration | Vitest     | API Client + Storage | 70%+            |
+| E2E         | Playwright | Dashboard UI         | Key flows       |
 
 ### 18.4 ブランチ戦略
 
@@ -1104,13 +1107,13 @@ test(checker): add access control rule tests
 
 ## Appendix B: Glossary
 
-| Term | Description |
-|------|-------------|
-| **Compliance API** | Anthropic の監査ログ API（アクティビティフィード） |
-| **Admin API** | Anthropic の組織管理 API |
-| **Primary Owner** | Organization の最高権限を持つユーザー |
-| **Compliance Access Key** | Compliance API にアクセスするためのキー |
-| **Admin API Key** | Admin API にアクセスするためのキー (`sk-ant-admin...`) |
-| **Snapshot** | ある時点での監査データの完全なスナップショット |
-| **Compliance Score** | 0-100 のコンプライアンス準拠スコア |
-| **Alert Rule** | 通知をトリガーする条件定義 |
+| Term                      | Description                                            |
+| ------------------------- | ------------------------------------------------------ |
+| **Compliance API**        | Anthropic の監査ログ API（アクティビティフィード）     |
+| **Admin API**             | Anthropic の組織管理 API                               |
+| **Primary Owner**         | Organization の最高権限を持つユーザー                  |
+| **Compliance Access Key** | Compliance API にアクセスするためのキー                |
+| **Admin API Key**         | Admin API にアクセスするためのキー (`sk-ant-admin...`) |
+| **Snapshot**              | ある時点での監査データの完全なスナップショット         |
+| **Compliance Score**      | 0-100 のコンプライアンス準拠スコア                     |
+| **Alert Rule**            | 通知をトリガーする条件定義                             |

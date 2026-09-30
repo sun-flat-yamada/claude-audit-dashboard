@@ -11,6 +11,7 @@ description: >
 ## Purpose
 
 This skill analyzes Claude Enterprise Organization usage data to:
+
 1. Identify AI model usage patterns and biases across workspaces
 2. Detect cost optimization opportunities (model mix optimization)
 3. Generate monthly improvement recommendations
@@ -50,6 +51,7 @@ ls data/reports/monthly/
 ### Step 2: Workspace Usage Analysis
 
 For each workspace, calculate:
+
 - Total tokens (input + output)
 - Total cost (USD)
 - Cost per 1M tokens
@@ -60,12 +62,12 @@ For each workspace, calculate:
 
 Identify model usage biases:
 
-| Pattern | Description | Recommendation |
-|---------|-------------|----------------|
+| Pattern                               | Description                                       | Recommendation                                               |
+| ------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------ |
 | **Over-reliance on expensive models** | >60% of tokens use Opus when Sonnet would suffice | Consider model routing: use Sonnet for straightforward tasks |
-| **Under-utilization of caching** | Cache hit rate <30% | Implement prompt caching for repeated system prompts |
-| **Haiku underuse** | Haiku usage <5% despite suitable use cases | Use Haiku for classification, extraction, and simple Q&A |
-| **Workspace imbalance** | One workspace uses >80% of total budget | Review if usage is proportional to team size/needs |
+| **Under-utilization of caching**      | Cache hit rate <30%                               | Implement prompt caching for repeated system prompts         |
+| **Haiku underuse**                    | Haiku usage <5% despite suitable use cases        | Use Haiku for classification, extraction, and simple Q&A     |
+| **Workspace imbalance**               | One workspace uses >80% of total budget           | Review if usage is proportional to team size/needs           |
 
 ### Step 4: Generate Recommendations
 
@@ -74,13 +76,13 @@ Produce structured recommendations:
 ```json
 {
   "month": "2026-09",
-  "total_cost_usd": 4230.50,
+  "total_cost_usd": 4230.5,
   "recommendations": [
     {
       "id": "REC-001",
       "type": "model-optimization",
       "title": "Shift Engineering workspace from Opus to Sonnet",
-      "impact_estimate_usd": 850.00,
+      "impact_estimate_usd": 850.0,
       "details": "Engineering workspace uses Claude Opus for 45% of requests. Analysis of token patterns suggests 70% of these could use Sonnet with equivalent quality.",
       "priority": "high"
     },
@@ -88,7 +90,7 @@ Produce structured recommendations:
       "id": "REC-002",
       "type": "caching",
       "title": "Enable prompt caching for Research workspace",
-      "impact_estimate_usd": 200.00,
+      "impact_estimate_usd": 200.0,
       "details": "Research workspace has 15% cache hit rate. System prompts are repeated 85% of the time.",
       "priority": "medium"
     }
@@ -119,6 +121,7 @@ Focus on whether the Engineering team is using the right model mix.
 ## Output Format
 
 The skill produces:
+
 1. **JSON analysis file** — Machine-readable recommendations
 2. **Markdown summary** — Human-readable report for notifications
 3. **Notification payload** — Formatted for Slack/Discord/Email distribution

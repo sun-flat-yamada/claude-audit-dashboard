@@ -19,14 +19,17 @@ Each feature includes its priority, implementation status, and references to rel
 **Status:** 🔲 Planned
 
 ### Description
+
 Display a high-level overview of the Claude Enterprise Organization including member count, workspace count, active API key count, and current compliance score.
 
 ### Data Sources
+
 - Admin API: `GET /v1/organizations/users` ([ref](https://docs.anthropic.com/en/api/admin-api))
 - Admin API: `GET /v1/organizations/workspaces` ([ref](https://docs.anthropic.com/en/api/admin-api))
 - Admin API: `GET /v1/organizations/api_keys` ([ref](https://docs.anthropic.com/en/api/admin-api))
 
 ### UI Components
+
 - KPI cards (Members, Workspaces, API Keys, Compliance Score)
 - Organization name & ID display
 - Last collection timestamp
@@ -39,13 +42,16 @@ Display a high-level overview of the Claude Enterprise Organization including me
 **Status:** 🔲 Planned
 
 ### Description
+
 Display the current compliance score (0-100) with a 30-day trend chart. Show the number of passed, failed, and warning checks with severity breakdown.
 
 ### Data Sources
+
 - Generated from: Compliance check results (internal)
 - Rule definitions: `packages/shared/src/constants/audit-rules.ts`
 
 ### UI Components
+
 - Compliance score gauge/circle
 - Trend line chart (30 days)
 - Status breakdown bar (pass/fail/warn)
@@ -59,12 +65,15 @@ Display the current compliance score (0-100) with a 30-day trend chart. Show the
 **Status:** 🔲 Planned
 
 ### Description
+
 Detailed table of all compliance check results with rule ID, name, status, severity, message, evidence, and remediation guidance.
 
 ### Data Sources
+
 - Generated from: Compliance report JSON
 
 ### UI Components
+
 - Sortable/filterable data table
 - Status badges (pass/fail/warn)
 - Severity icons
@@ -79,13 +88,16 @@ Detailed table of all compliance check results with rule ID, name, status, sever
 **Status:** 🔲 Planned
 
 ### Description
+
 Visualize API usage (tokens) and costs (USD) with breakdowns by workspace, model, and time period.
 
 ### Data Sources
+
 - Admin API: `GET /v1/organizations/usage_report/messages` ([ref](https://docs.anthropic.com/en/api/admin-api))
 - Admin API: `GET /v1/organizations/cost_report` ([ref](https://docs.anthropic.com/en/api/admin-api))
 
 ### UI Components
+
 - Daily/Weekly/Monthly token usage area chart
 - Cost trend line chart
 - Workspace usage pie chart
@@ -102,12 +114,15 @@ Visualize API usage (tokens) and costs (USD) with breakdowns by workspace, model
 **Status:** 🔲 Planned
 
 ### Description
+
 Searchable, filterable timeline of audit activities collected from the Compliance API.
 
 ### Data Sources
+
 - Compliance API: `GET /v1/compliance/activities` ([ref](https://docs.anthropic.com/en/api/compliance-api))
 
 ### UI Components
+
 - Activity timeline with category icons
 - Filter by category (admin, identity, configuration, resource, access, security)
 - Filter by date range
@@ -123,12 +138,15 @@ Searchable, filterable timeline of audit activities collected from the Complianc
 **Status:** 🔲 Planned
 
 ### Description
+
 View all organization members with their roles, last active dates, and workspace memberships. Highlight inactive members.
 
 ### Data Sources
+
 - Admin API: `GET /v1/organizations/users` ([ref](https://docs.anthropic.com/en/api/admin-api))
 
 ### UI Components
+
 - Members table with role, last active, created date
 - Inactive member highlighting (configurable threshold)
 - Role distribution chart
@@ -142,12 +160,15 @@ View all organization members with their roles, last active dates, and workspace
 **Status:** 🔲 Planned
 
 ### Description
+
 Display all API keys with status, age, last usage, scope, and creator. Flag unused or unscoped keys.
 
 ### Data Sources
+
 - Admin API: `GET /v1/organizations/api_keys` ([ref](https://docs.anthropic.com/en/api/admin-api))
 
 ### UI Components
+
 - API keys table with status badges
 - Age indicator (color-coded by rotation need)
 - Scope visualization (workspace assignment)
@@ -162,12 +183,15 @@ Display all API keys with status, age, last usage, scope, and creator. Flag unus
 **Status:** 🔲 Planned
 
 ### Description
+
 Centralized view of all active, acknowledged, and resolved alerts. Includes alert history and trend.
 
 ### Data Sources
+
 - Generated from: Alert engine results (internal)
 
 ### UI Components
+
 - Active alerts list with severity badges
 - Alert detail panel
 - Alert trend chart
@@ -182,13 +206,16 @@ Centralized view of all active, acknowledged, and resolved alerts. Includes aler
 **Status:** 🔲 Planned
 
 ### Description
+
 Monthly usage and cost reports with group-level (workspace) aggregation and full raw data breakdown. Supports billing charge-back to internal teams.
 
 ### Data Sources
+
 - Admin API: `GET /v1/organizations/usage_report/messages` ([ref](https://docs.anthropic.com/en/api/admin-api))
 - Admin API: `GET /v1/organizations/cost_report` ([ref](https://docs.anthropic.com/en/api/admin-api))
 
 ### UI Components
+
 - Month selector
 - Summary cards (total cost, total tokens, model breakdown)
 - Workspace cost allocation table
@@ -205,13 +232,16 @@ Monthly usage and cost reports with group-level (workspace) aggregation and full
 **Status:** 🔲 Planned
 
 ### Description
+
 Analyze AI model usage patterns and provide optimization recommendations. Identify model mix inefficiencies, overuse of expensive models, and suggest cost-saving alternatives.
 
 ### Data Sources
+
 - Admin API: `GET /v1/organizations/usage_report/messages` ([ref](https://docs.anthropic.com/en/api/admin-api))
 - Admin API: `GET /v1/organizations/cost_report` ([ref](https://docs.anthropic.com/en/api/admin-api))
 
 ### UI Components
+
 - Model utilization heatmap (workspace × model)
 - Cost-per-token comparison across models
 - Trend of model mix over time
@@ -227,9 +257,11 @@ Analyze AI model usage patterns and provide optimization recommendations. Identi
 **Status:** 🔲 Planned
 
 ### Description
+
 System-aware dark mode with manual toggle. Persistent theme preference.
 
 ### UI Components
+
 - Theme toggle in header
 - System preference detection
 - Consistent dark mode across all components and charts
@@ -242,12 +274,15 @@ System-aware dark mode with manual toggle. Persistent theme preference.
 **Status:** 🔲 Planned
 
 ### Description
+
 Drill-down view for individual workspaces showing members, API keys, usage, and activities specific to that workspace.
 
 ### Data Sources
+
 - All Admin API endpoints filtered by workspace_id
 
 ### UI Components
+
 - Workspace info header
 - Members list
 - API keys scoped to workspace
@@ -262,9 +297,11 @@ Drill-down view for individual workspaces showing members, API keys, usage, and 
 **Status:** 🔲 Planned
 
 ### Description
+
 View data retention status, archive history, and storage usage. Anthropic retains audit logs for 6 years; this system provides independent long-term storage.
 
 ### UI Components
+
 - Retention policy display
 - Archive history table
 - Storage size tracking
@@ -278,9 +315,11 @@ View data retention status, archive history, and storage usage. Anthropic retain
 **Status:** 🔲 Planned
 
 ### Description
+
 View the current notification channel configuration and alert rule definitions. (Configuration changes require editing config files or GitHub secrets.)
 
 ### UI Components
+
 - Channel status cards (Slack, Discord, Email)
 - Alert rule table
 - Notification history log
@@ -293,9 +332,11 @@ View the current notification channel configuration and alert rule definitions. 
 **Status:** 🔲 Planned
 
 ### Description
+
 Compare compliance reports across time periods. Show what changed between collection runs.
 
 ### UI Components
+
 - Period selector (compare any two dates)
 - Diff table showing added/removed/changed findings
 - Score delta visualization
@@ -304,9 +345,9 @@ Compare compliance reports across time periods. Show what changed between collec
 
 ## Feature Priority Matrix
 
-| Priority | Features | Target Phase |
-|----------|----------|-------------|
-| **P0** | F-001 ~ F-005 | Phase 3 (Dashboard v1) |
-| **P1** | F-006 ~ F-010 | Phase 4 (Dashboard v2) |
-| **P2** | F-011 ~ F-014 | Phase 5 (Polish) |
-| **P3** | F-015 | Future |
+| Priority | Features      | Target Phase           |
+| -------- | ------------- | ---------------------- |
+| **P0**   | F-001 ~ F-005 | Phase 3 (Dashboard v1) |
+| **P1**   | F-006 ~ F-010 | Phase 4 (Dashboard v2) |
+| **P2**   | F-011 ~ F-014 | Phase 5 (Polish)       |
+| **P3**   | F-015         | Future                 |

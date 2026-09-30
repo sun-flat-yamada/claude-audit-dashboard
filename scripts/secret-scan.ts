@@ -25,8 +25,14 @@ const PATTERNS: { name: string; pattern: RegExp }[] = [
   { name: 'GitHub PAT (classic)', pattern: /ghp_[A-Za-z0-9]{36,}/ },
   { name: 'GitHub PAT (fine-grained)', pattern: /github_pat_[A-Za-z0-9_]{30,}/ },
   { name: 'GitHub OAuth Token', pattern: /gho_[A-Za-z0-9]{36,}/ },
-  { name: 'Slack Webhook', pattern: /https:\/\/hooks\.slack\.com\/services\/T[A-Z0-9]+\/B[A-Z0-9]+\/[A-Za-z0-9]+/ },
-  { name: 'Discord Webhook', pattern: /https:\/\/discord\.com\/api\/webhooks\/\d+\/[A-Za-z0-9_-]+/ },
+  {
+    name: 'Slack Webhook',
+    pattern: /https:\/\/hooks\.slack\.com\/services\/T[A-Z0-9]+\/B[A-Z0-9]+\/[A-Za-z0-9]+/,
+  },
+  {
+    name: 'Discord Webhook',
+    pattern: /https:\/\/discord\.com\/api\/webhooks\/\d+\/[A-Za-z0-9_-]+/,
+  },
   { name: 'AWS Access Key', pattern: /AKIA[A-Z0-9]{16}/ },
   { name: 'Google API Key', pattern: /AIza[A-Za-z0-9_-]{35}/ },
   { name: 'OpenAI Key', pattern: /sk-[A-Za-z0-9]{48,}/ },
@@ -43,13 +49,33 @@ function isPlaceholder(value: string): boolean {
 }
 
 const IGNORE_DIRS = new Set([
-  'node_modules', '.git', 'dist', 'coverage', '.next', '__pycache__', '.venv',
+  'node_modules',
+  '.git',
+  'dist',
+  'coverage',
+  '.next',
+  '__pycache__',
+  '.venv',
   '.pnpm-store',
 ]);
 
 const IGNORE_EXTENSIONS = new Set([
-  '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.woff', '.woff2',
-  '.ttf', '.eot', '.mp4', '.webm', '.zip', '.gz', '.tar', '.lock',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.ico',
+  '.svg',
+  '.woff',
+  '.woff2',
+  '.ttf',
+  '.eot',
+  '.mp4',
+  '.webm',
+  '.zip',
+  '.gz',
+  '.tar',
+  '.lock',
   '.tsbuildinfo',
 ]);
 
