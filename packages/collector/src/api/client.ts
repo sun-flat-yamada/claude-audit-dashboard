@@ -26,7 +26,15 @@ export interface HttpClientOptions {
   sleep?: (ms: number) => Promise<void>;
 }
 
-export type QueryParams = Record<string, string | number | undefined>;
+/** Array values are sent as repeated `key[]=v` parameters (e.g. `group_by[]=model`). */
+export type QueryParams = Record<string, string | number | string[] | undefined>;
+
+/** Page of time buckets from the usage/cost endpoints (`page` / `next_page` cursor). */
+export interface BucketPage<T> {
+  data: T[];
+  has_more: boolean;
+  next_page: string | null;
+}
 
 const RETRYABLE = new Set([429, 500, 502, 503, 504]);
 
@@ -51,7 +59,11 @@ export class HttpClient {
   async get<T>(path: string, query: QueryParams = {}): Promise<T> {
     const url = new URL(path, this.baseUrl);
     for (const [k, v] of Object.entries(query)) {
-      if (v !== undefined) url.searchParams.set(k, String(v));
+      if (Array.isArray(v)) {
+        for (const item of v) url.searchParams.append(`${k}[]`, item);
+      } else if (v !== undefined) {
+        url.searchParams.set(k, String(v));
+      }
     }
 
     for (let attempt = 0; ; attempt++) {
@@ -82,7 +94,7 @@ export class HttpClient {
     }
   }
 
-  /** Follows has_more/last_id cursors and returns every item. */
+  /** Follows has_more/last_id cursors (`after_id`) and returns every item. */
   async getAll<T>(path: string, query: QueryParams = {}, pageSize = 100): Promise<T[]> {
     const items: T[] = [];
     let cursor: string | undefined;
@@ -90,12 +102,24 @@ export class HttpClient {
       const page: PaginatedResponse<T> = await this.get(path, {
         ...query,
         limit: pageSize,
-        starting_after: cursor,
+        ...(cursor ? { after_id: cursor } : {}),
       });
       items.push(...page.data);
       cursor = page.has_more && page.last_id ? page.last_id : undefined;
     } while (cursor);
     return items;
+  }
+
+  /** Follows `has_more` / `next_page` and returns every time bucket (usage and cost endpoints). */
+  async getAllBuckets<T>(path: string, query: QueryParams = {}): Promise<T[]> {
+    const buckets: T[] = [];
+    let page: string | undefined;
+    do {
+      const res: BucketPage<T> = await this.get(path, { ...query, page });
+      buckets.push(...res.data);
+      page = res.has_more && res.next_page ? res.next_page : undefined;
+    } while (page);
+    return buckets;
   }
 
   private backoffMs(res: Response, attempt: number): number {

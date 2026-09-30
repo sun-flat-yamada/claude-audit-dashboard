@@ -55,6 +55,31 @@ describe('HttpClient', () => {
       json({ data: [3], has_more: false, first_id: '3', last_id: '3' }),
     ]);
     await expect(http.getAll<number>('/v1/x')).resolves.toEqual([1, 2, 3]);
-    expect(String(vi.mocked(fetchImpl).mock.calls[1]![0])).toContain('starting_after=2');
+    expect(String(vi.mocked(fetchImpl).mock.calls[1]![0])).toContain('after_id=2');
+  });
+
+  it('keeps a caller-supplied after_id on the first page and then follows last_id', async () => {
+    const { http, fetchImpl } = client([
+      json({ data: [1], has_more: true, first_id: '1', last_id: '9' }),
+      json({ data: [2], has_more: false, first_id: '2', last_id: '2' }),
+    ]);
+    await http.getAll<number>('/v1/x', { after_id: 'start' });
+    const urls = vi.mocked(fetchImpl).mock.calls.map((c) => new URL(String(c[0])).searchParams);
+    expect(urls[0]!.get('after_id')).toBe('start');
+    expect(urls[1]!.get('after_id')).toBe('9');
+  });
+
+  it('sends array params as repeated key[] and follows next_page for buckets', async () => {
+    const { http, fetchImpl } = client([
+      json({ data: ['a'], has_more: true, next_page: 'page_2' }),
+      json({ data: ['b'], has_more: false, next_page: null }),
+    ]);
+    await expect(
+      http.getAllBuckets<string>('/v1/x', { group_by: ['workspace_id', 'model'] }),
+    ).resolves.toEqual(['a', 'b']);
+    const urls = vi.mocked(fetchImpl).mock.calls.map((c) => new URL(String(c[0])).searchParams);
+    expect(urls[0]!.getAll('group_by[]')).toEqual(['workspace_id', 'model']);
+    expect(urls[0]!.has('page')).toBe(false);
+    expect(urls[1]!.get('page')).toBe('page_2');
   });
 });

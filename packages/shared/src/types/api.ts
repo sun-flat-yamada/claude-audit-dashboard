@@ -19,8 +19,8 @@ export interface PaginatedResponse<T> {
 /** Pagination request parameters */
 export interface PaginationParams {
   limit?: number;
-  starting_after?: string;
-  ending_before?: string;
+  after_id?: string;
+  before_id?: string;
 }
 
 /** API error response */

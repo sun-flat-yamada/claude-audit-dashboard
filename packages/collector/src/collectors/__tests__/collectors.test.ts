@@ -95,6 +95,27 @@ describe('collectSnapshot', () => {
     expect(await state.load()).toMatchObject({ last_activity_id: 'a1', collection_count: 2 });
   });
 
+  it('stores month-to-date usage in the snapshot when a usage source is given', async () => {
+    const store = new FileStore(dir);
+    const snap = await collectSnapshot({
+      org,
+      activities: null,
+      usage: {
+        listUsage: async () => [],
+        listCost: async () => [
+          {
+            starting_at: '',
+            ending_at: '',
+            results: [{ workspace_id: null, model: null, amount: '1234', currency: 'USD' }],
+          },
+        ],
+      },
+      store,
+      state: new StateManager(store),
+    });
+    expect(snap.usage?.total_cost_usd).toBeCloseTo(12.34);
+  });
+
   it('does not advance state when collection fails', async () => {
     const store = new FileStore(dir);
     const state = new StateManager(store);

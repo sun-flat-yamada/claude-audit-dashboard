@@ -4,12 +4,15 @@ import type { FileStore } from '../storage/file-store.js';
 import type { StateManager } from '../storage/state-manager.js';
 import { collectActivities, type ActivitySource } from './audit-collector.js';
 import { collectOrg, type OrgSource } from './org-collector.js';
+import { collectUsage, type UsageSource } from './usage-collector.js';
 
 export const COLLECTOR_VERSION = '0.1.0';
 
 export interface SnapshotDeps {
   org: OrgSource;
   activities: ActivitySource | null;
+  /** Usage/cost source; usage is left null when absent. */
+  usage?: UsageSource | null | undefined;
   store: FileStore;
   state: StateManager;
   organizationId?: string | undefined;
@@ -34,6 +37,8 @@ export async function collectSnapshot(deps: SnapshotDeps): Promise<AuditSnapshot
     collectActivities(deps.activities, state.last_activity_id),
   ]);
 
+  const usage = deps.usage ? await collectUsage(deps.usage, org.workspaces) : null;
+
   const collected_at = nowISO();
   const snapshot: AuditSnapshot = {
     collected_at,
@@ -41,7 +46,7 @@ export async function collectSnapshot(deps: SnapshotDeps): Promise<AuditSnapshot
     organization_id: deps.organizationId ?? audit.activities[0]?.organization_id ?? 'unknown',
     activities: audit.activities,
     ...org,
-    usage: null,
+    usage,
     metadata: {
       collector_version: COLLECTOR_VERSION,
       duration_ms: Date.now() - started,

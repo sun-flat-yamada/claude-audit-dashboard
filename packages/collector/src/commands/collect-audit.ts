@@ -1,6 +1,7 @@
 import { pathToFileURL } from 'node:url';
 import { AdminApi } from '../api/admin.js';
 import { ComplianceApi } from '../api/compliance.js';
+import { UsageApi } from '../api/usage.js';
 import { collectSnapshot } from '../collectors/snapshot.js';
 import { loadConfig } from '../config.js';
 import { FileStore } from '../storage/file-store.js';
@@ -14,6 +15,7 @@ export async function main(): Promise<void> {
     activities: config.complianceApiKey
       ? new ComplianceApi({ apiKey: config.complianceApiKey })
       : null,
+    usage: new UsageApi({ apiKey: config.adminApiKey }),
     store,
     state: new StateManager(store),
     organizationId: config.organizationId,
