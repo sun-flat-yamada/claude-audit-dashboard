@@ -4,14 +4,13 @@ on:
   push:
     branches: [main]
     paths:
+      - 'packages/core/**'
       - 'packages/dashboard/**'
-      - 'packages/shared/**'
       - 'data/sample/**'
+      - '.github/workflows/deploy-pages.yml'
   workflow_run:
-    workflows: ['Collect Audit Data', 'Monthly Billing & Usage Report']
+    workflows: ['Collect Audit Data']
     types: [completed]
-    # workflow_run filters on the branch the triggering workflow ran on (main),
-    # not the branch it pushed data to.
     branches: [main]
   workflow_dispatch:
 
@@ -28,50 +27,35 @@ jobs:
   build:
     name: Build Dashboard
     runs-on: ubuntu-latest
-    # Only build if collect/report succeeded (for workflow_run triggers)
+    # Published data is the synthetic sample unless the repository variable
+    # PAGES_DATA_SOURCE=live is set (only for Pages sites restricted to your organization).
     if: >-
       github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion == 'success'
+      (github.event.workflow_run.conclusion == 'success' && vars.PAGES_DATA_SOURCE == 'live')
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           ref: main
+      - uses: ./.github/actions/setup
 
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-
-      # --- Load live data from orphan branch (if available) ---
-      - name: Load audit data
-        run: |
-          git fetch origin data/audit || true
-          if git rev-parse --verify origin/data/audit >/dev/null 2>&1; then
-            echo "Loading live data from data/audit branch..."
-            # Overlay live data onto data/ directory
-            git checkout origin/data/audit -- data/dashboard.json data/reports/ 2>/dev/null || true
-            echo "DATA_SOURCE=live" >> $GITHUB_ENV
-          else
-            echo "No data/audit branch found. Using sample data."
-            # Copy sample data as fallback
-            cp data/sample/dashboard.json data/dashboard.json 2>/dev/null || true
-            echo "DATA_SOURCE=sample" >> $GITHUB_ENV
-          fi
-
-      # --- Stage data for dashboard build ---
-      - name: Stage data for dashboard
+      - name: Stage dashboard data
+        env:
+          PAGES_DATA_SOURCE: ${{ vars.PAGES_DATA_SOURCE }}
         run: |
           mkdir -p packages/dashboard/public/data
-          cp data/dashboard.json packages/dashboard/public/data/ 2>/dev/null || \
+          if [ "$PAGES_DATA_SOURCE" = "live" ]; then
+            git fetch --quiet --depth=1 origin data/audit
+            git show FETCH_HEAD:data/dashboard.json > packages/dashboard/public/data/dashboard.json
+            echo "Staged live data from data/audit"
+          else
             cp data/sample/dashboard.json packages/dashboard/public/data/dashboard.json
-          echo "{\"source\":\"$DATA_SOURCE\",\"built_at\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" \
-            > packages/dashboard/public/data/meta.json
+            echo "Staged the synthetic sample (set PAGES_DATA_SOURCE=live to publish live data)"
+          fi
 
       - name: Build dashboard
         run: pnpm build:dashboard
+        env:
+          STAGED_DATA: '1'
 
       - uses: actions/upload-pages-artifact@v5
         with:
