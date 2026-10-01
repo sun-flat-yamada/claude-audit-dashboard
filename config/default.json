@@ -1,65 +1,44 @@
 {
-  "organization": {
-    "name": "My Organization",
-    "id": ""
+  "$comment": "Claude Enterprise Audit Dashboard configuration. Every field is optional; see docs/SETUP.md. Secrets never go here (environment variables only).",
+  "dashboard": {
+    "title": "Claude Enterprise Audit Dashboard",
+    "maskPii": true
   },
-  "collection": {
-    "interval_hours": 6,
-    "retention_days": 90,
-    "full_sync_on_first_run": true,
-    "page_size": 100,
-    "request_timeout_ms": 30000,
-    "max_retries": 3
+  "sources": {
+    "disabled": [],
+    "members": { "provider": "admin" },
+    "memberActivity": { "lookbackDays": 90 },
+    "groups": { "maxMemberRequests": 200 },
+    "activities": {
+      "initialLookbackHours": 168,
+      "overlapMinutes": 10,
+      "lagMinutes": 2,
+      "pageSize": 5000,
+      "includeTypes": [],
+      "excludeTypes": [
+        "claude_artifact_comments_viewed",
+        "claude_artifact_viewed",
+        "claude_chat_snapshot_viewed",
+        "claude_chat_viewed",
+        "claude_file_viewed",
+        "claude_project_document_viewed",
+        "claude_project_viewed",
+        "design_project_viewed"
+      ]
+    }
   },
   "compliance": {
-    "enabled_rules": [
-      "AC-001",
-      "AC-002",
-      "AC-003",
-      "AK-001",
-      "AK-002",
-      "AK-003",
-      "UA-001",
-      "UA-002",
-      "DG-001",
-      "OP-001"
-    ],
-    "custom_rules_path": "./config/custom-rules.json",
-    "score_threshold_warning": 80,
-    "score_threshold_critical": 60
+    "disabledRules": [],
+    "params": {
+      "UA-002": { "monthlyBudget": 10000, "currency": "USD" }
+    }
   },
   "notifications": {
-    "channels": [
-      {
-        "type": "slack",
-        "enabled": false,
-        "config": {
-          "username": "Claude Audit Bot",
-          "icon_emoji": ":shield:"
-        }
-      },
-      {
-        "type": "discord",
-        "enabled": false,
-        "config": {
-          "username": "Claude Audit Bot"
-        }
-      },
-      {
-        "type": "email",
-        "enabled": false,
-        "config": {
-          "smtp_secure": true,
-          "from": "audit@example.com"
-        }
-      }
-    ],
-    "cooldown_minutes": 60
+    "statuses": ["fail", "warning"],
+    "minSeverity": "high",
+    "cooldownMinutes": 360
   },
-  "dashboard": {
-    "base_url": "/claude-audit-dashboard/",
-    "title": "Claude Enterprise Audit Dashboard",
-    "theme": "system",
-    "locale": "en"
+  "retention": {
+    "snapshotDays": 365
   }
 }

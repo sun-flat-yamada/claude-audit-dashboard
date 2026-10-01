@@ -5,7 +5,8 @@
  *
  * Checks:
  * 1. No live audit data files are tracked on the code branch
- * 2. Sample data is valid and present
+ * 2. Sample data matches the published dashboard contract, comes from the synthetic
+ *    demo tenant and contains no real-looking e-mail addresses
  * 3. No secrets in tracked files
  * 4. .gitignore properly configured
  */
@@ -13,6 +14,7 @@
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { dashboardViewSchema } from '../packages/core/src/contracts/index.js';
 
 const ROOT = resolve(import.meta.dirname, '..');
 let errors = 0;
@@ -89,22 +91,46 @@ if (errors === 0) {
 // --- Check 2: Sample data validity ---
 console.log('\n📋 Check 2: Sample data presence and validity');
 
-const sampleFile = join(ROOT, 'data', 'sample', 'dashboard.json');
-if (!existsSync(sampleFile)) {
-  fail('data/sample/dashboard.json is missing');
-} else {
+const sampleDir = join(ROOT, 'data', 'sample');
+const sampleFile = join(sampleDir, 'dashboard.json');
+const EMAIL = /[A-Za-z0-9._%+*-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}/g;
+const SAFE_EMAIL_DOMAIN = /@(([A-Za-z0-9-]+\.)*example\.(com|org|net)|anthropic\.com)$/i;
+
+function checkSampleDashboard(): void {
+  if (!existsSync(sampleFile)) return fail('data/sample/dashboard.json is missing');
+  let data: unknown;
   try {
-    const content = readFileSync(sampleFile, 'utf-8');
-    const data = JSON.parse(content);
-    if (!data.last_updated || !data.organization || !data.compliance || !data.usage) {
-      fail('data/sample/dashboard.json is missing required fields');
-    } else {
-      pass('Sample dashboard data is valid');
-    }
+    data = JSON.parse(readFileSync(sampleFile, 'utf-8'));
   } catch {
-    fail('data/sample/dashboard.json is not valid JSON');
+    return fail('data/sample/dashboard.json is not valid JSON');
   }
+  const parsed = dashboardViewSchema.safeParse(data);
+  if (!parsed.success)
+    return fail(
+      `data/sample/dashboard.json does not match the dashboard contract: ${parsed.error.message}`,
+    );
+  if (parsed.data.source !== 'demo')
+    return fail('data/sample/dashboard.json must be generated from the demo tenant (`pnpm demo`)');
+  pass('Sample dashboard data matches the published contract (demo source)');
 }
+
+function checkSampleEmails(): void {
+  const before = errors;
+  for (const name of readdirSync(sampleDir)) {
+    const content = readFileSync(join(sampleDir, name), 'utf-8');
+    const real = [...content.matchAll(EMAIL)]
+      .map((m) => m[0])
+      .filter((e) => !SAFE_EMAIL_DOMAIN.test(e));
+    if (real.length > 0)
+      fail(
+        `data/sample/${name} contains non-example e-mail addresses: ${[...new Set(real)].slice(0, 3).join(', ')}`,
+      );
+  }
+  if (errors === before) pass('Sample data uses example.* e-mail domains only');
+}
+
+checkSampleDashboard();
+if (existsSync(sampleDir)) checkSampleEmails();
 
 // --- Check 3: Secret scanning ---
 console.log('\n🔒 Check 3: Secret scanning');

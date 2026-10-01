@@ -1,0 +1,293 @@
+import type {
+  DashboardActivity,
+  DashboardAdoption,
+  DashboardCheckResult,
+  DashboardCoverage,
+  DashboardKpi,
+  DashboardShare,
+  DashboardUsage,
+  DashboardView,
+} from '../../contracts/dashboard-view.js';
+import { DASHBOARD_VIEW_SCHEMA_VERSION } from '../../contracts/dashboard-view.js';
+import type { Insight } from '../../domain/analysis/analyzers.js';
+import { assessedCount } from '../../domain/compliance/scoring.js';
+import type { ComplianceReport } from '../../domain/compliance/types.js';
+import { withDefaults, type DatasetMap, type DatasetName } from '../../domain/model/dataset.js';
+import type { CostRow, UsageDimension } from '../../domain/model/entities.js';
+import { inputTokens } from '../../domain/model/metrics.js';
+import type { AuditSnapshot } from '../../domain/model/snapshot.js';
+import { countBy, sortedByValue, sumBy, totalsBy } from '../../domain/util/collections.js';
+import { maskEmails } from '../../domain/util/mask.js';
+import { percent, round } from '../../domain/util/numbers.js';
+import { monthKey } from '../../domain/util/time.js';
+
+export interface DashboardInput {
+  now: Date;
+  title: string;
+  source: 'live' | 'demo';
+  maskPii: boolean;
+  snapshot: AuditSnapshot | null;
+  report: ComplianceReport | null;
+  /** Earlier compliance reports, oldest first. */
+  history: readonly ComplianceReport[];
+  insights: readonly Insight[];
+}
+
+type Mask = (text: string) => string;
+
+const MAX_EVIDENCE = 20;
+const MAX_NOTABLE = 30;
+
+const collected = (snapshot: AuditSnapshot | null, name: DatasetName): boolean =>
+  snapshot?.coverage[name]?.status === 'ok';
+
+const latestAdoption = (data: DatasetMap) =>
+  [...data.adoption].sort((a, b) => a.date.localeCompare(b.date)).at(-1) ?? null;
+
+const kpi = (
+  id: string,
+  label: string,
+  value: number | null,
+  unit: DashboardKpi['unit'],
+  hint: string | null = null,
+): DashboardKpi => ({
+  id,
+  label,
+  value,
+  unit,
+  hint,
+});
+
+/** Month-to-date total cost, or null when cost was not collected. */
+function monthToDate(snapshot: AuditSnapshot | null, data: DatasetMap, now: Date): DashboardKpi {
+  const month = monthKey(now);
+  const rows = data.cost.filter((r) => r.dimension === 'total' && r.date.startsWith(month));
+  const value = collected(snapshot, 'cost') ? round(sumBy(rows, (r) => r.amount)) : null;
+  return kpi('mtd-cost', 'Month-to-date cost', value, 'currency', rows[0]?.currency ?? null);
+}
+
+/** Shown with the score whenever rules lacked the data (or failed) to produce a verdict. */
+function coverageHint(report: ComplianceReport): string | null {
+  const assessed = assessedCount(report.summary);
+  return assessed === report.summary.total
+    ? null
+    : `${assessed} of ${report.summary.total} rules assessed`;
+}
+
+function kpis(input: DashboardInput, data: DatasetMap): DashboardKpi[] {
+  const { snapshot, report } = input;
+  const adoptionDay = latestAdoption(data);
+  const members = collected(snapshot, 'members')
+    ? new Set(data.members.map((m) => m.id)).size
+    : null;
+  const open = report ? report.summary.failed + report.summary.warnings : null;
+  return [
+    kpi(
+      'score',
+      'Compliance score',
+      report ? report.summary.score : null,
+      'score',
+      report ? coverageHint(report) : null,
+    ),
+    kpi('open-findings', 'Open findings', open, 'count'),
+    kpi('members', 'Members', members, 'count'),
+    kpi(
+      'mau',
+      'Monthly active users',
+      adoptionDay ? adoptionDay.monthlyActiveUsers : null,
+      'count',
+    ),
+    kpi(
+      'seat-utilization',
+      'Seat utilization (30d)',
+      adoptionDay ? adoptionDay.monthlyAdoptionRate : null,
+      'percent',
+    ),
+    monthToDate(snapshot, data, input.now),
+  ];
+}
+
+const resultView =
+  (mask: Mask) =>
+  (r: ComplianceReport['results'][number]): DashboardCheckResult => ({
+    ruleId: r.ruleId,
+    ruleName: r.ruleName,
+    category: r.category,
+    severity: r.severity,
+    status: r.status,
+    message: mask(r.message),
+    remediation: r.remediation,
+    evidence: r.evidence
+      .slice(0, MAX_EVIDENCE)
+      .map((e) => ({ kind: e.kind, label: mask(e.label) })),
+  });
+
+const EMPTY_SUMMARY = { score: 0, passed: 0, failed: 0, warnings: 0, skipped: 0, errors: 0 };
+
+function compliance(input: DashboardInput, mask: Mask): DashboardView['compliance'] {
+  const { report, history } = input;
+  const reports = report ? [...history.filter((h) => h.id !== report.id), report] : [...history];
+  const { score, passed, failed, warnings, skipped, errors } = report
+    ? report.summary
+    : EMPTY_SUMMARY;
+  const byCategory = Object.entries(report ? report.summary.byCategory : {})
+    .filter(([, v]) => v.total > 0)
+    .map(([category, v]) => ({ category, ...v }));
+  return {
+    score,
+    passed,
+    failed,
+    warnings,
+    skipped,
+    errors,
+    byCategory,
+    history: reports.map((r) => ({ date: r.generatedAt, score: r.summary.score })),
+    results: (report ? report.results : []).map(resultView(mask)),
+  };
+}
+
+const coverage = (snapshot: AuditSnapshot | null): DashboardCoverage[] =>
+  Object.entries(snapshot?.coverage ?? {}).map(([dataset, meta]) => ({
+    dataset,
+    status: meta.status,
+    source: meta.source ?? null,
+    reason: meta.reason ?? null,
+    count: meta.count ?? null,
+    asOf: meta.asOf ?? null,
+  }));
+
+function shares(
+  rows: readonly CostRow[],
+  dimension: UsageDimension,
+  labels: ReadonlyMap<string, string>,
+): DashboardShare[] {
+  const total = sumBy(
+    rows.filter((r) => r.dimension === 'total'),
+    (r) => r.amount,
+  );
+  const scoped = rows.filter((r) => r.dimension === dimension);
+  return sortedByValue(
+    totalsBy(
+      scoped,
+      (r) => r.key ?? '(unattributed)',
+      (r) => r.amount,
+    ),
+  ).map(([key, value]) => ({
+    key,
+    label: labels.get(key) ?? key,
+    value: round(value),
+    percent: percent(value, total),
+  }));
+}
+
+function dailySeries(data: DatasetMap): DashboardUsage['daily'] {
+  const cost = totalsBy(
+    data.cost.filter((r) => r.dimension === 'total'),
+    (r) => r.date,
+    (r) => r.amount,
+  );
+  const totals = data.usage.filter((r) => r.dimension === 'total');
+  const input = totalsBy(totals, (r) => r.date, inputTokens);
+  const output = totalsBy(
+    totals,
+    (r) => r.date,
+    (r) => r.outputTokens,
+  );
+  return [...new Set([...cost.keys(), ...input.keys()])].sort().map((date) => ({
+    date,
+    cost: round(cost.get(date) ?? 0),
+    inputTokens: input.get(date) ?? 0,
+    outputTokens: output.get(date) ?? 0,
+  }));
+}
+
+function usage(snapshot: AuditSnapshot | null, data: DatasetMap): DashboardUsage | null {
+  if (!snapshot || (!collected(snapshot, 'cost') && !collected(snapshot, 'usage'))) return null;
+  const groupNames = new Map(data.groups.map((g) => [g.id, g.name]));
+  return {
+    currency: data.cost[0]?.currency ?? 'USD',
+    asOf: snapshot.coverage.cost?.asOf ?? snapshot.coverage.usage?.asOf ?? null,
+    daily: dailySeries(data),
+    byProduct: shares(data.cost, 'product', new Map()),
+    byModel: shares(data.cost, 'model', new Map()),
+    byGroup: shares(data.cost, 'group', groupNames),
+  };
+}
+
+function adoption(snapshot: AuditSnapshot | null, data: DatasetMap): DashboardAdoption | null {
+  if (!collected(snapshot, 'adoption')) return null;
+  const days = [...data.adoption].sort((a, b) => a.date.localeCompare(b.date));
+  const latest = days.at(-1);
+  return {
+    daily: days.map((d) => ({
+      date: d.date,
+      dau: d.dailyActiveUsers,
+      wau: d.weeklyActiveUsers,
+      mau: d.monthlyActiveUsers,
+    })),
+    assignedSeats: latest?.assignedSeats ?? null,
+    monthlyAdoptionRate: latest?.monthlyAdoptionRate ?? null,
+    pendingInvites: latest?.pendingInvites ?? null,
+  };
+}
+
+function activity(input: DashboardInput, data: DatasetMap, mask: Mask): DashboardActivity | null {
+  const { snapshot, report } = input;
+  if (!collected(snapshot, 'activities')) return null;
+  const byId = new Map(data.activities.map((a) => [a.id, a]));
+  const notable = (report?.results ?? [])
+    .filter((r) => r.category === 'activity-monitoring' && r.status === 'warning')
+    .flatMap((r) =>
+      r.evidence.flatMap((e) => {
+        const a = byId.get(e.id);
+        return a
+          ? [
+              {
+                id: a.id,
+                ruleId: r.ruleId,
+                type: a.type,
+                createdAt: a.createdAt,
+                actor: mask(a.actor.email ?? a.actor.id ?? a.actor.kind),
+              },
+            ]
+          : [];
+      }),
+    )
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, MAX_NOTABLE);
+  return {
+    total: data.activities.length,
+    window: snapshot?.coverage.activities?.window ?? null,
+    topTypes: sortedByValue(countBy(data.activities, (a) => a.type))
+      .slice(0, 10)
+      .map(([type, count]) => ({ type, count })),
+    notable,
+  };
+}
+
+/** Builds the published dashboard contract: aggregates only, PII masked when requested. */
+export function buildDashboardView(input: DashboardInput): DashboardView {
+  const mask: Mask = input.maskPii ? maskEmails : (text) => text;
+  const data = withDefaults(input.snapshot?.data ?? {});
+  return {
+    schemaVersion: DASHBOARD_VIEW_SCHEMA_VERSION,
+    generatedAt: input.now.toISOString(),
+    collectedAt: input.snapshot?.collectedAt ?? null,
+    source: input.source,
+    title: input.title,
+    organizations: data.organizations.map((o) => ({ id: o.id, name: o.name })),
+    kpis: kpis(input, data),
+    compliance: compliance(input, mask),
+    coverage: coverage(input.snapshot),
+    usage: usage(input.snapshot, data),
+    adoption: adoption(input.snapshot, data),
+    activity: activity(input, data, mask),
+    insights: input.insights.map(({ id, kind, priority, title, detail }) => ({
+      id,
+      kind,
+      priority,
+      title,
+      detail,
+    })),
+  };
+}

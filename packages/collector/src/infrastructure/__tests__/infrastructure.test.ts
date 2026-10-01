@@ -1,0 +1,80 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { loadConfig } from '../config.js';
+import { readEnvironment } from '../env.js';
+
+let dir: string;
+beforeEach(async () => {
+  dir = await mkdtemp(join(tmpdir(), 'config-'));
+});
+afterEach(async () => {
+  await rm(dir, { recursive: true, force: true });
+});
+
+describe('readEnvironment', () => {
+  it('falls back to the enterprise key per family and ignores blank secrets', () => {
+    const env = readEnvironment(
+      {
+        ANTHROPIC_ENTERPRISE_API_KEY: 'shared',
+        ANTHROPIC_ANALYTICS_API_KEY: 'analytics',
+        ANTHROPIC_ADMIN_API_KEY: '  ',
+      },
+      '/repo',
+    );
+    expect(env.keys).toEqual({ compliance: 'shared', analytics: 'analytics', admin: 'shared' });
+    expect(readEnvironment({}, '/repo').keys).toEqual({
+      compliance: undefined,
+      analytics: undefined,
+      admin: undefined,
+    });
+  });
+
+  it('resolves directories against INIT_CWD (pnpm) and parses SMTP settings', () => {
+    const env = readEnvironment(
+      {
+        INIT_CWD: '/repo',
+        DATA_DIR: 'data',
+        SMTP_HOST: 'smtp.example.com',
+        SMTP_PORT: '465',
+        ALERT_EMAIL_TO: 'a@example.com, b@example.com',
+      },
+      '/repo/packages/collector',
+    );
+    expect(env.dataDir).toBe('/repo/data');
+    expect(env.configDir).toBe('/repo/config');
+    expect(env.smtp).toMatchObject({
+      port: 465,
+      secure: true,
+      to: ['a@example.com', 'b@example.com'],
+    });
+    expect(() =>
+      readEnvironment({ SMTP_HOST: 'x', ALERT_EMAIL_TO: 'a@example.com', SMTP_PORT: 'abc' }),
+    ).toThrow(/SMTP_PORT/);
+  });
+});
+
+describe('loadConfig', () => {
+  it('fills defaults when files are absent', async () => {
+    const { config, customRules } = await loadConfig(dir);
+    expect(config.sources.activities.excludeTypes).toContain('claude_chat_viewed');
+    expect(config.notifications).toEqual({
+      statuses: ['fail', 'warning'],
+      minSeverity: 'high',
+      cooldownMinutes: 360,
+    });
+    expect(customRules).toEqual({ settingBaselines: [], activityWatches: [] });
+  });
+
+  it('explains invalid configuration and custom rules', async () => {
+    await writeFile(join(dir, 'default.json'), JSON.stringify({ sources: { disabled: ['nope'] } }));
+    await expect(loadConfig(dir)).rejects.toThrow(/config\/default.json[\s\S]*Unknown dataset/);
+    await writeFile(join(dir, 'default.json'), '{}');
+    await writeFile(
+      join(dir, 'custom-rules.json'),
+      JSON.stringify({ settingBaselines: [{ id: 'X' }] }),
+    );
+    await expect(loadConfig(dir)).rejects.toThrow(/custom-rules.json/);
+  });
+});
