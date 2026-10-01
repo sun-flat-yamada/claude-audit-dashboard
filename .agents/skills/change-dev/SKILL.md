@@ -1,5 +1,5 @@
 ---
-name: change-workflow
+name: change-dev
 description: >
   End-to-end development lifecycle for multi-agent work using plan / task /
   walkthrough artifacts and sibling Git worktrees. Covers Issue scoping,
@@ -8,7 +8,7 @@ description: >
   PR authoring, rebase merge, and workspace cleanup.
 ---
 
-# 🔄 Change Workflow & Multi-Agent Worktree Skill (`change-workflow`)
+# 🔄 Change Dev & Multi-Agent Worktree Skill (`change-dev`)
 
 Use this skill when proposing, planning, and making code, documentation, or architectural changes to the repository, particularly when several AI agents (Antigravity, Gemini, Claude Code, Cursor, Copilot, …) or parallel tasks operate at the same time.
 
@@ -32,7 +32,19 @@ Before executing changes, identify whether this workspace is:
 
 ## 📐 Artifact Triad (Plan / Task / Walkthrough)
 
-Architectural changes and task executions are governed through three artifacts. They are **session artifacts, never repository files**: do not commit them.
+Architectural changes and task executions are governed through three artifacts. They are stored per change under the **original repository root**, never under `<appDataDir>`:
+
+```text
+<repo-root>/.devs/changes/yyyy-mm-dd_<ChangeTitle>/
+├── implementation_plan.md
+├── task.md
+└── walkthrough.md
+```
+
+- `yyyy-mm-dd`: the date the change was started (local date). `<ChangeTitle>`: short PascalCase/kebab-case title (no spaces or path-unsafe characters).
+- A finished copy of every artifact is placed in this directory upon completion and committed with the change so reviewers see the plan and the evidence in the PR.
+- Scratch scripts and temporary data stay out of the repository (use the agent's scratch area) and are never committed.
+- Artifacts must not contain secrets, PII or machine-specific absolute paths. `pnpm secret-scan` scans `.devs/changes/` (it only matches secret patterns), so check for PII and absolute paths by review. Everything else under `.devs/` is gitignored local scratch.
 
 | Artifact                     | Role                                           | Generation Timing                             | Blocks for user approval |
 | :--------------------------- | :--------------------------------------------- | :-------------------------------------------- | :----------------------- |
@@ -42,16 +54,16 @@ Architectural changes and task executions are governed through three artifacts. 
 
 ### Where each tool keeps them
 
-| Tool                      | Plan (approval gate)                                                                                                                                              | Task tracking                                              | Walkthrough                                                       |
-| :------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------- | :---------------------------------------------------------------- |
-| **Google Antigravity**    | `<appDataDir>/brain/<conversation-id>/implementation_plan.md` + `ArtifactMetadata` (`RequestFeedback: true`, `UserFacing: true`) — renders the **Proceed** button | `task.md` in the same directory (`RequestFeedback: false`) | `walkthrough.md` in the same directory (`RequestFeedback: false`) |
-| **Claude Code**           | Plan mode (`ExitPlanMode` approval), or the plan posted in chat and confirmed                                                                                     | Task list (`TaskCreate` / `TaskUpdate`)                    | Final summary + the PR description                                |
-| **Other agents / humans** | Issue comment or draft PR description awaiting reviewer sign-off                                                                                                  | Checklist in the Issue / PR                                | PR description "Verification" section                             |
+| Tool                      | Plan (approval gate)                                                                                                                                                         | Task tracking                                                                                              | Walkthrough                                                                  |
+| :------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------- |
+| **Google Antigravity**    | `.devs/changes/yyyy-mm-dd_<ChangeTitle>/implementation_plan.md` + `ArtifactMetadata` (`RequestFeedback: true`, `UserFacing: true`) — renders the **Proceed** button          | `task.md` in the same directory (`RequestFeedback: false`); finished copy kept there                       | `walkthrough.md` in the same directory (`RequestFeedback: false`)            |
+| **Claude Code**           | Plan mode (`ExitPlanMode` approval), or the plan posted in chat and confirmed; the approved plan is saved as `.devs/changes/yyyy-mm-dd_<ChangeTitle>/implementation_plan.md` | Task list (`TaskCreate` / `TaskUpdate`); final `task.md` copy in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` | Final copy in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` + the PR description |
+| **Other agents / humans** | Issue comment or draft PR description awaiting reviewer sign-off                                                                                                             | Checklist in the Issue / PR                                                                                | PR description "Verification" section                                        |
 
 > [!IMPORTANT]
 >
 > - The plan gate is **blocking**: do not provision worktrees or edit code until the user approves the plan.
-> - Antigravity only: `ArtifactMetadata` is mandatory for files inside the brain directory and **must never** be used when editing repository files (`packages/`, `docs/`, `.agents/`, …). Scratch scripts go to `<appDataDir>/brain/<conversation-id>/scratch/`.
+> - Antigravity only: `ArtifactMetadata` is mandatory when writing the artifact files in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` and **must never** be used when editing other repository files (`packages/`, `docs/`, `.agents/`, …). On Antigravity, a finished copy of every artifact must be placed in this directory even if its own artifact runtime keeps an internal working copy.
 > - Artifacts must follow the zero-PII rule (`.agents/rules/security-zero-leakage.md`): no real names, emails, keys or absolute paths revealing a user's home directory.
 
 ### A. `implementation_plan.md` structure
@@ -175,8 +187,8 @@ Record the Issue number (e.g. `#42`) and choose the branch name: `feat/<issue>-<
 
 Before writing any application code or provisioning worktrees:
 
-1. **Formulate `implementation_plan.md`** — proposed file changes, risks, and verification commands (see structure A).
-2. **Initialize `task.md`** — the phase checklist (see structure B).
+1. **Formulate `implementation_plan.md`** in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` of the original repository root — proposed file changes, risks, and verification commands (see structure A).
+2. **Initialize `task.md`** in the same directory — the phase checklist (see structure B).
 3. **Await user sign-off** — Antigravity **Proceed** button, Claude Code plan approval, or reviewer confirmation. Do not move to Phase 3 without it.
 
 ---
@@ -229,9 +241,10 @@ In the isolated worktree directory:
 
 Once all checks pass cleanly:
 
-1. Create `walkthrough.md` (see structure C) — summary, modified files, and the quality-gate results table.
+1. Create `.devs/changes/yyyy-mm-dd_<ChangeTitle>/walkthrough.md` (see structure C) — summary, modified files, and the quality-gate results table.
 2. Mark every task as completed (`[x]`) in `task.md`.
-3. Reuse the walkthrough as the "Key Changes" / "Verification" body of the PR (`.github/PULL_REQUEST_TEMPLATE.md`).
+3. Place the finished copies of `implementation_plan.md`, `task.md` and `walkthrough.md` in `.devs/changes/` and commit them with the change; run `pnpm secret-scan` first.
+4. Reuse the walkthrough as the "Key Changes" / "Verification" body of the PR (`.github/PULL_REQUEST_TEMPLATE.md`).
 
 ---
 
@@ -298,7 +311,7 @@ Once all checks pass cleanly:
 
 - **Specifications**: `docs/BLUEPRINT.md`, `docs/PLUGIN-ARCHITECTURE.md`, `CONTRIBUTING.md`
 - **Rules (`.agents/rules/`)**: `development-workflow.md`, `security-zero-leakage.md`, `storage-and-data-routing.md`, `compliance-rules-management.md`
-- **Agent personas (`.agents/`)**: `change-workflow-agent.md`, `fork-sync-agent.md`
+- **Agent personas (`.agents/`)**: `change-dev.agent.md`, `fork-sync-agent.md`
 - **Antigravity docs** (verify artifact behavior when in doubt): `https://antigravity.google/docs`, `https://antigravity.google/docs/skills`, `https://antigravity.google/docs/rules-workflows`
 
 ---
@@ -308,7 +321,7 @@ Once all checks pass cleanly:
 Before finalizing any task or proposing changes:
 
 1. **Plan gate**: Was the implementation plan approved before any code was written?
-2. **Artifact hygiene**: Are `implementation_plan.md`, `task.md` and `walkthrough.md` kept out of the repository (and, in Antigravity, under the brain directory with the right `ArtifactMetadata`)? Are repository files written without `ArtifactMetadata`?
+2. **Artifact destination**: Are `implementation_plan.md`, `task.md` and `walkthrough.md` in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` under the repository root (not `<appDataDir>`), committed with the change, and free of secrets, PII and absolute paths? On Antigravity, do they carry the right `ArtifactMetadata` (plan `RequestFeedback: true`, others `false`, all `UserFacing: true`) while other repository files carry none?
 3. **Isolation**: Were edits made in a sibling worktree (or an isolated session checkout), not the shared root working tree?
 4. **Docs sync**: Is `docs/BLUEPRINT.md` (and README rule tables, if compliance rules changed) up to date?
 5. **Formatting**: Do alerts use GitHub Alert syntax (`> [!IMPORTANT]`, `> [!WARNING]`, `> [!NOTE]`)? Are file references repository-relative?

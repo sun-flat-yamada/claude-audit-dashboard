@@ -1,6 +1,6 @@
 # 🔄 Development Workflow & Multi-Agent Worktree Policy (`.agents/rules/development-workflow.md`)
 
-All AI agents (Antigravity, Gemini, Claude Code, Cursor, Copilot, etc.) operating in this repository **MUST** adhere to this development lifecycle rule when making changes. The step-by-step procedure lives in the `change-workflow` skill (`.agents/skills/change-workflow/SKILL.md`).
+All AI agents (Antigravity, Gemini, Claude Code, Cursor, Copilot, etc.) operating in this repository **MUST** adhere to this development lifecycle rule when making changes. The step-by-step procedure lives in the `change-dev` skill (`.agents/change-dev.agent.md`) (`.agents/skills/change-dev/SKILL.md`).
 
 ---
 
@@ -44,9 +44,9 @@ All AI agents (Antigravity, Gemini, Claude Code, Cursor, Copilot, etc.) operatin
 
 ### Step 2: Implementation Plan & Task Orchestration (Pre-Execution Gate)
 
-- Before provisioning worktrees or modifying code, formulate an `implementation_plan.md` (proposed changes, risks, verification plan) and a `task.md` checklist.
-- Antigravity: write both to `<appDataDir>/brain/<conversation-id>/` with `ArtifactMetadata` (`RequestFeedback: true` for the plan, `false` for the task list; `UserFacing: true`). Claude Code: use plan mode and the task list. Others: Issue comment / draft PR.
-- **Await user approval** before proceeding. These artifacts are never committed.
+- Before provisioning worktrees or modifying code, formulate an `implementation_plan.md` (proposed changes, risks, verification plan) and a `task.md` checklist in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` under the original repository root (never under `<appDataDir>`).
+- Antigravity: write them with `ArtifactMetadata` (`RequestFeedback: true` for the plan, `false` for the task list; `UserFacing: true`). Claude Code: use plan mode and the task list. Others: Issue comment / draft PR.
+- **Await user approval** before proceeding.
 
 ### Step 3: Sibling Worktree Provisioning
 
@@ -73,7 +73,8 @@ cd ../claude-audit-dashboard-worktrees/feat-<id>-<slug> && pnpm install --frozen
 
 ### Step 5: Walkthrough Generation & Evidence Sealing
 
-- Generate `walkthrough.md` (Antigravity: brain directory, `RequestFeedback: false`) sealing the change summary, modified files, and the quality-gate results. Reuse it as the PR body.
+- Generate `.devs/changes/yyyy-mm-dd_<ChangeTitle>/walkthrough.md` (Antigravity: `RequestFeedback: false`, `UserFacing: true`) sealing the change summary, modified files, and the quality-gate results. Reuse it as the PR body.
+- On Google Antigravity, place a finished copy of all artifacts in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` upon completion and commit them with the change (run `pnpm secret-scan` first; `.devs/changes/` is scanned, the rest of `.devs/` is local-only and gitignored).
 
 ### Step 6: Rebase onto Base & Pull Request
 
@@ -117,4 +118,4 @@ git branch -d feat/<id>-<slug>
 
 - **Data Isolation**: Never commit audit data (`data/snapshots/`, `data/reports/`, `data/state.json`, `data/dashboard.json`, `packages/dashboard/public/data/`) on any code branch or worktree (`.agents/rules/storage-and-data-routing.md`).
 - **Secret Zero Leakage**: Never bypass `pnpm secret-scan` (`.agents/rules/security-zero-leakage.md`).
-- **No Session Artifacts in Git**: `implementation_plan.md`, `task.md` and `walkthrough.md` stay out of the repository.
+- **Artifact Hygiene**: Artifacts under `.devs/changes/` are committed, so they must contain no secrets, PII or machine-specific absolute paths. Scratch files are never committed.

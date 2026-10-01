@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `change-workflow` agent, skill and rule replaced by `change-dev`: implementation plan with user approval gate, plan / task / walkthrough artifacts in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` committed with each change, `.devs/` otherwise gitignored
+
 ## [0.2.0] - 2026-10-01
 
 Claude Enterprise redesign. See [docs/CHANGE-PLAN.md](docs/CHANGE-PLAN.md) for the findings, decisions and migration notes.

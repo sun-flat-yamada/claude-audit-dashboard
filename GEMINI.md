@@ -42,9 +42,9 @@ All AI coding assistants (Antigravity, Gemini, Claude Code, Cursor, Copilot Work
 ## 🔄 5. Multi-Agent Worktree & Change Workflow
 
 - **Multi-Agent Isolation**: Never edit directly on the root workspace when multiple agents operate concurrently. Always provision an isolated sibling worktree (`../claude-audit-dashboard-worktrees/<branch>`) to prevent concurrency race conditions.
-- **Strict Lifecycle**: `Issue -> Sibling Worktree -> Local Quality Gate -> PR -> Rebase Merge -> Clean`.
+- **Strict Lifecycle** (`change-dev`): `Issue -> Implementation Plan (user approval) -> Sibling Worktree -> Local Quality Gate -> Walkthrough -> PR -> Rebase Merge -> Clean`. Write `implementation_plan.md`, `task.md` and `walkthrough.md` to `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` under the repository root (never `<appDataDir>`) and commit the finished copies with the change.
 - **Permission Boundary**: Direct commits/pushes to `main` are strictly forbidden on upstream (`sun-flat-yamada`). On downstream forks, direct commits are permitted when operationally necessary.
-- **Reference**: See `.agents/rules/development-workflow.md`.
+- **Reference**: See `.agents/rules/development-workflow.md` and `.agents/skills/change-dev/SKILL.md`.
 
 ---
 

@@ -29,6 +29,7 @@ All checks must pass before merging:
 - [ ] `npm run secret-scan` exits 0 with zero detected secrets or PII
 - [ ] `npm run build` generates production bundle successfully
 - [ ] (If applicable) Tested in isolated Sibling Worktree environment
+- [ ] `change-dev` artifacts (`implementation_plan.md`, `task.md`, `walkthrough.md`) added under `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` (no secrets, PII or absolute paths)
 
 ## Git Ops & Rebase Checklist
 
