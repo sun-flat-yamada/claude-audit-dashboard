@@ -1,4 +1,5 @@
 {
-  "$schema": "Custom compliance rules - add your own rules here",
-  "rules": []
+  "$comment": "Data-driven rules added without code. settingBaselines compare effective organization settings; activityWatches flag Activity Feed events. An entry with the id of a built-in rule (CF-xxx / AM-xxx) replaces it. See docs/ARCHITECTURE.md section 8.2.",
+  "settingBaselines": [],
+  "activityWatches": []
 }

@@ -1,1119 +1,615 @@
 # Claude Enterprise Audit Dashboard — Blueprint
 
-> **Version:** 0.2.0  
-> **Date:** 2026-09-30  
-> **Author:** @sun-flat-yamada (Youhei Yamada)  
-> **Status:** Draft — Spec-Driven Development Ready (Review v2)
+> **Version:** 0.3.0
+> **Date:** 2026-10-01
+> **Author:** @sun-flat-yamada (Youhei Yamada)
+> **Status:** Draft — Phase A 実装済み、実テナント検証 (Phase B) 待ち
+> **対象:** Claude Enterprise (claude.ai の Enterprise プラン。Compliance API / Admin API ユーザー管理 / Enterprise Analytics API / Spend Limits API)
+
+本書は要求仕様の正本である。変更の経緯と判断理由は [CHANGE-PLAN.md](CHANGE-PLAN.md)、構造の詳細は [ARCHITECTURE.md](ARCHITECTURE.md)、エンドポイント単位の写像は [API-MAPPING.md](API-MAPPING.md)、出発点となった不一致の記録は [api-spec-mismatch-findings.md](api-spec-mismatch-findings.md) を参照する。
 
 ---
 
-## Table of Contents
+## 目次
 
-1. [Executive Summary](#1-executive-summary)
-2. [Goals & Non-Goals](#2-goals--non-goals)
-3. [Architecture Overview](#3-architecture-overview)
-4. [Fork-Safe Design & Data Isolation](#4-fork-safe-design--data-isolation)
-5. [Data Sources & API Integration](#5-data-sources--api-integration)
-6. [Data Model & Long-Term Retention](#6-data-model--long-term-retention)
-7. [Compliance Audit Rules](#7-compliance-audit-rules)
-8. [Plugin Architecture](#8-plugin-architecture)
-9. [Dashboard Design](#9-dashboard-design)
-10. [Notification System](#10-notification-system)
-11. [Monthly Billing Report & Model Analysis](#11-monthly-billing-report--model-analysis)
-12. [GitHub Actions Automation](#12-github-actions-automation)
-13. [Private/Internal Repository & Deployment](#13-privateinternal-repository--deployment)
-14. [Security Considerations](#14-security-considerations)
-15. [Project Structure](#15-project-structure)
-16. [Technology Stack](#16-technology-stack)
-17. [Development Roadmap](#17-development-roadmap)
-18. [Spec-Driven Development Plan](#18-spec-driven-development-plan)
+1. [概要](#1-概要)
+2. [ゴールと非ゴール](#2-ゴールと非ゴール)
+3. [アーキテクチャ](#3-アーキテクチャ)
+4. [Fork-Safe 設計とデータ分離](#4-fork-safe-設計とデータ分離)
+5. [データソースと API 連携](#5-データソースと-api-連携)
+6. [データモデルと長期保持](#6-データモデルと長期保持)
+7. [コンプライアンス監査ルール](#7-コンプライアンス監査ルール)
+8. [拡張アーキテクチャ](#8-拡張アーキテクチャ)
+9. [ダッシュボード](#9-ダッシュボード)
+10. [通知](#10-通知)
+11. [レポートと分析](#11-レポートと分析)
+12. [GitHub Actions](#12-github-actions)
+13. [Private/Internal リポジトリとデプロイ](#13-privateinternal-リポジトリとデプロイ)
+14. [セキュリティ](#14-セキュリティ)
+15. [プロジェクト構成](#15-プロジェクト構成)
+16. [技術スタック](#16-技術スタック)
+17. [ロードマップ](#17-ロードマップ)
+18. [開発プロセス](#18-開発プロセス)
+19. [付録 A: 設定スキーマ](#付録-a-設定スキーマ)
+20. [付録 B: 用語集](#付録-b-用語集)
 
 ---
 
-## 1. Executive Summary
+## 1. 概要
 
-**Claude Enterprise Audit Dashboard** は、Anthropic Claude Enterprise の Organization レベルの監査データを自動収集し、コンプライアンスチェックを実行し、結果を GitHub Pages 上のダッシュボードで可視化するツールです。
+**Claude Enterprise Audit Dashboard** は、Claude Enterprise テナントの監査データ (Activity Feed、ディレクトリ、実効設定、キー台帳、利用量・コスト、利用上限) を GitHub Actions で定期収集し、コンプライアンスルールで評価し、集計結果を GitHub Pages のダッシュボード・定期レポート・通知で届けるツールである。
 
-**Fork されることを前提**に設計されており、各組織が Fork してPrivate/Internal リポジトリとして自組織の監査基盤を即座に構築できます。
+Fork して自組織の Private / Internal リポジトリとして運用することを前提とし、コードと監査データを分離する (Fork-Safe)。
 
 ### コアバリュー
 
-- **自動監査** — Compliance API / Admin API からデータを定期自動収集
-- **コンプライアンスチェック** — 10+ の組み込みルールで継続的にセキュリティ監査
-- **可視化** — GitHub Pages でホストされる静的ダッシュボード
-- **アラート通知** — Slack / Discord / Email で異常検知・定期レポート配信
-- **月次請求レポート** — Workspace別のコスト配分・モデル使用分析・改善提案
-- **ゼロインフラ** — GitHub Actions のみで動作、サーバー不要
-- **Fork-Safe** — Orphan ブランチによるデータ分離、コードと監査データの完全分離
-- **プラグイン拡張** — Alert・ルール・通知チャネルをコード変更なしに追加可能
+- **取りこぼしの無い監査ログ** — Activity Feed を時間窓 + ID 重複排除で収集し、Anthropic 側の保持期間 (6 年) を超えて保管できる
+- **誤判定しない評価** — ルールは必要なデータセットを宣言し、取得できなかった場合は理由付きの `skipped`。「データが無いから準拠」とはしない
+- **変化への耐性** — API・監査ルール・分析・レポート方式の追加と変更を、既存コードを複雑にせず「ファイル追加 + 登録 1 行」または設定だけで吸収する (Clean Architecture)
+- **最小権限** — 読み取りスコープのみ。会話本文・ファイル本文は取得しない
+- **ゼロインフラ** — GitHub Actions と GitHub Pages のみで動作
+- **Fork-Safe** — ライブデータは orphan ブランチ `data/audit` にのみ保存。公開サンプルは合成テナントから自動生成
 
 ---
 
-## 2. Goals & Non-Goals
+## 2. ゴールと非ゴール
 
-### Goals
+### 2.1 ゴール
 
-| #   | Goal                                                                        | Priority |
-| --- | --------------------------------------------------------------------------- | -------- |
-| G1  | Compliance API からの監査アクティビティ自動収集                             | **P0**   |
-| G2  | Admin API からの組織メンバー・ワークスペース・API キー情報の収集            | **P0**   |
-| G3  | 組み込みコンプライアンスルールによる自動監査チェック                        | **P0**   |
-| G4  | GitHub Pages での静的ダッシュボード表示                                     | **P0**   |
-| G5  | Slack / Discord / Email によるアラート通知                                  | **P0**   |
-| G6  | GitHub Actions による定期実行（6時間ごと）                                  | **P0**   |
-| G7  | **Fork-Safe 設計** — Orphan ブランチによるデータ分離                        | **P0**   |
-| G8  | **Private/Internal リポジトリ前提** の GitHub Pages デプロイ対応            | **P0**   |
-| G9  | 週次サマリーレポートの自動生成・配信                                        | **P1**   |
-| G10 | **月次請求レポート** — Workspace 別コスト配分・モデル別内訳・Raw データ付き | **P1**   |
-| G11 | **AIモデル使用分析** — モデル偏り検出・コスト最適化提案の自動生成           | **P1**   |
-| G12 | 使用量異常検知（スパイク検出、予算超過）                                    | **P1**   |
-| G13 | **プラグインアーキテクチャ** — ルール・トリガー・通知チャネルの拡張         | **P1**   |
-| G14 | **長期データ保持** — Anthropic の保証期間を超えた独立した監査データ保存     | **P1**   |
-| G15 | カスタムコンプライアンスルールの追加サポート                                | **P2**   |
-| G16 | 多言語対応（日本語 / 英語）                                                 | **P2**   |
+| #   | ゴール                                                                                                                | 優先度 |
+| --- | --------------------------------------------------------------------------------------------------------------------- | ------ |
+| G1  | Activity Feed を取りこぼし無く (at-least-once + 重複排除) 収集し、長期保持できる                                      | P0     |
+| G2  | Enterprise のディレクトリ (リンク組織、メンバー、招待、RBAC グループ)、実効設定、キー台帳を収集する                   | P0     |
+| G3  | データが揃ったときだけ判定するルールエンジン。欠けたら理由付き `skipped`、取得失敗は OP-002 で検出                    | P0     |
+| G4  | 集計済みの `DashboardView` (契約 v2) を Pages で表示。PII は既定でマスク、ライブデータ公開は明示的オプトイン          | P0     |
+| G5  | 任意の通知チャネル (Slack / Discord / Email / console)。アラートポリシー (状態・重大度・冷却時間) で制御              | P0     |
+| G6  | 6 時間ごとの定期実行がレート制限内に収まる                                                                            | P0     |
+| G7  | Fork-Safe。公開サンプルは合成データ生成器から自動生成し、契約との一致をテストで保証                                   | P0     |
+| G8  | Private / Internal 運用前提。Pages の公開データ源は `PAGES_DATA_SOURCE` で明示的に選択                                | P0     |
+| G9  | 週次ダイジェストを汎用レポート文書で生成し、Markdown / HTML / CSV / JSON で出力・配信                                 | P1     |
+| G10 | 月次コストレポート: RBAC グループ別・プロダクト別・モデル別の配分。確定値は 30 日後に変わり得る旨を明記               | P1     |
+| G11 | 分析 (モデル集中度、キャッシュ効率、グループ集中度、シート利用率) をプラグインとして追加できる                        | P1     |
+| G12 | 利用異常の検知 (スパイク、月次予算、上限未設定、上限接近)                                                             | P1     |
+| G13 | 拡張点 8 種 (データソース、投影、ルール、ルール生成器の期待値、分析、レポート、レンダラ、通知) を登録だけで追加できる | P1     |
+| G14 | データセット単位スナップショットと CLI アーカイブ (gzip) による長期保持                                               | P1     |
+| G15 | コード不要で設定ベースライン (CF) とアクティビティ監視 (AM) を `config/custom-rules.json` に追加できる                | P2     |
+| G16 | 多言語ドキュメント (日本語 / 英語)                                                                                    | P2     |
+| G17 | 最小権限: 本文閲覧・書き込み・削除スコープを要求しない                                                                | P0     |
+| G18 | 外部 DTO の変更はアダプタ内のスキーマと写像だけで吸収。未知の activity type / actor / enum 値は通過させる             | P0     |
 
-### Non-Goals
+### 2.2 非ゴール
 
-- リアルタイムストリーミング監視（バッチ処理のみ）
-- プロンプト/レスポンスの内容監査（Compliance API のスコープ外）
-- 複数組織の一元管理
-- **Public リポジトリでの本番運用**（監査データ漏洩リスクのため）
-- 有料 SaaS サービスへの依存
-
----
-
-## 3. Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    GitHub Actions                        │
-│  ┌──────────┐  ┌──────────────┐  ┌───────────────────┐  │
-│  │ Collector │→│ Compliance   │→│ Notification       │  │
-│  │ (6h cron) │  │ Checker      │  │ Dispatcher         │  │
-│  └─────┬─────┘  └──────┬───────┘  └────────┬──────────┘  │
-│        │               │                    │             │
-│        ▼               ▼                    ▼             │
-│  ┌──────────┐  ┌──────────────┐  ┌───────────────────┐  │
-│  │ data/    │  │ data/        │  │ Slack / Discord /  │  │
-│  │ snapshots│  │ reports      │  │ Email              │  │
-│  └─────┬─────┘  └──────┬───────┘  └───────────────────┘  │
-│        │               │                                  │
-│        └───────┬───────┘                                  │
-│                ▼                                          │
-│  ┌──────────────────────┐                                │
-│  │ Dashboard Build      │                                │
-│  │ (Vite + React)       │                                │
-│  └──────────┬───────────┘                                │
-│             ▼                                            │
-│  ┌──────────────────────┐                                │
-│  │ GitHub Pages Deploy  │                                │
-│  └──────────────────────┘                                │
-└─────────────────────────────────────────────────────────┘
-
-External APIs:
-  ┌────────────────────────┐  ┌───────────────────────────┐
-  │ Anthropic Compliance   │  │ Anthropic Admin API       │
-  │ API                    │  │                           │
-  │ GET /v1/compliance/    │  │ GET /v1/organizations/    │
-  │     activities         │  │     users                 │
-  │                        │  │     workspaces            │
-  │                        │  │     api_keys              │
-  │                        │  │     usage                 │
-  └────────────────────────┘  └───────────────────────────┘
-```
-
-### データフロー
-
-1. **Collect** — GitHub Actions の cron (6h) で Collector が起動
-2. **Fetch** — Compliance API / Admin API からデータを取得
-3. **Restore** — `data/audit` orphan ブランチから前回データを復元
-4. **Store** — スナップショットとして保存
-5. **Check** — コンプライアンスルールに基づいて監査チェック実行
-6. **Report** — チェック結果をレポートとして保存
-7. **Commit** — `data/audit` orphan ブランチにデータをコミット（main には触れない）
-8. **Archive** — 古いスナップショットを圧縮してアーカイブ
-9. **Notify** — 異常検知時に Slack / Discord / Email で通知
-10. **Build** — Dashboard をビルド（`data/audit` からデータを取得）
-11. **Deploy** — GitHub Pages にデプロイ
+- プロンプト・応答・ファイル・セッション本文の取得と監査 (`read:compliance_user_data` を要するため対象外)
+- 書き込み・削除操作 (メンバー削除、上限変更、コンテンツ削除など)
+- リアルタイム監視 (バッチのみ)
+- 複数テナントの一元管理
+- Public リポジトリでの本番運用
 
 ---
 
-## 4. Fork-Safe Design & Data Isolation
+## 3. アーキテクチャ
 
-> **Reference:** [github-copilot-dashboard](https://github.com/sun-flat-yamada/github-copilot-dashboard/) のデータ分離パターンを参考に設計
+```mermaid
+flowchart LR
+    subgraph Anthropic["Claude Enterprise APIs"]
+        CA["Compliance API"]
+        AA["Admin API (user management)"]
+        NA["Enterprise Analytics API"]
+        SA["Spend Limits API"]
+    end
+    subgraph Actions["GitHub Actions"]
+        COL["collector: collect → check → dashboard → notify"]
+        REP["collector: weekly / monthly report"]
+        BLD["dashboard build"]
+    end
+    DATA[("data/audit<br/>(orphan branch)")]
+    PAGES["GitHub Pages"]
+    CH["Slack / Discord / Email"]
 
-### 4.1 ブランチ戦略
-
+    CA & AA & NA & SA --> COL
+    COL <--> DATA
+    REP <--> DATA
+    COL --> CH
+    REP --> CH
+    DATA -->|"PAGES_DATA_SOURCE=live のみ"| BLD
+    BLD --> PAGES
 ```
-main              ← コードのみ。監査データなし。Fork-Safe
-gh-pages          ← Dashboard 静的アセット（CI 自動生成）
-data/audit        ← Orphan ブランチ。監査スナップショット・レポート（Fork 個別）
-```
 
-### 4.2 データ保存場所
+### 3.1 レイヤー
 
-| データ種別                 | 保存場所                | ブランチ              | main にコミット? |
-| -------------------------- | ----------------------- | --------------------- | ---------------- |
-| ソースコード               | `packages/`             | `main`                | ✅ Yes           |
-| サンプル/DEMOデータ        | `data/sample/`          | `main`                | ✅ Yes           |
-| ライブ監査スナップショット | `data/snapshots/`       | `data/audit` (orphan) | ❌ Never         |
-| コンプライアンスレポート   | `data/reports/`         | `data/audit` (orphan) | ❌ Never         |
-| ダッシュボード JSON        | `data/dashboard.json`   | `data/audit` (orphan) | ❌ Never         |
-| コレクター状態             | `data/state.json`       | `data/audit` (orphan) | ❌ Never         |
-| 月次レポート               | `data/reports/monthly/` | `data/audit` (orphan) | ❌ Never         |
-| アーカイブデータ           | `data/archive/`         | `data/audit` (orphan) | ❌ Never         |
+| パッケージ                | 役割                                                                            | 依存してよい先                      |
+| ------------------------- | ------------------------------------------------------------------------------- | ----------------------------------- |
+| `@claude-audit/core`      | domain (モデル、ルール、分析、投影) + application (ユースケース、ポート) + 契約 | zod のみ (Node API なし、IO なし)   |
+| `@claude-audit/collector` | adapters (Anthropic、保存、通知、レンダラ、デモ) + infrastructure + main (CLI)  | core                                |
+| `@claude-audit/dashboard` | React SPA                                                                       | `@claude-audit/core/contracts` だけ |
 
-### 4.3 Orphan ブランチを選択した理由
+依存規則は tsconfig (core に Node 型を与えない) と ESLint `no-restricted-imports` で強制し、関数の大きさは ESLint (`complexity` 10、`max-depth` 3、`max-params` 5、`max-lines-per-function` 60) で監視する。詳細は [ARCHITECTURE.md](ARCHITECTURE.md)。
 
-1. **Fork 分離** — `Sync Fork` で `main` のコードだけが同期され、監査データはローカルに留まる
-2. **履歴分離** — 監査データのコミットがコード履歴を汚さず、リポジトリサイズも抑制
-3. **アクセス制御** — ブランチ保護ルールでデータブランチへの書き込みを制限可能
-4. **Clean Upstream** — upstream の `main` は常にクリーンで `Sync Fork` のコンフリクトゼロ
-5. **長期保持** — コードリリースとは独立してデータを永続保持可能
+### 3.2 データフロー (6 時間ごと)
 
-### 4.4 DEMOデータ vs 本番データの分離
-
-|                        | DEMO データ                         | 本番データ                           |
-| ---------------------- | ----------------------------------- | ------------------------------------ |
-| **保存場所**           | `data/sample/` (main ブランチ)      | `data/` (data/audit orphan ブランチ) |
-| **目的**               | 開発・テスト・ショーケース          | 実際の組織監査                       |
-| **内容**               | 合成データ（架空の名前・ID）        | API から収集した実データ             |
-| **Git 追跡**           | ✅ 追跡対象                         | ❌ main では追跡しない               |
-| **Dashboard での利用** | data/audit 未作成時のフォールバック | 通常運用時のデータソース             |
-
-### 4.5 fork:verify スクリプト
-
-`npm run fork:verify` で以下を検証:
-
-1. `main` ブランチにライブデータファイルが存在しないこと
-2. `data/sample/` に有効な DEMO データが存在すること
-3. 追跡ファイルにシークレットが含まれていないこと
-4. `.gitignore` がライブデータパスを正しく除外していること
+1. **Restore** — `data/audit` から前回のデータ (スナップショット、レポート、状態) を復元
+2. **Collect** — 各データセットを収集。取得状況を coverage (`ok` / `unavailable` / `error`) として記録
+3. **Project** — 収集データから導出データを作る (例: Activity Feed の API 呼び出しからキーの最終利用)
+4. **Check** — ルールエンジンで評価し、コンプライアンスレポートを保存
+5. **Dashboard** — 集計済み・マスク済みの `dashboard.json` (契約 v2) を生成
+6. **Archive** — 保持期間を過ぎたスナップショットを gzip に移動
+7. **Notify** — アラートポリシーに合致する新しい結果を通知 (冷却時間付き)
+8. **Save** — `data/audit` に保存 (main には触れない)
+9. **Deploy** — `PAGES_DATA_SOURCE=live` の場合だけライブデータで Pages を再構築
 
 ---
 
-## 5. Data Sources & API Integration
+## 4. Fork-Safe 設計とデータ分離
 
-### 5.1 Compliance API
+### 4.1 ブランチ
 
-| Endpoint                    | Method | Description                      |
-| --------------------------- | ------ | -------------------------------- |
-| `/v1/compliance/activities` | GET    | 監査アクティビティフィードの取得 |
-
-**認証:** `x-api-key` ヘッダーに Compliance Access Key  
-**バージョン:** `anthropic-version: 2023-06-01`  
-**ページネーション:** カーソルベース（`has_more`, `first_id`, `last_id`）
-
-**取得可能なアクティビティカテゴリ:**
-
-| Category      | Events                           |
-| ------------- | -------------------------------- |
-| Admin         | ユーザー管理、ロール変更         |
-| Identity      | SSO/SCIM プロビジョニング        |
-| Configuration | 設定変更、ワークスペース管理     |
-| Resource      | ファイル作成・ダウンロード・削除 |
-| Access        | API キー作成・無効化             |
-| Security      | セキュリティ関連イベント         |
-
-### 5.2 Admin API
-
-| Endpoint                                  | Method | Description                                            |
-| ----------------------------------------- | ------ | ------------------------------------------------------ |
-| `/v1/organizations/users`                 | GET    | 組織メンバー一覧の取得                                 |
-| `/v1/organizations/workspaces`            | GET    | ワークスペース一覧の取得                               |
-| `/v1/organizations/api_keys`              | GET    | API キー一覧の取得                                     |
-| `/v1/organizations/invites`               | GET    | 招待一覧の取得                                         |
-| `/v1/organizations/usage_report/messages` | GET    | 使用量レポート (group_by: workspace, model)            |
-| `/v1/organizations/cost_report`           | GET    | コストレポート (USD cents, group_by: workspace, model) |
-
-**認証:** `x-api-key` ヘッダーに Admin API Key (`sk-ant-admin...`)  
-**バージョン:** `anthropic-version: 2023-06-01`
-
-### 5.3 API Client Design
-
-```typescript
-// Retry with exponential backoff
-// Rate limit: respect 429 with Retry-After header
-// Pagination: auto-paginate all list endpoints
-// Error handling: structured ApiError type
-// Timeout: 30s per request, 5min per collection cycle
+```text
+main          コードと合成サンプルのみ。監査データなし
+data/audit    orphan ブランチ。ライブのスナップショット・レポート・状態 (Fork ごと)
 ```
+
+### 4.2 データの保存場所
+
+| データ                   | パス                                                   | ブランチ     | main にコミット |
+| ------------------------ | ------------------------------------------------------ | ------------ | --------------- |
+| ソースコード             | `packages/`                                            | `main`       | する            |
+| 合成サンプル             | `data/sample/` (`pnpm demo` が生成)                    | `main`       | する            |
+| スナップショット         | `data/snapshots/<id>/<dataset>.json` + `manifest.json` | `data/audit` | しない          |
+| コンプライアンスレポート | `data/reports/compliance/<snapshot id>.json`           | `data/audit` | しない          |
+| 週次・月次レポート       | `data/reports/{weekly,monthly}/`                       | `data/audit` | しない          |
+| ダッシュボード JSON      | `data/dashboard.json`                                  | `data/audit` | しない          |
+| コレクタ状態             | `data/state.json` (カーソル、投影状態、通知記録)       | `data/audit` | しない          |
+| アーカイブ               | `data/archive/<year>/<id>.json.gz`                     | `data/audit` | しない          |
+
+`data/audit` への読み書きは `.github/scripts/data-branch.sh` (`restore` / `save`) に集約する。`save` は直前の `restore` を必須とし、アーカイブによる削除も反映する。サンプルと `.gitkeep` は保存しない。書き込むワークフローは同じ `concurrency` グループ (`audit-data`) で直列化する。
+
+### 4.3 サンプルとライブの分離
+
+|                | サンプル (`data/sample/`)                        | ライブ (`data/audit`)               |
+| -------------- | ------------------------------------------------ | ----------------------------------- |
+| 生成           | `pnpm demo` (固定シード・固定時刻の合成テナント) | `pnpm pipeline` (実 API)            |
+| 内容           | 架空の組織・`example.com` のメールアドレス       | 実データ                            |
+| 保証           | 生成結果との完全一致をテスト (ゴールデンテスト)  | —                                   |
+| Pages での利用 | 既定                                             | `PAGES_DATA_SOURCE=live` のときのみ |
+
+### 4.4 fork:verify
+
+`pnpm fork:verify` は次を検証する。
+
+1. ライブデータのパス (`data/snapshots`、`data/reports`、`data/archive`、`data/dashboard.json`、`data/state.json`) が git で追跡されていない
+2. `data/sample/dashboard.json` が公開契約 (`dashboardViewSchema`) に一致し、`source` が `demo` である
+3. `data/sample/` のメールアドレスが `example.*` ドメインだけである
+4. 追跡ファイルにシークレットのパターンが無い
+5. `.gitignore` に必須パターンがある / `.env` が無い / `.env.example` に実値が無い
 
 ---
 
-## 6. Data Model & Long-Term Retention
+## 5. データソースと API 連携
 
-### 6.1 Storage Strategy (Orphan Branch)
+### 5.1 キーとスコープ
 
-```
-data/                              # data/audit orphan branch
-├── snapshots/                     # Raw audit snapshots
-│   ├── 2026-09-29T00-00.json
-│   ├── 2026-09-29T06-00.json
-│   └── ...
-├── reports/                       # Compliance check reports
-│   ├── 2026-09-29T00-00.json
-│   ├── monthly/                   # Monthly billing reports
-│   │   ├── 2026-09/
-│   │   │   ├── billing-summary.json
-│   │   │   ├── usage-report.json
-│   │   │   ├── cost-report.json
-│   │   │   └── analysis.json
-│   │   └── ...
-│   └── ...
-├── archive/                       # Compressed old snapshots
-│   ├── 2025/
-│   │   ├── snapshot-2025-01-01.json.gz
-│   │   └── ...
-│   └── ...
-├── dashboard.json                 # Aggregated dashboard data
-└── state.json                     # Collector state (last cursor, etc.)
+主キーは claude.ai の **Organization settings > API** で primary owner が作成する Enterprise キー (`sk-ant-api01-...`) 1 本で、次のスコープだけを付与する。
 
-data/sample/                       # main branch (DEMO data)
-├── dashboard.json                 # Sample dashboard data
-├── snapshot.json                  # Sample snapshot
-└── report.json                    # Sample compliance report
-```
+| スコープ                     | 用途                                                  |
+| ---------------------------- | ----------------------------------------------------- |
+| `read:compliance_activities` | Activity Feed                                         |
+| `read:compliance_org_data`   | リンク組織、実効設定、キー台帳、(代替経路の) グループ |
+| `read:members`               | メンバー、招待                                        |
+| `read:rbac_groups`           | RBAC グループとメンバー                               |
+| `read:analytics`             | 利用者別活動、DAU/WAU/MAU、利用量、コスト             |
+| `read:spend_limits`          | メンバー別の実効上限と当期支出                        |
 
-### 6.2 Core Types
+`read:compliance_user_data`・`read:org_audit`・`write:*`・`delete:*` は付与しない。API 系統ごとに別キーを使う場合は `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY` で主キーを上書きできる。キーが無い系統のデータセットは `unavailable` になり、処理は継続する。
 
-| Type                        | Package | Description                             |
-| --------------------------- | ------- | --------------------------------------- |
-| `AuditActivity`             | shared  | Compliance API のアクティビティイベント |
-| `OrganizationMember`        | shared  | 組織メンバー情報                        |
-| `Workspace`                 | shared  | ワークスペース情報                      |
-| `ApiKeyInfo`                | shared  | API キー情報                            |
-| `UsageReport`               | shared  | 使用量レポート                          |
-| `AuditSnapshot`             | shared  | 収集したデータのスナップショット        |
-| `ComplianceRule`            | shared  | コンプライアンスルール定義              |
-| `ComplianceCheckResult`     | shared  | チェック結果                            |
-| `ComplianceReport`          | shared  | コンプライアンスレポート                |
-| `DashboardData`             | shared  | ダッシュボード表示用データ              |
-| `Notification`              | shared  | 通知メッセージ                          |
-| `AlertRule`                 | shared  | アラートルール定義                      |
-| `MonthlyBillingReport`      | shared  | 月次請求レポート                        |
-| `ModelUsageAnalysis`        | shared  | AIモデル使用分析結果                    |
-| `ComplianceRulePlugin`      | shared  | プラグイン: コンプライアンスルール      |
-| `AlertTriggerPlugin`        | shared  | プラグイン: アラートトリガー            |
-| `NotificationChannelPlugin` | shared  | プラグイン: 通知チャネル                |
+### 5.2 データセット
 
-### 6.3 Long-Term Data Retention
+| データセット      | API                                                                      | 備考                                               |
+| ----------------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
+| `organizations`   | Compliance `GET /v1/compliance/organizations`                            | リンク組織                                         |
+| `members`         | Admin `GET /v1/organizations/users` (代替: Compliance 組織ユーザー)      | ロールを含む                                       |
+| `memberActivity`  | Analytics `GET /v1/organizations/analytics/users`                        | 最終活動日。活動記録を無効にした組織では欠落し得る |
+| `invites`         | Admin `GET /v1/organizations/invites`                                    | 保留中の招待                                       |
+| `groups`          | Admin `GET /v1/organizations/rbac_groups` (+ members) (代替: Compliance) | 直接作成 / SCIM 由来を区別                         |
+| `settings`        | Compliance `GET /v1/compliance/organizations/{uuid}/settings`            | 実効設定。行が無い = その組織では変更できない      |
+| `credentials`     | 同上の `api_keys`                                                        | キー台帳 (値は含まない)                            |
+| `credentialUsage` | 投影: Activity Feed の `api_actor` から導出                              | キーの最終利用                                     |
+| `activities`      | Compliance `GET /v1/compliance/activities`                               | 前回以降の差分 (時間窓)                            |
+| `usage` / `cost`  | Analytics `usage_report` / `cost_report`                                 | 日次 × (総計 / product / model / rbac_group)       |
+| `adoption`        | Analytics `summaries`                                                    | DAU / WAU / MAU、シート、保留招待                  |
+| `spendLimits`     | Spend Limits `GET /v1/organizations/spend_limits/effective`              | 実効上限 (null = 無制限) と当期支出                |
 
-> Anthropic Compliance API は **6年間** の監査ログ保持を保証。
-> 本システムはそれに加え、**独立した永続保持**を実現する。
+### 5.3 通信の契約
 
-| データ                   | デフォルト保持期間 | 保持場所                | アーカイブ                            |
-| ------------------------ | ------------------ | ----------------------- | ------------------------------------- |
-| Raw スナップショット     | 365 日             | `data/snapshots/`       | 期限後に `data/archive/` へ gzip 圧縮 |
-| コンプライアンスレポート | 無期限             | `data/reports/`         | 圧縮なし                              |
-| 月次請求レポート         | 無期限             | `data/reports/monthly/` | 圧縮なし                              |
-| アーカイブデータ         | 無期限             | `data/archive/`         | gzip 圧縮済み                         |
-| Dashboard JSON           | 最新のみ           | `data/dashboard.json`   | N/A                                   |
-| Collector 状態           | 最新のみ           | `data/state.json`       | N/A                                   |
-
-**アーカイブプロセス:**
-
-```bash
-# collect-audit.yml の Archive ステップで自動実行
-find data/snapshots/ -name "*.json" -mtime +365 | while read file; do
-  gzip -c "$file" > "data/archive/$(date -r "$file" +%Y)/$(basename "$file").gz"
-  rm "$file"
-done
-```
-
-これにより:
-
-- Anthropic の 6 年保証とは独立してデータを永続保持
-- 古いスナップショットは圧縮してストレージを節約
-- 月次レポートは無期限保持で監査証跡を確保
+| 項目       | 仕様                                                                                                                                   |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| リトライ   | 429 は `retry-after` を優先。500 / 502 / 503 / 504 / 529 は 1 秒から 60 秒上限の指数バックオフ。`x-should-retry: false` は再試行しない |
+| ページング | ID カーソル、ページトークン、`next_page` のみ、単一オブジェクトの 4 方式。Analytics の 410 (カーソル失効) は 1 回だけ先頭から再開      |
+| Activity   | `created_at.gte/lt` の時間窓 + `order=asc`、取得遅延 2 分、重複区間 10 分、ID で重複排除 (状態に直近 ID を保持)                        |
+| 検証       | 使う項目だけを zod で検証 (寛容な読み取り)。必須項目の欠落はデータセット単位の `error`                                                 |
+| 失敗の扱い | キー未設定・401・403・404 は `unavailable`、その他は `error`。どちらも他のデータセットの収集を止めない                                 |
 
 ---
 
-## 7. Compliance Audit Rules
+## 6. データモデルと長期保持
 
-### 7.1 組み込みルール一覧
+### 6.1 スナップショット
 
-| ID     | Name                  | Category           | Severity | Description                            |
-| ------ | --------------------- | ------------------ | -------- | -------------------------------------- |
-| AC-001 | Inactive Members      | access-control     | Medium   | 90日以上非アクティブなメンバーを検出   |
-| AC-002 | Excessive Admin Roles | access-control     | High     | 管理者ロール比率が20%超を警告          |
-| AC-003 | Single Primary Owner  | access-control     | Critical | Primary Owner の一意性確認             |
-| AK-001 | Unused API Keys       | api-key-management | Medium   | 30日以上未使用の API キーを検出        |
-| AK-002 | Unscoped API Keys     | api-key-management | High     | ワークスペース非限定の API キーを検出  |
-| AK-003 | API Key Age           | api-key-management | Medium   | 180日超の API キーのローテーション推奨 |
-| UA-001 | Usage Spike Detection | usage-anomaly      | High     | 7日平均の3倍超のトークン使用を検出     |
-| UA-002 | Cost Budget Threshold | usage-anomaly      | Critical | 月次コスト予算超過アラート             |
-| DG-001 | Empty Workspaces      | data-governance    | Low      | メンバーのいないワークスペースを検出   |
-| OP-001 | Collection Freshness  | operational        | High     | 24時間以上データ収集がない場合に警告   |
+スナップショットは「名前付きデータセットの束」と「データセットごとの取得状況 (coverage)」である。
 
-### 7.2 コンプライアンススコア計算
-
-```
-Score = max(0, 100 - Σ(failed_check_severity_weight))
-
-Severity Weights:
-  Critical = 10 points
-  High     = 5 points
-  Medium   = 3 points
-  Low      = 1 point
-  Info     = 0 points
+```ts
+interface DatasetMeta {
+  status: 'ok' | 'unavailable' | 'error';
+  source?: string; // データを供給したエンドポイント (または projection:<name>)
+  reason?: string; // unavailable / error の理由
+  count?: number;
+  window?: { from: string; to: string }; // 期間を持つデータの対象期間
+  asOf?: string; // Analytics の集計時刻など
+}
 ```
 
-### 7.3 カスタムルール拡張
+保存は `snapshots/<id>/` にデータセットごとの JSON と `manifest.json` (最後に書く = 完了の印) で行い、項目順・要素順を固定した決定的 JSON にする (変化が無ければ差分ゼロ)。
 
-ユーザーは `config/custom-rules.json` にカスタムルールを定義可能：
+### 6.2 状態
+
+`state.json` は Activity Feed のカーソル (時間窓の終端と直近 ID)、投影の状態 (キー最終利用)、通知の送信記録 (冷却時間判定) を持つ。
+
+### 6.3 保持
+
+| 対象                     | 既定                                          | 設定                     |
+| ------------------------ | --------------------------------------------- | ------------------------ |
+| スナップショット         | 365 日を過ぎたら `archive/<year>/` へ gzip    | `retention.snapshotDays` |
+| コンプライアンスレポート | 保持 (履歴はダッシュボードのスコア推移に使用) | —                        |
+| Activity                 | スナップショットに差分として保持              | —                        |
+
+---
+
+## 7. コンプライアンス監査ルール
+
+### 7.1 組み込みルール
+
+結果の状態は `pass` / `fail` / `warning` (要確認) / `skipped` (前提データなし) / `error` (引数不正・例外) の 5 種。閾値は `config/default.json` の `compliance.params.<ID>` で変更でき、`compliance.disabledRules` で無効化できる。
+
+| ID     | ルール                                 | カテゴリ            | 重大度   | 前提データ                   | 判定 (既定値)                                                                                                                                                                               |
+| ------ | -------------------------------------- | ------------------- | -------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-001 | Inactive Members                       | access-control      | Medium   | members, memberActivity      | 最終活動が `inactiveDays` (90) 日より前、または記録なしのメンバー → fail                                                                                                                    |
+| AC-002 | Excessive Administrative Roles         | access-control      | High     | members                      | 組織ごとの管理系ロール比率が `maxAdminPercentage` (20%) 超 → fail                                                                                                                           |
+| AC-003 | Single Primary Owner                   | access-control      | Critical | members                      | primary owner がちょうど 1 名でない組織 → fail                                                                                                                                              |
+| AC-004 | Stale Pending Invites                  | access-control      | Low      | invites                      | `maxPendingDays` (30) 日を超えた保留中の招待 → fail                                                                                                                                         |
+| AK-001 | Unused API Keys                        | api-key-management  | Medium   | credentials, credentialUsage | Compliance スコープを持つ有効キーが `unusedDays` (30) 日 API 呼び出しに現れない → fail                                                                                                      |
+| AK-002 | Over-privileged API Keys               | api-key-management  | High     | credentials                  | `flaggedScopes` (書き込み・削除系) を持つ有効キー → fail                                                                                                                                    |
+| AK-003 | API Key Age                            | api-key-management  | Medium   | credentials                  | 作成から `maxAgeDays` (180) 日を超えた有効キー → fail                                                                                                                                       |
+| UA-001 | Usage Spike Detection                  | usage-anomaly       | High     | usage                        | 直近の完了日のトークン量が直前 `baselineDays` (7) 日平均の `spikeMultiplier` (3) 倍超 → fail                                                                                                |
+| UA-002 | Cost Budget Threshold                  | usage-anomaly       | Critical | cost                         | 当月コストが `monthlyBudget` 超 → fail、月末予測が超過 → warning                                                                                                                            |
+| UA-003 | Members Without Spend Limit            | usage-anomaly       | Medium   | spendLimits                  | すべての期間で実効上限が無制限のメンバー → fail                                                                                                                                             |
+| UA-004 | Spend Limit Nearly Exhausted           | usage-anomaly       | Low      | spendLimits                  | 当期支出が上限の `thresholdPercent` (90%) 以上のメンバー → warning                                                                                                                          |
+| DG-001 | Empty Groups                           | data-governance     | Low      | groups                       | メンバー 0 の直接作成 RBAC グループ → fail                                                                                                                                                  |
+| OP-001 | Collection Freshness                   | operational         | High     | —                            | 評価したスナップショットが `maxStaleHours` (24) 時間より古い → fail                                                                                                                         |
+| OP-002 | Data Source Coverage                   | operational         | High     | —                            | 取得できなかったデータセットがある → fail (`ignore` で除外可)                                                                                                                               |
+| CF-001 | SSO Enforced for claude.ai             | configuration       | High     | settings                     | `sso_claude_ai_enforced = true`                                                                                                                                                             |
+| CF-002 | SCIM Provisioning                      | configuration       | Medium   | settings                     | `sso_provisioning_mode` が `scim_advanced` / `scim_permissive`                                                                                                                              |
+| CF-003 | IP Allowlist Enabled                   | configuration       | Medium   | settings                     | `ip_allowlist_enabled = true`                                                                                                                                                               |
+| CF-004 | Session Duration Limited               | configuration       | Low      | settings                     | `account_session_duration_seconds <= 604800` (7 日)                                                                                                                                         |
+| CF-005 | Finite Data Retention                  | configuration       | Medium   | settings                     | `data_retention_periods <= 365` 日                                                                                                                                                          |
+| CF-006 | Public Projects Disabled               | configuration       | Medium   | settings                     | `public_projects_enabled = false`                                                                                                                                                           |
+| CF-007 | Code Execution Egress Restricted       | configuration       | Medium   | settings                     | `code_execution_network_egress_enabled = false`                                                                                                                                             |
+| CF-008 | Claude Code Permission Bypass Disabled | configuration       | High     | settings                     | `claude_code_desktop_bypass_permissions_enabled = false`                                                                                                                                    |
+| CF-009 | Invite Domains Restricted              | configuration       | Low      | settings                     | `allowed_invite_domains` が空でない                                                                                                                                                         |
+| AM-001 | Privileged Role Changes                | activity-monitoring | High     | activities                   | `primary_owner_transferred`、`rbac_role_assigned`、`rbac_role_permission_added`、`role_assignment_granted`、`claude_user_role_updated`                                                      |
+| AM-002 | Identity Provider Changes              | activity-monitoring | High     | activities                   | `org_sso_toggled`、`org_sso_connection_deactivated`、`org_sso_connection_deleted`、`org_sso_provisioning_mode_changed`、`org_sso_group_role_mappings_updated`、`org_directory_sync_deleted` |
+| AM-003 | Network Restriction Changes            | activity-monitoring | Medium   | activities                   | `org_ip_restriction_created`、`org_ip_restriction_updated`、`org_ip_restriction_deleted`                                                                                                    |
+| AM-004 | API Key Lifecycle                      | activity-monitoring | Medium   | activities                   | `api_key_created`、`admin_api_key_*`、`scoped_api_key_*`、`org_compliance_api_settings_updated`、`org_analytics_api_capability_updated`                                                     |
+| AM-005 | Data Export Events                     | activity-monitoring | Medium   | activities                   | `org_data_export_*`、`org_members_exported`、`audit_log_export_*`                                                                                                                           |
+| AM-006 | Authentication Failure Burst           | activity-monitoring | Medium   | activities                   | `sso_login_failed`、`magic_link_login_failed`、`step_up_authentication_failed` が 1 回の収集で 20 件以上                                                                                    |
+| AM-007 | Data Protection Changes                | activity-monitoring | High     | activities                   | `org_claude_code_zero_data_retention_disabled`、`org_data_residency_updated`、`platform_workspace_inference_data_retention_disabled`                                                        |
+
+- CF-xxx (設定ベースライン) は、その設定行を持つ組織だけを評価する。どの組織でも変更できない設定は `skipped`。
+- AM-xxx (アクティビティ監視) は前回収集以降の差分を対象に、件数が閾値 (既定 1、AM-006 は 20) 以上なら `warning` とし、該当イベントを証跡に載せる。
+- AM の activity type は公式リファレンスの既知一覧 (516 種、2026-09-30 時点) と照合し、未知の type を参照する定義は実行時に警告する。
+
+### 7.2 スコア
+
+```text
+Score = max(0, 100 − Σ 重み(fail の重大度))      重み: Critical 10 / High 5 / Medium 3 / Low 1 / Info 0
+```
+
+- `warning` と `skipped` は減点しない (`skipped` は「判定できない」であって「準拠」ではない)。
+- `skipped` または `error` が 1 件でもある場合、スコアは**評価済みルール数と常にセットで表示する** (例: `95/100 (2 of 30 rules assessed)`)。ダッシュボード・通知・レポートは同じ書式関数 (`formatScore`) を使い、データ欠落による高スコアが単独で伝わらないようにする。データ欠落そのものは OP-002 (High) が fail として検出する。
+
+### 7.3 カスタムルール (コード不要)
+
+`config/custom-rules.json` に設定ベースラインとアクティビティ監視を追加できる。既定の定義と同じ ID を書くと上書きになる。
 
 ```json
 {
-  "rules": [
+  "settingBaselines": [
     {
-      "id": "CUSTOM-001",
-      "name": "Max Members",
-      "description": "Warn if organization exceeds 100 members",
-      "category": "access-control",
-      "severity": "medium",
-      "checker": "checkMaxMembers",
-      "params": { "maxMembers": 100 }
+      "id": "CF-101",
+      "name": "Web Search Disabled",
+      "severity": "low",
+      "setting": "web_search_enabled",
+      "expect": { "kind": "equals", "value": false }
+    }
+  ],
+  "activityWatches": [
+    {
+      "id": "AM-101",
+      "name": "Organization Deletion",
+      "severity": "high",
+      "match": [{ "types": ["org_deletion_requested"] }],
+      "threshold": 1
     }
   ]
 }
 ```
 
----
-
-## 8. Plugin Architecture
-
-> **詳細仕様:** [PLUGIN-ARCHITECTURE.md](PLUGIN-ARCHITECTURE.md)
-
-### 8.1 設計原則
-
-1. **Registry Pattern** — 全プラグインはレジストリ経由で登録。コアコードは実装をハードコードしない
-2. **Interface-First** — 全プラグインタイプに TypeScript インターフェースを定義
-3. **Zero Core Modification** — プラグイン追加時にコア処理コードの変更不要
-4. **Convention over Configuration** — 規約に基づいたファイルパスから自動検出
-5. **Isolated Side Effects** — 各プラグインが自身のリソース（API クライアント等）を管理
-
-### 8.2 プラグインタイプ
-
-| Type                     | Interface                   | 用途               | 追加の複雑度                   |
-| ------------------------ | --------------------------- | ------------------ | ------------------------------ |
-| **Compliance Rule**      | `ComplianceRulePlugin`      | 監査ルールの追加   | **O(1)** — 1ファイル、自己登録 |
-| **Alert Trigger**        | `AlertTriggerPlugin`        | アラート条件の追加 | **O(1)** — 1ファイル、自己登録 |
-| **Notification Channel** | `NotificationChannelPlugin` | 通知先の追加       | **O(1)** — 1ファイル、自己登録 |
-
-### 8.3 ファイル配置
-
-```
-packages/collector/src/
-├── plugins/
-│   ├── registry.ts              # Central registry (PluginRegistry class)
-│   ├── loader.ts                # Auto-discovery & loading
-│   └── index.ts
-├── rules/                       # Built-in compliance rules
-│   ├── ac-001-inactive-members.ts
-│   ├── ac-002-excessive-admins.ts
-│   └── ...                      # 各ルール: 1ファイル = 1プラグイン
-├── triggers/                    # Built-in alert triggers
-│   ├── compliance-failure.ts
-│   ├── usage-spike.ts
-│   └── ...
-├── channels/                    # Built-in notification channels
-│   ├── slack.ts
-│   ├── discord.ts
-│   └── email.ts
-└── custom/                      # User custom plugins (gitignored)
-    └── README.md
-```
-
-### 8.4 拡張性保証
-
-```
-switch 文なし、if/else チェーンなし、既存ファイルの変更なし
-→ Registry Pattern + 自己登録で「追加のみ」の拡張
-```
+期待値の種類 (`expect.kind`): `equals` / `oneOf` / `max` / `nonEmpty` / `retentionAtMostDays`。コードによるルール追加は [ARCHITECTURE.md §8.1](ARCHITECTURE.md) の手順に従う。
 
 ---
 
-## 9. Dashboard Design
+## 8. 拡張アーキテクチャ
 
-> **機能要求仕様:** [DASHBOARD-FEATURES.md](DASHBOARD-FEATURES.md)
+すべての拡張は「実装を 1 つ追加して登録する」だけで行い、既存の分岐を増やさない。
 
-### 9.1 ページ構成
+| 拡張対象                 | 実装するもの                                      | 登録先                                                     |
+| ------------------------ | ------------------------------------------------- | ---------------------------------------------------------- |
+| データソース             | `DatasetCollector` (+ ゲートウェイのメソッド)     | `collector/src/adapters/anthropic/collectors.ts`           |
+| 導出データ               | `Projection`                                      | `core/src/domain/projections/`                             |
+| 監査ルール               | `defineRule({...})`                               | `core/src/domain/compliance/rules/<category>.ts`           |
+| 設定ベースラインの期待値 | 期待値ストラテジ                                  | `core/src/domain/compliance/factories/setting-baseline.ts` |
+| 分析                     | `Analyzer`                                        | `core/src/domain/analysis/analyzers.ts`                    |
+| レポート                 | `ReportDefinition` (汎用 `ReportDocument` を返す) | `core/src/application/use-cases/reports.ts`                |
+| 出力形式                 | `DocumentRenderer`                                | `collector/src/adapters/renderers/index.ts`                |
+| 通知チャネル             | `Notifier`                                        | `collector/src/adapters/notifiers/channels.ts`             |
+| CLI コマンド             | `Command`                                         | `collector/src/main/commands.ts`                           |
 
-```
-/                          → Overview (メインダッシュボード)
-/compliance                → コンプライアンスレポート詳細
-/compliance/:reportId      → 個別レポート
-/usage                     → 使用量分析
-/activities                → アクティビティログ
-/members                   → メンバー管理
-/api-keys                  → API キー管理
-/settings                  → ダッシュボード設定
-```
-
-### 9.2 Overview ページ構成
-
-```
-┌──────────────────────────────────────────────────────┐
-│  Claude Enterprise Audit Dashboard                    │
-│  Last Updated: 2026-09-29 12:00 UTC                  │
-├──────────────────────────────────────────────────────┤
-│                                                       │
-│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐        │
-│  │ Score  │ │Members │ │API Keys│ │ Cost   │        │
-│  │  92    │ │  47    │ │  12    │ │ $4,230 │        │
-│  │ /100   │ │ active │ │ active │ │ /month │        │
-│  └────────┘ └────────┘ └────────┘ └────────┘        │
-│                                                       │
-│  ┌─────────────────────┐ ┌─────────────────────────┐ │
-│  │ Compliance Trend    │ │ Active Alerts           │ │
-│  │ [Line Chart]        │ │ 🔴 Critical: 0         │ │
-│  │                     │ │ 🟠 High: 2             │ │
-│  │                     │ │ 🟡 Medium: 3            │ │
-│  └─────────────────────┘ └─────────────────────────┘ │
-│                                                       │
-│  ┌─────────────────────┐ ┌─────────────────────────┐ │
-│  │ Usage Trend         │ │ Recent Activities       │ │
-│  │ [Area Chart]        │ │ • User added to ws...   │ │
-│  │                     │ │ • API key created...    │ │
-│  │                     │ │ • Config changed...     │ │
-│  └─────────────────────┘ └─────────────────────────┘ │
-└──────────────────────────────────────────────────────┘
-```
-
-### 9.3 技術要件
-
-- **React 19** + **TypeScript 5.8** — コンポーネントベース UI
-- **Vite 7** — 高速ビルド＆HMR
-- **Tailwind CSS v4** — ユーティリティファースト CSS
-- **Recharts** — SVG チャートライブラリ
-- **React Router v7** — クライアントサイドルーティング
-- **Lucide React** — アイコン
-- **Static JSON** — `data/dashboard.json` を fetch して表示
-- **レスポンシブ** — モバイル/タブレット/デスクトップ対応
-- **ダークモード** — Tailwind dark variant 対応
+API の項目名・ページング方式の変更は該当ゲートウェイのスキーマと写像に閉じる (ドメイン型が変わらない限り、ルール・分析・レポート・UI は無変更)。プラグインの詳細は [PLUGIN-ARCHITECTURE.md](PLUGIN-ARCHITECTURE.md)。
 
 ---
 
-## 10. Notification System
+## 9. ダッシュボード
 
-### 10.1 通知チャネル
+### 9.1 公開契約
 
-| Channel     | Protocol          | Use Case                       |
-| ----------- | ----------------- | ------------------------------ |
-| **Slack**   | Incoming Webhook  | チーム向けリアルタイムアラート |
-| **Discord** | Webhook           | 開発チーム向け通知             |
-| **Email**   | SMTP (Nodemailer) | 管理者向け公式レポート         |
+UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod スキーマ付き) だけを読む。collector が書き込み時に検証し、UI は schemaVersion を確認して不一致なら再生成を促す。内容は集計値のみで、メールアドレスは既定でマスクする (`dashboard.maskPii`)。
 
-### 10.2 通知トリガー
+### 9.2 画面構成 (単一ページ)
 
-| Trigger                    | Priority | Channels       | Description                        |
-| -------------------------- | -------- | -------------- | ---------------------------------- |
-| Critical Finding           | Urgent   | All            | コンプライアンスの Critical 検出時 |
-| High Finding               | High     | Slack, Discord | High severity の検出時             |
-| Collection Failure         | High     | All            | データ収集の失敗時                 |
-| Weekly Report              | Normal   | Email, Slack   | 週次サマリーレポート               |
-| **Monthly Billing Report** | Normal   | Email, Slack   | 月次請求レポート                   |
-| Budget Alert               | Urgent   | All            | 予算超過検知時                     |
-| Usage Spike                | High     | Slack, Discord | 異常使用量検知時                   |
+| セクション       | 内容                                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| ヘッダー         | タイトル、組織、収集時刻、デモデータ表示                                                           |
+| KPI              | スコア (ヒーロー表示、評価済みルール数の注記)、未解決件数、メンバー、MAU、シート利用率、当月コスト |
+| Insights         | 分析結果                                                                                           |
+| コンプライアンス | 状態フィルタ付きの結果一覧 (失敗優先、展開で対処と証跡)、カテゴリ別の失敗数、スコア推移            |
+| コスト・トークン | 日次推移 (表の切替あり)                                                                            |
+| 内訳             | プロダクト別・モデル別・グループ別                                                                 |
+| 採用状況         | DAU / WAU / MAU の推移                                                                             |
+| Activity         | 件数上位の type、監視ルールに一致したイベント                                                      |
+| Data coverage    | データセットごとの取得状況・件数・取得元・理由                                                     |
 
-### 10.3 Slack メッセージフォーマット
+詳細と今後の画面 (Phase B) は [DASHBOARD-FEATURES.md](DASHBOARD-FEATURES.md)。
 
-```json
-{
-  "blocks": [
-    {
-      "type": "header",
-      "text": { "type": "plain_text", "text": "🔴 Critical: API Key Security Alert" }
-    },
-    {
-      "type": "section",
-      "fields": [
-        { "type": "mrkdwn", "text": "*Rule:* AK-002 Unscoped API Keys" },
-        { "type": "mrkdwn", "text": "*Score:* 72/100" },
-        { "type": "mrkdwn", "text": "*Found:* 3 unscoped keys" },
-        { "type": "mrkdwn", "text": "*Dashboard:* <https://...|View>" }
-      ]
-    }
-  ]
-}
-```
+### 9.3 表示要件
 
-### 10.4 Discord Embed フォーマット
-
-```json
-{
-  "embeds": [
-    {
-      "title": "🔴 Critical: API Key Security Alert",
-      "color": 14495300,
-      "fields": [
-        { "name": "Rule", "value": "AK-002 Unscoped API Keys", "inline": true },
-        { "name": "Score", "value": "72/100", "inline": true }
-      ],
-      "timestamp": "2026-09-29T12:00:00Z"
-    }
-  ]
-}
-```
+- 色だけで状態を伝えない (状態はアイコン + ラベル + 色)。系列色はカテゴリ順で固定し、2 系列以上は凡例を出す
+- すべてのグラフに表形式の切替を付ける。二軸グラフは使わない
+- ライト / ダーク両対応 (`prefers-color-scheme`)、幅 390px でも横スクロールしない
+- 依存は React 19、Recharts 3、Tailwind CSS 4 のみ (ルーターなし)
 
 ---
 
-## 11. Monthly Billing Report & Model Analysis
+## 10. 通知
 
-> **Agent Skill 仕様:** [billing-report SKILL.md](../.agents/skills/billing-report/SKILL.md)  
-> **Agent Skill 仕様:** [model-usage-analysis SKILL.md](../.agents/skills/model-usage-analysis/SKILL.md)
-
-### 11.1 月次請求レポート
-
-**Workflow:** `monthly-report.yml` — 毎月1日 3:00 UTC に自動実行
-
-**Admin API エンドポイント:**
-
-| Endpoint                                      | Purpose                                   |
-| --------------------------------------------- | ----------------------------------------- |
-| `GET /v1/organizations/usage_report/messages` | Workspace × モデル × 日次のトークン使用量 |
-| `GET /v1/organizations/cost_report`           | Workspace × モデル × 日次のコスト (USD)   |
-
-**レポート内容:**
-
-| セクション            | 内容                                                          |
-| --------------------- | ------------------------------------------------------------- |
-| サマリー              | 総コスト、総トークン数、日平均、年間予測、前月比              |
-| Workspace 別集計      | Workspace ごとのコスト・トークン内訳 (Group 分類での請求配分) |
-| モデル別集計          | モデルごとのコスト・トークン内訳                              |
-| 日次明細              | 日別のコスト・トークン推移                                    |
-| **全 Raw 内訳データ** | 全レコードの完全な生データ (CSV/JSON エクスポート対応)        |
-
-### 11.2 AIモデル使用分析
-
-**目的:** モデルの使われ方の偏りを検出し、コスト最適化の改善提案を自動生成
-
-**検出パターン:**
-
-| パターン         | 基準                 | 推奨アクション                     |
-| ---------------- | -------------------- | ---------------------------------- |
-| 高額モデル偏重   | Opus 使用率 >60%     | Sonnet への切り替え検討            |
-| キャッシュ未活用 | Cache hit rate <30%  | System prompt のキャッシュ化       |
-| Haiku 未活用     | Haiku 使用率 <5%     | 分類・抽出タスクへの Haiku 適用    |
-| Workspace 不均衡 | 1 WS が総予算の >80% | 使用量の見直し・チーム配分の最適化 |
-
-**出力:**
-
-```json
-{
-  "month": "2026-09",
-  "total_cost_usd": 4230.5,
-  "recommendations": [
-    {
-      "id": "REC-001",
-      "type": "model-optimization",
-      "title": "Engineering workspace: Opus → Sonnet 切り替え提案",
-      "impact_estimate_usd": 850.0,
-      "priority": "high"
-    }
-  ]
-}
-```
-
-### 11.3 Claude 組み込みコマンド活用
-
-| コマンド/ツール         | 用途                                         |
-| ----------------------- | -------------------------------------------- |
-| `/plan`                 | 複雑な使用パターン分析の多段階推論           |
-| `/boost`                | コスト最適化分析の深掘り・多角的検証         |
-| Sequential Thinking MCP | モデル使用トレンドのステップバイステップ分析 |
+| 項目     | 仕様                                                                                                       |
+| -------- | ---------------------------------------------------------------------------------------------------------- |
+| チャネル | console (常時)、Slack Incoming Webhook、Discord Webhook、SMTP (nodemailer)。設定されたものだけ登録         |
+| 対象     | 最新レポートの結果のうち `notifications.statuses` (既定 fail, warning) かつ `minSeverity` (既定 high) 以上 |
+| 重複抑止 | 同じ結果集合は `cooldownMinutes` (既定 360 分) 内に再送しない                                              |
+| 収集失敗 | ワークフローの収集ステップが失敗したら `notify --collect-status failure` で別途通知                        |
+| レポート | `report <id> --notify` で文書の要約を同じチャネルに送る                                                    |
+| 書式     | タイトルにスコア (評価済みルール数付き)、本文に重大度順の結果一覧、ダッシュボード URL (`DASHBOARD_URL`)    |
 
 ---
 
-## 12. GitHub Actions Automation
+## 11. レポートと分析
 
-### 12.1 ワークフロー一覧
+### 11.1 レポート
 
-| Workflow             | Trigger                          | Description                                                    |
-| -------------------- | -------------------------------- | -------------------------------------------------------------- |
-| `ci.yml`             | Push / PR to main                | Lint, TypeCheck, Test, Build                                   |
-| `deploy-pages.yml`   | Push to main + workflow_run      | Dashboard の GitHub Pages デプロイ (data/audit からデータ取得) |
-| `collect-audit.yml`  | Cron (6h) / Manual               | 監査データ収集 → orphan ブランチにコミット → 通知              |
-| `weekly-report.yml`  | Cron (月曜 9:00 UTC) / Manual    | 週次レポート生成・配信                                         |
-| `monthly-report.yml` | Cron (毎月1日 3:00 UTC) / Manual | **月次請求レポート生成・モデル分析・配信**                     |
-| `secret-scan.yml`    | Push / PR                        | シークレットスキャン                                           |
+| レポート     | 期間                     | 主な内容                                                                   | 生成                              |
+| ------------ | ------------------------ | -------------------------------------------------------------------------- | --------------------------------- |
+| `compliance` | 最新評価                 | スコア、件数、未解決の結果                                                 | `pnpm report:compliance`          |
+| `weekly`     | 直近 7 日                | スコアと変化、未解決の結果、Activity 上位、7 日コスト、Insights            | `pnpm report:weekly` (毎週月曜)   |
+| `monthly`    | 前月 (`--month YYYY-MM`) | コスト総額、プロダクト / モデル / グループ別、日次内訳、生データ、Insights | `pnpm report:monthly` (毎月 1 日) |
 
-### 12.2 必要な GitHub Secrets
+レポートは汎用文書 (`kpis` / `table` / `list` / `text` セクション) として作り、Markdown / HTML / CSV (表ごと) / JSON で `data/reports/<id>/` に出力する。月次レポートは対象月の利用量・コストを Analytics API から取り直す (Analytics の値は最大 30 日後まで更新され得る)。
 
-| Secret                         | Required | Description                        |
-| ------------------------------ | -------- | ---------------------------------- |
-| `ANTHROPIC_ADMIN_API_KEY`      | ✅       | Admin API キー (`sk-ant-admin...`) |
-| `ANTHROPIC_COMPLIANCE_API_KEY` | ✅       | Compliance Access Key              |
-| `SLACK_WEBHOOK_URL`            | ⬜       | Slack Incoming Webhook URL         |
-| `DISCORD_WEBHOOK_URL`          | ⬜       | Discord Webhook URL                |
-| `SMTP_HOST`                    | ⬜       | SMTP サーバーホスト                |
-| `SMTP_PORT`                    | ⬜       | SMTP ポート (587)                  |
-| `SMTP_USER`                    | ⬜       | SMTP ユーザー名                    |
-| `SMTP_PASS`                    | ⬜       | SMTP パスワード                    |
-| `ALERT_EMAIL_TO`               | ⬜       | アラート送信先メールアドレス       |
+### 11.2 分析 (Insights)
 
-### 12.3 GitHub Pages 設定
-
-- **Source:** GitHub Actions
-- **URL:** `https://{username}.github.io/claude-audit-dashboard/`
-- **Custom Domain:** オプション対応
+| ID                    | 内容                                                     |
+| --------------------- | -------------------------------------------------------- |
+| `model-concentration` | 支出が特定モデルに偏っている場合に小型モデルの利用を提案 |
+| `cache-efficiency`    | 入力トークンに占めるキャッシュ読み取りが低い場合に提案   |
+| `group-concentration` | 支出が特定グループに偏っている場合に通知                 |
+| `seat-utilization`    | 月間アクティブ率が低い場合にシートの見直しを提案         |
 
 ---
 
-## 13. Private/Internal Repository & Deployment
+## 12. GitHub Actions
 
-> **詳細ガイド:** [DEPLOYMENT.md](DEPLOYMENT.md)
+### 12.1 ワークフロー
 
-### 13.1 リポジトリ可視性の前提
+| ワークフロー         | トリガー                                         | 内容                                                                                     |
+| -------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `ci.yml`             | push / PR (main)                                 | fork:verify、lint、typecheck、format:check、test、build、`pnpm audit --audit-level=high` |
+| `collect-audit.yml`  | 6 時間ごと (要 `ENABLE_SCHEDULED_JOBS`) / 手動   | restore → pipeline → archive → notify → save                                             |
+| `weekly-report.yml`  | 毎週月曜 09:00 UTC (同上) / 手動                 | restore → `report:weekly --notify` → save                                                |
+| `monthly-report.yml` | 毎月 1 日 03:00 UTC (同上) / 手動 (対象月指定可) | restore → `report:monthly --notify` → save                                               |
+| `deploy-pages.yml`   | main への push、収集完了 (live 時のみ)、手動     | サンプルまたはライブデータでダッシュボードをビルドしデプロイ                             |
+| `secret-scan.yml`    | push / PR                                        | 独自スキャナと gitleaks                                                                  |
 
-| 可視性       | GitHub Pages アクセス                  | 推奨用途              |
-| ------------ | -------------------------------------- | --------------------- |
-| **Private**  | ⚠️ Pages はデフォルトで公開 (下記参照) | 単一組織利用          |
-| **Internal** | Enterprise Cloud のみ、Pages 制限可能  | エンタープライズ利用  |
-| **Public**   | Pages は公開                           | ❌ 本番運用には非推奨 |
+共通のセットアップは複合アクション `.github/actions/setup` に集約し、Dependabot の更新対象に含める。
 
-### 13.2 デプロイオプション
+### 12.2 Secrets と Variables
 
-| シナリオ              | リポジトリ | Pages                                | データ             |
-| --------------------- | ---------- | ------------------------------------ | ------------------ |
-| Enterprise (フル機能) | Internal   | Private Pages (Enterprise Cloud)     | Orphan ブランチ    |
-| Team (セキュア)       | Private    | DEMO データのみ Pages + ローカル dev | Orphan ブランチ    |
-| 個人/デモ             | Private    | サンプルデータ Pages                 | サンプルデータのみ |
-| 最大セキュリティ      | Private    | Pages なし (Artifact ダウンロード)   | Orphan ブランチ    |
-
-### 13.3 Private リポジトリでの GitHub Pages 注意点
-
-- Private リポジトリでも、GitHub Pages サイトは**デフォルトで公開**
-- **GitHub Enterprise Cloud** のみ Pages の Private 設定が可能
-- Enterprise Cloud 以外の場合は、**DEMO データのみ** を Pages で配信し、本番データは Pages に含めない
-- 代替案: Vercel / Netlify / Cloudflare Pages での認証付きデプロイ
-
----
-
-## 14. Security Considerations
-
-### 14.1 シークレット管理
-
-- API キーは **GitHub Secrets** にのみ保存
-- `.env` ファイルは `.gitignore` に追加済み
-- 収集データ (`data/*.json`) は `.gitignore` で除外（サンプルデータのみコミット）
-- Compliance Access Key は Primary Owner のみ作成可能
-
-### 14.2 データ保護
-
-- ダッシュボードに表示するデータは集約済みのサマリーのみ
-- 個人を特定できる情報（メールアドレス等）は表示時にマスキング可能
-- GitHub Pages は公開リポジトリの場合、ダッシュボードも公開になる点に注意
-- プライベートリポジトリでの運用を推奨
-
-### 14.3 API セキュリティ
-
-- Admin API Key は最小権限のスコープで発行
-- API キーのローテーション推奨（180日以内）
-- Rate Limit 遵守（429 レスポンスで Retry-After を尊重）
+| 名前                                                                                          | 種別     | 必須 | 内容                                                  |
+| --------------------------------------------------------------------------------------------- | -------- | ---- | ----------------------------------------------------- |
+| `ANTHROPIC_ENTERPRISE_API_KEY`                                                                | Secret   | 必須 | §5.1 の Enterprise キー                               |
+| `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY`    | Secret   | 任意 | 系統ごとの上書き                                      |
+| `SLACK_WEBHOOK_URL` / `DISCORD_WEBHOOK_URL`                                                   | Secret   | 任意 | 通知先                                                |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO` | Secret   | 任意 | メール通知                                            |
+| `ENABLE_SCHEDULED_JOBS`                                                                       | Variable | 任意 | `true` で定期実行を有効化 (既定は手動のみ)            |
+| `PAGES_DATA_SOURCE`                                                                           | Variable | 任意 | `live` でライブデータを Pages に公開 (既定はサンプル) |
+| `DASHBOARD_URL`                                                                               | Variable | 任意 | 通知に載せるダッシュボードの URL                      |
 
 ---
 
-## 15. Project Structure
+## 13. Private/Internal リポジトリとデプロイ
 
-```
+| 可視性   | Pages                                          | 推奨                                     |
+| -------- | ---------------------------------------------- | ---------------------------------------- |
+| Internal | Enterprise Cloud ならアクセス制限付き Pages 可 | `PAGES_DATA_SOURCE=live` を検討してよい  |
+| Private  | Pages は既定で公開                             | サンプルのみ公開、ライブはローカルで閲覧 |
+| Public   | 公開                                           | 本番運用しない                           |
+
+Private リポジトリの Pages は既定で公開されるため、アクセス制限付き Pages を使えない場合は `PAGES_DATA_SOURCE` を設定しない。ライブデータはローカルで `data-branch.sh restore` 後に `pnpm dev` で閲覧する。詳細は [DEPLOYMENT.md](DEPLOYMENT.md)。
+
+---
+
+## 14. セキュリティ
+
+| 領域         | 対策                                                                                                                       |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| シークレット | GitHub Secrets のみ。秘密情報は使うステップの `env` にだけ渡す。`.env` は gitignore、`pnpm secret-scan` と gitleaks で検査 |
+| 最小権限     | §5.1 の読み取りスコープのみ。キーのローテーションは 180 日以内 (AK-003 が検出)                                             |
+| PII          | ダッシュボードは集計値のみ、メールアドレスはマスク。サンプルは `example.com` のみ (fork:verify が検査)                     |
+| データ分離   | ライブデータは `data/audit` のみ。main へのコミットを fork:verify と CI で阻止                                             |
+| ワークフロー | `inputs` や PR 由来の値を `run:` に直接埋め込まない (環境変数経由)。書き込み権限は data/audit を更新するジョブだけ         |
+| 依存関係     | Dependabot (グループ化) と CI の `pnpm audit --audit-level=high`                                                           |
+| API 呼び出し | タイムアウト、リトライ上限、レート制限の尊重                                                                               |
+
+---
+
+## 15. プロジェクト構成
+
+```text
 claude-audit-dashboard/
 ├── .github/
-│   ├── workflows/
-│   │   ├── ci.yml                    # CI (lint, test, build)
-│   │   ├── deploy-pages.yml          # GitHub Pages deploy
-│   │   ├── collect-audit.yml         # Scheduled audit collection
-│   │   └── weekly-report.yml         # Weekly report generation
-│   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.yml
-│   │   └── feature_request.yml
-│   ├── PULL_REQUEST_TEMPLATE.md
-│   ├── CODEOWNERS
-│   └── dependabot.yml
-├── packages/
-│   ├── shared/                       # Shared types & utilities
-│   │   ├── src/
-│   │   │   ├── types/
-│   │   │   │   ├── api.ts            # API common types
-│   │   │   │   ├── audit.ts          # Audit data types
-│   │   │   │   ├── compliance.ts     # Compliance check types
-│   │   │   │   ├── notification.ts   # Notification types
-│   │   │   │   └── dashboard.ts      # Dashboard data types
-│   │   │   ├── constants/
-│   │   │   │   ├── audit-rules.ts    # Default audit rules
-│   │   │   │   └── api-endpoints.ts  # API endpoint constants
-│   │   │   ├── utils/
-│   │   │   │   ├── date.ts           # Date utilities
-│   │   │   │   └── severity.ts       # Severity utilities
-│   │   │   └── index.ts
-│   │   ├── package.json
-│   │   ├── tsconfig.json
-│   │   └── tsconfig.build.json
-│   ├── collector/                    # Data collector & checker
-│   │   ├── src/
-│   │   │   ├── api/
-│   │   │   │   ├── client.ts         # Base HTTP client
-│   │   │   │   ├── compliance.ts     # Compliance API client
-│   │   │   │   └── admin.ts          # Admin API client
-│   │   │   ├── collectors/
-│   │   │   │   ├── audit-collector.ts
-│   │   │   │   ├── usage-collector.ts
-│   │   │   │   └── org-collector.ts
-│   │   │   ├── checkers/
-│   │   │   │   ├── access-control.ts
-│   │   │   │   ├── api-key-management.ts
-│   │   │   │   ├── usage-anomaly.ts
-│   │   │   │   ├── data-governance.ts
-│   │   │   │   └── operational.ts
-│   │   │   ├── notifiers/
-│   │   │   │   ├── slack.ts
-│   │   │   │   ├── discord.ts
-│   │   │   │   ├── email.ts
-│   │   │   │   └── dispatcher.ts
-│   │   │   ├── reports/
-│   │   │   │   ├── compliance-reporter.ts
-│   │   │   │   ├── weekly-reporter.ts
-│   │   │   │   └── dashboard-builder.ts
-│   │   │   ├── storage/
-│   │   │   │   ├── file-store.ts
-│   │   │   │   └── state-manager.ts
-│   │   │   ├── commands/
-│   │   │   │   ├── collect-audit.ts
-│   │   │   │   ├── collect-usage.ts
-│   │   │   │   ├── compliance-check.ts
-│   │   │   │   ├── send-notifications.ts
-│   │   │   │   └── weekly-report.ts
-│   │   │   ├── config.ts
-│   │   │   └── index.ts
-│   │   ├── package.json
-│   │   ├── tsconfig.json
-│   │   └── tsconfig.build.json
-│   └── dashboard/                    # React dashboard
-│       ├── src/
-│       │   ├── components/
-│       │   │   ├── layout/
-│       │   │   │   ├── Header.tsx
-│       │   │   │   ├── Sidebar.tsx
-│       │   │   │   ├── Footer.tsx
-│       │   │   │   └── Layout.tsx
-│       │   │   ├── charts/
-│       │   │   │   ├── ComplianceTrendChart.tsx
-│       │   │   │   ├── UsageTrendChart.tsx
-│       │   │   │   ├── CostBreakdownChart.tsx
-│       │   │   │   └── ActivityTimelineChart.tsx
-│       │   │   ├── cards/
-│       │   │   │   ├── ScoreCard.tsx
-│       │   │   │   ├── StatCard.tsx
-│       │   │   │   └── AlertCard.tsx
-│       │   │   ├── tables/
-│       │   │   │   ├── MembersTable.tsx
-│       │   │   │   ├── ApiKeysTable.tsx
-│       │   │   │   ├── ActivityTable.tsx
-│       │   │   │   └── ComplianceResultsTable.tsx
-│       │   │   └── ui/
-│       │   │       ├── Badge.tsx
-│       │   │       ├── Button.tsx
-│       │   │       ├── Card.tsx
-│       │   │       ├── Skeleton.tsx
-│       │   │       └── Tooltip.tsx
-│       │   ├── pages/
-│       │   │   ├── OverviewPage.tsx
-│       │   │   ├── CompliancePage.tsx
-│       │   │   ├── UsagePage.tsx
-│       │   │   ├── ActivitiesPage.tsx
-│       │   │   ├── MembersPage.tsx
-│       │   │   ├── ApiKeysPage.tsx
-│       │   │   └── SettingsPage.tsx
-│       │   ├── hooks/
-│       │   │   ├── useDashboardData.ts
-│       │   │   ├── useTheme.ts
-│       │   │   └── useLocalStorage.ts
-│       │   ├── lib/
-│       │   │   ├── data-loader.ts
-│       │   │   └── cn.ts
-│       │   ├── App.tsx
-│       │   ├── main.tsx
-│       │   └── index.css
-│       ├── public/
-│       │   └── favicon.svg
-│       ├── index.html
-│       ├── vite.config.ts
-│       ├── postcss.config.js
-│       ├── package.json
-│       └── tsconfig.json
-├── data/
-│   ├── .gitkeep
-│   └── sample/
-│       ├── snapshot.json
-│       ├── report.json
-│       └── dashboard.json
+│   ├── actions/setup/            共通セットアップ (pnpm + Node 22 + install + build)
+│   ├── scripts/data-branch.sh    data/audit の restore / save
+│   └── workflows/                ci / collect-audit / weekly-report / monthly-report / deploy-pages / secret-scan
 ├── config/
-│   ├── default.json                  # Default configuration
-│   └── custom-rules.json            # Custom compliance rules
-├── docs/
-│   ├── BLUEPRINT.md                  # This file
-│   ├── SETUP.md                      # Setup guide
-│   ├── API.md                        # API reference
-│   └── CONTRIBUTING.md               # Contribution guide
-├── .github/
-├── .editorconfig
-├── .gitignore
-├── .nvmrc
-├── .prettierrc
-├── .prettierignore
-├── package.json
-├── pnpm-workspace.yaml
-├── tsconfig.json
-├── LICENSE
-├── README.md
-└── CHANGELOG.md
+│   ├── default.json              アプリ設定 (付録 A)
+│   └── custom-rules.json         カスタムルール (§7.3)
+├── data/
+│   └── sample/                   合成サンプル (`pnpm demo` が生成)
+├── docs/                         BLUEPRINT / CHANGE-PLAN / ARCHITECTURE / API-MAPPING / SETUP / DEPLOYMENT ほか
+├── packages/
+│   ├── core/                     @claude-audit/core (domain / application / contracts)
+│   ├── collector/                @claude-audit/collector (adapters / infrastructure / main)
+│   └── dashboard/                @claude-audit/dashboard (React SPA)
+└── scripts/                      fork-verify / secret-scan / worktree-manage
 ```
+
+パッケージ内部の構成は [ARCHITECTURE.md §3](ARCHITECTURE.md)。
 
 ---
 
-## 16. Technology Stack
+## 16. 技術スタック
 
-### Core
-
-| Layer               | Technology      | Version | Rationale                |
-| ------------------- | --------------- | ------- | ------------------------ |
-| **Language**        | TypeScript      | 5.8     | 型安全性、DX             |
-| **Runtime**         | Node.js         | 22 LTS  | 最新 LTS                 |
-| **Package Manager** | pnpm            | 9.x     | 高速、ディスク効率       |
-| **Monorepo**        | pnpm workspaces | —       | シンプル、追加ツール不要 |
-
-### Dashboard (Frontend)
-
-| Library               | Version | Purpose                |
-| --------------------- | ------- | ---------------------- |
-| React                 | 19      | UI フレームワーク      |
-| Vite                  | 7       | ビルドツール           |
-| Tailwind CSS          | 4       | スタイリング           |
-| Recharts              | 2.15    | チャート               |
-| React Router          | 7       | ルーティング           |
-| Lucide React          | 0.470   | アイコン               |
-| clsx + tailwind-merge | —       | クラス名ユーティリティ |
-| date-fns              | 4       | 日付処理               |
-
-### Collector (Backend)
-
-| Library    | Version | Purpose                  |
-| ---------- | ------- | ------------------------ |
-| Zod        | 3.24    | ランタイムバリデーション |
-| Nodemailer | 7       | Email 送信               |
-
-### DevOps / Quality
-
-| Tool           | Purpose                    |
-| -------------- | -------------------------- |
-| GitHub Actions | CI/CD、定期実行            |
-| GitHub Pages   | ダッシュボードホスティング |
-| Vitest         | テスト                     |
-| ESLint         | Linting                    |
-| Prettier       | フォーマッティング         |
-| Husky          | Git hooks                  |
-| Dependabot     | 依存関係の自動更新         |
+| 領域      | 採用                                                                |
+| --------- | ------------------------------------------------------------------- |
+| 言語      | TypeScript 5 (strict、`exactOptionalPropertyTypes`)                 |
+| 実行環境  | Node.js 22.13 以上、pnpm 9 (workspace)                              |
+| 検証      | zod 4                                                               |
+| collector | Node 標準 API (fetch、fs、zlib)、nodemailer                         |
+| dashboard | React 19、Vite 8 (Rolldown)、Tailwind CSS 4、Recharts 3             |
+| テスト    | Vitest 5 (core / collector / dashboard)                             |
+| 品質      | ESLint 10 (typescript-eslint)、Prettier 3、secret-scan、fork:verify |
+| CI/CD     | GitHub Actions、GitHub Pages                                        |
 
 ---
 
-## 17. Development Roadmap
+## 17. ロードマップ
 
-### Phase 1: Foundation (Week 1-2) — ✅ 完了
+| フェーズ | 内容                                                                                                                     | 状態     |
+| -------- | ------------------------------------------------------------------------------------------------------------------------ | -------- |
+| Phase A  | Enterprise API への全面移行、Clean Architecture 再構成、ルール 30 種、レポート・通知・ダッシュボード v2、Dependabot 全件 | 実装済み |
+| Phase B  | 実テナントでの検証 (CHANGE-PLAN §10 の仮定 V1〜V7)、詳細画面、長期運用の検証、任意アダプタ、E2E                          | 次       |
+| Phase C  | v1.0.0 リリース                                                                                                          | —        |
 
-- [x] Blueprint ドキュメント作成
-- [x] プロジェクト構造の初期化
-- [x] 共有型定義（shared パッケージ）
-- [x] GitHub Actions ワークフロー設定
-- [x] CI/CD パイプライン構築
-- [x] サンプル DEMO データの生成
-- [x] README / SETUP / CONTRIBUTING ドキュメント
-- [x] Fork-Safe 設計（Orphan ブランチ、fork:verify スクリプト）
-- [x] Plugin Architecture 仕様策定
-- [x] Dashboard 機能要求仕様書 (DASHBOARD-FEATURES.md)
-- [x] Private/Internal リポジトリデプロイガイド (DEPLOYMENT.md)
-- [x] 月次請求レポート仕様策定
-- [x] AIモデル分析 Agent Skill 定義
-
-### Phase 2: Collector (Week 3-4)
-
-- [x] Anthropic API クライアント実装
-- [x] Compliance API データ収集 (増分取得・カーソル管理)
-- [ ] Admin API データ収集 (members / workspaces / api_keys は実装済み。usage_report/messages, cost_report は未)
-- [x] ファイルストレージ・状態管理 (FileStore / StateManager)
-- [x] Plugin Registry 実装
-- [x] コンプライアンスチェッカー実装 (10 ルール)
-- [ ] 月次請求レポート生成コマンド
-- [ ] ユニットテスト (API client / storage / registry / checkers 実装済み。collectors・報告系は未)
-
-### Phase 3: Dashboard (Week 5-6)
-
-- [ ] Dashboard UI コンポーネント (F-001 ~ F-005)
-- [ ] Overview ページ
-- [ ] Compliance ページ
-- [ ] Usage & Cost ページ
-- [ ] Activity Log ページ
-- [ ] Monthly Billing Report ページ (F-009)
-- [ ] レスポンシブ対応
-- [ ] ダークモード対応
-
-### Phase 4: Notifications & Alerts (Week 7)
-
-- [ ] Slack 通知実装
-- [ ] Discord 通知実装
-- [ ] Email 通知実装
-- [ ] 通知ディスパッチャー（Plugin ベース）
-- [ ] アラートルールエンジン（Plugin ベース）
-- [ ] 月次レポート配信
-
-### Phase 5: Model Analysis & Polish (Week 8)
-
-- [ ] AIモデル使用分析の実装
-- [ ] コスト最適化提案の自動生成
-- [ ] E2E テスト
-- [ ] パフォーマンス最適化
-- [ ] ドキュメント完成
-- [ ] v1.0.0 リリース
+WBS と受け入れ基準は [CHANGE-PLAN.md §7](CHANGE-PLAN.md)。
 
 ---
 
-## 18. Spec-Driven Development Plan
+## 18. 開発プロセス
 
-### 18.1 開発プロセス
+### 18.1 流れ
 
-```
-Spec → Types → Tests → Implementation → Review → Deploy
-```
+`Issue → 兄弟 worktree → 実装 + テスト → 品質ゲート → PR → Rebase Merge` (詳細は `.agents/rules/development-workflow.md`)。
 
-1. **Spec First** — 各機能の仕様を先に定義（この Blueprint が基準）
-2. **Types First** — TypeScript の型定義を先に作成 → 完了済み
-3. **Tests First** — テストケースを先に作成（TDD）
-4. **Implementation** — テストを通す実装を作成
-5. **Review** — コードレビュー + CI チェック
-6. **Deploy** — main ブランチへのマージで自動デプロイ
+### 18.2 品質ゲート
 
-### 18.2 Spec ファイル構成
-
-各機能モジュールごとに `__specs__` ディレクトリに仕様書を配置：
-
-```
-packages/collector/src/api/__specs__/
-  compliance-api.spec.md        # Compliance API client specification
-  admin-api.spec.md             # Admin API client specification
-
-packages/collector/src/checkers/__specs__/
-  access-control.spec.md        # Access control rules specification
-  api-key-management.spec.md    # API key rules specification
-
-packages/collector/src/notifiers/__specs__/
-  slack.spec.md                 # Slack notifier specification
-  discord.spec.md               # Discord notifier specification
-  email.spec.md                 # Email notifier specification
+```bash
+pnpm fork:verify && pnpm typecheck && pnpm test && pnpm secret-scan && pnpm build
+pnpm lint && pnpm format:check && pnpm audit:deps
 ```
 
 ### 18.3 テスト戦略
 
-| Level       | Tool       | Scope                | Coverage Target |
-| ----------- | ---------- | -------------------- | --------------- |
-| Unit        | Vitest     | 個別関数・クラス     | 80%+            |
-| Integration | Vitest     | API Client + Storage | 70%+            |
-| E2E         | Playwright | Dashboard UI         | Key flows       |
+| レベル           | 対象                                                                                       |
+| ---------------- | ------------------------------------------------------------------------------------------ |
+| ルール           | 全ルールの pass / fail / skipped (core)                                                    |
+| アダプタ         | 公式ドキュメントのレスポンス例によるスキーマ・写像、リトライ、4 種のページング (collector) |
+| ユースケース     | 収集 (coverage、カーソル)、レポート、通知ポリシー                                          |
+| ゴールデン       | `pnpm demo` の出力と `data/sample/` の完全一致                                             |
+| ドキュメント同期 | 本書 §7.1 と README のルール表が実装のルール一覧と一致 (AGENTS.md 規則 8)                  |
+| UI               | 表示用の純粋関数とデータ読み込み (dashboard)                                               |
 
-### 18.4 ブランチ戦略
+### 18.4 コミット規約
 
-```
-main              ← production (auto-deploy)
-├── develop       ← integration branch
-│   ├── feat/*    ← feature branches
-│   ├── fix/*     ← bug fix branches
-│   └── docs/*    ← documentation branches
-```
-
-### 18.5 コミットメッセージ規約
-
-[Conventional Commits](https://www.conventionalcommits.org/) に準拠：
-
-```
-feat(collector): implement compliance API client
-fix(dashboard): correct chart rendering on mobile
-docs: update setup guide
-chore(ci): add weekly report workflow
-test(checker): add access control rule tests
-```
+[Conventional Commits](https://www.conventionalcommits.org/) に従う (例: `feat(core): add UA-004 spend limit rule`)。
 
 ---
 
-## Appendix A: Configuration Schema
+## 付録 A: 設定スキーマ
 
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "organization": {
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "id": { "type": "string" }
-      }
-    },
-    "collection": {
-      "type": "object",
-      "properties": {
-        "interval_hours": { "type": "number", "default": 6 },
-        "retention_days": { "type": "number", "default": 90 },
-        "full_sync_on_first_run": { "type": "boolean", "default": true }
-      }
-    },
-    "compliance": {
-      "type": "object",
-      "properties": {
-        "enabled_rules": { "type": "array", "items": { "type": "string" } },
-        "custom_rules_path": { "type": "string" },
-        "score_threshold_warning": { "type": "number", "default": 80 },
-        "score_threshold_critical": { "type": "number", "default": 60 }
-      }
-    },
-    "notifications": {
-      "type": "object",
-      "properties": {
-        "channels": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "type": { "enum": ["slack", "discord", "email"] },
-              "enabled": { "type": "boolean" },
-              "config": { "type": "object" }
-            }
-          }
-        },
-        "cooldown_minutes": { "type": "number", "default": 60 }
-      }
-    },
-    "dashboard": {
-      "type": "object",
-      "properties": {
-        "base_url": { "type": "string" },
-        "title": { "type": "string", "default": "Claude Enterprise Audit Dashboard" },
-        "theme": { "enum": ["light", "dark", "system"], "default": "system" }
-      }
-    }
-  }
-}
-```
+`config/default.json` (すべて省略可、zod で検証。不正値は起動時にエラー):
+
+| キー                                      | 既定                                | 内容                                          |
+| ----------------------------------------- | ----------------------------------- | --------------------------------------------- |
+| `dashboard.title`                         | `Claude Enterprise Audit Dashboard` | 表示名                                        |
+| `dashboard.maskPii`                       | `true`                              | ダッシュボードのメールアドレスをマスク        |
+| `sources.disabled`                        | `[]`                                | 収集しないデータセット                        |
+| `sources.members.provider`                | `admin`                             | `admin` / `compliance`                        |
+| `sources.memberActivity.lookbackDays`     | `90`                                | 最終活動を探す期間 (1〜366)                   |
+| `sources.groups.maxMemberRequests`        | `200`                               | グループメンバー取得の上限リクエスト数        |
+| `sources.activities.initialLookbackHours` | `168`                               | 初回の取得期間                                |
+| `sources.activities.overlapMinutes`       | `10`                                | 時間窓の重複                                  |
+| `sources.activities.lagMinutes`           | `2`                                 | 取得遅延                                      |
+| `sources.activities.pageSize`             | `5000`                              | 1 ページの件数 (最大 5000)                    |
+| `sources.activities.includeTypes`         | `[]`                                | 取得する type (空 = すべて)                   |
+| `sources.activities.excludeTypes`         | 閲覧系 8 種                         | 除外する type                                 |
+| `compliance.disabledRules`                | `[]`                                | 無効にするルール ID                           |
+| `compliance.params.<ID>`                  | `{}`                                | ルールごとの引数 (例: `UA-002.monthlyBudget`) |
+| `notifications.statuses`                  | `["fail", "warning"]`               | 通知する状態                                  |
+| `notifications.minSeverity`               | `high`                              | 通知する最低重大度                            |
+| `notifications.cooldownMinutes`           | `360`                               | 同じ内容を再送しない時間                      |
+| `retention.snapshotDays`                  | `365`                               | アーカイブまでの日数                          |
+
+環境変数: `ANTHROPIC_ENTERPRISE_API_KEY` ほか §12.2、`ANTHROPIC_BASE_URL` (テスト用)、`DATA_DIR` (既定 `data`)、`CONFIG_DIR` (既定 `config`)、`DASHBOARD_URL`、`SMTP_SECURE`。相対パスは pnpm を起動したディレクトリ基準で解決する。
 
 ---
 
-## Appendix B: Glossary
+## 付録 B: 用語集
 
-| Term                      | Description                                            |
-| ------------------------- | ------------------------------------------------------ |
-| **Compliance API**        | Anthropic の監査ログ API（アクティビティフィード）     |
-| **Admin API**             | Anthropic の組織管理 API                               |
-| **Primary Owner**         | Organization の最高権限を持つユーザー                  |
-| **Compliance Access Key** | Compliance API にアクセスするためのキー                |
-| **Admin API Key**         | Admin API にアクセスするためのキー (`sk-ant-admin...`) |
-| **Snapshot**              | ある時点での監査データの完全なスナップショット         |
-| **Compliance Score**      | 0-100 のコンプライアンス準拠スコア                     |
-| **Alert Rule**            | 通知をトリガーする条件定義                             |
+| 用語               | 説明                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| Enterprise キー    | claude.ai の Organization settings > API で primary owner が作成するスコープ付きキー |
+| Activity Feed      | Compliance API の監査イベント (`/v1/compliance/activities`)                          |
+| リンク組織         | Enterprise の親組織に属する組織。Compliance API の対象単位                           |
+| データセット       | スナップショットを構成する名前付きのデータ (例: `members`)                           |
+| coverage           | データセットごとの取得状況 (`ok` / `unavailable` / `error`) と理由                   |
+| 投影 (projection)  | 収集データから導出し、スナップショット間で状態を持つデータ                           |
+| 設定ベースライン   | 実効設定の期待値から生成するルール (CF)                                              |
+| アクティビティ監視 | Activity type の一致件数から生成するルール (AM)                                      |
+| DashboardView      | collector と UI の公開契約 (schemaVersion 2)                                         |
+| 評価済みルール     | `skipped` / `error` 以外の結果になったルール。スコアと一緒に表示する                 |
