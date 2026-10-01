@@ -17,11 +17,11 @@ Before asking for support, please review:
 **Q: Do I need a paid external database or server?**  
 A: No. The platform is 100% serverless, operating purely within GitHub Actions (scheduled cron jobs) and GitHub Pages (SPA hosting).
 
-**Q: Will our employee names, workspaces, and audit events be publicly exposed?**  
-A: No. When configured for enterprise usage, you can deploy the dashboard to **GitHub Pages Private Visibility** (available in GitHub Enterprise) or keep the repository private. Furthermore, sample datasets use purely synthetic identities.
+**Q: Will our employee names, groups, and audit events be publicly exposed?**  
+A: Not by default. Live data stays on the `data/audit` branch of your private repository, and GitHub Pages shows the synthetic sample unless you set `PAGES_DATA_SOURCE=live` (do this only with access-controlled Pages). The dashboard masks e-mail addresses, and the sample uses purely synthetic identities.
 
 **Q: What Anthropic API keys are required?**  
-A: You need an Anthropic Admin API Key (`sk-ant-admin...`) to query members and workspaces, and a Compliance Access Key (`sk-ant-api...`) which requires Organization Primary Owner authorization to access audit activity streams.
+A: One Claude Enterprise key (`sk-ant-api01-...`) created by the primary owner in claude.ai (Organization settings → API) with read-only scopes: `read:compliance_activities`, `read:compliance_org_data`, `read:members`, `read:rbac_groups`, `read:analytics`, `read:spend_limits`. Datasets whose scope is missing are reported as unavailable instead of failing the run. See [docs/SETUP.md](docs/SETUP.md).
 
 ### 3. Reporting Bugs or Requesting Features
 

@@ -6,6 +6,7 @@ Related references:
 
 - [Development workflow rules](../.agents/rules/development-workflow.md)
 - [Compliance rule synchronization policy](../.agents/rules/compliance-rules-management.md) — when adding a rule, update
-  `packages/shared/src/constants/audit-rules.ts`, the checker in `packages/collector/src/checkers/`, its tests,
-  `docs/BLUEPRINT.md` §7 and the README rule table together.
+  the rule in `packages/core/src/domain/compliance/rules/` (or a definition in `factories/defaults.ts`), its tests,
+  `docs/BLUEPRINT.md` §7.1, `README.md` and `README.ja.md` together (a test checks the ID lists).
+- [Extension architecture](PLUGIN-ARCHITECTURE.md) — how to add data sources, rules, analyzers, reports, renderers and channels.
 - [Code of Conduct](../CODE_OF_CONDUCT.md)

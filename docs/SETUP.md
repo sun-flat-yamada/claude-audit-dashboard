@@ -1,128 +1,136 @@
 # Setup Guide
 
-This guide walks you through setting up the Claude Enterprise Audit Dashboard.
+This guide sets up the Claude Enterprise Audit Dashboard for one Claude Enterprise tenant.
+For hosting choices (who can see the dashboard), read [DEPLOYMENT.md](DEPLOYMENT.md) first.
 
 ## Prerequisites
 
-1. **Node.js >= 22** — [Download](https://nodejs.org/)
-2. **pnpm >= 9** — Install with `npm install -g pnpm`
-3. **Claude Enterprise Organization** — With API access enabled
+1. **Claude Enterprise** with the Compliance API enabled for your organization, and access to the **primary owner** account (only the primary owner can create the key).
+2. A **Private or Internal** fork of this repository.
+3. For local runs: **Node.js >= 22.13** and **pnpm >= 9**.
 
-## Step 1: Get API Keys
+## Step 1: Create the Enterprise API key
 
-### Admin API Key
+1. Sign in to claude.ai as the primary owner.
+2. Open **Organization settings → API** and create a key. It starts with `sk-ant-api01-`.
+3. Grant **only** these scopes:
 
-1. Go to [Anthropic Console](https://console.anthropic.com/)
-2. Navigate to **Settings > Admin API Keys**
-3. Create a new Admin API Key
-4. Copy the key (starts with `sk-ant-admin...`)
+   | Scope                        | Used for                                                    |
+   | ---------------------------- | ----------------------------------------------------------- |
+   | `read:compliance_activities` | Activity Feed                                               |
+   | `read:compliance_org_data`   | Linked organizations, effective settings, API key inventory |
+   | `read:members`               | Members and pending invites                                 |
+   | `read:rbac_groups`           | RBAC groups and their members                               |
+   | `read:analytics`             | Per-user activity, DAU/WAU/MAU, usage and cost              |
+   | `read:spend_limits`          | Effective spend limits and period-to-date spend             |
 
-### Compliance Access Key
+   Do **not** grant `read:compliance_user_data` (conversation content), `read:org_audit`, or any `write:*` / `delete:*` scope. Rule AK-002 flags keys holding write or delete scopes.
 
-> ⚠️ Requires **Primary Owner** role
+4. Copy the key once; it is not shown again.
 
-1. Go to **Organization Settings > Data and Privacy**
-2. Navigate to **Compliance Access Keys**
-3. Create a new Compliance Access Key
-4. Copy the key
+Missing scopes do not break collection: the affected datasets are reported as `unavailable` with the API's message (which names the missing scope), the rules that need them are `skipped`, and rule OP-002 fails until coverage is complete.
 
-## Step 2: Fork & Clone
+> [!NOTE]
+> If your security policy splits scopes across several keys, store the main key as `ANTHROPIC_ENTERPRISE_API_KEY` and override individual API families with `ANTHROPIC_COMPLIANCE_API_KEY`, `ANTHROPIC_ANALYTICS_API_KEY` or `ANTHROPIC_ADMIN_API_KEY`.
+
+## Step 2: Repository secrets and variables
+
+**Settings → Secrets and variables → Actions**:
+
+| Name                                                                                       | Kind     | Required | Value                                                                    |
+| ------------------------------------------------------------------------------------------ | -------- | -------- | ------------------------------------------------------------------------ |
+| `ANTHROPIC_ENTERPRISE_API_KEY`                                                             | Secret   | Yes      | The key from Step 1                                                      |
+| `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY` | Secret   | No       | Per-API overrides                                                        |
+| `SLACK_WEBHOOK_URL`                                                                        | Secret   | No       | Slack Incoming Webhook URL                                               |
+| `DISCORD_WEBHOOK_URL`                                                                      | Secret   | No       | Discord webhook URL                                                      |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`                                      | Secret   | No       | SMTP server (`SMTP_SECURE=true` is implied for port 465)                 |
+| `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO`                                                      | Secret   | No       | Sender and comma-separated recipients                                    |
+| `DASHBOARD_URL`                                                                            | Variable | No       | Dashboard link included in alerts and reports                            |
+| `ENABLE_SCHEDULED_JOBS`                                                                    | Variable | No       | `true` enables the schedules (set it after Step 4)                       |
+| `PAGES_DATA_SOURCE`                                                                        | Variable | No       | `live` publishes live data to Pages — see [DEPLOYMENT.md](DEPLOYMENT.md) |
+
+Workflows declare their own token permissions; no change to the repository's default workflow permissions is needed.
+
+## Step 3: GitHub Pages
+
+1. **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+2. The first deployment shows the synthetic sample (`data/sample/`). Live data is published only when `PAGES_DATA_SOURCE=live`.
+
+## Step 4: First collection
+
+1. **Actions → Collect Audit Data → Run workflow**.
+2. The run restores stored data from the `data/audit` branch (created on the first successful run), collects every dataset, evaluates the rules, writes the dashboard data, archives old snapshots, sends alerts and saves everything back to `data/audit`.
+3. Check the log line `Snapshot …: N/13 datasets collected` and the warnings that follow it. Each `unavailable` dataset names its reason (missing key or scope, API not enabled, …).
+4. When coverage looks right, set `ENABLE_SCHEDULED_JOBS=true`.
+
+Schedules once enabled:
+
+| Workflow             | When                                                         | What                                                   |
+| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
+| `collect-audit.yml`  | Every 6 hours                                                | Collect, check, dashboard data, archive, alerts        |
+| `weekly-report.yml`  | Mondays 09:00 UTC                                            | Weekly digest (previous 7 days), sent to every channel |
+| `monthly-report.yml` | 1st of the month 03:00 UTC                                   | Cost report for the previous month (or a chosen month) |
+| `deploy-pages.yml`   | Push to main; after collection when `PAGES_DATA_SOURCE=live` | Dashboard build and deployment                         |
+
+## Step 5: Tune the rules (optional)
+
+`config/default.json` — thresholds and switches (full list in [BLUEPRINT appendix A](BLUEPRINT.md#付録-a-設定スキーマ)):
+
+```json
+{
+  "compliance": {
+    "disabledRules": ["CF-003"],
+    "params": {
+      "UA-002": { "monthlyBudget": 25000, "currency": "USD" },
+      "AC-001": { "inactiveDays": 60 }
+    }
+  },
+  "notifications": {
+    "statuses": ["fail", "warning"],
+    "minSeverity": "high",
+    "cooldownMinutes": 360
+  }
+}
+```
+
+`config/custom-rules.json` — add configuration baselines (`CF-xxx`) and activity watches (`AM-xxx`) without code; see [BLUEPRINT §7.3](BLUEPRINT.md#73-カスタムルール-コード不要). Invalid values stop the run with a precise message instead of being ignored.
+
+## Local runs
 
 ```bash
-# Fork the repository on GitHub, then:
-git clone https://github.com/YOUR_USERNAME/claude-audit-dashboard.git
+git clone https://github.com/YOUR_ORG/claude-audit-dashboard.git
 cd claude-audit-dashboard
 pnpm install
+
+# Without a key: synthetic tenant
+pnpm demo        # refreshes data/sample/
+pnpm dev         # http://localhost:5173/claude-audit-dashboard/
+
+# With a key
+cp .env.example .env    # fill in ANTHROPIC_ENTERPRISE_API_KEY (never commit .env)
+pnpm pipeline           # collect → check → data/dashboard.json
+pnpm dev                # now shows your data (data/ is gitignored)
+pnpm report:weekly
+pnpm report:monthly --month 2026-09
 ```
 
-## Step 3: Configure
+To look at the data collected by Actions locally, restore it first: `.github/scripts/data-branch.sh restore`.
 
-```bash
-cp .env.example .env
-```
+## Notification channels
 
-Edit `.env` and add your API keys:
+- **Slack** — create an [Incoming Webhook](https://api.slack.com/messaging/webhooks) and store its URL as `SLACK_WEBHOOK_URL`.
+- **Discord** — Channel settings → Integrations → Webhooks → New webhook; store the URL as `DISCORD_WEBHOOK_URL`.
+- **E-mail** — store the SMTP settings and `ALERT_EMAIL_TO` (comma-separated) as secrets.
 
-```env
-ANTHROPIC_ADMIN_API_KEY=sk-ant-admin...
-ANTHROPIC_COMPLIANCE_API_KEY=your-compliance-key
-```
+Alerts contain rule IDs, counts and masked identifiers; review your channel's audience before connecting it.
 
-## Step 4: GitHub Secrets
+## Troubleshooting
 
-For automated collection via GitHub Actions, add secrets to your repository:
-
-1. Go to **Settings > Secrets and variables > Actions**
-2. Add the following secrets:
-
-| Secret                         | Value                      |
-| ------------------------------ | -------------------------- |
-| `ANTHROPIC_ADMIN_API_KEY`      | Your Admin API Key         |
-| `ANTHROPIC_COMPLIANCE_API_KEY` | Your Compliance Access Key |
-
-### Optional: Notification Secrets
-
-| Secret                | Value                      |
-| --------------------- | -------------------------- |
-| `SLACK_WEBHOOK_URL`   | Slack Incoming Webhook URL |
-| `DISCORD_WEBHOOK_URL` | Discord Webhook URL        |
-| `SMTP_HOST`           | SMTP server hostname       |
-| `SMTP_PORT`           | SMTP port (usually 587)    |
-| `SMTP_USER`           | SMTP username              |
-| `SMTP_PASS`           | SMTP password              |
-| `ALERT_EMAIL_TO`      | Alert recipient email      |
-
-## Step 5: Enable GitHub Pages
-
-1. Go to **Settings > Pages**
-2. Set **Source** to **GitHub Actions**
-3. The dashboard will be available at `https://YOUR_USERNAME.github.io/claude-audit-dashboard/`
-
-## Step 6: Test Locally
-
-```bash
-# Collect data
-pnpm collect:audit
-pnpm collect:usage
-
-# Run compliance checks
-pnpm check:compliance
-
-# Start dashboard
-pnpm dev
-```
-
-## Step 7: Verify Automation
-
-Scheduled workflows are **opt-in**, so a fresh fork does not fail every few hours before its secrets exist.
-After the secrets from Step 4 are configured, go to **Settings > Secrets and variables > Actions > Variables**
-and add the repository variable `ENABLE_SCHEDULED_JOBS` = `true`.
-
-Once enabled, the following workflows run automatically:
-
-- **Every 6 hours**: Collect audit data and run compliance checks (`collect-audit.yml`)
-- **Every Monday at 9:00 UTC**: Generate and send weekly report (`weekly-report.yml`)
-- **1st of each month at 3:00 UTC**: Monthly billing & usage report (`monthly-report.yml`)
-- **On push to main / after collection**: Deploy dashboard to GitHub Pages (`deploy-pages.yml`)
-
-You can also trigger workflows manually from the **Actions** tab.
-
-## Notification Setup
-
-### Slack
-
-1. Create an [Incoming Webhook](https://api.slack.com/messaging/webhooks) in your Slack workspace
-2. Copy the webhook URL
-3. Add as `SLACK_WEBHOOK_URL` secret
-
-### Discord
-
-1. In your Discord server, go to **Channel Settings > Integrations > Webhooks**
-2. Create a new webhook
-3. Copy the webhook URL
-4. Add as `DISCORD_WEBHOOK_URL` secret
-
-### Email
-
-1. Configure your SMTP server details
-2. Add `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `ALERT_EMAIL_TO` as secrets
+| Symptom                                         | Cause and fix                                                                                  |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Every dataset `unavailable: No key for …`       | `ANTHROPIC_ENTERPRISE_API_KEY` is not set for the workflow                                     |
+| `unavailable` with a 403 message                | The key lacks the scope named in the message — add it in claude.ai (a new key may be required) |
+| `settings` / `credentials` unavailable with 404 | The Compliance API organization settings endpoint is not available for your tenant yet         |
+| OP-001 fails                                    | No successful collection in the last 24 hours — check the collect workflow                     |
+| Score shows `(N of 30 rules assessed)`          | Some rules lacked data; see the dashboard's Data coverage section                              |
+| `Invalid config/default.json`                   | The message lists each invalid field; fix it or remove the field to use the default            |

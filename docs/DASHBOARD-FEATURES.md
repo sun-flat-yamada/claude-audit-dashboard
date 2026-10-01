@@ -1,353 +1,122 @@
-# Dashboard Feature Requirements Specification
+# Dashboard Feature Requirements
 
-> **Status:** Living Document — features are developed incrementally  
-> **Reference:** [github-copilot-dashboard](https://github.com/sun-flat-yamada/github-copilot-dashboard/)  
-> **Last Updated:** 2026-09-29
-
----
-
-## Overview
-
-This document defines the complete feature set planned for the Claude Enterprise Audit Dashboard.
-Each feature includes its priority, implementation status, and references to relevant Anthropic API documentation.
+> **Status:** Living document. Phase A (dashboard v2) implemented; Phase B items are planned.
+> **Last updated:** 2026-10-01
+> **Data contract:** `DashboardView` schemaVersion 2 (`packages/core/src/contracts/dashboard-view.ts`)
 
 ---
 
-## F-001: Organization Overview
+## Principles
 
-**Priority:** P0 — Must Have  
-**Status:** 🔲 Planned
-
-### Description
-
-Display a high-level overview of the Claude Enterprise Organization including member count, workspace count, active API key count, and current compliance score.
-
-### Data Sources
-
-- Admin API: `GET /v1/organizations/users` ([ref](https://docs.anthropic.com/en/api/admin-api))
-- Admin API: `GET /v1/organizations/workspaces` ([ref](https://docs.anthropic.com/en/api/admin-api))
-- Admin API: `GET /v1/organizations/api_keys` ([ref](https://docs.anthropic.com/en/api/admin-api))
-
-### UI Components
-
-- KPI cards (Members, Workspaces, API Keys, Compliance Score)
-- Organization name & ID display
-- Last collection timestamp
+- **Claude Enterprise vocabulary.** Enterprise tenants are organized as _linked organizations_ and _RBAC groups_; there are no Console workspaces. Breakdowns use product, model and RBAC group.
+- **Aggregates only in `dashboard.json`.** The file may be published on Pages, so it carries counts, totals and masked identifiers. Views that need per-person data (member list, key inventory) require a separate, access-controlled data file (Phase B).
+- **Honest coverage.** Every view that depends on a dataset says so when it was not collected; the score is shown with the number of rules actually assessed.
+- **One system of charts.** Fixed categorical color order, legend for two or more series, a table view for every chart, no dual axes, status shown with icon + label + color, light and dark themes, no horizontal scroll at 390 px.
 
 ---
 
-## F-002: Compliance Score & Trend
+## Feature matrix
 
-**Priority:** P0 — Must Have  
-**Status:** 🔲 Planned
-
-### Description
-
-Display the current compliance score (0-100) with a 30-day trend chart. Show the number of passed, failed, and warning checks with severity breakdown.
-
-### Data Sources
-
-- Generated from: Compliance check results (internal)
-- Rule definitions: `packages/shared/src/constants/audit-rules.ts`
-
-### UI Components
-
-- Compliance score gauge/circle
-- Trend line chart (30 days)
-- Status breakdown bar (pass/fail/warn)
-- Severity distribution pie chart
-
----
-
-## F-003: Compliance Check Results Table
-
-**Priority:** P0 — Must Have  
-**Status:** 🔲 Planned
-
-### Description
-
-Detailed table of all compliance check results with rule ID, name, status, severity, message, evidence, and remediation guidance.
-
-### Data Sources
-
-- Generated from: Compliance report JSON
-
-### UI Components
-
-- Sortable/filterable data table
-- Status badges (pass/fail/warn)
-- Severity icons
-- Expandable row for evidence and remediation
-- Export to CSV/JSON
+| ID    | Feature                         | Priority | Status                                                    | Contract fields                                  |
+| ----- | ------------------------------- | -------- | --------------------------------------------------------- | ------------------------------------------------ |
+| F-001 | Organization overview           | P0       | ✅ Phase A                                                | `title`, `organizations`, `collectedAt`, `kpis`  |
+| F-002 | Compliance score and trend      | P0       | ✅ Phase A                                                | `kpis[score]`, `compliance.history`              |
+| F-003 | Compliance results              | P0       | ✅ Phase A (export: Phase B)                              | `compliance.results`, `compliance.byCategory`    |
+| F-004 | Usage and cost                  | P0       | ✅ Phase A                                                | `usage.daily`, `usage.byProduct/byModel/byGroup` |
+| F-005 | Activity                        | P0       | 🔶 Aggregates in Phase A; search in Phase B               | `activity`                                       |
+| F-006 | Member view                     | P1       | ⏳ Phase B                                                | separate access-controlled file                  |
+| F-007 | API key inventory               | P1       | ⏳ Phase B                                                | separate access-controlled file                  |
+| F-008 | Alert history                   | P1       | ⏳ Phase B                                                | notification state                               |
+| F-009 | Monthly cost report view        | P1       | 🔶 Files in Phase A; viewer in Phase B                    | `data/reports/monthly/*`                         |
+| F-010 | Model usage analytics           | P1       | 🔶 Phase A (spend by model, insights); heatmap in Phase B | `usage.byModel`, `insights`                      |
+| F-011 | Light / dark theme              | P2       | ✅ Phase A                                                | —                                                |
+| F-012 | Organization / group drill-down | P2       | ⏳ Phase B                                                | —                                                |
+| F-013 | Data coverage and retention     | P2       | ✅ coverage in Phase A; archive inventory in Phase B      | `coverage`                                       |
+| F-014 | Configuration view (read-only)  | P2       | ⏳ Phase B                                                | —                                                |
+| F-015 | Snapshot comparison             | P3       | ⏳ Later                                                  | —                                                |
+| F-016 | Adoption (DAU / WAU / MAU)      | P1       | ✅ Phase A                                                | `adoption`                                       |
+| F-017 | Insights                        | P1       | ✅ Phase A                                                | `insights`                                       |
 
 ---
 
-## F-004: Usage & Cost Dashboard
+## Implemented (Phase A)
 
-**Priority:** P0 — Must Have  
-**Status:** 🔲 Planned
+### F-001 Organization overview
 
-### Description
+- Header: dashboard title, linked organization names, last collection time, a "Demo data" badge when `source = demo`.
+- KPI tiles: open findings (failed + warnings), members, monthly active users, seat utilization (30 days), month-to-date cost. A tile shows `—` when its dataset was not collected.
 
-Visualize API usage (tokens) and costs (USD) with breakdowns by workspace, model, and time period.
+### F-002 Compliance score and trend
 
-### Data Sources
+- Hero figure: score out of 100 with the failed / to-review / error / skipped counts.
+- When rules were skipped or errored, a warning line states `N of M rules assessed` and points to Data coverage.
+- Score trend (single series, 0–100 axis) appears once two or more reports exist.
 
-- Admin API: `GET /v1/organizations/usage_report/messages` ([ref](https://docs.anthropic.com/en/api/admin-api))
-- Admin API: `GET /v1/organizations/cost_report` ([ref](https://docs.anthropic.com/en/api/admin-api))
+### F-003 Compliance results
 
-### UI Components
+- Status filter (All / Fail / Review / Error / Skipped / Pass) with counts.
+- Order: fail, error, warning, skipped, pass; then severity; then rule ID.
+- Each row expands to the remediation text and up to 20 evidence items (masked).
+- Failing rules by category as labeled bars (`failed of evaluated`).
+- Phase B: CSV / JSON export from the UI (the compliance report is already written as CSV / JSON / Markdown / HTML by `pnpm report:compliance`).
 
-- Daily/Weekly/Monthly token usage area chart
-- Cost trend line chart
-- Workspace usage pie chart
-- Model usage breakdown bar chart
-- Input vs Output token ratio
-- Cache hit rate visualization
-- Budget utilization progress bar
+### F-004 Usage and cost
 
----
+- Daily cost: line with a 10% area wash, crosshair tooltip, compact axis ticks, exact values in the tooltip and table view.
+- Daily tokens: input (including cache reads and writes) and output as two lines with a legend.
+- Spend by product, by model and by RBAC group: horizontal bars with the amount and share at the tip. Group shares can exceed 100% in total because a member can belong to several groups (noted in the card).
+- Phase B: cache read share over time, budget progress (UA-002 already reports month-to-date and forecast).
 
-## F-005: Activity Log Viewer
+### F-005 Activity (aggregates)
 
-**Priority:** P0 — Must Have  
-**Status:** 🔲 Planned
+- Total events in the last collection window, with the window bounds.
+- Top 10 activity types as labeled bars.
+- Events matched by activity-watch rules (AM-xxx): time, type, rule, masked actor (up to 30).
+- Phase B: a searchable timeline needs a paged, access-controlled activity export rather than `dashboard.json`.
 
-### Description
+### F-011 Light / dark theme
 
-Searchable, filterable timeline of audit activities collected from the Compliance API.
+- Follows `prefers-color-scheme`; `data-theme="light|dark"` on `<html>` forces a theme.
+- Categorical series colors (slots 1–3) validated for both themes; the light-theme third slot is below 3:1 contrast, so every multi-series chart ships a legend and a table view.
 
-### Data Sources
+### F-013 Data coverage
 
-- Compliance API: `GET /v1/compliance/activities` ([ref](https://docs.anthropic.com/en/api/compliance-api))
+- One row per dataset: status badge (Collected / Unavailable / Error), record count, source endpoint (or `projection:<name>`), and the reason or `as of` time.
+- Rules that need an uncollected dataset are listed as skipped, never as passed.
 
-### UI Components
+### F-016 Adoption
 
-- Activity timeline with category icons
-- Filter by category (admin, identity, configuration, resource, access, security)
-- Filter by date range
-- Search by actor, target, event type
-- Activity detail panel
-- Export to CSV
+- Daily, weekly and monthly active users as three lines with a legend (the weekly and monthly series converge, so values are read from the tooltip and table rather than end labels).
+- Subtitle: assigned seats, pending invites and monthly adoption rate from the latest summary.
 
----
+### F-017 Insights
 
-## F-006: Member Management View
-
-**Priority:** P1 — Should Have  
-**Status:** 🔲 Planned
-
-### Description
-
-View all organization members with their roles, last active dates, and workspace memberships. Highlight inactive members.
-
-### Data Sources
-
-- Admin API: `GET /v1/organizations/users` ([ref](https://docs.anthropic.com/en/api/admin-api))
-
-### UI Components
-
-- Members table with role, last active, created date
-- Inactive member highlighting (configurable threshold)
-- Role distribution chart
-- Workspace membership matrix
+- Title and detail of each analyzer result (model concentration, cache efficiency, group concentration, seat utilization) with its priority.
 
 ---
 
-## F-007: API Key Management View
+## Planned (Phase B and later)
 
-**Priority:** P1 — Should Have  
-**Status:** 🔲 Planned
-
-### Description
-
-Display all API keys with status, age, last usage, scope, and creator. Flag unused or unscoped keys.
-
-### Data Sources
-
-- Admin API: `GET /v1/organizations/api_keys` ([ref](https://docs.anthropic.com/en/api/admin-api))
-
-### UI Components
-
-- API keys table with status badges
-- Age indicator (color-coded by rotation need)
-- Scope visualization (workspace assignment)
-- Usage sparkline
-- Key lifecycle timeline
+| ID    | Scope                                                                                                                                |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| F-006 | Members with roles, last activity and group membership; inactive members highlighted (AC-001). Needs an access-controlled data file. |
+| F-007 | Key inventory with scopes, age and last use (AK-001…AK-003).                                                                         |
+| F-008 | History of alerts sent (from the notification state) and their acknowledgement status.                                               |
+| F-009 | In-app viewer for `data/reports/monthly/*` with charge-back tables per RBAC group.                                                   |
+| F-010 | Model × group heatmap (sequential single-hue scale with a legend), trend of model mix.                                               |
+| F-012 | Drill-down per linked organization or RBAC group: members, settings deviations (CF-xxx), spend.                                      |
+| F-013 | Archive inventory (years, snapshot counts, sizes).                                                                                   |
+| F-014 | Read-only view of the effective configuration: disabled rules, parameters, custom rules, notification policy.                        |
+| F-015 | Compare two snapshots or two reports: rules that changed status, datasets that changed coverage.                                     |
 
 ---
 
-## F-008: Alert Dashboard
-
-**Priority:** P1 — Should Have  
-**Status:** 🔲 Planned
-
-### Description
-
-Centralized view of all active, acknowledged, and resolved alerts. Includes alert history and trend.
-
-### Data Sources
-
-- Generated from: Alert engine results (internal)
-
-### UI Components
-
-- Active alerts list with severity badges
-- Alert detail panel
-- Alert trend chart
-- Acknowledge/resolve actions (state stored in data branch)
-- Alert rule configuration viewer
-
----
-
-## F-009: Monthly Billing Report View
-
-**Priority:** P1 — Should Have  
-**Status:** 🔲 Planned
-
-### Description
-
-Monthly usage and cost reports with group-level (workspace) aggregation and full raw data breakdown. Supports billing charge-back to internal teams.
-
-### Data Sources
-
-- Admin API: `GET /v1/organizations/usage_report/messages` ([ref](https://docs.anthropic.com/en/api/admin-api))
-- Admin API: `GET /v1/organizations/cost_report` ([ref](https://docs.anthropic.com/en/api/admin-api))
-
-### UI Components
-
-- Month selector
-- Summary cards (total cost, total tokens, model breakdown)
-- Workspace cost allocation table
-- Model usage comparison chart
-- Raw data table (all individual usage records)
-- CSV/JSON export for billing integration
-- Year-over-year comparison
-
----
-
-## F-010: Model Usage Analytics
-
-**Priority:** P1 — Should Have  
-**Status:** 🔲 Planned
-
-### Description
-
-Analyze AI model usage patterns and provide optimization recommendations. Identify model mix inefficiencies, overuse of expensive models, and suggest cost-saving alternatives.
-
-### Data Sources
-
-- Admin API: `GET /v1/organizations/usage_report/messages` ([ref](https://docs.anthropic.com/en/api/admin-api))
-- Admin API: `GET /v1/organizations/cost_report` ([ref](https://docs.anthropic.com/en/api/admin-api))
-
-### UI Components
-
-- Model utilization heatmap (workspace × model)
-- Cost-per-token comparison across models
-- Trend of model mix over time
-- Recommendation cards (e.g., "Switch from Opus to Sonnet for workspace X")
-- Cached vs uncached input token ratio
-- Cache creation efficiency chart
-
----
-
-## F-011: Dark Mode & Theme Support
-
-**Priority:** P2 — Nice to Have  
-**Status:** 🔲 Planned
-
-### Description
-
-System-aware dark mode with manual toggle. Persistent theme preference.
-
-### UI Components
-
-- Theme toggle in header
-- System preference detection
-- Consistent dark mode across all components and charts
-
----
-
-## F-012: Workspace Detail View
-
-**Priority:** P2 — Nice to Have  
-**Status:** 🔲 Planned
-
-### Description
-
-Drill-down view for individual workspaces showing members, API keys, usage, and activities specific to that workspace.
-
-### Data Sources
-
-- All Admin API endpoints filtered by workspace_id
-
-### UI Components
-
-- Workspace info header
-- Members list
-- API keys scoped to workspace
-- Usage chart
-- Activity stream
-
----
-
-## F-013: Data Retention & Archive View
-
-**Priority:** P2 — Nice to Have  
-**Status:** 🔲 Planned
-
-### Description
-
-View data retention status, archive history, and storage usage. Anthropic retains audit logs for 6 years; this system provides independent long-term storage.
-
-### UI Components
-
-- Retention policy display
-- Archive history table
-- Storage size tracking
-- Data age distribution chart
-
----
-
-## F-014: Notification Configuration View
-
-**Priority:** P2 — Nice to Have  
-**Status:** 🔲 Planned
-
-### Description
-
-View the current notification channel configuration and alert rule definitions. (Configuration changes require editing config files or GitHub secrets.)
-
-### UI Components
-
-- Channel status cards (Slack, Discord, Email)
-- Alert rule table
-- Notification history log
-
----
-
-## F-015: Comparison & Diff View
-
-**Priority:** P3 — Future  
-**Status:** 🔲 Planned
-
-### Description
-
-Compare compliance reports across time periods. Show what changed between collection runs.
-
-### UI Components
-
-- Period selector (compare any two dates)
-- Diff table showing added/removed/changed findings
-- Score delta visualization
-
----
-
-## Feature Priority Matrix
-
-| Priority | Features      | Target Phase           |
-| -------- | ------------- | ---------------------- |
-| **P0**   | F-001 ~ F-005 | Phase 3 (Dashboard v1) |
-| **P1**   | F-006 ~ F-010 | Phase 4 (Dashboard v2) |
-| **P2**   | F-011 ~ F-014 | Phase 5 (Polish)       |
-| **P3**   | F-015         | Future                 |
+## Non-functional requirements
+
+| Area          | Requirement                                                                                    |
+| ------------- | ---------------------------------------------------------------------------------------------- |
+| Compatibility | The UI rejects `dashboard.json` with another `schemaVersion` and explains how to regenerate it |
+| Performance   | One JSON file (aggregates); no runtime API calls; code-split React bundle                      |
+| Accessibility | Table view for every chart; status never color-only; keyboard-operable filters and details     |
+| Privacy       | E-mail addresses masked by default (`dashboard.maskPii`); sample data uses `example.com` only  |
+| Testing       | Unit tests for view helpers and data loading; E2E (Playwright) in Phase B                      |

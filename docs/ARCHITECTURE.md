@@ -1,6 +1,6 @@
 # Architecture — Clean Architecture for continuous API / audit / report change
 
-> **Status:** Target design — implemented incrementally in Phase A of [CHANGE-PLAN.md](CHANGE-PLAN.md)
+> **Status:** Implemented in Phase A of [CHANGE-PLAN.md](CHANGE-PLAN.md) (2026-10-01). Extension recipes: §8 and [PLUGIN-ARCHITECTURE.md](PLUGIN-ARCHITECTURE.md)
 > **目的:** Anthropic API の変更、監査ルール・分析・レポート方式の追加が続いても、既存コードの複雑度を増やさずに追加だけで対応できる構造にする。
 
 ---
@@ -84,8 +84,9 @@ packages/
 │       ├── application/
 │       │   ├── ports.ts          外側が実装するインターフェース
 │       │   ├── registry.ts       Registry<T>
+│       │   ├── state.ts          コレクタ状態 (カーソル、投影、通知記録) のスキーマ
 │       │   ├── documents.ts      汎用レポート文書 (ReportDocument)
-│       │   ├── use-cases/        collect-snapshot / evaluate / dashboard / reports / alerts
+│       │   ├── use-cases/        collect-snapshot / check-compliance / reports / alerts
 │       │   └── presenters/       DashboardView への変換 (PII マスク)
 │       └── contracts/            UI 向け公開契約 (DashboardView v2 と zod スキーマ)
 ├── collector/                    @claude-audit/collector — Node 実行環境
@@ -93,10 +94,10 @@ packages/
 │       ├── adapters/
 │       │   ├── anthropic/        http-client, paginate, compliance-api, admin-api, analytics-api, collectors
 │       │   ├── storage/          file-store, repositories (決定的 JSON)
-│       │   ├── notifiers/        console, slack, discord, email
+│       │   ├── notifiers/        channels (console, slack, discord), email, webhook (共通 POST)
 │       │   ├── renderers/        markdown, html, csv, json
 │       │   └── demo/             決定的な合成データソース (サンプル生成・テスト用)
-│       ├── infrastructure/       env (環境変数)、config (設定ファイル)、clock、logger
+│       ├── infrastructure/       env (環境変数)、config (設定ファイル)、runtime (clock、logger)
 │       └── main/                 container (組み立て)、commands (CLI コマンド登録)、cli (入口)
 └── dashboard/                    @claude-audit/dashboard — React SPA (contracts の型だけを使う)
 ```
@@ -168,14 +169,14 @@ interface DatasetMeta {
 
 ## 5. ユースケース
 
-| ユースケース                    | 入力                                             | 出力                                          | 主なポート                                                                         |
-| ------------------------------- | ------------------------------------------------ | --------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `collectSnapshot`               | コレクタ一覧、投影一覧、前回状態                 | スナップショット (+ 次回用カーソル・投影状態) | `DatasetCollector`, `Projection`, `SnapshotRepository`, `StateRepository`, `Clock` |
-| `evaluateCompliance`            | ルール一覧、スナップショット、引数、無効化リスト | コンプライアンスレポート                      | — (純粋)                                                                           |
-| `runAnalyzers`                  | 分析一覧、スナップショット                       | Insight 一覧                                  | — (純粋)                                                                           |
-| `buildDashboardView`            | 最新スナップショット、レポート履歴、Insight      | `DashboardView` v2                            | — (純粋)                                                                           |
-| `buildReport`                   | `ReportDefinition`、入力                         | `ReportDocument`                              | `DocumentRenderer` で出力                                                          |
-| `planAlerts` / `dispatchAlerts` | レポート、ポリシー、前回送信記録                 | 送信する通知                                  | `Notifier`, `StateRepository`                                                      |
+| ユースケース                                 | 入力                                             | 出力                                          | 主なポート                                                                         |
+| -------------------------------------------- | ------------------------------------------------ | --------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `collectSnapshot`                            | コレクタ一覧、投影一覧、前回状態                 | スナップショット (+ 次回用カーソル・投影状態) | `DatasetCollector`, `Projection`, `SnapshotRepository`, `StateRepository`, `Clock` |
+| `evaluateCompliance` / `checkLatestSnapshot` | ルール一覧、スナップショット、引数、無効化リスト | コンプライアンスレポート (保存は後者)         | — (純粋) / `SnapshotRepository`, `ComplianceReportRepository`                      |
+| `runAnalyzers`                               | 分析一覧、スナップショット                       | Insight 一覧                                  | — (純粋)                                                                           |
+| `buildDashboardView`                         | 最新スナップショット、レポート履歴、Insight      | `DashboardView` v2                            | — (純粋)                                                                           |
+| `ReportDefinition.build`                     | `ReportContext` (期間、スナップショット、履歴)   | `ReportDocument`                              | `DocumentRenderer` で出力 (collector の `generateReport` が組み立て)               |
+| `planComplianceAlert` / `dispatchAlert`      | レポート、ポリシー、前回送信記録                 | 送信する通知                                  | `Notifier`, `StateRepository`                                                      |
 
 `collectSnapshot` はデータセット固有の処理を持たない。コレクタごとに
 
@@ -214,7 +215,7 @@ export const inactiveMembers = defineRule({
 2. `requires` のデータセットが `ok` でなければ `skipped` (理由に status と reason を含める)
 3. `params` を zod で検証 (既定値 + `compliance.params.<id>`)。不正なら `error`
 4. `evaluate` の例外を `error` に変換 (他のルールは継続)
-5. 結果を集計しスコアを計算 (`fail` の重大度重みを減点)
+5. 結果を集計しスコアを計算 (`fail` の重大度重みを減点)。表示は `formatScore` で評価済みルール数と併記する (skipped / error がある場合)
 
 ### 6.1 データ駆動のルール生成器
 
@@ -238,12 +239,12 @@ export const inactiveMembers = defineRule({
 
 ### 7.2 その他
 
-| アダプタ  | 実装するポート                                              | 備考                                                                                                 |
-| --------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| storage   | `SnapshotRepository`, `ReportRepository`, `StateRepository` | データセット単位ファイル、キー順固定の決定的 JSON、原子的書き込み、パス逸脱の拒否                    |
-| notifiers | `Notifier`                                                  | console / Slack Incoming Webhook / Discord Webhook / SMTP (nodemailer)。未設定のチャネルは登録しない |
-| renderers | `DocumentRenderer`                                          | markdown / html / csv / json                                                                         |
-| demo      | `DatasetCollector`                                          | 固定シード・固定時刻の合成データ。`pnpm demo` でサンプルデータを生成し、テストのフィクスチャにも使う |
+| アダプタ  | 実装するポート                                                                          | 備考                                                                                                 |
+| --------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| storage   | `SnapshotRepository`, `ComplianceReportRepository`, `StateRepository`, `ArtifactWriter` | データセット単位ファイル、キー順固定の決定的 JSON、原子的書き込み、パス逸脱の拒否                    |
+| notifiers | `Notifier`                                                                              | console / Slack Incoming Webhook / Discord Webhook / SMTP (nodemailer)。未設定のチャネルは登録しない |
+| renderers | `DocumentRenderer`                                                                      | markdown / html / csv / json                                                                         |
+| demo      | `DatasetCollector`                                                                      | 固定シード・固定時刻の合成データ。`pnpm demo` でサンプルデータを生成し、テストのフィクスチャにも使う |
 
 ---
 
@@ -298,12 +299,13 @@ export const inactiveMembers = defineRule({
 
 ### 8.5 分析・レポート・出力形式・通知チャネルを追加する
 
-| 追加対象     | 実装                                                    | 登録先                             |
-| ------------ | ------------------------------------------------------- | ---------------------------------- |
-| 分析         | `Analyzer` (`requires` + `analyze`)                     | `domain/analysis/index.ts`         |
-| レポート     | `ReportDefinition` (`build` が `ReportDocument` を返す) | `application/use-cases/reports.ts` |
-| 出力形式     | `DocumentRenderer`                                      | `collector/src/main/container.ts`  |
-| 通知チャネル | `Notifier`                                              | `collector/src/main/container.ts`  |
+| 追加対象     | 実装                                                    | 登録先                                                            |
+| ------------ | ------------------------------------------------------- | ----------------------------------------------------------------- |
+| 分析         | `Analyzer` (`requires` + `analyze`)                     | `BUILTIN_ANALYZERS` (`domain/analysis/analyzers.ts`)              |
+| 投影         | `Projection` (`requires` + `reduce`)                    | `BUILTIN_PROJECTIONS` (`domain/projections/index.ts`)             |
+| レポート     | `ReportDefinition` (`build` が `ReportDocument` を返す) | `BUILTIN_REPORTS` (`application/use-cases/reports.ts`)            |
+| 出力形式     | `DocumentRenderer`                                      | `BUILTIN_RENDERERS` (`collector/src/adapters/renderers/index.ts`) |
+| 通知チャネル | `Notifier`                                              | `notifiers()` (`collector/src/main/container.ts`)                 |
 
 レポートは汎用文書 (`kpis` / `table` / `list` / `text` セクション) を返すため、新しいレポートは既存のすべての出力形式・通知チャネルでそのまま使える。
 
@@ -324,14 +326,17 @@ export const inactiveMembers = defineRule({
 
 ## 10. CLI とワークフロー
 
-| npm script              | CLI              | 内容                                               | ワークフロー                     |
-| ----------------------- | ---------------- | -------------------------------------------------- | -------------------------------- |
-| `pnpm collect`          | `collect`        | スナップショット取得                               | —                                |
-| `pnpm check:compliance` | `check`          | 最新スナップショットを評価しレポート保存           | —                                |
-| `pnpm build:data`       | `dashboard`      | `data/dashboard.json` を生成                       | —                                |
-| `pnpm pipeline`         | `pipeline`       | collect → check → dashboard                        | `collect-audit.yml` (6 時間ごと) |
-| `pnpm notify`           | `notify`         | アラートポリシーに従い通知                         | `collect-audit.yml`              |
-| `pnpm archive`          | `archive`        | 保持期間超過のスナップショットを圧縮               | `collect-audit.yml` (commit 前)  |
-| `pnpm report:weekly`    | `report weekly`  | 週次レポート生成・配信                             | `weekly-report.yml`              |
-| `pnpm report:monthly`   | `report monthly` | 月次コストレポート生成・配信                       | `monthly-report.yml`             |
-| `pnpm demo`             | `demo`           | 合成データで全処理を実行し `data/sample/` を再生成 | —                                |
+| npm script               | CLI                 | 内容                                                 | ワークフロー                     |
+| ------------------------ | ------------------- | ---------------------------------------------------- | -------------------------------- |
+| `pnpm collect`           | `collect`           | スナップショット取得                                 | —                                |
+| `pnpm check:compliance`  | `check`             | 最新スナップショットを評価しレポート保存             | —                                |
+| `pnpm build:data`        | `dashboard`         | `data/dashboard.json` を生成                         | —                                |
+| `pnpm pipeline`          | `pipeline`          | collect → check → dashboard                          | `collect-audit.yml` (6 時間ごと) |
+| `pnpm notify`            | `notify`            | アラートポリシーに従い通知                           | `collect-audit.yml`              |
+| `pnpm archive`           | `archive`           | 保持期間超過のスナップショットを圧縮                 | `collect-audit.yml` (commit 前)  |
+| `pnpm report:compliance` | `report compliance` | 最新評価のレポート                                   | —                                |
+| `pnpm report:weekly`     | `report weekly`     | 週次レポート生成・配信 (`--notify`)                  | `weekly-report.yml`              |
+| `pnpm report:monthly`    | `report monthly`    | 月次コストレポート生成・配信 (`--month`, `--notify`) | `monthly-report.yml`             |
+| `pnpm demo`              | `demo`              | 合成データで全処理を実行し `data/sample/` を再生成   | —                                |
+
+ワークフローは共通セットアップ (`.github/actions/setup`) の後、`.github/scripts/data-branch.sh restore` で `data/audit` から復元し、コマンド実行後に `save` で書き戻す。書き込むワークフローは `concurrency: audit-data` で直列化し、API キーと通知用シークレットはそれを使うステップの `env` にだけ渡す。

@@ -1,26 +1,26 @@
 # 💻 Dashboard UI/UX & Visualization Agent (`dashboard-ui-agent`)
 
-Specialized autonomous agent responsible for developing, maintaining, and testing the single-page React analytics dashboard deployed on GitHub Pages.
+Specialized autonomous agent responsible for developing, maintaining, and testing the single-page React dashboard deployed on GitHub Pages.
 
 ---
 
 ## 🎯 Scope of Work
 
 1. **Frontend Architecture & Components**:
-   - Maintain the React 19 + TypeScript + Vite + Tailwind CSS dashboard application located in `packages/dashboard/`.
-   - Build accessible, responsive UI components (Compliance Score Gauge, Category Cards, Severity Badges, Audit Timeline, Workspace Breakdown).
+   - Maintain the React 19 + TypeScript + Vite 8 + Tailwind CSS 4 app in `packages/dashboard/`.
+   - Import only `@claude-audit/core/contracts` (the `DashboardView` v2 contract); derive display values in pure helpers (`src/lib/view.ts`, `src/lib/format.ts`) with unit tests.
+   - Sections live in `src/components/sections.tsx`; adding a view means one component and one line in `App.tsx`.
 2. **Chart Visualization & Interactivity**:
-   - Implement interactive charts via Recharts (score progression, activity volume by category, member role distribution).
-   - Support dark mode and light mode with system preference detection.
+   - Use the shared `TimeSeriesChart` (Recharts 3) and `ShareBars`; categorical colors in fixed order (`--series-1..3`), a legend for two or more series, a table view for every chart, crosshair tooltips, no dual axes.
+   - Status is always icon + label + color (`StatusBadge`); light and dark themes via the tokens in `src/index.css`.
 3. **Data Fetching & Fallbacks**:
-   - Ensure clean client-side data consumption from `./data/` with robust empty-state handling.
+   - Load `data/dashboard.json` relative to the Vite base path; reject other `schemaVersion`s with a regeneration hint; show "not collected" states from `coverage` instead of empty charts.
 4. **Build & GitHub Pages Readiness**:
-   - Enforce clean production bundles (`pnpm build:dashboard`) with zero unresolved imports or bundle bloating.
+   - `pnpm build:dashboard` must pass; no horizontal scroll at 390 px; screenshots in light and dark mode before shipping visual changes.
 
 ---
 
-## 🛠️ Bound Skill & Specifications
+## 🛠️ Bound Specifications & Rules
 
-- **Bound Specifications & Rules**:
-  - `docs/BLUEPRINT.md` (Section 7: Dashboard Design)
-  - `.agents/rules/storage-and-data-routing.md`
+- `docs/BLUEPRINT.md` (Section 9: Dashboard), `docs/DASHBOARD-FEATURES.md`
+- `.agents/rules/storage-and-data-routing.md`
