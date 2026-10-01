@@ -19,15 +19,31 @@ updates:
         patterns:
           - 'vite*'
           - '@vitejs/*'
+          - 'vitest*'
+          - '@vitest/*'
       tailwind:
         patterns:
           - 'tailwindcss*'
           - '@tailwindcss/*'
-          - 'postcss*'
-          - 'autoprefixer*'
+          - 'prettier-plugin-tailwindcss'
+      lint:
+        patterns:
+          - 'eslint*'
+          - '@eslint/*'
+          - 'typescript-eslint'
+          - 'globals'
+          - 'prettier'
+      types:
+        patterns:
+          - '@types/*'
+        exclude-patterns:
+          - '@types/react*'
 
   - package-ecosystem: 'github-actions'
-    directory: '/'
+    # Workflows plus the local composite action used by every workflow.
+    directories:
+      - '/'
+      - '/.github/actions/*'
     schedule:
       interval: 'monthly'
     open-pull-requests-limit: 5
@@ -36,3 +52,7 @@ updates:
     labels:
       - 'dependencies'
       - 'github-actions'
+    groups:
+      actions:
+        patterns:
+          - '*'

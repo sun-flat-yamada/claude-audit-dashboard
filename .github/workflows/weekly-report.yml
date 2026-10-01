@@ -2,39 +2,47 @@ name: Weekly Audit Report
 
 on:
   schedule:
-    # Every Monday at 9:00 AM UTC
+    # Every Monday at 09:00 UTC (covers the previous 7 days)
     - cron: '0 9 * * 1'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
-env:
-  ANTHROPIC_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_ADMIN_API_KEY }}
+concurrency:
+  group: audit-data
+  cancel-in-progress: false
 
 jobs:
   report:
-    name: Generate & Send Report
+    name: Generate & send report
     runs-on: ubuntu-latest
-    # Scheduled runs are opt-in: set repository variable ENABLE_SCHEDULED_JOBS=true
-    # once API secrets are configured (see docs/SETUP.md). Manual runs always work.
+    # Scheduled runs are opt-in: set repository variable ENABLE_SCHEDULED_JOBS=true.
     if: github.event_name != 'schedule' || vars.ENABLE_SCHEDULED_JOBS == 'true'
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
         with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build:collector
-      - name: Generate Weekly Report
-        run: pnpm report:weekly
+          ref: main
+      - uses: ./.github/actions/setup
+        with:
+          build: build:collector
+
+      - name: Restore stored data
+        run: .github/scripts/data-branch.sh restore
+
+      - name: Generate and send the weekly report
+        run: pnpm report:weekly --notify
         env:
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
           ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+
+      - name: Save the report to the data/audit branch
+        run: |
+          .github/scripts/data-branch.sh save "chore: weekly report $(date -u +%Y-%m-%d) [skip ci]"

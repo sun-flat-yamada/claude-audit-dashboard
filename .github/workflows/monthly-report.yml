@@ -1,97 +1,64 @@
-name: Monthly Billing & Usage Report
+name: Monthly Usage & Cost Report
 
 on:
   schedule:
-    # First day of each month at 3:00 AM UTC
+    # 1st of each month at 03:00 UTC (covers the previous calendar month)
     - cron: '0 3 1 * *'
   workflow_dispatch:
     inputs:
-      target_month:
-        description: 'Target month (YYYY-MM format, e.g., 2026-09)'
+      month:
+        description: 'Target month (YYYY-MM). Defaults to the previous month.'
         required: false
         type: string
-      include_analysis:
-        description: 'Include AI model usage analysis'
-        required: false
-        default: 'true'
-        type: boolean
 
 permissions:
   contents: write
 
-env:
-  ANTHROPIC_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_ADMIN_API_KEY }}
-  ANTHROPIC_COMPLIANCE_API_KEY: ${{ secrets.ANTHROPIC_COMPLIANCE_API_KEY }}
+concurrency:
+  group: audit-data
+  cancel-in-progress: false
 
 jobs:
-  generate-report:
-    name: Generate Monthly Report
+  report:
+    name: Generate & send report
     runs-on: ubuntu-latest
-    # Scheduled runs are opt-in: set repository variable ENABLE_SCHEDULED_JOBS=true
-    # once API secrets are configured (see docs/SETUP.md). Manual runs always work.
+    # Scheduled runs are opt-in: set repository variable ENABLE_SCHEDULED_JOBS=true.
     if: github.event_name != 'schedule' || vars.ENABLE_SCHEDULED_JOBS == 'true'
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
         with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build:collector
+          ref: main
+      - uses: ./.github/actions/setup
+        with:
+          build: build:collector
 
-      - name: Fetch Monthly Usage Data
-        run: pnpm --filter @claude-audit/collector start:monthly-usage
-        env:
-          TARGET_MONTH: ${{ github.event.inputs.target_month || '' }}
+      - name: Restore stored data
+        run: .github/scripts/data-branch.sh restore
 
-      - name: Fetch Monthly Cost Data
-        run: pnpm --filter @claude-audit/collector start:monthly-cost
-        env:
-          TARGET_MONTH: ${{ github.event.inputs.target_month || '' }}
-
-      - name: Generate Billing Report
-        run: pnpm report:monthly
-        env:
-          TARGET_MONTH: ${{ github.event.inputs.target_month || '' }}
-
-      - name: Commit Report Data
+      # The monthly report re-reads usage and cost for the whole month from the Analytics API.
+      - name: Generate and send the monthly report
         run: |
-          # Checkout or create orphan data branch
-          git fetch origin data/audit || true
-          git checkout data/audit 2>/dev/null || git switch --orphan data/audit
-
-          # Copy report files
-          mkdir -p data/reports/monthly
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/reports/monthly/
-          git diff --staged --quiet || git commit -m "chore: add monthly report [skip ci]"
-          git push origin data/audit
-
-  send-report:
-    name: Distribute Report
-    needs: generate-report
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build:collector
-
-      - name: Send Billing Report Notifications
-        run: pnpm --filter @claude-audit/collector start:send-monthly-report
+          if [ -n "$TARGET_MONTH" ]; then
+            pnpm report:monthly --month "$TARGET_MONTH" --notify
+          else
+            pnpm report:monthly --notify
+          fi
         env:
-          TARGET_MONTH: ${{ github.event.inputs.target_month || '' }}
+          TARGET_MONTH: ${{ inputs.month }}
+          ANTHROPIC_ENTERPRISE_API_KEY: ${{ secrets.ANTHROPIC_ENTERPRISE_API_KEY }}
+          ANTHROPIC_COMPLIANCE_API_KEY: ${{ secrets.ANTHROPIC_COMPLIANCE_API_KEY }}
+          ANTHROPIC_ANALYTICS_API_KEY: ${{ secrets.ANTHROPIC_ANALYTICS_API_KEY }}
+          ANTHROPIC_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_ADMIN_API_KEY }}
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
           ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+
+      - name: Save the report to the data/audit branch
+        run: |
+          .github/scripts/data-branch.sh save "chore: monthly report $(date -u +%Y-%m-%d) [skip ci]"
