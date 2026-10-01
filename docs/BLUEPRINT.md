@@ -544,7 +544,7 @@ WBS と受け入れ基準は [CHANGE-PLAN.md §7](CHANGE-PLAN.md)。
 
 ### 18.1 流れ
 
-`Issue → 兄弟 worktree → 実装 + テスト → 品質ゲート → PR → Rebase Merge` (詳細は `.agents/rules/development-workflow.md`)。
+`Issue → 実装計画(ユーザー承認) → 兄弟 worktree → 実装 + テスト → 品質ゲート → walkthrough → PR → Rebase Merge` (詳細は `.agents/rules/development-workflow.md` と `.agents/skills/change-dev/SKILL.md`)。計画・タスク・walkthrough は `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` に置き、変更と一緒にコミットする(秘密情報・個人情報・絶対パスを含めない。`pnpm secret-scan` の対象)。
 
 ### 18.2 品質ゲート
 

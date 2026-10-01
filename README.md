@@ -93,7 +93,8 @@ Details: [ARCHITECTURE.md](docs/ARCHITECTURE.md) (layers and extension recipes) 
 
 ```text
 claude-audit-dashboard/
-├── .agents/                   # Rules and skills for AI coding agents
+├── .agents/                   # Rules, skills and agent personas (change-dev, fork-sync) for AI coding agents
+├── .devs/changes/             # change-dev plan / task / walkthrough artifacts, one folder per change
 ├── .github/
 │   ├── actions/setup/         # Shared setup (pnpm, Node 22, install, optional build)
 │   ├── scripts/data-branch.sh # restore / save of the data/audit branch

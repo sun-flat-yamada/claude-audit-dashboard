@@ -43,3 +43,7 @@ packages/dashboard/public/data/
 # Logs
 logs/
 *.log
+
+# change-dev artifacts under .devs/changes/ are shared via PRs; everything else in .devs/ stays local
+.devs/*
+!.devs/changes/

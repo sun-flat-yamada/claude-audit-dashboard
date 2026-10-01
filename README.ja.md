@@ -93,7 +93,8 @@ flowchart LR
 
 ```text
 claude-audit-dashboard/
-├── .agents/                   # AI コーディングエージェント向けの規約とスキル
+├── .agents/                   # AI コーディングエージェント向けの規約・スキル・エージェント定義 (change-dev, fork-sync)
+├── .devs/changes/             # change-dev の計画・タスク・walkthrough 成果物 (変更ごとに 1 フォルダ)
 ├── .github/
 │   ├── actions/setup/         # 共通セットアップ (pnpm、Node 22、install、任意のビルド)
 │   ├── scripts/data-branch.sh # data/audit ブランチの restore / save

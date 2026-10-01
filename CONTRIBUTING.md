@@ -41,7 +41,7 @@ npm run fork:verify
 ### 2. Step-by-Step Change Lifecycle
 
 ```text
-[1. Issue] ──> [2. Sibling Worktree] ──> [3. Quality Gate] ──> [4. Rebase & PR] ──> [5. Rebase Merge & Clean]
+[1. Issue] ──> [2. Plan (approval)] ──> [3. Sibling Worktree] ──> [4. Quality Gate] ──> [5. Walkthrough] ──> [6. Rebase & PR] ──> [7. Rebase Merge & Clean]
 ```
 
 #### Step 1: Create or Reference an Issue
@@ -54,7 +54,11 @@ gh issue create --title "feat: Add new compliance check rule AK-004" --label "en
 
 Record the assigned Issue number (e.g. `#42`).
 
-#### Step 2: Provision an Isolated Sibling Worktree
+#### Step 2: Write the Implementation Plan and Get Approval
+
+Before touching code, write `implementation_plan.md` (proposed changes, risks, verification plan) and `task.md` in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` at the repository root and wait for the maintainer's approval. When the change is done, add `walkthrough.md` (summary, files, quality-gate results) and commit the finished artifacts with the change. They must contain no secrets, PII or absolute paths; `pnpm secret-scan` covers `.devs/changes/`. See `.agents/skills/change-dev/SKILL.md`.
+
+#### Step 3: Provision an Isolated Sibling Worktree
 
 Worktrees are provisioned in a sibling directory (`../claude-audit-dashboard-worktrees/<branch>`) so concurrent agents never interfere with each other or the primary root checkout:
 
@@ -69,7 +73,7 @@ cd ../claude-audit-dashboard-worktrees/feat-42-api-key-scope
 pnpm install
 ```
 
-#### Step 3: Implement & Run Local Quality Gate
+#### Step 4: Implement & Run Local Quality Gate
 
 1. **Branch Naming**: `feat/<issue>-<slug>`, `fix/<issue>-<slug>`, `docs/...`, `refactor/...`.
 2. **Conventional Commits**: `feat: ...`, `fix: ...`, `docs: ...`, `test: ...`.
@@ -82,7 +86,7 @@ pnpm install
    npm run build         # Production monorepo & dashboard build
    ```
 
-#### Step 4: Rebase onto Base & Create PR
+#### Step 5: Rebase onto Base & Create PR
 
 1. Rebase onto the latest base to guarantee linear history:
    ```bash
@@ -99,7 +103,7 @@ pnpm install
      --body "## Summary\n\nCloses #42"
    ```
 
-#### Step 5: Rebase & Merge
+#### Step 6: Rebase & Merge
 
 We standardise on **Rebase & Merge** (preserving linear history and ensuring clean `git bisect` / fork sync):
 
@@ -107,7 +111,7 @@ We standardise on **Rebase & Merge** (preserving linear history and ensuring cle
 gh pr merge 42 --rebase --delete-branch
 ```
 
-#### Step 6: Worktree & Branch Cleanup
+#### Step 7: Worktree & Branch Cleanup
 
 Return to the primary repo directory and clean up:
 
