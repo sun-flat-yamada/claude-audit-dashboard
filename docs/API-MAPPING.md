@@ -36,14 +36,14 @@ Analytics のカーソルはデータ更新で失効し 410 を返す → 先頭
 
 ### 2.1 `GET /v1/compliance/activities` → `activities`
 
-| 項目     | 内容                                                                                                                                                             |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| スコープ | `read:compliance_activities`                                                                                                                                     |
-| 取得方式 | window polling: `created_at.gte = 前回の窓終端 − 10 分`、`created_at.lt = 現在 − 2 分`、`order=asc`、`limit=5000`、`after_id=<last_id>` で `has_more=false` まで |
-| 除外     | 既定で `exclude_activity_types[]` に閲覧系 (`claude_chat_viewed` など)。`activity_types[]` と同時指定不可                                                        |
-| 重複排除 | 窓の重複区間の ID を状態 (`cursors.activities.recentIds`) に保持し除外 (公式推奨の at-least-once + ID 重複排除)                                                  |
-| 保持     | Anthropic 側 6 年。記録は Compliance API 有効化以降のみ                                                                                                          |
-| 注意     | 返却順は既定で新しい順、`after_id` は「より古い」方向。`*_viewed` は表示ではなくアプリの読み込み回数                                                             |
+| 項目     | 内容                                                                                                                                                                                                                                 |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| スコープ | `read:compliance_activities`                                                                                                                                                                                                         |
+| 取得方式 | window polling: `created_at.gte = 前回の窓終端 − 10 分`、`created_at.lt = 現在 − 2 分`、`limit=5000` (並び順は新しい順の既定のまま。公式に並び替えパラメータの記載がないため送らない)、`after_id=<last_id>` で `has_more=false` まで |
+| 除外     | 既定で `exclude_activity_types[]` に閲覧系 (`claude_chat_viewed` など)。`activity_types[]` と同時指定不可                                                                                                                            |
+| 重複排除 | 窓の重複区間の ID を状態 (`cursors.activities.recentIds`) に保持し除外 (公式推奨の at-least-once + ID 重複排除)                                                                                                                      |
+| 保持     | Anthropic 側 6 年。記録は Compliance API 有効化以降のみ                                                                                                                                                                              |
+| 注意     | 返却順は既定で新しい順、`after_id` は「より古い」方向。`*_viewed` は表示ではなくアプリの読み込み回数                                                                                                                                 |
 
 | 外部項目                                                                       | ドメイン                               |
 | ------------------------------------------------------------------------------ | -------------------------------------- |

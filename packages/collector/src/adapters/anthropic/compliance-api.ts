@@ -167,7 +167,10 @@ export class ComplianceApi {
 
   constructor(private readonly http: HttpClient) {}
 
-  /** Window polling in ascending order; `include` and `exclude` filters are mutually exclusive. */
+  /**
+   * Window polling; `include` and `exclude` filters are mutually exclusive. The feed returns
+   * newest first (no sort parameter is documented), so callers must not rely on result order.
+   */
   listActivities(window: ActivityWindow, query: ActivityQuery): Promise<Activity[]> {
     const filter = query.includeTypes.length
       ? { activity_types: query.includeTypes }
@@ -177,7 +180,6 @@ export class ComplianceApi {
         idPage(activitySchema),
         await this.http.getJson(PATHS.activities, {
           created_at: { gte: window.from.toISOString(), lt: window.to.toISOString() },
-          order: 'asc',
           limit: query.pageSize,
           after_id: afterId,
           ...filter,

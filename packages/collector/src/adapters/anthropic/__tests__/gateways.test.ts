@@ -20,7 +20,7 @@ function gateways(overrides = {}) {
 }
 
 describe('ComplianceApi', () => {
-  it('polls the activity window in ascending order with exclusions and maps actors', async () => {
+  it('polls the activity window with exclusions, sends no undocumented sort parameter, and maps actors', async () => {
     const { compliance, api } = gateways();
     const window = { from: new Date('2026-09-30T06:00:00Z'), to: new Date('2026-09-30T11:58:00Z') };
     const items = await compliance.listActivities(window, {
@@ -32,10 +32,10 @@ describe('ComplianceApi', () => {
     expect(Object.fromEntries(first)).toMatchObject({
       'created_at.gte': '2026-09-30T06:00:00.000Z',
       'created_at.lt': '2026-09-30T11:58:00.000Z',
-      order: 'asc',
       limit: '5000',
       'exclude_activity_types[]': 'claude_chat_viewed',
     });
+    expect(first.has('order')).toBe(false);
     expect(api.calls[1]!.searchParams.get('after_id')).toBe('activity_02');
     expect(items[0]).toMatchObject({
       organizationId: ORG_A,
