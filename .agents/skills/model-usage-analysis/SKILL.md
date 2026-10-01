@@ -1,127 +1,48 @@
 ---
 name: model-usage-analysis
 description: >
-  Analyze Claude Enterprise AI model usage patterns, identify cost optimization
-  opportunities, and generate improvement recommendations. Uses monthly billing
-  data from the Anthropic Admin API to create actionable reports.
+  Analyze Claude Enterprise model usage and spend (by model, product and RBAC group),
+  cache efficiency and seat utilization; explain or extend the built-in analyzers that
+  produce dashboard and report insights.
 ---
 
 # Model Usage Analysis Skill
 
 ## Purpose
 
-This skill analyzes Claude Enterprise Organization usage data to:
-
-1. Identify AI model usage patterns and biases across workspaces
-2. Detect cost optimization opportunities (model mix optimization)
-3. Generate monthly improvement recommendations
-4. Compare usage trends month-over-month
+1. Identify model mix and concentration (e.g. most spend on the largest model)
+2. Find cost optimization opportunities (model routing, prompt caching)
+3. Spot spend concentration in one RBAC group and low seat utilization
+4. Compare trends across months using the stored snapshots and monthly reports
 
 ## When to Activate
 
-- User asks to analyze model usage or spending patterns
-- Monthly report generation triggers this skill
-- User asks for cost optimization recommendations
-- User asks about model selection best practices for their organization
+- A user asks about model usage, spending patterns or optimization
+- Insights on the dashboard or in a report need explaining
+- A new analysis should be added
 
-## Data Sources
+## Built-in Analyzers (`packages/core/src/domain/analysis/analyzers.ts`)
 
-The skill reads from the following data files:
+| ID                    | Requires   | Fires when                                                       | Suggests                                      |
+| --------------------- | ---------- | ---------------------------------------------------------------- | --------------------------------------------- |
+| `model-concentration` | `cost`     | One model holds more than 60% of spend                           | Route routine tasks to a smaller model        |
+| `cache-efficiency`    | `usage`    | Cache reads below 30% of input tokens (at least 1M input tokens) | Use prompt caching for long, repeated context |
+| `group-concentration` | `cost`     | One RBAC group holds more than 80% of spend                      | Check that usage matches the team's needs     |
+| `seat-utilization`    | `adoption` | Monthly adoption rate below 50%                                  | Review assigned seats                         |
 
-```
-data/reports/monthly/YYYY-MM/
-├── usage-report.json        # Token usage by workspace, model, day
-├── cost-report.json         # Cost data by workspace, model
-├── billing-summary.json     # Aggregated billing summary
-└── analysis.json            # Generated analysis output
-```
+Analyzers whose datasets were not collected are skipped. Insights appear on the dashboard, in the weekly digest and in the monthly report.
 
-## Analysis Steps
+## Data
 
-### Step 1: Load Data
+| Question                                   | Where                                                                       |
+| ------------------------------------------ | --------------------------------------------------------------------------- |
+| Spend by model / product / group (30 days) | `data/dashboard.json` → `usage.byModel`, `usage.byProduct`, `usage.byGroup` |
+| Daily tokens incl. cache reads             | latest snapshot `usage.json` (`cacheReadInputTokens`, …)                    |
+| A full month                               | `data/reports/monthly/monthly-YYYY-MM.*` (`pnpm report:monthly`)            |
+| Adoption                                   | snapshot `adoption.json` (DAU / WAU / MAU, seats)                           |
 
-Read the monthly usage and cost reports from `data/reports/monthly/<target-month>/`.
-If the target month is not specified, use the most recent available month.
+Run locally without a key on the synthetic tenant: `pnpm demo` (insights in `data/sample/dashboard.json` and the sample reports).
 
-```bash
-# List available monthly reports
-ls data/reports/monthly/
-```
+## Adding an Analysis
 
-### Step 2: Workspace Usage Analysis
-
-For each workspace, calculate:
-
-- Total tokens (input + output)
-- Total cost (USD)
-- Cost per 1M tokens
-- Model mix ratio (percentage of each model)
-- Cache utilization rate
-
-### Step 3: Model Bias Detection
-
-Identify model usage biases:
-
-| Pattern                               | Description                                       | Recommendation                                               |
-| ------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------ |
-| **Over-reliance on expensive models** | >60% of tokens use Opus when Sonnet would suffice | Consider model routing: use Sonnet for straightforward tasks |
-| **Under-utilization of caching**      | Cache hit rate <30%                               | Implement prompt caching for repeated system prompts         |
-| **Haiku underuse**                    | Haiku usage <5% despite suitable use cases        | Use Haiku for classification, extraction, and simple Q&A     |
-| **Workspace imbalance**               | One workspace uses >80% of total budget           | Review if usage is proportional to team size/needs           |
-
-### Step 4: Generate Recommendations
-
-Produce structured recommendations:
-
-```json
-{
-  "month": "2026-09",
-  "total_cost_usd": 4230.5,
-  "recommendations": [
-    {
-      "id": "REC-001",
-      "type": "model-optimization",
-      "title": "Shift Engineering workspace from Opus to Sonnet",
-      "impact_estimate_usd": 850.0,
-      "details": "Engineering workspace uses Claude Opus for 45% of requests. Analysis of token patterns suggests 70% of these could use Sonnet with equivalent quality.",
-      "priority": "high"
-    },
-    {
-      "id": "REC-002",
-      "type": "caching",
-      "title": "Enable prompt caching for Research workspace",
-      "impact_estimate_usd": 200.0,
-      "details": "Research workspace has 15% cache hit rate. System prompts are repeated 85% of the time.",
-      "priority": "medium"
-    }
-  ]
-}
-```
-
-### Step 5: Output Report
-
-Write the analysis to `data/reports/monthly/<month>/analysis.json` and generate
-a human-readable summary for notification channels.
-
-## Claude Built-in Commands Integration
-
-This skill leverages Claude's built-in capabilities:
-
-- **`/plan`** — Use when the analysis requires multi-step reasoning about complex usage patterns
-- **`/boost`** — Use for deep cost optimization analysis requiring multiple perspectives
-- **Sequential Thinking MCP** — Use for step-by-step analysis of model usage trends
-
-## Example Invocation
-
-```
-Analyze the model usage for September 2026 and suggest cost optimizations.
-Focus on whether the Engineering team is using the right model mix.
-```
-
-## Output Format
-
-The skill produces:
-
-1. **JSON analysis file** — Machine-readable recommendations
-2. **Markdown summary** — Human-readable report for notifications
-3. **Notification payload** — Formatted for Slack/Discord/Email distribution
+Implement `Analyzer { id, requires, analyze(data) → Insight[] }` as a pure function and add it to `BUILTIN_ANALYZERS`. Keep thresholds as named constants, add a test with the demo data, and describe the insight in this table. See `docs/PLUGIN-ARCHITECTURE.md` §6.

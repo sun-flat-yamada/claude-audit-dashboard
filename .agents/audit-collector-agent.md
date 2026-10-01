@@ -1,22 +1,23 @@
 # 📡 Claude Audit Collector Agent (`audit-collector-agent`)
 
-Specialized autonomous agent responsible for collecting audit logs, organization metadata, and usage metrics from Anthropic Compliance and Admin APIs.
+Specialized autonomous agent responsible for collecting audit logs, directory data, settings, usage, cost and spend limits from the Claude Enterprise APIs.
 
 ---
 
 ## 🎯 Scope of Work
 
 1. **API Ingestion Management**:
-   - Oversee API integration for Anthropic Compliance API (`/v1/compliance/...`) and Admin API (`/v1/organizations/...`).
-   - Manage cursor-based pagination, rate limits (HTTP 429 backoff), and connection resilience.
+   - Own the Anthropic adapters in `packages/collector/src/adapters/anthropic/`: Compliance API (`/v1/compliance/...`), Admin API user management (`/v1/organizations/users|invites|rbac_groups`), Enterprise Analytics API (`/v1/organizations/analytics/...`) and Spend Limits API.
+   - Keep the HTTP contract (429 `retry-after`, 5xx/529 back-off, `x-should-retry`, timeouts) and the four pagination styles in `http-client.ts` / `paginate.ts`.
+   - Absorb API changes inside the gateway's zod schema and mapper (`docs/API-MAPPING.md`); never leak API field names into `@claude-audit/core`.
 2. **Snapshot Persistence**:
-   - Save partitioned raw audit activities, members, workspaces, and API keys under `data/snapshots/`.
-   - Ensure snapshots are timestamped and schema-validated against `packages/shared/src/types/`.
-3. **Data Sanitization & Mock Mode**:
-   - Maintain the synthetic public dataset in `data/sample/` for zero-PII local testing and public demo execution.
-   - Verify that all live API responses are kept strictly inside ignored storage.
+   - Snapshots are `data/snapshots/<id>/<dataset>.json` plus `manifest.json`, with per-dataset coverage (`ok` / `unavailable` / `error` and the reason).
+   - The Activity Feed cursor (time window + recent IDs) lives in `data/state.json`; it must never skip or duplicate events.
+3. **Data Sanitization & Demo Mode**:
+   - Maintain the deterministic synthetic tenant (`packages/collector/src/adapters/demo/`) and regenerate `data/sample/` with `pnpm demo`.
+   - Verify that all live API responses stay in gitignored storage or on the `data/audit` branch.
 4. **Pipeline CLI & Execution**:
-   - Maintain and test CLI runners: `pnpm collect:audit` and `pnpm collect:usage`.
+   - Maintain `pnpm collect`, `pnpm pipeline` and `pnpm archive` and their workflow wiring (`collect-audit.yml`).
 
 ---
 
@@ -24,6 +25,6 @@ Specialized autonomous agent responsible for collecting audit logs, organization
 
 - **Bound Skill**: `.agents/skills/audit-collector/SKILL.md`
 - **Related Specifications & Rules**:
-  - `docs/BLUEPRINT.md` (Sections 4 & 5)
+  - `docs/BLUEPRINT.md` (Sections 4–6), `docs/API-MAPPING.md`, `docs/ARCHITECTURE.md`
   - `.agents/rules/storage-and-data-routing.md`
   - `.agents/rules/security-zero-leakage.md`

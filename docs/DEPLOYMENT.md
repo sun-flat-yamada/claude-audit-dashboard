@@ -2,6 +2,12 @@
 
 > **Important:** This project stores audit data and should be deployed from a **Private** or **Internal** repository.
 
+## What gets published
+
+`deploy-pages.yml` builds the dashboard with **the synthetic sample** (`data/sample/dashboard.json`) unless the repository variable **`PAGES_DATA_SOURCE=live`** is set. With `live`, it takes `data/dashboard.json` from the `data/audit` branch and also redeploys after every successful collection.
+
+The published file contains aggregates only (KPIs, rule results, daily totals, top activity types, coverage). E-mail addresses are masked (`dashboard.maskPii`, default `true`), but organization names, rule evidence labels and cost figures are included — treat a live site as confidential.
+
 ---
 
 ## Repository Visibility Requirements
@@ -26,6 +32,7 @@ GitHub Enterprise Cloud supports **private GitHub Pages** that are only accessib
 2. Set **Source** to **GitHub Actions**
 3. Under **GitHub Pages visibility**, select **"Private"**
 4. Only users with repository access can view the dashboard
+5. Set the repository variable **`PAGES_DATA_SOURCE=live`** and re-run **Deploy Dashboard to GitHub Pages**
 
 ### Characteristics
 
@@ -43,19 +50,9 @@ GitHub Enterprise Cloud supports **private GitHub Pages** that are only accessib
 
 > ⚠️ **WARNING:** Even with a private repository, GitHub Pages sites are **publicly accessible by default** on `*.github.io`. The dashboard HTML/JS/CSS and the **embedded `dashboard.json`** will be publicly reachable.
 
-### Mitigation: Use Sample Data in Pages Build
+### Mitigation: keep the default (sample data on Pages)
 
-Configure the dashboard to use **sample/demo data** for the public Pages site, while keeping live audit data in the orphan branch (not deployed):
-
-```yaml
-# .github/workflows/deploy-pages.yml
-- name: Stage DEMO data only for Pages
-  run: |
-    cp data/sample/dashboard.json packages/dashboard/public/data/dashboard.json
-    echo '{"source":"demo","built_at":"..."}' > packages/dashboard/public/data/meta.json
-```
-
-This ensures:
+Leave `PAGES_DATA_SOURCE` **unset**. The public site then shows the synthetic tenant, while live data stays on the `data/audit` branch. This ensures:
 
 - ✅ Dashboard UI is visible as a demo/showcase
 - ✅ No real audit data exposed
@@ -63,8 +60,13 @@ This ensures:
 
 ### Accessing Live Data (Private Repo Owners)
 
-- Clone the repo and run `pnpm dev` locally with real data from the orphan branch
-- Or access via GitHub's file browser on the `data/audit` branch
+```bash
+.github/scripts/data-branch.sh restore   # copies data/ from the data/audit branch (gitignored locally)
+pnpm build:core && pnpm build:data       # regenerates data/dashboard.json if needed
+pnpm dev                                 # http://localhost:5173/claude-audit-dashboard/
+```
+
+The weekly and monthly reports (Markdown / HTML / CSV) are also on the `data/audit` branch under `data/reports/`.
 
 ---
 
@@ -72,7 +74,13 @@ This ensures:
 
 **Best for:** Organizations that need full control over access.
 
-Instead of GitHub Pages, deploy the dashboard to a self-hosted platform with authentication:
+Instead of GitHub Pages, deploy the dashboard to a self-hosted platform with authentication. Build it with live data first:
+
+```bash
+.github/scripts/data-branch.sh restore
+cp data/dashboard.json packages/dashboard/public/data/dashboard.json
+VITE_BASE_PATH=/ STAGED_DATA=1 pnpm build:dashboard   # output: packages/dashboard/dist
+```
 
 ### 3a. Vercel (Recommended)
 
@@ -143,7 +151,7 @@ Instead of hosting a live website, generate the dashboard as an artifact:
 ```yaml
 # In deploy workflow
 - name: Upload Dashboard as Artifact
-  uses: actions/upload-artifact@v4
+  uses: actions/upload-artifact@v4 # use the current major version
   with:
     name: audit-dashboard-${{ github.run_number }}
     path: ./packages/dashboard/dist/
@@ -174,13 +182,14 @@ Users download the artifact and open `index.html` locally:
 Regardless of hosting option, set these in your CI/CD:
 
 ```env
-# vite.config.ts base path — adjust per hosting
-VITE_BASE_URL=/claude-audit-dashboard/   # For GitHub Pages
-VITE_BASE_URL=/                          # For custom domain / Vercel / Netlify
+# Base path used by vite.config.ts (default: /claude-audit-dashboard/ for GitHub Pages)
+VITE_BASE_PATH=/                          # custom domain / Vercel / Netlify
 
-# Data source indicator
-VITE_DATA_SOURCE=live                    # or 'sample' for demo mode
+# Keep a pre-staged public/data/dashboard.json instead of copying data/ or data/sample/
+STAGED_DATA=1
 ```
+
+The dashboard itself shows whether it renders demo or live data (header badge, from the `source` field of `dashboard.json`).
 
 ---
 
@@ -189,10 +198,10 @@ VITE_DATA_SOURCE=live                    # or 'sample' for demo mode
 When setting up a fork for your organization:
 
 - [ ] Set repository to **Private** or **Internal**
-- [ ] Configure GitHub Secrets (API keys, notification webhooks)
-- [ ] Choose deployment option from above
-- [ ] Run first collection: `workflow_dispatch` on "Collect Audit Data"
-- [ ] Verify `data/audit` orphan branch was created
-- [ ] Verify dashboard loads with data
-- [ ] Configure notification channels
-- [ ] Test alert notifications
+- [ ] Configure secrets (`ANTHROPIC_ENTERPRISE_API_KEY`, notification channels) — see [SETUP.md](SETUP.md)
+- [ ] Choose a deployment option above; set `PAGES_DATA_SOURCE=live` only for access-controlled Pages
+- [ ] Run the first collection: `workflow_dispatch` on "Collect Audit Data"
+- [ ] Verify the `data/audit` orphan branch was created and contains `data/dashboard.json`
+- [ ] Check the dashboard's Data coverage section (every dataset `Collected`)
+- [ ] Set `ENABLE_SCHEDULED_JOBS=true`
+- [ ] Trigger a weekly report manually to test the notification channels

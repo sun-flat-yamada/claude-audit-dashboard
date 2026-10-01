@@ -7,15 +7,15 @@ Specialized autonomous agent responsible for evaluating organizational complianc
 ## 🎯 Scope of Work
 
 1. **Rule Engine & Evaluation**:
-   - Execute the 10+ built-in compliance checks across Access Control (`AC-*`), API Key Management (`AK-*`), Usage Anomaly (`UA-*`), Data Governance (`DG-*`), and Operational Health (`OP-*`).
-   - Calculate category scores and the overall Organization Compliance Score (0–100 scale).
+   - Evaluate the 30 built-in rules — Access Control (`AC-*`), API Key Management (`AK-*`), Usage Anomaly (`UA-*`), Data Governance (`DG-*`), Operational Health (`OP-*`), Configuration baselines (`CF-*`) and Activity monitoring (`AM-*`) — plus custom rules from `config/custom-rules.json`.
+   - Report the overall score (0–100) together with the number of rules actually assessed; explain `skipped` results through dataset coverage.
 2. **Anomaly & Violation Triaging**:
    - Rank violations by severity (`critical`, `high`, `medium`, `low`, `info`).
    - Generate actionable remediation recommendations for each detected violation.
 3. **Report Generation**:
-   - Write comprehensive evaluation reports to `data/reports/compliance-report-<timestamp>.json` and update `latest-report.json`.
+   - Reports are written to `data/reports/compliance/<snapshot id>.json`; `pnpm report:compliance` renders Markdown / HTML / CSV / JSON.
 4. **Configuration & Thresholds**:
-   - Validate and apply customizable threshold rules from `config/default.json` (e.g. inactive days, admin role ratio, usage spike multiplier).
+   - Tune parameters in `config/default.json` (`compliance.params.<ID>`, e.g. `AC-001.inactiveDays`, `UA-002.monthlyBudget`) and `compliance.disabledRules`; invalid values surface as `error` results.
 
 ---
 
@@ -23,5 +23,6 @@ Specialized autonomous agent responsible for evaluating organizational complianc
 
 - **Bound Skill**: `.agents/skills/compliance-checker/SKILL.md`
 - **Related Specifications & Rules**:
-  - `docs/BLUEPRINT.md` (Section 6: Compliance Audit Rules)
+  - `docs/BLUEPRINT.md` (Section 7: Compliance Audit Rules)
+  - `docs/PLUGIN-ARCHITECTURE.md` (adding rules)
   - `.agents/rules/compliance-rules-management.md`

@@ -1,38 +1,40 @@
 ---
 name: compliance-checker
-description: Execute 10+ built-in compliance checks, calculate posture scores (0-100), identify security violations, and generate structured compliance audit reports.
+description: Evaluate the 30 built-in compliance rules (plus custom CF/AM rules) against the latest snapshot, explain skipped results through dataset coverage, tune thresholds, and add or change rules while keeping docs in sync.
 ---
 
 # 🔍 Compliance Checker Skill (`compliance-checker`)
 
-Use this skill when auditing compliance rules, implementing new checks, modifying thresholds, or validating compliance scoring logic.
+Use this skill when auditing compliance results, implementing or changing rules, tuning thresholds, or validating scoring.
 
 ---
 
-## 📋 Rule Categories & Built-in Rules
+## 📋 Where things are
 
-| Category            | Rule ID | Title                      | Default Threshold            | Severity |
-| :------------------ | :------ | :------------------------- | :--------------------------- | :------- |
-| **Access Control**  | AC-001  | Inactive Members           | 90+ days without login       | Medium   |
-| **Access Control**  | AC-002  | Excessive Admin Ratio      | > 20% of total members       | High     |
-| **Access Control**  | AC-003  | Primary Owner Verification | Must be verified active      | Critical |
-| **API Keys**        | AK-001  | Inactive API Keys          | 30+ days without activity    | Medium   |
-| **API Keys**        | AK-002  | Unscoped API Keys          | Unrestricted workspace scope | High     |
-| **API Keys**        | AK-003  | API Key Age                | 180+ days old                | Medium   |
-| **Usage Anomaly**   | UA-001  | Token Consumption Spike    | > 3x trailing 7-day average  | High     |
-| **Usage Anomaly**   | UA-002  | Cost Budget Exceeded       | > 100% monthly limit         | Critical |
-| **Data Governance** | DG-001  | Empty Workspaces           | 0 members or 0 projects      | Low      |
-| **Operations**      | OP-001  | Collection Freshness       | > 24 hours without sync      | High     |
+| What                         | Where                                                                                   |
+| :--------------------------- | :-------------------------------------------------------------------------------------- |
+| Rule list (normative)        | `docs/BLUEPRINT.md` §7.1 (30 rules: AC, AK, UA, DG, OP, CF, AM)                         |
+| Code rules                   | `packages/core/src/domain/compliance/rules/<category>.ts`                               |
+| Baselines and watches (data) | `packages/core/src/domain/compliance/factories/defaults.ts`, `config/custom-rules.json` |
+| Engine, scoring              | `packages/core/src/domain/compliance/engine.ts`, `scoring.ts`                           |
+| Thresholds / disabled rules  | `config/default.json` → `compliance.params.<ID>`, `compliance.disabledRules`            |
 
----
-
-## 🛠️ Execution & Diagnostics
+## 🛠️ Execution & diagnostics
 
 ```bash
-# Run all compliance checks locally
-pnpm check:compliance
-
-# Output artifact locations:
-# - data/reports/compliance-report-<timestamp>.json
-# - data/reports/latest-report.json
+pnpm demo               # whole pipeline on the synthetic tenant (no key needed); output in data/sample/
+pnpm check:compliance   # evaluate the latest stored snapshot (after `pnpm collect`)
+pnpm report:compliance  # Markdown / HTML / CSV / JSON in data/reports/compliance/
 ```
+
+Output: `data/reports/compliance/<snapshot id>.json` (one report per evaluated snapshot).
+
+## 🧭 Reading results
+
+- `skipped` means a required dataset was not collected; the message names the dataset and the reason (missing key or scope, API error). Check the snapshot coverage or the dashboard's Data coverage section, not the rule.
+- `error` means invalid parameters (`Invalid params: …`) or an exception inside the rule; other rules still ran.
+- The score is `100 − Σ weights of failed rules`; it is always reported with `N of M rules assessed` when anything was skipped or errored.
+
+## ✅ Changing rules
+
+Follow `.agents/rules/compliance-rules-management.md`: implementation + tests + BLUEPRINT §7.1 + README.md + README.ja.md + `pnpm demo` in the same change. The docs-sync and golden tests in `packages/collector/src/main/__tests__/sample-and-docs.test.ts` enforce it.

@@ -1,6 +1,6 @@
 # 変更計画: Claude Enterprise 対応と Clean Architecture への再構成
 
-> **Version:** 1.0 (2026-09-30)
+> **Version:** 1.1 (2026-10-01) — Phase A 実装済み (実施結果は §12)
 > **起点:** [api-spec-mismatch-findings.md](api-spec-mismatch-findings.md) (§1〜§7 は前セッションの原文、§8 は本計画の再照合結果)
 > **関連:** [ARCHITECTURE.md](ARCHITECTURE.md) (設計) / [API-MAPPING.md](API-MAPPING.md) (API 対応表) / [BLUEPRINT.md](BLUEPRINT.md) (仕様の正)
 > **対象:** Claude Enterprise テナント (claude.ai の親組織と、その配下のリンク組織)
@@ -207,6 +207,8 @@ activity type は公式リファレンスの 516 種 (2026-09-30 時点) を `kn
 `Score = max(0, 100 − Σ 重み(fail の重大度))`、重み Critical 10 / High 5 / Medium 3 / Low 1 / Info 0 (変更なし)。
 `warning` と `skipped` は減点しない。`skipped` の件数は coverage と併せてダッシュボードに表示し、「データ欠落による高スコア」を見えるようにする。
 
+実装時の追加判断: キー未設定の空実行で `95/100` と表示されることを確認したため、`skipped` / `error` が 1 件でもある場合はスコアを常に評価済みルール数と併記する (`95/100 (2 of 30 rules assessed)`)。書式は domain の `formatScore` 1 か所に置き、ダッシュボードのヒーロー表示 (警告行付き)、通知タイトル、コンプライアンス / 週次レポートが共通に使う。計算式は変えない (除外方式は AWS Security Hub 等と同じ考え方で、欠落は OP-002 が fail として検出する)。
+
 ---
 
 ## 5. データモデルとストレージの変更
@@ -232,7 +234,7 @@ activity type は公式リファレンスの 516 種 (2026-09-30 時点) を `kn
 | 上書き             | `ANTHROPIC_COMPLIANCE_API_KEY` (任意)               | `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY` (任意、API 系統ごとに主キーを上書き) |
 | 必須性             | Admin キーが無いと起動失敗                          | キーが無い系統のデータセットは `unavailable` として続行し、OP-002 が検出                                                        |
 | データディレクトリ | `DATA_DIR` (パッケージ基準で解決される不具合)       | `DATA_DIR` を pnpm 起動ディレクトリ (`INIT_CWD`) 基準で解決                                                                     |
-| ルール有効化       | `compliance.enabled_rules` (許可リスト)             | `compliance.disabled_rules` (拒否リスト。新ルールは既定で有効)                                                                  |
+| ルール有効化       | `compliance.enabled_rules` (許可リスト)             | `compliance.disabledRules` (拒否リスト。新ルールは既定で有効)                                                                   |
 | ルール引数         | 無し                                                | `compliance.params.<ruleId>` (zod で検証、不正値は `error` 結果)                                                                |
 | カスタムルール     | `{ rules: [{ checker: "fn名" }] }` (未実装)         | `{ settingBaselines: [...], activityWatches: [...] }`                                                                           |
 | Pages の公開データ | data/audit があれば常にライブ                       | リポジトリ変数 `PAGES_DATA_SOURCE=live` のときのみライブ、既定はサンプル                                                        |
@@ -290,7 +292,7 @@ Phase B 完了後にリリース。BLUEPRINT の Status を Stable に更新す�
 | #9                  | @types/node 26.6.3                                                                          | 適用                                    | 実行環境は Node 22 のまま。Node 22 に無い API を使わないことをレビューで確認                                            |
 | #2, #3, #5, #6, #19 | checkout v7, setup-node v7, upload-pages-artifact v5, deploy-pages v5, pnpm/action-setup v6 | 適用                                    | #3 の CI 失敗は lockfile 追加前の古い基点が原因で、v7 固有の問題ではない (ログで確認)。v4 系の Node 20 非推奨警告も解消 |
 
-再発防止として `dependabot.yml` に lint / test / types のグループを追加し、Actions の複合アクション (`.github/actions/setup`) も更新対象に含める。CI に `pnpm audit --audit-level=high` を追加する。
+再発防止として `dependabot.yml` に lint / types のグループ (vitest は vite グループ) と Actions のグループを追加し、Actions の複合アクション (`.github/actions/setup`) も `directories` で更新対象に含めた。CI に `pnpm audit --audit-level=high` (`pnpm audit:deps`) のジョブを追加した。
 
 ---
 
@@ -351,13 +353,13 @@ primary owner が claude.ai **Organization settings > API** で「すべての�
 
 ## 11. 品質ゲートとテスト戦略
 
-| 観点           | 手段                                                                                                                               |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 依存方向       | core の tsconfig に Node 型を含めない / ESLint `no-restricted-imports` でレイヤー越境を禁止                                        |
-| 複雑度         | ESLint `complexity: 10`、`max-lines-per-function: 60`                                                                              |
-| API 契約       | 公式ドキュメントのレスポンス例をフィクスチャ化したアダプタテスト、未知項目・未知 enum の通過テスト、必須項目欠落の検出テスト       |
-| ルール         | 全ルールで pass / fail / skipped、引数検証、例外隔離のテスト                                                                       |
-| 仕様同期       | BLUEPRINT §7 と README のルール表 = レジストリのルール ID (テストで強制)                                                           |
-| サンプルデータ | `pnpm demo` の出力と `data/sample/` の一致 (ゴールデンテスト)、fork:verify で契約 v2 を検証                                        |
-| セキュリティ   | secret-scan、gitleaks、`pnpm audit --audit-level=high`、PII マスクのテスト                                                         |
-| 必須ゲート     | `npm run fork:verify && npm run typecheck && npm test && npm run secret-scan && npm run build` + `pnpm lint` + `pnpm format:check` |
+| 観点           | 手段                                                                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 依存方向       | core の tsconfig に Node 型を含めない / ESLint `no-restricted-imports` でレイヤー越境を禁止                                                 |
+| 複雑度         | ESLint `complexity: 10`、`max-lines-per-function: 60`                                                                                       |
+| API 契約       | 公式ドキュメントのレスポンス例をフィクスチャ化したアダプタテスト、未知項目・未知 enum の通過テスト、必須項目欠落の検出テスト                |
+| ルール         | 全ルールで pass / fail / skipped、引数検証、例外隔離のテスト                                                                                |
+| 仕様同期       | BLUEPRINT §7 と README のルール表 = レジストリのルール ID (テストで強制)                                                                    |
+| サンプルデータ | `pnpm demo` の出力と `data/sample/` の一致 (ゴールデンテスト)、fork:verify で契約 v2 を検証                                                 |
+| セキュリティ   | secret-scan、gitleaks、`pnpm audit --audit-level=high`、PII マスクのテスト                                                                  |
+| 必須ゲート     | `pnpm fork:verify && pnpm typecheck && pnpm test && pnpm secret-scan && pnpm build` + `pnpm lint` + `pnpm format:check` + `pnpm audit:deps` |
