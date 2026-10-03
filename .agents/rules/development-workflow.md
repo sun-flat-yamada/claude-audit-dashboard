@@ -27,7 +27,7 @@ All AI agents (Antigravity, Gemini, Claude Code, Cursor, Copilot, etc.) operatin
      ```
    - Placing worktrees inside the repository root risks polluting secret scanners, Vitest runners, and `git status`.
    - Helper: `pnpm worktree:add <branch>`, `pnpm worktree:list`, `pnpm worktree:clean <branch>` (`scripts/worktree-manage.ts`).
-3. **Isolated Hosted Sessions**: An agent running in its own container on an assigned branch (e.g. Claude Code on the web) is already isolated; it works on that branch directly.
+3. **Isolated Hosted Sessions**: An agent running in its own container on an assigned branch (e.g. Claude Code on the web, `CLAUDE_CODE_REMOTE=true`) is already isolated; it works on that branch directly, uses REST only (the cloud GitHub proxy rejects GraphQL), and may rename the assigned branch to `<type>/<issue>-<slug>` before the first push when the session is allowed to choose its branch (`pnpm change-dev:branch rename`).
 
 ---
 
@@ -41,12 +41,15 @@ All AI agents (Antigravity, Gemini, Claude Code, Cursor, Copilot, etc.) operatin
 
 - Every non-trivial change must correspond to an Issue specifying **Why**, **What**, and **Acceptance Criteria**.
 - Create via GitHub Web or `gh issue create`. Record the Issue number (`#<id>`).
+- Each plan task is one **Work-Unit Issue** (`.github/ISSUE_TEMPLATE/work_unit.yml`, one PR each) under a per-phase tracking Issue; "Resolve Issue #N" starts a session from the Issue (skill section _Work-Unit Issue_).
+- Name the branch with `pnpm change-dev:branch name --issue <id>` (§4).
 
 ### Step 2: Implementation Plan & Task Orchestration (Pre-Execution Gate)
 
 - Before provisioning worktrees or modifying code, formulate an `implementation_plan.md` (proposed changes, risks, verification plan) and a `task.md` checklist in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` under the original repository root (never under `<appDataDir>`).
 - Antigravity: write them with `ArtifactMetadata` (`RequestFeedback: true` for the plan, `false` for the task list; `UserFacing: true`). Claude Code: use plan mode and the task list. Others: Issue comment / draft PR.
-- **Await user approval** before proceeding.
+- **Plan first**: commit the plan and task list on their own before any implementation file (`pnpm change-dev:plan-check`; `change-dev:finish` re-checks).
+- **Await user approval** before proceeding, unless `CHG_DEV_AUTO_PILOT` is on (`pnpm change-dev:mode`): then report the plan and continue, stopping only for a missing prerequisite, an ambiguous scope, or an irreversible / destructive step.
 
 ### Step 3: Sibling Worktree Provisioning
 
@@ -85,12 +88,13 @@ git push -u origin feat/<id>-<slug>   # (or --force-with-lease after a rebase of
 gh pr create --base main --head feat/<id>-<slug> --title "feat: ... (#<id>)" --body "... Closes #<id>"
 ```
 
-Follow `.github/PULL_REQUEST_TEMPLATE.md`.
+Follow `.github/PULL_REQUEST_TEMPLATE.md`. The PR is **ready for review when `CHG_DEV_AUTO_PILOT` is on and a draft when it is off**.
 
 ### Step 7: Rebase Merge & Pruning
 
 ```bash
-gh pr merge <pr> --rebase --delete-branch
+pnpm change-dev:finish <pr>      # Auto-Pilot: ready -> plan/branch checks -> CI -> approve -> rebase merge (exit 2 = CI running)
+# manual local equivalent: gh pr merge <pr> --rebase --delete-branch
 pnpm worktree:clean feat/<id>-<slug>
 # or manually:
 cd ../../claude-audit-dashboard
@@ -102,6 +106,8 @@ git branch -d feat/<id>-<slug>
 ---
 
 ## 4. Branch Naming
+
+Details and enforcement: `.agents/rules/git-rules-commit.md` §2. Cloud sessions: `.agents/rules/instructions-rules-precedence.md`.
 
 - `feat/<issue>-<slug>` — New features
 - `fix/<issue>-<slug>` — Bug fixes

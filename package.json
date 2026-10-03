@@ -37,7 +37,7 @@
     "build:collector": "pnpm --filter @claude-audit/collector... build",
     "build:dashboard": "pnpm --filter @claude-audit/dashboard... build",
     "typecheck": "pnpm build:core && pnpm -r typecheck",
-    "test": "pnpm build:core && pnpm -r test",
+    "test": "pnpm build:core && pnpm -r test && pnpm test:scripts",
     "test:unit": "pnpm -r test:unit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -60,6 +60,11 @@
     "worktree:add": "tsx scripts/worktree-manage.ts add",
     "worktree:list": "tsx scripts/worktree-manage.ts list",
     "worktree:clean": "tsx scripts/worktree-manage.ts clean",
+    "change-dev:plan-check": "tsx scripts/plan-first-check.ts",
+    "change-dev:branch": "tsx scripts/change-dev-branch.ts",
+    "change-dev:mode": "tsx scripts/change-dev-autopilot.ts mode",
+    "change-dev:finish": "tsx scripts/change-dev-autopilot.ts finish",
+    "test:scripts": "tsx --test \"scripts/__tests__/*.test.ts\"",
     "clean": "pnpm -r clean && rimraf node_modules"
   },
   "devDependencies": {

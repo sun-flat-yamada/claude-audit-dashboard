@@ -75,7 +75,7 @@ pnpm install
 
 #### Step 4: Implement & Run Local Quality Gate
 
-1. **Branch Naming**: `feat/<issue>-<slug>`, `fix/<issue>-<slug>`, `docs/...`, `refactor/...`.
+1. **Branch Naming**: `<type>/<issue>-<slug>` (e.g. `feat/42-cost-center-export`); generate and check with `npm run change-dev:branch -- name --issue 42` / `-- check` (`.agents/rules/git-rules-commit.md`). Commit the implementation plan on its own before any implementation (`npm run change-dev:plan-check`). With `CHG_DEV_AUTO_PILOT=true`, `npm run change-dev:finish -- <pr>` carries a PR through CI and Rebase & Merge.
 2. **Conventional Commits**: `feat: ...`, `fix: ...`, `docs: ...`, `test: ...`.
 3. **Mandatory 5-Stage Quality Gate** (run inside the worktree):
    ```bash
