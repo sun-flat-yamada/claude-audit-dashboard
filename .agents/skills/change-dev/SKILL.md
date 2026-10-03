@@ -156,6 +156,18 @@ Architectural changes and task executions are governed through three artifacts. 
 
 ---
 
+## 🎫 Work-Unit Issue (one task = one Issue)
+
+Every task that a plan defines (a `task.md` item, a plan table row such as `P1-2`) is registered as **one Issue**, sized for one Pull Request, so a fresh agent session can start from the Issue number alone.
+
+1. **Register**: one Issue per task with `.github/ISSUE_TEMPLATE/work_unit.yml` (Why, What, Done condition, Acceptance Criteria checklist, References and Prerequisites, How to start). Title: `[<task-id>] <imperative title>`.
+2. **Group**: one parent (tracking) Issue per phase / epic, titled `[Phase N] <name> — tracking`, with each task Issue attached as a sub-issue. The parent is closed when all children are closed.
+3. **Start from an Issue**: on "Resolve Issue #N" the agent reads the Issue and its parent, `AGENTS.md` and every reference; checks the Prerequisites are merged (otherwise stops and reports); creates `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` linking the Issue (Phase 2); follows the lifecycle; opens the PR with `Closes #N`.
+4. **One Issue per session**: anything a later session needs (decisions, open questions) goes into the Issue or the plan documents, never only into chat.
+5. **Scope discipline**: findings outside the Issue's scope become new Issues, not extra changes in the PR.
+
+---
+
 ## 🛠️ The 7-Phase Execution Lifecycle
 
 ```text
@@ -179,7 +191,15 @@ gh issue create \
   --label "enhancement"
 ```
 
-Record the Issue number (e.g. `#42`) and choose the branch name: `feat/<issue>-<slug>`, `fix/<issue>-<slug>`, `docs/...`, `refactor/...`.
+Record the Issue number (e.g. `#42`) and name the branch after the change (`.agents/rules/git-rules-commit.md` §2):
+
+```bash
+pnpm change-dev:branch name --issue 42                          # type + title from the Issue → feat/42-cost-center-export
+pnpm change-dev:branch name feat 42 "Add cost center export"    # explicit
+pnpm change-dev:branch check [branch]                           # validate (default: current branch)
+```
+
+`<type>/<issue>-<slug>`: a Conventional Commits type, the Issue number, 2-6 lowercase English words (slug ≤ 40 chars, whole name ≤ 60). Pass `--slug` for a long or non-English title. `change-dev:finish` refuses other names (except `main`, `data/audit`, `fork/custom`, `dependabot/**`).
 
 ---
 
@@ -189,7 +209,8 @@ Before writing any application code or provisioning worktrees:
 
 1. **Formulate `implementation_plan.md`** in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` of the original repository root — proposed file changes, risks, and verification commands (see structure A).
 2. **Initialize `task.md`** in the same directory — the phase checklist (see structure B).
-3. **Await user sign-off** — Antigravity **Proceed** button, Claude Code plan approval, or reviewer confirmation. Do not move to Phase 3 without it.
+3. **Plan first**: commit `implementation_plan.md` and `task.md` on their own **before** any implementation file is touched; verify with `pnpm change-dev:plan-check` (`change-dev:finish` re-checks before merging). Documentation-only branches are exempt.
+4. **Await user sign-off** — Antigravity **Proceed** button, Claude Code plan approval, or reviewer confirmation — unless Auto-Pilot is on (below), in which case report the plan and continue, stopping only for a missing prerequisite, an ambiguous scope, or an irreversible / destructive step. Do not move to Phase 3 without sign-off or Auto-Pilot.
 
 ---
 
@@ -266,10 +287,10 @@ Once all checks pass cleanly:
    git push --force-with-lease origin feat/42-new-feature   # after a rebase (own branch only)
    ```
 
-3. Open the Pull Request following `.github/PULL_REQUEST_TEMPLATE.md`:
+3. Open the Pull Request following `.github/PULL_REQUEST_TEMPLATE.md`. **Draft or not is decided by `CHG_DEV_AUTO_PILOT`** (`pnpm change-dev:mode`): on = ready for review, off = draft (`--draft`):
 
    ```bash
-   gh pr create \
+   gh pr create [--draft] \
      --base main \
      --head feat/42-new-feature \
      --title "feat: Add new feature (#42)" \
@@ -280,12 +301,14 @@ Once all checks pass cleanly:
 
 ### Phase 7: Rebase & Merge and Workspace Cleanup
 
-1. Merge with **Rebase & Merge** once CI is green:
+1. Merge with **Rebase & Merge** once CI is green. The helper works locally and in Claude Code cloud sessions (REST only):
 
    ```bash
-   gh pr checks 42
-   gh pr merge 42 --rebase --delete-branch
+   pnpm change-dev:finish 42          # ready if draft -> plan/branch checks -> CI -> approve -> rebase merge
+   pnpm change-dev:finish 42 --wait   # local: poll CI instead of exiting with 2
    ```
+
+   Manual equivalent (local only; `gh pr` subcommands use GraphQL, which the cloud GitHub proxy rejects): `gh pr checks 42 && gh pr merge 42 --rebase --delete-branch`.
 
 2. Clean up from the primary repository:
 
@@ -307,10 +330,44 @@ Once all checks pass cleanly:
 
 ---
 
+## 🚀 Auto-Pilot Mode (`CHG_DEV_AUTO_PILOT`)
+
+Opt-in mode that carries a change from **PR creation to Rebase & Merge** without manual intervention.
+
+| Item             | Value                                                                                                                       |
+| :--------------- | :-------------------------------------------------------------------------------------------------------------------------- |
+| Enabled when     | `true` (case-insensitive) or `1`                                                                                            |
+| Resolution order | process environment → `.env` → `.env.example` (repository default)                                                          |
+| This repository  | **disabled** by default (`CHG_DEV_AUTO_PILOT=false` in `.env.example`); set it in `.env` or the cloud environment to opt in |
+
+`pnpm change-dev:mode` prints the resolved value, its source and the branches below (`scripts/change-dev-autopilot.ts`).
+
+| Decision point                           | Auto-Pilot on                                              | Auto-Pilot off         |
+| :--------------------------------------- | :--------------------------------------------------------- | :--------------------- |
+| After `implementation_plan.md` (Phase 2) | Report and continue                                        | Wait for user approval |
+| PR at creation (Phase 6)                 | Ready for review                                           | Draft                  |
+| After the PR (Phase 7)                   | `change-dev:finish`: CI, approval, Rebase & Merge, cleanup | Manual                 |
+
+Behavior after PR creation: mark ready → wait for CI (cloud: do not poll; the `check_suite.completed` event wakes the session, then rerun `change-dev:finish`; exit code `2` = still running) → self-heal failures (fix, rerun the quality gate, push; never skip tests) → approve with the agent's account (GitHub rejects the author's own approval with 422; the helper then merges only when the base requires 0 approvals) → Rebase & Merge at the checked head SHA → cleanup.
+
+Guardrails (never relaxed): no `--admin`, no bypassing branch protection, no direct push to `main`; never merge with a failed or running check, a conflict or an unanswered review thread; stop and report when required approvals cannot be given, a rebase conflict is non-trivial, or checks stay red after fixes. The quality gate always runs before the PR.
+
+---
+
+## ☁️ Claude Code Cloud Sessions (`CLAUDE_CODE_REMOTE=true`)
+
+- The session checkout replaces the sibling worktree (Phase 3).
+- GitHub traffic goes through a proxy that **rejects GraphQL**: use REST (`gh api`, as the helper does); `gh pr view / checks / ready / merge` do not work. Ready-for-review uses `POST .../pulls/{n}/ccr/ready_for_review`.
+- The proxy may reject branch deletion: the helper reports a branch it could not delete.
+- The platform names the session branch `claude/<adjective>-<name>-<id>`. When the session may choose its branch, rename it before the first push with `pnpm change-dev:branch rename --issue 42` (refused if the branch has pushed work of its own, the new name exists, or it is a long-lived branch; `.agents/rules/instructions-rules-precedence.md` §2). When the session is told to use an assigned branch, keep it and push only there.
+- Repository rules take precedence over cloud defaults (`.agents/rules/instructions-rules-precedence.md`); conflicts are reported only in the final reply.
+
+---
+
 ## 🔗 Repository References
 
 - **Specifications**: `docs/BLUEPRINT.md`, `docs/PLUGIN-ARCHITECTURE.md`, `CONTRIBUTING.md`
-- **Rules (`.agents/rules/`)**: `development-workflow.md`, `security-zero-leakage.md`, `storage-and-data-routing.md`, `compliance-rules-management.md`
+- **Rules (`.agents/rules/`)**: `development-workflow.md`, `git-rules-commit.md`, `instructions-rules-precedence.md`, `security-zero-leakage.md`, `storage-and-data-routing.md`, `compliance-rules-management.md`
 - **Agent personas (`.agents/`)**: `change-dev.agent.md`, `fork-sync-agent.md`
 - **Antigravity docs** (verify artifact behavior when in doubt): `https://antigravity.google/docs`, `https://antigravity.google/docs/skills`, `https://antigravity.google/docs/rules-workflows`
 
