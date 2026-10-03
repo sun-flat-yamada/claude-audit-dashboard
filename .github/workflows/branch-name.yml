@@ -1,0 +1,25 @@
+name: Branch Name Check
+
+# change-dev branches are named after the change: <type>/<issue>-<slug> (.agents/rules/git-rules-commit.md).
+# Fails a pull request whose head branch keeps a name that does not describe the change,
+# such as the Claude Code cloud session default `claude/<adjective>-<name>-<id>`.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  branch-name:
+    name: Head branch follows <type>/<issue>-<slug>
+    # Fork PRs and Dependabot keep their own naming.
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - name: Validate head branch name
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: pnpm change-dev:branch check "$HEAD_REF"

@@ -46,7 +46,7 @@ A branch is named after the change it carries, so that `git branch -r`, the PR l
 
 - Generate and check the name with the helper instead of typing it: `pnpm change-dev:branch name <type> <issue> "<title>"` (or `name --issue <n>`, which takes the type and title from the Issue) and `pnpm change-dev:branch check [branch]`.
 - **Names that do not describe the change are not used for PRs**, in particular the names the Claude Code cloud platform assigns to a session (`claude/<adjective>-<name>-<id>`, `ccr-<hex>-<id>`). A cloud session renames its assigned branch before the first push (`pnpm change-dev:branch rename ...`; see `development-workflow.md` and `instructions-rules-precedence.md` §2).
-- Enforcement: `change-dev:finish` stops on a non-conforming head branch, and fails such a PR when it is merged through it (a CI workflow can run `pnpm change-dev:branch check "$HEAD_REF"` for the same check). Long-lived and bot branches (`main`, `data/audit`, `fork/custom`, `dependabot/**`) and PRs from forks are exempt.
+- Enforcement: `change-dev:finish` stops on a non-conforming head branch, and the `Branch Name Check` workflow (`.github/workflows/branch-name.yml`) fails such a PR. Long-lived and bot branches (`main`, `data/audit`, `fork/custom`, `dependabot/**`) and PRs from forks are exempt.
 - Sibling worktrees live at `../<repo>-worktrees/<branch with / replaced by ->` (see `development-workflow.md`).
 - Direct commits/pushes to `main` on upstream are forbidden (see `development-workflow.md`).
 
