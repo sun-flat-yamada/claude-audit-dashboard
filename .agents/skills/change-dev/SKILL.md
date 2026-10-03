@@ -199,7 +199,7 @@ pnpm change-dev:branch name feat 42 "Add cost center export"    # explicit
 pnpm change-dev:branch check [branch]                           # validate (default: current branch)
 ```
 
-`<type>/<issue>-<slug>`: a Conventional Commits type, the Issue number, 2-6 lowercase English words (slug ≤ 40 chars, whole name ≤ 60). Pass `--slug` for a long or non-English title. `change-dev:finish` refuses other names (except `main`, `data/audit`, `fork/custom`, `dependabot/**`).
+`<type>/<issue>-<slug>`: a Conventional Commits type, the Issue number, 2-6 lowercase English words (slug ≤ 40 chars, whole name ≤ 60). Pass `--slug` for a long or non-English title. `change-dev:finish` and the `Branch Name Check` workflow refuse other names (except `main`, `data/audit`, `fork/custom`, `dependabot/**`).
 
 ---
 
