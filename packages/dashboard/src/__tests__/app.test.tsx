@@ -22,11 +22,14 @@ const FIXTURE = raw(
     import: 'default',
   }),
 );
-const DETAIL = import.meta.glob<string>('../../../../data/sample/detail/{index,members}.json', {
-  eager: true,
-  query: '?raw',
-  import: 'default',
-});
+const DETAIL = import.meta.glob<string>(
+  '../../../../data/sample/detail/{index,members,api-keys}.json',
+  {
+    eager: true,
+    query: '?raw',
+    import: 'default',
+  },
+);
 const SOURCES: Array<[string, string | undefined]> = [
   ['sample', SAMPLE],
   ['fixtures', FIXTURE],
@@ -93,6 +96,25 @@ describe('hash routing', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Members' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Members' })).toHaveAttribute('aria-current', 'page');
     expect(await screen.findByRole('table', { name: 'Members' })).toBeInTheDocument();
+  });
+
+  it('opens the API key inventory by deep link', async () => {
+    const byName = (suffix: string) =>
+      Object.entries(DETAIL).find(([name]) => name.endsWith(suffix))?.[1] ?? '';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: RequestInfo | URL) => {
+        const path = String(url);
+        if (path.endsWith('/api-keys.json')) return new Response(byName('/api-keys.json'));
+        if (path.endsWith('/detail/index.json')) return new Response(byName('/index.json'));
+        return new Response(SAMPLE ?? '');
+      }),
+    );
+    window.location.hash = '#/keys';
+    render(<App />);
+    expect(await screen.findByRole('heading', { level: 1, name: 'API keys' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'API keys' })).toHaveAttribute('aria-current', 'page');
+    expect(await screen.findByRole('table', { name: 'API keys' })).toBeInTheDocument();
   });
 
   it('shows the not-found page for an unknown deep link and recovers with back/forward', async () => {

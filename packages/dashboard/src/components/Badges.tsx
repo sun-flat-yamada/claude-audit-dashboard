@@ -10,6 +10,13 @@ const STATUS: Record<string, { icon: string; color: string; label: string }> = {
   active: { icon: '✓', color: 'var(--status-good)', label: 'Active' },
   inactive: { icon: '!', color: 'var(--status-warning)', label: 'Inactive' },
   unknown: { icon: '?', color: 'var(--status-neutral)', label: 'Unknown' },
+  'key-rotate': { icon: '✕', color: 'var(--status-critical)', label: 'Rotate' },
+  'key-unused': { icon: '!', color: 'var(--status-serious)', label: 'Unused' },
+  'key-privileged': { icon: '!', color: 'var(--status-serious)', label: 'Write scope' },
+  'key-rotate_soon': { icon: '!', color: 'var(--status-warning)', label: 'Rotate soon' },
+  'key-unknown': { icon: '?', color: 'var(--status-neutral)', label: 'Use unknown' },
+  'key-ok': { icon: '✓', color: 'var(--status-good)', label: 'OK' },
+  'key-inactive': { icon: '–', color: 'var(--status-neutral)', label: 'Deactivated' },
 };
 
 const SEVERITY: Record<string, string> = {

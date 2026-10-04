@@ -3,6 +3,7 @@ import type { DashboardView } from '@claude-audit/core/contracts';
 import type { NavItem } from './components/NavBar';
 import { matchPath } from './lib/router';
 import { Compliance } from './pages/Compliance';
+import { ApiKeys } from './pages/ApiKeys';
 import { Members } from './pages/Members';
 import { Overview } from './pages/Overview';
 
@@ -36,6 +37,13 @@ export const ROUTES: RouteDef[] = [
     label: 'Members',
     nav: true,
     render: () => <Members />,
+  },
+  {
+    path: '/keys',
+    pattern: '/keys',
+    label: 'API keys',
+    nav: true,
+    render: () => <ApiKeys />,
   },
 ];
 
