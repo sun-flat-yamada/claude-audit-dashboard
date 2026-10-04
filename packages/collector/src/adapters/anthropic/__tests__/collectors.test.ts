@@ -1,6 +1,7 @@
 import { DataUnavailableError, gatherDatasets, type DatasetCollector } from '@claude-audit/core';
 import { describe, expect, it } from 'vitest';
-import { MOCK_KEY, fakeAnthropic } from '../../../__tests__/fake-anthropic.js';
+import { MOCK_KEY } from '../../../__tests__/fake-anthropic.js';
+import { FIXTURE_SETS, OFFICIAL_SET, type FixtureSet } from '../../../__tests__/fixture-sets.js';
 import { AdminApi } from '../admin-api.js';
 import { AnalyticsApi } from '../analytics-api.js';
 import {
@@ -33,10 +34,11 @@ const settings: SourceSettings = {
 function apis(
   overrides = {},
   families: (keyof AnthropicApis)[] = ['compliance', 'admin', 'analytics'],
+  set: FixtureSet = OFFICIAL_SET,
 ): AnthropicApis {
   const http = new HttpClient({
     apiKey: MOCK_KEY,
-    fetchImpl: fakeAnthropic(overrides).fetch,
+    fetchImpl: set.api(overrides).fetch,
     sleep: async () => {},
   });
   return {
@@ -46,9 +48,12 @@ function apis(
   };
 }
 
-describe('createAnthropicCollectors', () => {
+describe.each(FIXTURE_SETS)('createAnthropicCollectors on the $name fixtures', (set) => {
   it('collects every Enterprise dataset from the documented responses', async () => {
-    const gathered = await gatherDatasets(createAnthropicCollectors(apis(), settings), context);
+    const gathered = await gatherDatasets(
+      createAnthropicCollectors(apis({}, undefined, set), settings),
+      context,
+    );
     const statuses = Object.fromEntries(
       Object.entries(gathered.coverage).map(([k, v]) => [k, v.status]),
     );
@@ -67,13 +72,13 @@ describe('createAnthropicCollectors', () => {
       'spendLimits',
       'usage',
     ]);
-    expect(gathered.coverage.cost?.asOf).toBe('2026-09-30T06:00:00Z');
+    expect(gathered.coverage.cost?.asOf).toBe(set.costAsOf);
     expect(gathered.coverage.groups?.source).toBe('GET /v1/organizations/rbac_groups');
   });
 
   it('marks datasets unavailable when their key is missing, naming the variable to set', async () => {
     const gathered = await gatherDatasets(
-      createAnthropicCollectors(apis({}, ['compliance']), settings),
+      createAnthropicCollectors(apis({}, ['compliance'], set), settings),
       context,
     );
     expect(gathered.coverage.usage).toMatchObject({
@@ -100,10 +105,14 @@ describe('createAnthropicCollectors', () => {
     });
     const gathered = await gatherDatasets(
       createAnthropicCollectors(
-        apis({
-          '/v1/organizations/spend_limits/effective': forbidden,
-          '/v1/organizations/invites': broken,
-        }),
+        apis(
+          {
+            '/v1/organizations/spend_limits/effective': forbidden,
+            '/v1/organizations/invites': broken,
+          },
+          undefined,
+          set,
+        ),
         settings,
       ),
       context,
@@ -124,7 +133,10 @@ describe('createAnthropicCollectors', () => {
       body: { error: { type: 'permission_error', message: 'needs read:rbac_groups' } },
     });
     const gathered = await gatherDatasets(
-      createAnthropicCollectors(apis({ '/v1/organizations/rbac_groups': forbidden }), settings),
+      createAnthropicCollectors(
+        apis({ '/v1/organizations/rbac_groups': forbidden }, undefined, set),
+        settings,
+      ),
       context,
     );
     expect(gathered.coverage.groups).toMatchObject({
@@ -132,14 +144,15 @@ describe('createAnthropicCollectors', () => {
       source: 'GET /v1/compliance/groups',
     });
     expect(gathered.data.groups?.[0]?.memberCount).toBeNull();
+    expect(gathered.data.groups).toHaveLength(set.groups);
   });
 
   it('advances the activity window cursor and de-duplicates across runs', async () => {
-    const collector = createAnthropicCollectors(apis(), settings).find(
+    const collector = createAnthropicCollectors(apis({}, undefined, set), settings).find(
       (c) => c.dataset === 'activities',
     )!;
     const first = await collector.collect({ ...context, cursor: undefined });
-    expect(first.items).toHaveLength(2);
+    expect(first.items).toHaveLength(set.activities);
     const second = await collector.collect({
       ...context,
       now: new Date('2026-09-30T12:30:00Z'),
@@ -150,7 +163,7 @@ describe('createAnthropicCollectors', () => {
   });
 
   it('omits disabled datasets', () => {
-    const collectors = createAnthropicCollectors(apis(), {
+    const collectors = createAnthropicCollectors(apis({}, undefined, set), {
       ...settings,
       disabled: ['spendLimits', 'usage'],
     });

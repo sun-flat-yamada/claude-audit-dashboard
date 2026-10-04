@@ -6,7 +6,11 @@ export const ORG_A = '91012d09-e48b-438e-a489-1bebfd8fa6f9';
 
 export const MOCK_KEY = 'sk-ant-api01-mock000000000000000000000000';
 
-type Handler = (url: URL) => { status?: number; body: unknown; headers?: Record<string, string> };
+export type Handler = (url: URL) => {
+  status?: number;
+  body: unknown;
+  headers?: Record<string, string>;
+};
 
 /** Applies the `created_at.gte` / `created_at.lt` window like the Activity Feed does. */
 const inWindow = <T extends { created_at: string }>(url: URL, rows: T[]): T[] => {

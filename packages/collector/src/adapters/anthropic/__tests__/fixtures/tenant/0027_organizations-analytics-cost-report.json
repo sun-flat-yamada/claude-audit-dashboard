@@ -1,0 +1,173 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/cost_report",
+    "query": {
+      "bucket_width": ["1d"],
+      "ending_at": ["2026-09-30T11:58:00.000Z"],
+      "group_by[]": ["rbac_group_id"],
+      "starting_at": ["2026-07-03T00:00:00.000Z"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "ending_at": "2026-09-27T00:00:00Z",
+          "results": [
+            {
+              "amount": "68477.000000",
+              "currency": "USD",
+              "list_amount": "82172",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "63336.000000",
+              "currency": "USD",
+              "list_amount": "76003",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "18758.000000",
+              "currency": "USD",
+              "list_amount": "22509",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            }
+          ],
+          "starting_at": "2026-09-26T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-28T00:00:00Z",
+          "results": [
+            {
+              "amount": "18541.000000",
+              "currency": "USD",
+              "list_amount": "22249",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "30443.000000",
+              "currency": "USD",
+              "list_amount": "36531",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "82590.000000",
+              "currency": "USD",
+              "list_amount": "99108",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            }
+          ],
+          "starting_at": "2026-09-27T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-29T00:00:00Z",
+          "results": [
+            {
+              "amount": "7818.000000",
+              "currency": "USD",
+              "list_amount": "9381",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "74726.000000",
+              "currency": "USD",
+              "list_amount": "89671",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "85508.000000",
+              "currency": "USD",
+              "list_amount": "102609",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            }
+          ],
+          "starting_at": "2026-09-28T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-30T00:00:00Z",
+          "results": [
+            {
+              "amount": "44941.000000",
+              "currency": "USD",
+              "list_amount": "53929",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "84640.000000",
+              "currency": "USD",
+              "list_amount": "101568",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "26308.000000",
+              "currency": "USD",
+              "list_amount": "31569",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            }
+          ],
+          "starting_at": "2026-09-29T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-31T00:00:00Z",
+          "results": [
+            {
+              "amount": "82307.000000",
+              "currency": "USD",
+              "list_amount": "98768",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "19115.000000",
+              "currency": "USD",
+              "list_amount": "22938",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "21238.000000",
+              "currency": "USD",
+              "list_amount": "25485",
+              "model": null,
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            }
+          ],
+          "starting_at": "2026-09-30T00:00:00Z"
+        }
+      ],
+      "data_refreshed_at": "2026-09-30T06:00:00Z",
+      "has_more": false,
+      "next_page": null,
+      "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9"
+    },
+    "status": 200
+  }
+}

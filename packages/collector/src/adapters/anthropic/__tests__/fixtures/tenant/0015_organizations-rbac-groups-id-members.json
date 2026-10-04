@@ -1,0 +1,50 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/rbac_groups/rbac_group_50MYzTmTkiRONgS8EqSNeP6R/members",
+    "query": {
+      "limit": ["1000"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "created_at": "2026-06-01T12:30:00Z",
+          "email": "user2@example.com",
+          "group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+          "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+          "type": "rbac_group_member",
+          "user_id": "user_91BMC6nANnYbmehG8pd3Z1r0"
+        },
+        {
+          "created_at": "2026-06-01T12:30:00Z",
+          "email": "user9@example.com",
+          "group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+          "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+          "type": "rbac_group_member",
+          "user_id": "user_882aBvxIWkBDngHQYxk4YSTd"
+        },
+        {
+          "created_at": "2026-06-01T12:30:00Z",
+          "email": "user13@example.com",
+          "group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+          "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+          "type": "rbac_group_member",
+          "user_id": "user_46O5Gx09ga45eFhlhpoX4huT"
+        },
+        {
+          "created_at": "2026-06-01T12:30:00Z",
+          "email": "user14@example.com",
+          "group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+          "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+          "type": "rbac_group_member",
+          "user_id": "user_92AtJ1VLPjVhLSrwMAwGAP3o"
+        }
+      ],
+      "has_more": false,
+      "next_page": null
+    },
+    "status": 200
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/usage_report",
+    "query": {
+      "bucket_width": ["1d"],
+      "ending_at": ["2026-09-30T11:58:00.000Z"],
+      "starting_at": ["2026-07-03T00:00:00.000Z"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "ending_at": "2026-09-27T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 500,
+                "ephemeral_5m_input_tokens": 424
+              },
+              "cache_read_input_tokens": 34598,
+              "model": null,
+              "output_tokens": 29510,
+              "product": null,
+              "rbac_group_id": null,
+              "requests": 251,
+              "server_tool_use": {
+                "web_search_requests": 5
+              },
+              "uncached_input_tokens": 30763
+            }
+          ],
+          "starting_at": "2026-09-26T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-28T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 520,
+                "ephemeral_5m_input_tokens": 444
+              },
+              "cache_read_input_tokens": 23529,
+              "model": null,
+              "output_tokens": 29537,
+              "product": null,
+              "rbac_group_id": null,
+              "requests": 68,
+              "server_tool_use": {
+                "web_search_requests": 3
+              },
+              "uncached_input_tokens": 16679
+            }
+          ],
+          "starting_at": "2026-09-27T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-29T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 241,
+                "ephemeral_5m_input_tokens": 74
+              },
+              "cache_read_input_tokens": 3711,
+              "model": null,
+              "output_tokens": 10869,
+              "product": null,
+              "rbac_group_id": null,
+              "requests": 200,
+              "server_tool_use": {
+                "web_search_requests": 0
+              },
+              "uncached_input_tokens": 87236
+            }
+          ],
+          "starting_at": "2026-09-28T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-30T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 426,
+                "ephemeral_5m_input_tokens": 754
+              },
+              "cache_read_input_tokens": 30737,
+              "model": null,
+              "output_tokens": 19941,
+              "product": null,
+              "rbac_group_id": null,
+              "requests": 381,
+              "server_tool_use": {
+                "web_search_requests": 3
+              },
+              "uncached_input_tokens": 6490
+            }
+          ],
+          "starting_at": "2026-09-29T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-31T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 843,
+                "ephemeral_5m_input_tokens": 802
+              },
+              "cache_read_input_tokens": 40000,
+              "model": null,
+              "output_tokens": 10292,
+              "product": null,
+              "rbac_group_id": null,
+              "requests": 348,
+              "server_tool_use": {
+                "web_search_requests": 7
+              },
+              "uncached_input_tokens": 11353
+            }
+          ],
+          "starting_at": "2026-09-30T00:00:00Z"
+        }
+      ],
+      "data_refreshed_at": "2026-09-30T06:00:00Z",
+      "has_more": false,
+      "next_page": null,
+      "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9"
+    },
+    "status": 200
+  }
+}

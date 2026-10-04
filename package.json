@@ -55,6 +55,8 @@
     "notify": "pnpm --filter @claude-audit/collector cli notify",
     "archive": "pnpm --filter @claude-audit/collector cli archive",
     "demo": "pnpm --filter @claude-audit/collector cli demo",
+    "sanitize": "pnpm --filter @claude-audit/collector cli sanitize",
+    "fixture:tenant": "pnpm --filter @claude-audit/collector cli fixture",
     "secret-scan": "tsx scripts/secret-scan.ts",
     "fork:verify": "tsx scripts/fork-verify.ts",
     "worktree:add": "tsx scripts/worktree-manage.ts add",

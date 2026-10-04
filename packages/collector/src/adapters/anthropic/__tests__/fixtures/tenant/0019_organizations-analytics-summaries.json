@@ -1,0 +1,123 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/summaries",
+    "query": {
+      "limit": ["31"],
+      "starting_date": ["2026-07-03"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "assigned_seat_count": 16,
+          "cowork_daily_active_user_count": 1,
+          "cowork_monthly_active_user_count": 3,
+          "cowork_weekly_active_user_count": 2,
+          "daily_active_user_count": 8,
+          "daily_adoption_rate": 55,
+          "ending_at": "2026-09-25T00:00:00Z",
+          "monthly_active_user_count": 13,
+          "monthly_adoption_rate": 81.25,
+          "pending_invite_count": 2,
+          "starting_at": "2026-09-24T00:00:00Z",
+          "weekly_active_user_count": 11,
+          "weekly_adoption_rate": 70.5
+        },
+        {
+          "assigned_seat_count": 16,
+          "cowork_daily_active_user_count": 1,
+          "cowork_monthly_active_user_count": 3,
+          "cowork_weekly_active_user_count": 2,
+          "daily_active_user_count": 9,
+          "daily_adoption_rate": 55,
+          "ending_at": "2026-09-26T00:00:00Z",
+          "monthly_active_user_count": 13,
+          "monthly_adoption_rate": 81.25,
+          "pending_invite_count": 2,
+          "starting_at": "2026-09-25T00:00:00Z",
+          "weekly_active_user_count": 11,
+          "weekly_adoption_rate": 70.5
+        },
+        {
+          "assigned_seat_count": 16,
+          "cowork_daily_active_user_count": 1,
+          "cowork_monthly_active_user_count": 3,
+          "cowork_weekly_active_user_count": 2,
+          "daily_active_user_count": 10,
+          "daily_adoption_rate": 55,
+          "ending_at": "2026-09-27T00:00:00Z",
+          "monthly_active_user_count": 13,
+          "monthly_adoption_rate": 81.25,
+          "pending_invite_count": 2,
+          "starting_at": "2026-09-26T00:00:00Z",
+          "weekly_active_user_count": 11,
+          "weekly_adoption_rate": 70.5
+        },
+        {
+          "assigned_seat_count": 16,
+          "cowork_daily_active_user_count": 1,
+          "cowork_monthly_active_user_count": 3,
+          "cowork_weekly_active_user_count": 2,
+          "daily_active_user_count": 11,
+          "daily_adoption_rate": 55,
+          "ending_at": "2026-09-28T00:00:00Z",
+          "monthly_active_user_count": 13,
+          "monthly_adoption_rate": 81.25,
+          "pending_invite_count": 2,
+          "starting_at": "2026-09-27T00:00:00Z",
+          "weekly_active_user_count": 11,
+          "weekly_adoption_rate": 70.5
+        },
+        {
+          "assigned_seat_count": 16,
+          "cowork_daily_active_user_count": 1,
+          "cowork_monthly_active_user_count": 3,
+          "cowork_weekly_active_user_count": 2,
+          "daily_active_user_count": 8,
+          "daily_adoption_rate": 55,
+          "ending_at": "2026-09-29T00:00:00Z",
+          "monthly_active_user_count": 13,
+          "monthly_adoption_rate": 81.25,
+          "pending_invite_count": 2,
+          "starting_at": "2026-09-28T00:00:00Z",
+          "weekly_active_user_count": 11,
+          "weekly_adoption_rate": 70.5
+        },
+        {
+          "assigned_seat_count": 16,
+          "cowork_daily_active_user_count": 1,
+          "cowork_monthly_active_user_count": 3,
+          "cowork_weekly_active_user_count": 2,
+          "daily_active_user_count": 9,
+          "daily_adoption_rate": 55,
+          "ending_at": "2026-09-30T00:00:00Z",
+          "monthly_active_user_count": 13,
+          "monthly_adoption_rate": 81.25,
+          "pending_invite_count": 2,
+          "starting_at": "2026-09-29T00:00:00Z",
+          "weekly_active_user_count": 11,
+          "weekly_adoption_rate": 70.5
+        },
+        {
+          "assigned_seat_count": 16,
+          "cowork_daily_active_user_count": 1,
+          "cowork_monthly_active_user_count": 3,
+          "cowork_weekly_active_user_count": 2,
+          "daily_active_user_count": 10,
+          "daily_adoption_rate": 55,
+          "ending_at": "2026-09-31T00:00:00Z",
+          "monthly_active_user_count": 13,
+          "monthly_adoption_rate": 81.25,
+          "pending_invite_count": 2,
+          "starting_at": "2026-09-30T00:00:00Z",
+          "weekly_active_user_count": 11,
+          "weekly_adoption_rate": 70.5
+        }
+      ],
+      "next_page": null
+    },
+    "status": 200
+  }
+}

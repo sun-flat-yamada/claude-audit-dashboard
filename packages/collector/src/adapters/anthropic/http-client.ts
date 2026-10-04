@@ -1,3 +1,5 @@
+import { queryOf, type RawCapture } from './raw-capture.js';
+
 export const ANTHROPIC_API_BASE_URL = 'https://api.anthropic.com';
 export const ANTHROPIC_VERSION = '2023-06-01';
 
@@ -33,6 +35,8 @@ export interface HttpClientOptions {
   maxRetries?: number | undefined;
   fetchImpl?: typeof fetch | undefined;
   sleep?: ((ms: number) => Promise<void>) | undefined;
+  /** Opt-in sink for the final response of every request (never headers or the key). */
+  capture?: RawCapture | undefined;
 }
 
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504, 529]);
@@ -118,13 +122,41 @@ export class HttpClient {
     const url = buildUrl(this.baseUrl, path, query);
     for (let attempt = 0; ; attempt++) {
       const outcome = await this.request(url).catch((error: unknown) => error);
-      if (outcome instanceof Response && outcome.ok) return outcome.json();
-      const canRetry = outcome instanceof Response ? retryable(outcome) : true;
-      if (!canRetry || attempt >= this.maxRetries) throw await this.failure(outcome, url);
+      const verdict = this.verdict(outcome, attempt);
+      if (outcome instanceof Response && verdict !== 'retry') await this.capture(outcome, url);
+      if (verdict === 'ok' && outcome instanceof Response) return outcome.json();
+      if (verdict === 'fail') throw await this.failure(outcome, url);
       await this.sleep(
         outcome instanceof Response ? retryDelayMs(outcome, attempt) : backoffMs(attempt),
       );
     }
+  }
+
+  private verdict(outcome: unknown, attempt: number): 'ok' | 'retry' | 'fail' {
+    if (outcome instanceof Response && outcome.ok) return 'ok';
+    const canRetry = outcome instanceof Response ? retryable(outcome) : true;
+    return canRetry && attempt < this.maxRetries ? 'retry' : 'fail';
+  }
+
+  /** Stores the exchange when capture is on. The body is copied; the key is scrubbed if echoed. */
+  private async capture(res: Response, url: URL): Promise<void> {
+    if (!this.options.capture) return;
+    const raw = await res
+      .clone()
+      .text()
+      .catch(() => '');
+    const { apiKey } = this.options;
+    const text = apiKey ? raw.split(apiKey).join('[redacted]') : raw;
+    let body: unknown = text;
+    try {
+      body = JSON.parse(text) as unknown;
+    } catch {
+      // non-JSON body: stored as text
+    }
+    await this.options.capture.record({
+      request: { method: 'GET', path: url.pathname, query: queryOf(url) },
+      response: { status: res.status, body },
+    });
   }
 
   private request(url: URL): Promise<Response> {

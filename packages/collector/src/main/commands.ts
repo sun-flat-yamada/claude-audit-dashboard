@@ -9,9 +9,12 @@ import {
   planComplianceAlert,
   pruneLastSent,
 } from '@claude-audit/core';
+import { defaultFixtureDir } from '../adapters/fixture/fixture-source.js';
 import { archiveSnapshots } from '../adapters/storage/archive.js';
 import type { Container } from './container.js';
 import { writeDemoSample } from './demo.js';
+import { writeFixtureTenant } from './fixture.js';
+import { sanitizeDirectory } from './sanitize.js';
 import { check, collect, generateReport, writeDashboard } from './workflows.js';
 
 export interface Command {
@@ -28,8 +31,8 @@ const option = (args: readonly string[], name: string): string | undefined => {
 
 const collectCommand: Command = {
   name: 'collect',
-  usage: 'collect',
-  description: 'Collect every dataset into a new snapshot',
+  usage: 'collect [--capture-raw <dir>]',
+  description: 'Collect every dataset into a new snapshot (opt-in raw capture)',
   async run(c) {
     const snapshot = await collect(c);
     const entries = Object.entries(snapshot.coverage);
@@ -150,6 +153,42 @@ const demoCommand: Command = {
   },
 };
 
+const sanitizeCommand: Command = {
+  name: 'sanitize',
+  usage: 'sanitize <captured-dir> <out-dir>',
+  description: 'Turn raw captures (--capture-raw) into shareable synthetic fixtures',
+  async run(c, args) {
+    const [from, to] = args;
+    if (!from || !to || from.startsWith('--') || to.startsWith('--')) {
+      throw new Error(`Usage: ${this.usage}`);
+    }
+    const r = await sanitizeDirectory(resolve(c.env.baseDir, from), resolve(c.env.baseDir, to));
+    c.logger.info(
+      `Sanitized ${r.files} file(s) into ${to}: ${r.emails} e-mails, ${r.ids} IDs, ${r.names} names, ${r.ips} IPs mapped. Review the output before committing.`,
+    );
+  },
+};
+
+const fixtureCommand: Command = {
+  name: 'fixture',
+  usage: 'fixture --out <dir> [--fixtures <dir>]',
+  description: 'Run collect, check and dashboard on the fixture tenant (no key needed)',
+  async run(c, args) {
+    const out = option(args, '--out');
+    if (!out) throw new Error(`Usage: ${this.usage}`);
+    const fixtureDir = resolve(
+      c.env.baseDir,
+      option(args, '--fixtures') ?? defaultFixtureDir(c.env.baseDir),
+    );
+    const files = await writeFixtureTenant(resolve(c.env.baseDir, out), {
+      fixtureDir,
+      cwd: c.env.baseDir,
+      logger: c.logger,
+    });
+    c.logger.info(`Fixture tenant output written to ${out}: ${Object.keys(files).join(', ')}`);
+  },
+};
+
 export const COMMANDS = new Registry<Command>((cmd) => cmd.name, 'command').addAll([
   collectCommand,
   checkCommand,
@@ -159,6 +198,8 @@ export const COMMANDS = new Registry<Command>((cmd) => cmd.name, 'command').addA
   notifyCommand,
   archiveCommand,
   demoCommand,
+  sanitizeCommand,
+  fixtureCommand,
 ]);
 
 export const usage = (): string =>

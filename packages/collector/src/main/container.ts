@@ -23,6 +23,11 @@ import { AnalyticsApi } from '../adapters/anthropic/analytics-api.js';
 import { createAnthropicCollectors, type AnthropicApis } from '../adapters/anthropic/collectors.js';
 import { ComplianceApi } from '../adapters/anthropic/compliance-api.js';
 import { HttpClient } from '../adapters/anthropic/http-client.js';
+import {
+  FileRawCapture,
+  resolveCaptureDir,
+  type RawCapture,
+} from '../adapters/anthropic/raw-capture.js';
 import { consoleNotifier, discordNotifier, slackNotifier } from '../adapters/notifiers/channels.js';
 import { emailNotifier } from '../adapters/notifiers/email.js';
 import { BUILTIN_RENDERERS } from '../adapters/renderers/index.js';
@@ -65,14 +70,20 @@ export interface ContainerOptions {
   clock?: Clock | undefined;
   logger?: Logger | undefined;
   fetchImpl?: typeof fetch | undefined;
+  /** Raw response capture directory (opt-in; overrides `CAPTURE_RAW_DIR`). */
+  captureRawDir?: string | undefined;
   /** Replaces the Anthropic collectors (demo source, tests). */
   collectors?: DatasetCollector[] | undefined;
   source?: 'live' | 'demo' | undefined;
 }
 
-function anthropicApis(env: Environment, fetchImpl: typeof fetch | undefined): AnthropicApis {
+function anthropicApis(
+  env: Environment,
+  fetchImpl: typeof fetch | undefined,
+  capture: RawCapture | undefined,
+): AnthropicApis {
   const client = (apiKey: string | undefined) =>
-    apiKey ? new HttpClient({ apiKey, baseUrl: env.baseUrl, fetchImpl }) : null;
+    apiKey ? new HttpClient({ apiKey, baseUrl: env.baseUrl, fetchImpl, capture }) : null;
   const compliance = client(env.keys.compliance);
   const admin = client(env.keys.admin);
   const analytics = client(env.keys.analytics);
@@ -87,15 +98,30 @@ function liveCollectors(
   env: Environment,
   config: AppConfig,
   fetchImpl: typeof fetch | undefined,
+  capture: RawCapture | undefined,
 ): DatasetCollector[] {
   const { activities, members, memberActivity, groups } = config.sources;
-  return createAnthropicCollectors(anthropicApis(env, fetchImpl), {
+  return createAnthropicCollectors(anthropicApis(env, fetchImpl, capture), {
     disabled: disabledDatasets(config),
     membersProvider: members.provider,
     memberActivityLookbackDays: memberActivity.lookbackDays,
     maxGroupMemberRequests: groups.maxMemberRequests,
     activities,
   });
+}
+
+/** Opt-in: `--capture-raw <dir>` or `CAPTURE_RAW_DIR`. Real tenant data, so it is validated and announced. */
+function rawCapture(
+  env: Environment,
+  dir: string | undefined,
+  logger: Logger,
+): RawCapture | undefined {
+  if (!dir) return undefined;
+  const resolved = resolveCaptureDir(env.baseDir, dir, env.ci);
+  logger.warn(
+    `Raw response capture is ON: tenant data is written to ${resolved}. Never commit it; sanitize it first (pnpm sanitize).`,
+  );
+  return new FileRawCapture(resolved);
 }
 
 /** Console always; Slack, Discord and e-mail when their secrets are present. */
@@ -132,7 +158,14 @@ export async function createContainer(options: ContainerOptions = {}): Promise<C
     reports: new FsComplianceReportRepository(store),
     state: new FsStateRepository(store),
     artifacts: fileArtifacts(store),
-    collectors: options.collectors ?? liveCollectors(env, config, options.fetchImpl),
+    collectors:
+      options.collectors ??
+      liveCollectors(
+        env,
+        config,
+        options.fetchImpl,
+        rawCapture(env, options.captureRawDir ?? env.captureRawDir, logger),
+      ),
     projections: BUILTIN_PROJECTIONS,
     rules: catalog.rules,
     analyzers: BUILTIN_ANALYZERS,

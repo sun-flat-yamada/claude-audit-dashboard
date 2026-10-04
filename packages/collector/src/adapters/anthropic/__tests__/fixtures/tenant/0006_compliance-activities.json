@@ -1,0 +1,131 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/compliance/activities",
+    "query": {
+      "limit": ["5000"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "actor": {
+            "api_key_id": "apikey_475HbvN8GjwWIqFVyGZVftlo",
+            "ip_address": "192.0.2.248",
+            "type": "api_actor",
+            "user_agent": "synthetic-agent/1.0"
+          },
+          "created_at": "2026-09-30T11:26:42Z",
+          "id": "activity_745v110Ere8SUPqPEqkjYBWI",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "b3edc4d7-e266-4e88-9f5c-1992c1a51983",
+          "type": "compliance_api_accessed"
+        },
+        {
+          "actor": {
+            "api_key_id": "apikey_475HbvN8GjwWIqFVyGZVftlo",
+            "ip_address": "192.0.2.248",
+            "type": "api_actor",
+            "user_agent": "synthetic-agent/1.0"
+          },
+          "created_at": "2026-09-30T11:13:57Z",
+          "id": "activity_960XL2aJXC2uy4XvHXF72FKc",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "b3edc4d7-e266-4e88-9f5c-1992c1a51983",
+          "type": "compliance_api_accessed"
+        },
+        {
+          "actor": {
+            "api_key_id": "apikey_50jBdoztdPhdveU79A6000Fj",
+            "ip_address": "192.0.2.65",
+            "type": "api_actor",
+            "user_agent": "synthetic-agent/1.0"
+          },
+          "created_at": "2026-09-30T10:08:41Z",
+          "id": "activity_42mpu8rVtiQPqRb7jvuuJrcP",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "b3edc4d7-e266-4e88-9f5c-1992c1a51983",
+          "type": "compliance_api_accessed"
+        },
+        {
+          "actor": {
+            "email_address": "user1@example.com",
+            "ip_address": "192.0.2.37",
+            "type": "user_actor",
+            "user_agent": "synthetic-agent/1.0",
+            "user_id": "user_77Zj2sJYB0AvvQxQccLEOen4"
+          },
+          "created_at": "2026-09-30T09:42:52Z",
+          "current_role": "owner",
+          "id": "activity_19ZrQHyXl5Eib1Inh7Yzifw3",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "b3edc4d7-e266-4e88-9f5c-1992c1a51983",
+          "previous_role": "user",
+          "type": "claude_user_role_updated",
+          "user_email": "user2@example.com",
+          "user_id": "user_91BMC6nANnYbmehG8pd3Z1r0"
+        },
+        {
+          "actor": {
+            "email_address": "user3@example.com",
+            "ip_address": "192.0.2.9",
+            "type": "user_actor",
+            "user_agent": "synthetic-agent/1.0",
+            "user_id": "user_44CSBKCZcCuQlJLMskvJG2o7"
+          },
+          "created_at": "2026-09-30T09:03:57Z",
+          "id": "activity_00hwygIl8hLEEOxYHUhHxBKZ",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "b3edc4d7-e266-4e88-9f5c-1992c1a51983",
+          "type": "org_members_exported"
+        },
+        {
+          "actor": {
+            "email_address": "user4@example.com",
+            "ip_address": "192.0.2.69",
+            "type": "user_actor",
+            "user_agent": "synthetic-agent/1.0",
+            "user_id": "user_87cKvEypvPM0p5nTWjiOhrsJ"
+          },
+          "created_at": "2026-09-30T07:19:07Z",
+          "id": "activity_969X8ehKmBCahZtUyNlDdbau",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "701943e4-f236-459d-a96e-a3c2b2b24cf5",
+          "type": "org_ip_restriction_updated"
+        },
+        {
+          "actor": {
+            "ip_address": "192.0.2.198",
+            "type": "unauthenticated_user_actor",
+            "unauthenticated_email_address": "user5@example.com"
+          },
+          "created_at": "2026-09-30T05:09:56Z",
+          "id": "activity_09AnjOd1HjEYfnLH0DFsgaMl",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "b3edc4d7-e266-4e88-9f5c-1992c1a51983",
+          "type": "sso_login_failed"
+        },
+        {
+          "actor": {
+            "email_address": "user6@example.com",
+            "ip_address": "192.0.2.39",
+            "type": "user_actor",
+            "user_agent": "synthetic-agent/1.0",
+            "user_id": "user_38CpJwewTrVJY6VlhoztYTKE"
+          },
+          "claude_chat_id": "claude_chat_00LNXY3erTKnGuncR7A9IaFv",
+          "created_at": "2026-09-30T04:30:17Z",
+          "id": "activity_75ai48aY67Q7IVwvbsVpP5qa",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "b3edc4d7-e266-4e88-9f5c-1992c1a51983",
+          "type": "claude_chat_created"
+        }
+      ],
+      "first_id": "activity_745v110Ere8SUPqPEqkjYBWI",
+      "has_more": true,
+      "last_id": "activity_75ai48aY67Q7IVwvbsVpP5qa"
+    },
+    "status": 200
+  }
+}
