@@ -159,7 +159,7 @@ Score = 100 − Σ severity weight of failed rules (Critical 10, High 5, Medium 
 3. **API key**: in claude.ai, **Organization settings → API**, the primary owner creates a key with `read:compliance_activities`, `read:compliance_org_data`, `read:members`, `read:rbac_groups`, `read:analytics` and `read:spend_limits`. Save it as the secret `ANTHROPIC_ENTERPRISE_API_KEY`.
 4. **Optional secrets**: `SLACK_WEBHOOK_URL`, `DISCORD_WEBHOOK_URL`, `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO`.
 5. Run **Collect Audit Data** manually once, check the Data coverage section, then set the repository variable `ENABLE_SCHEDULED_JOBS=true`.
-6. Optional variables: `DASHBOARD_URL` (link in alerts), `PAGES_DATA_SOURCE=live` (publish live data — only for Pages sites restricted to your organization).
+6. Optional variables: `DASHBOARD_URL` (link in alerts), `PAGES_DATA_SOURCE=live` (publish live data — only for Pages sites restricted to your organization), `PAGES_DETAIL_DATA=true` (additionally publish per-person detail files — Private Pages only, default off).
 
 Step-by-step guide: [docs/SETUP.md](docs/SETUP.md). Hosting options: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 

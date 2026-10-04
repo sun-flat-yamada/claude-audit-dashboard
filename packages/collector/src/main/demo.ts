@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Logger } from '@claude-audit/core';
@@ -7,6 +7,8 @@ import { toMarkdown } from '../adapters/renderers/markdown.js';
 import { stableStringify } from '../adapters/storage/file-store.js';
 import { fixedClock } from '../infrastructure/runtime.js';
 import { createContainer } from './container.js';
+import { writeDetail } from './detail.js';
+import { writeFiles } from './write-files.js';
 import { check, collect, generateReport, writeDashboard } from './workflows.js';
 
 export interface DemoOptions {
@@ -38,16 +40,15 @@ export async function writeDemoSample(
     const view = await writeDashboard(c);
     const weekly = await generateReport(c, 'weekly');
     const monthly = await generateReport(c, 'monthly');
+    const detail = await writeDetail(c);
     const files: Record<string, string> = {
       'dashboard.json': stableStringify(view),
       'compliance-report.json': stableStringify(report),
       'weekly-report.md': toMarkdown(weekly.document),
       'monthly-report.md': toMarkdown(monthly.document),
+      ...detail,
     };
-    await mkdir(outDir, { recursive: true });
-    await Promise.all(
-      Object.entries(files).map(([name, content]) => writeFile(join(outDir, name), content)),
-    );
+    await writeFiles(outDir, files);
     return files;
   } finally {
     await rm(workDir, { recursive: true, force: true });

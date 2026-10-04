@@ -1,0 +1,433 @@
+{
+  "generatedAt": "2026-09-29T12:00:00.000Z",
+  "inactiveDays": 90,
+  "invites": [
+    {
+      "email": "n***@example.com",
+      "expiresAt": "2026-10-15T12:00:00.000Z",
+      "id": "i_b84504fe72c6",
+      "invitedAt": "2026-09-24T12:00:00.000Z",
+      "role": "user",
+      "status": "pending"
+    },
+    {
+      "email": "c***@example.com",
+      "expiresAt": "2026-10-08T12:00:00.000Z",
+      "id": "i_0d04437179f1",
+      "invitedAt": "2026-09-17T12:00:00.000Z",
+      "role": "managed",
+      "status": "pending"
+    },
+    {
+      "email": "o***@example.com",
+      "expiresAt": "2026-10-01T12:00:00.000Z",
+      "id": "i_2b6309ce61c7",
+      "invitedAt": "2026-08-13T12:00:00.000Z",
+      "role": "user",
+      "status": "pending"
+    }
+  ],
+  "members": [
+    {
+      "active": true,
+      "email": "a***@example.com",
+      "id": "u_fb1d8c8dd150",
+      "joinedAt": "2026-08-30T12:00:00.000Z",
+      "lastActiveOn": "2026-09-28",
+      "name": "A*** E***",
+      "organizationId": null,
+      "role": "primary_owner"
+    },
+    {
+      "active": true,
+      "email": "b***@example.com",
+      "id": "u_a45f06097b5a",
+      "joinedAt": "2026-08-13T12:00:00.000Z",
+      "lastActiveOn": "2026-09-27",
+      "name": "B*** E***",
+      "organizationId": null,
+      "role": "owner"
+    },
+    {
+      "active": true,
+      "email": "c***@example.com",
+      "id": "u_6657720365da",
+      "joinedAt": "2026-07-27T12:00:00.000Z",
+      "lastActiveOn": "2026-09-26",
+      "name": "C*** E***",
+      "organizationId": null,
+      "role": "owner"
+    },
+    {
+      "active": true,
+      "email": "d***@example.com",
+      "id": "u_a812cfd10359",
+      "joinedAt": "2026-07-10T12:00:00.000Z",
+      "lastActiveOn": "2026-09-25",
+      "name": "D*** E***",
+      "organizationId": null,
+      "role": "membership_admin"
+    },
+    {
+      "active": true,
+      "email": "e***@example.com",
+      "id": "u_8b6c198a3fa3",
+      "joinedAt": "2026-06-23T12:00:00.000Z",
+      "lastActiveOn": "2026-09-24",
+      "name": "E*** E***",
+      "organizationId": null,
+      "role": "membership_admin"
+    },
+    {
+      "active": true,
+      "email": "f***@example.com",
+      "id": "u_25bc60c28f44",
+      "joinedAt": "2026-06-06T12:00:00.000Z",
+      "lastActiveOn": "2026-09-23",
+      "name": "F*** E***",
+      "organizationId": null,
+      "role": "managed"
+    },
+    {
+      "active": true,
+      "email": "g***@example.com",
+      "id": "u_e4c2752fe694",
+      "joinedAt": "2026-05-20T12:00:00.000Z",
+      "lastActiveOn": "2026-09-22",
+      "name": "G*** E***",
+      "organizationId": null,
+      "role": "managed"
+    },
+    {
+      "active": true,
+      "email": "h***@example.com",
+      "id": "u_212582c9c4e5",
+      "joinedAt": "2026-05-03T12:00:00.000Z",
+      "lastActiveOn": "2026-09-21",
+      "name": "H*** E***",
+      "organizationId": null,
+      "role": "managed"
+    },
+    {
+      "active": true,
+      "email": "i***@example.com",
+      "id": "u_fa51f9078653",
+      "joinedAt": "2026-04-16T12:00:00.000Z",
+      "lastActiveOn": "2026-09-20",
+      "name": "I*** E***",
+      "organizationId": null,
+      "role": "managed"
+    },
+    {
+      "active": true,
+      "email": "j***@example.com",
+      "id": "u_64783789293b",
+      "joinedAt": "2026-03-30T12:00:00.000Z",
+      "lastActiveOn": "2026-09-19",
+      "name": "J*** E***",
+      "organizationId": null,
+      "role": "managed"
+    },
+    {
+      "active": true,
+      "email": "a***@example.com",
+      "id": "u_7bf50d3eac66",
+      "joinedAt": "2026-03-13T12:00:00.000Z",
+      "lastActiveOn": "2026-09-18",
+      "name": "A*** A***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "b***@example.com",
+      "id": "u_9dc9842e5c3a",
+      "joinedAt": "2026-02-24T12:00:00.000Z",
+      "lastActiveOn": "2026-09-17",
+      "name": "B*** A***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "c***@example.com",
+      "id": "u_f6865d116752",
+      "joinedAt": "2026-02-07T12:00:00.000Z",
+      "lastActiveOn": "2026-09-16",
+      "name": "C*** A***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "d***@example.com",
+      "id": "u_17450ffd6926",
+      "joinedAt": "2026-01-21T12:00:00.000Z",
+      "lastActiveOn": "2026-09-15",
+      "name": "D*** A***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "e***@example.com",
+      "id": "u_7ad385507ec5",
+      "joinedAt": "2026-01-04T12:00:00.000Z",
+      "lastActiveOn": "2026-09-14",
+      "name": "E*** A***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "f***@example.com",
+      "id": "u_3c84e8ca082f",
+      "joinedAt": "2025-12-18T12:00:00.000Z",
+      "lastActiveOn": "2026-09-28",
+      "name": "F*** A***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "g***@example.com",
+      "id": "u_0480ce9f0ca5",
+      "joinedAt": "2025-12-01T12:00:00.000Z",
+      "lastActiveOn": "2026-09-27",
+      "name": "G*** A***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "h***@example.com",
+      "id": "u_9d410da40b42",
+      "joinedAt": "2025-11-14T12:00:00.000Z",
+      "lastActiveOn": "2026-09-26",
+      "name": "H*** A***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "i***@example.com",
+      "id": "u_97f5edc7241d",
+      "joinedAt": "2025-10-28T12:00:00.000Z",
+      "lastActiveOn": "2026-09-25",
+      "name": "I*** A***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "j***@example.com",
+      "id": "u_03e801c2a22a",
+      "joinedAt": "2025-10-11T12:00:00.000Z",
+      "lastActiveOn": "2026-09-24",
+      "name": "J*** A***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": false,
+      "email": "a***@example.com",
+      "id": "u_3e2b992cb74f",
+      "joinedAt": "2025-09-24T12:00:00.000Z",
+      "lastActiveOn": null,
+      "name": "A*** C***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "b***@example.com",
+      "id": "u_735613831814",
+      "joinedAt": "2025-09-07T12:00:00.000Z",
+      "lastActiveOn": "2026-09-22",
+      "name": "B*** C***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "c***@example.com",
+      "id": "u_a062674c11d0",
+      "joinedAt": "2025-08-21T12:00:00.000Z",
+      "lastActiveOn": "2026-09-21",
+      "name": "C*** C***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "d***@example.com",
+      "id": "u_3b22301ffb84",
+      "joinedAt": "2025-08-04T12:00:00.000Z",
+      "lastActiveOn": "2026-09-20",
+      "name": "D*** C***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "e***@example.com",
+      "id": "u_d12c07700324",
+      "joinedAt": "2025-07-18T12:00:00.000Z",
+      "lastActiveOn": "2026-09-19",
+      "name": "E*** C***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "f***@example.com",
+      "id": "u_e600e1fc3b39",
+      "joinedAt": "2025-07-01T12:00:00.000Z",
+      "lastActiveOn": "2026-09-18",
+      "name": "F*** C***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "g***@example.com",
+      "id": "u_fe38ecfd4a13",
+      "joinedAt": "2025-06-14T12:00:00.000Z",
+      "lastActiveOn": "2026-09-17",
+      "name": "G*** C***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": false,
+      "email": "h***@example.com",
+      "id": "u_49222785682b",
+      "joinedAt": "2025-05-28T12:00:00.000Z",
+      "lastActiveOn": null,
+      "name": "H*** C***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "i***@example.com",
+      "id": "u_5d651e8c5b71",
+      "joinedAt": "2025-05-11T12:00:00.000Z",
+      "lastActiveOn": "2026-09-15",
+      "name": "I*** C***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "j***@example.com",
+      "id": "u_3367344307e1",
+      "joinedAt": "2025-04-24T12:00:00.000Z",
+      "lastActiveOn": "2026-09-14",
+      "name": "J*** C***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "a***@example.com",
+      "id": "u_250e8af3f27a",
+      "joinedAt": "2025-04-07T12:00:00.000Z",
+      "lastActiveOn": "2026-09-28",
+      "name": "A*** D***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "b***@example.com",
+      "id": "u_a95905a75d79",
+      "joinedAt": "2025-03-21T12:00:00.000Z",
+      "lastActiveOn": "2026-09-27",
+      "name": "B*** D***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "c***@example.com",
+      "id": "u_7b983a1ea9f3",
+      "joinedAt": "2025-03-04T12:00:00.000Z",
+      "lastActiveOn": "2026-09-26",
+      "name": "C*** D***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": false,
+      "email": "d***@example.com",
+      "id": "u_5cf9db0b0d02",
+      "joinedAt": "2025-02-15T12:00:00.000Z",
+      "lastActiveOn": null,
+      "name": "D*** D***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "e***@example.com",
+      "id": "u_f82d3e2df4d7",
+      "joinedAt": "2025-01-29T12:00:00.000Z",
+      "lastActiveOn": "2026-09-24",
+      "name": "E*** D***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": false,
+      "email": "f***@example.com",
+      "id": "u_00e578b25993",
+      "joinedAt": "2025-01-12T12:00:00.000Z",
+      "lastActiveOn": null,
+      "name": "F*** D***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "g***@example.com",
+      "id": "u_72a89d55cd76",
+      "joinedAt": "2026-08-18T12:00:00.000Z",
+      "lastActiveOn": "2026-09-22",
+      "name": "G*** D***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "h***@example.com",
+      "id": "u_6b6137260020",
+      "joinedAt": "2026-09-24T12:00:00.000Z",
+      "lastActiveOn": "2026-09-21",
+      "name": "H*** D***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "i***@example.com",
+      "id": "u_54a2e1cd6c41",
+      "joinedAt": "2026-09-17T12:00:00.000Z",
+      "lastActiveOn": "2026-09-20",
+      "name": "I*** D***",
+      "organizationId": null,
+      "role": "user"
+    },
+    {
+      "active": true,
+      "email": "j***@example.com",
+      "id": "u_a25b9bddd5d0",
+      "joinedAt": "2026-09-10T12:00:00.000Z",
+      "lastActiveOn": "2026-09-19",
+      "name": "J*** D***",
+      "organizationId": null,
+      "role": "user"
+    }
+  ],
+  "schemaVersion": 1
+}

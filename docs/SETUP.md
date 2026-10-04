@@ -37,17 +37,18 @@ Missing scopes do not break collection: the affected datasets are reported as `u
 
 **Settings → Secrets and variables → Actions**:
 
-| Name                                                                                       | Kind     | Required | Value                                                                    |
-| ------------------------------------------------------------------------------------------ | -------- | -------- | ------------------------------------------------------------------------ |
-| `ANTHROPIC_ENTERPRISE_API_KEY`                                                             | Secret   | Yes      | The key from Step 1                                                      |
-| `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY` | Secret   | No       | Per-API overrides                                                        |
-| `SLACK_WEBHOOK_URL`                                                                        | Secret   | No       | Slack Incoming Webhook URL                                               |
-| `DISCORD_WEBHOOK_URL`                                                                      | Secret   | No       | Discord webhook URL                                                      |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`                                      | Secret   | No       | SMTP server (`SMTP_SECURE=true` is implied for port 465)                 |
-| `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO`                                                      | Secret   | No       | Sender and comma-separated recipients                                    |
-| `DASHBOARD_URL`                                                                            | Variable | No       | Dashboard link included in alerts and reports                            |
-| `ENABLE_SCHEDULED_JOBS`                                                                    | Variable | No       | `true` enables the schedules (set it after Step 4)                       |
-| `PAGES_DATA_SOURCE`                                                                        | Variable | No       | `live` publishes live data to Pages — see [DEPLOYMENT.md](DEPLOYMENT.md) |
+| Name                                                                                       | Kind     | Required | Value                                                                                                                                  |
+| ------------------------------------------------------------------------------------------ | -------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `ANTHROPIC_ENTERPRISE_API_KEY`                                                             | Secret   | Yes      | The key from Step 1                                                                                                                    |
+| `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY` | Secret   | No       | Per-API overrides                                                                                                                      |
+| `SLACK_WEBHOOK_URL`                                                                        | Secret   | No       | Slack Incoming Webhook URL                                                                                                             |
+| `DISCORD_WEBHOOK_URL`                                                                      | Secret   | No       | Discord webhook URL                                                                                                                    |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`                                      | Secret   | No       | SMTP server (`SMTP_SECURE=true` is implied for port 465)                                                                               |
+| `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO`                                                      | Secret   | No       | Sender and comma-separated recipients                                                                                                  |
+| `DASHBOARD_URL`                                                                            | Variable | No       | Dashboard link included in alerts and reports                                                                                          |
+| `ENABLE_SCHEDULED_JOBS`                                                                    | Variable | No       | `true` enables the schedules (set it after Step 4)                                                                                     |
+| `PAGES_DATA_SOURCE`                                                                        | Variable | No       | `live` publishes live data to Pages — see [DEPLOYMENT.md](DEPLOYMENT.md)                                                               |
+| `PAGES_DETAIL_DATA`                                                                        | Variable | No       | `true` (with `PAGES_DATA_SOURCE=live`) also publishes per-person detail files; Private Pages only — see [DEPLOYMENT.md](DEPLOYMENT.md) |
 
 Workflows declare their own token permissions; no change to the repository's default workflow permissions is needed.
 
@@ -133,6 +134,7 @@ pnpm sanitize ../claude-audit-captures/run1 packages/collector/src/adapters/anth
 
 # 3. Review the result by eye, then check it and try it:
 pnpm fork:verify && pnpm secret-scan
+pnpm build:detail                              # write data/detail/*.json (members, API keys, activity, groups; part of pnpm pipeline)
 pnpm fixture                                  # collect -> check -> dashboard.json from the fixtures, no key (writes data/fixture/, gitignored)
 pnpm fixture:tenant --out ../fixture-out      # same, to another directory
 ```

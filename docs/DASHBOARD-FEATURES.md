@@ -9,7 +9,7 @@
 ## Principles
 
 - **Claude Enterprise vocabulary.** Enterprise tenants are organized as _linked organizations_ and _RBAC groups_; there are no Console workspaces. Breakdowns use product, model and RBAC group.
-- **Aggregates only in `dashboard.json`.** The file may be published on Pages, so it carries counts, totals and masked identifiers. Views that need per-person data (member list, key inventory) require a separate, access-controlled data file (Phase B).
+- **Aggregates only in `dashboard.json`.** The file may be published on Pages, so it carries counts, totals and masked identifiers. Views that need per-person data (member list, key inventory, activity search, group drill-down) read the separate **detail files** (`detail/*.json`, contract `DETAIL_SCHEMA_VERSION = 1`, below), which are published to Pages only with `PAGES_DETAIL_DATA=true`.
 - **Honest coverage.** Every view that depends on a dataset says so when it was not collected; the score is shown with the number of rules actually assessed.
 - **One system of charts.** Fixed categorical color order, legend for two or more series, a table view for every chart, no dual axes, status shown with icon + label + color, light and dark themes, no horizontal scroll at 390 px.
 
@@ -24,13 +24,13 @@
 | F-003 | Compliance results              | P0       | ✅ Phase A + CSV / JSON export (B2-1)                     | `compliance.results`, `compliance.byCategory`    |
 | F-004 | Usage and cost                  | P0       | ✅ Phase A                                                | `usage.daily`, `usage.byProduct/byModel/byGroup` |
 | F-005 | Activity                        | P0       | 🔶 Aggregates in Phase A; search in Phase B               | `activity`                                       |
-| F-006 | Member view                     | P1       | ⏳ Phase B                                                | separate access-controlled file                  |
-| F-007 | API key inventory               | P1       | ⏳ Phase B                                                | separate access-controlled file                  |
+| F-006 | Member view                     | P1       | ⏳ Phase B                                                | detail `members.json` (data ready, B2-2)         |
+| F-007 | API key inventory               | P1       | ⏳ Phase B                                                | detail `api-keys.json` (data ready, B2-2)        |
 | F-008 | Alert history                   | P1       | ⏳ Phase B                                                | notification state                               |
 | F-009 | Monthly cost report view        | P1       | 🔶 Files in Phase A; viewer in Phase B                    | `data/reports/monthly/*`                         |
 | F-010 | Model usage analytics           | P1       | 🔶 Phase A (spend by model, insights); heatmap in Phase B | `usage.byModel`, `insights`                      |
 | F-011 | Light / dark theme              | P2       | ✅ Phase A (follows system); toggle UI in Phase B2 (B2-9) | —                                                |
-| F-012 | Organization / group drill-down | P2       | ⏳ Phase B                                                | —                                                |
+| F-012 | Organization / group drill-down | P2       | ⏳ Phase B                                                | detail `org-groups.json` (data ready, B2-2)      |
 | F-013 | Data coverage and retention     | P2       | ✅ coverage in Phase A; archive inventory in Phase B      | `coverage`                                       |
 | F-014 | Configuration view (read-only)  | P2       | ⏳ Phase B                                                | —                                                |
 | F-015 | Snapshot comparison             | P3       | ⏳ Later                                                  | —                                                |
@@ -95,6 +95,22 @@
 ### F-017 Insights
 
 - Title and detail of each analyzer result (model concentration, cache efficiency, group concentration, seat utilization) with its priority.
+
+---
+
+## Detail data files (B2-2)
+
+The screens of F-005 (search), F-006, F-007 and F-012 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 1`, zod schemas in `@claude-audit/core/contracts`).
+
+| File                             | Content                                                                                                         |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `detail/index.json`              | Manifest: `maskPii`, `source`, and per file `kind`, `path`, `status` (`ok` / `unavailable` + reason), `count`   |
+| `detail/members.json`            | Members (role, organization, `active`, `lastActiveOn`), invites, the AC-001 `inactiveDays` threshold            |
+| `detail/api-keys.json`           | Keys (scopes, active, created / expires, creator, `lastSeenAt`), AK-001 / AK-003 thresholds, usage window start |
+| `detail/activity-<yyyy-mm>.json` | One file per UTC month, newest first, capped at 2000 rows (`total` and `truncated` give the real count)         |
+| `detail/org-groups.json`         | Organizations, RBAC groups (member count, month-to-date spend; groups overlap), CF-xxx deviations               |
+
+Identifier handling follows `dashboard.maskPii` (default `true`): e-mail addresses become `j***@example.com`, names become initials (`A*** E***`), IP addresses are dropped, and user / key / invite IDs become `u_` / `k_` / `i_` plus 12 hex characters, stable across files so rows stay joinable. With `maskPii=false` raw values are written (and the manifest says so). A missing file with an `unavailable` manifest entry means the dataset was not collected; absence of the whole directory means "not published". `pnpm build:detail` (part of `pnpm pipeline`) writes `data/detail/`; `pnpm demo` writes the synthetic `data/sample/detail/`, validated by `pnpm fork:verify` (contract, `example.*` e-mails only, masked identifiers).
 
 ---
 

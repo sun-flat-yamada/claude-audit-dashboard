@@ -150,16 +150,17 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 
 ### 4.2 データの保存場所
 
-| データ                   | パス                                                   | ブランチ     | main にコミット |
-| ------------------------ | ------------------------------------------------------ | ------------ | --------------- |
-| ソースコード             | `packages/`                                            | `main`       | する            |
-| 合成サンプル             | `data/sample/` (`pnpm demo` が生成)                    | `main`       | する            |
-| スナップショット         | `data/snapshots/<id>/<dataset>.json` + `manifest.json` | `data/audit` | しない          |
-| コンプライアンスレポート | `data/reports/compliance/<snapshot id>.json`           | `data/audit` | しない          |
-| 週次・月次レポート       | `data/reports/{weekly,monthly}/`                       | `data/audit` | しない          |
-| ダッシュボード JSON      | `data/dashboard.json`                                  | `data/audit` | しない          |
-| コレクタ状態             | `data/state.json` (カーソル、投影状態、通知記録)       | `data/audit` | しない          |
-| アーカイブ               | `data/archive/<year>/<id>.json.gz`                     | `data/audit` | しない          |
+| データ                   | パス                                                                              | ブランチ     | main にコミット |
+| ------------------------ | --------------------------------------------------------------------------------- | ------------ | --------------- |
+| ソースコード             | `packages/`                                                                       | `main`       | する            |
+| 合成サンプル             | `data/sample/` (`pnpm demo` が生成)                                               | `main`       | する            |
+| スナップショット         | `data/snapshots/<id>/<dataset>.json` + `manifest.json`                            | `data/audit` | しない          |
+| コンプライアンスレポート | `data/reports/compliance/<snapshot id>.json`                                      | `data/audit` | しない          |
+| 週次・月次レポート       | `data/reports/{weekly,monthly}/`                                                  | `data/audit` | しない          |
+| ダッシュボード JSON      | `data/dashboard.json`                                                             | `data/audit` | しない          |
+| 詳細データ (個人単位)    | `data/detail/{index,members,api-keys,org-groups}.json`, `activity-<yyyy-mm>.json` | `data/audit` | しない          |
+| コレクタ状態             | `data/state.json` (カーソル、投影状態、通知記録)                                  | `data/audit` | しない          |
+| アーカイブ               | `data/archive/<year>/<id>.json.gz`                                                | `data/audit` | しない          |
 
 `data/audit` への読み書きは `.github/scripts/data-branch.sh` (`restore` / `save`) に集約する。`save` は直前の `restore` を必須とし、アーカイブによる削除も反映する。サンプルと `.gitkeep` は保存しない。書き込むワークフローは同じ `concurrency` グループ (`audit-data`) で直列化する。
 
@@ -176,8 +177,8 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 
 `pnpm fork:verify` は次を検証する。
 
-1. ライブデータのパス (`data/snapshots`、`data/reports`、`data/archive`、`data/dashboard.json`、`data/state.json`) が git で追跡されていない
-2. `data/sample/dashboard.json` が公開契約 (`dashboardViewSchema`) に一致し、`source` が `demo` である
+1. ライブデータのパス (`data/snapshots`、`data/reports`、`data/archive`、`data/dashboard.json`、`data/detail`、`data/state.json`) が git で追跡されていない
+2. `data/sample/dashboard.json` が公開契約 (`dashboardViewSchema`) に一致し、`source` が `demo` である。`data/sample/detail/` は詳細データ契約 (§9.1) に一致し、`example.*` 以外のメールと未マスクの識別子を含まない
 3. `data/sample/` のメールアドレスが `example.*` ドメインだけである
 4. 追跡ファイルにシークレットのパターンが無い
 5. `.gitignore` に必須パターンがある / `.env` が無い / `.env.example` に実値が無い
@@ -372,6 +373,10 @@ API の項目名・ページング方式の変更は該当ゲートウェイの�
 
 UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod スキーマ付き) だけを読む。collector が書き込み時に検証し、UI は schemaVersion を確認して不一致なら再生成を促す。内容は集計値のみで、メールアドレスは既定でマスクする (`dashboard.maskPii`)。
 
+個人単位のデータ (メンバー、API キー、アクティビティ検索、組織/グループ) は `dashboard.json` に入れず、別の**詳細データファイル**で配る (`DETAIL_SCHEMA_VERSION = 1`、`contracts/detail-view.ts`)。`detail/index.json` (マニフェスト: `maskPii`・`source`・各ファイルの `kind`/`path`/`status`/`count`) と、`members.json`・`api-keys.json`・`activity-<yyyy-mm>.json` (月ごと、新しい順、最大 2000 行。`total`/`truncated` で実数を示す)・`org-groups.json` から成り、各ファイルが自前の `schemaVersion` を持つ (`DashboardView` は v2 のまま)。`maskPii=true` では、メールは `j***@example.com`、氏名はイニシャル、IP は除去、ユーザー/キー/招待 ID は `u_`/`k_`/`i_` + 12 桁 hex の安定ハッシュ (ファイル間で結合可能) にする。`maskPii=false` では生値になりマニフェストに記録される。生成は純粋なプレゼンタ (`core/application/presenters/detail-*.ts`) と `collector/src/main/detail.ts` (`pnpm build:detail`、`pnpm pipeline` に含む。書き込み時に zod 検証)。`checkDetailBundle()` (`contracts/detail-bundle.ts`) がマニフェストとファイルの整合・`example.*`・マスクを検査し、`fork:verify` がサンプルに適用する。
+
+公開条件: サンプル配備では `data/sample/detail/` を配る。`PAGES_DATA_SOURCE=live` でも、リポジトリ変数 `PAGES_DETAIL_DATA=true` (Private Pages であることの明示的な宣言。既定オフ) が無ければ詳細データは Pages に載せず、UI は「未公開」を表示する ([DEPLOYMENT.md](DEPLOYMENT.md) Option 1)。
+
 ### 9.2 画面構成 (単一ページ)
 
 | セクション       | 内容                                                                                                                                      |
@@ -453,15 +458,16 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 
 ### 12.2 Secrets と Variables
 
-| 名前                                                                                          | 種別     | 必須 | 内容                                                  |
-| --------------------------------------------------------------------------------------------- | -------- | ---- | ----------------------------------------------------- |
-| `ANTHROPIC_ENTERPRISE_API_KEY`                                                                | Secret   | 必須 | §5.1 の Enterprise キー                               |
-| `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY`    | Secret   | 任意 | 系統ごとの上書き                                      |
-| `SLACK_WEBHOOK_URL` / `DISCORD_WEBHOOK_URL`                                                   | Secret   | 任意 | 通知先                                                |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO` | Secret   | 任意 | メール通知                                            |
-| `ENABLE_SCHEDULED_JOBS`                                                                       | Variable | 任意 | `true` で定期実行を有効化 (既定は手動のみ)            |
-| `PAGES_DATA_SOURCE`                                                                           | Variable | 任意 | `live` でライブデータを Pages に公開 (既定はサンプル) |
-| `DASHBOARD_URL`                                                                               | Variable | 任意 | 通知に載せるダッシュボードの URL                      |
+| 名前                                                                                          | 種別     | 必須 | 内容                                                                                             |
+| --------------------------------------------------------------------------------------------- | -------- | ---- | ------------------------------------------------------------------------------------------------ |
+| `ANTHROPIC_ENTERPRISE_API_KEY`                                                                | Secret   | 必須 | §5.1 の Enterprise キー                                                                          |
+| `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY`    | Secret   | 任意 | 系統ごとの上書き                                                                                 |
+| `SLACK_WEBHOOK_URL` / `DISCORD_WEBHOOK_URL`                                                   | Secret   | 任意 | 通知先                                                                                           |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO` | Secret   | 任意 | メール通知                                                                                       |
+| `ENABLE_SCHEDULED_JOBS`                                                                       | Variable | 任意 | `true` で定期実行を有効化 (既定は手動のみ)                                                       |
+| `PAGES_DATA_SOURCE`                                                                           | Variable | 任意 | `live` でライブデータを Pages に公開 (既定はサンプル)                                            |
+| `PAGES_DETAIL_DATA`                                                                           | Variable | 任意 | `true` かつ `PAGES_DATA_SOURCE=live` で個人単位の詳細データも公開 (Private Pages のみ。既定オフ) |
+| `DASHBOARD_URL`                                                                               | Variable | 任意 | 通知に載せるダッシュボードの URL                                                                 |
 
 ---
 

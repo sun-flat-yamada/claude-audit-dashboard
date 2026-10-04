@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Logger } from '@claude-audit/core';
@@ -11,6 +11,8 @@ import {
 import { stableStringify } from '../adapters/storage/file-store.js';
 import { fixedClock } from '../infrastructure/runtime.js';
 import { createContainer } from './container.js';
+import { writeDetail } from './detail.js';
+import { writeFiles } from './write-files.js';
 import { check, collect, writeDashboard } from './workflows.js';
 
 export interface FixtureTenantOptions {
@@ -44,9 +46,11 @@ export async function runFixtureTenant(
     await collect(c);
     const { report } = await check(c);
     const view = await writeDashboard(c);
+    const detail = await writeDetail(c);
     return {
       'dashboard.json': stableStringify(view),
       'compliance-report.json': stableStringify(report),
+      ...detail,
     };
   } finally {
     await rm(workDir, { recursive: true, force: true });
@@ -55,9 +59,6 @@ export async function runFixtureTenant(
 
 export async function writeFixtureTenant(outDir: string, options: FixtureTenantOptions) {
   const files = await runFixtureTenant(options);
-  await mkdir(outDir, { recursive: true });
-  await Promise.all(
-    Object.entries(files).map(([name, content]) => writeFile(join(outDir, name), content)),
-  );
+  await writeFiles(outDir, files);
   return files;
 }

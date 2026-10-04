@@ -5,8 +5,8 @@
  *
  * Checks:
  * 1. No live audit data files are tracked on the code branch
- * 2. Sample data matches the published dashboard contract, comes from the synthetic
- *    demo tenant and contains no real-looking e-mail addresses
+ * 2. Sample data matches the published dashboard and detail contracts, comes from the synthetic
+ *    demo tenant and contains no real-looking e-mail addresses or unmasked identifiers
  * 3. No secrets in tracked files; sanitized tenant fixtures use example.com / 192.0.2.0/24 only
  * 4. .gitignore properly configured
  */
@@ -14,7 +14,7 @@
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { dashboardViewSchema } from '../packages/core/src/contracts/index.js';
+import { checkDetailBundle, dashboardViewSchema } from '../packages/core/src/contracts/index.js';
 
 const ROOT = resolve(import.meta.dirname, '..');
 let errors = 0;
@@ -57,6 +57,7 @@ const forbiddenPaths = [
   'data/archive',
   'data/raw',
   'data/fixture',
+  'data/detail',
 ];
 
 const trackedFiles = listTrackedFiles();
@@ -152,9 +153,33 @@ function checkSampleDashboard(): void {
   pass('Sample dashboard data matches the published contract (demo source)');
 }
 
+/** Relative paths (forward slashes) of every file below `dir`. */
+function listFilesRecursive(dir: string, prefix = ''): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+    entry.isDirectory()
+      ? listFilesRecursive(join(dir, entry.name), `${prefix}${entry.name}/`)
+      : [`${prefix}${entry.name}`],
+  );
+}
+
+function checkSampleDetail(): void {
+  const detailDir = join(sampleDir, 'detail');
+  if (!existsSync(detailDir)) return fail('data/sample/detail/ is missing (run `pnpm demo`)');
+  const files = Object.fromEntries(
+    listFilesRecursive(detailDir).map((name) => [
+      `detail/${name}`,
+      readFileSync(join(detailDir, name), 'utf-8'),
+    ]),
+  );
+  const problems = checkDetailBundle(files, { requireDemo: true });
+  for (const problem of problems) fail(`data/sample/${problem}`);
+  if (problems.length === 0)
+    pass(`${Object.keys(files).length} sample detail files match the detail contract (masked)`);
+}
+
 function checkSampleEmails(): void {
   const before = errors;
-  for (const name of readdirSync(sampleDir)) {
+  for (const name of listFilesRecursive(sampleDir)) {
     const content = readFileSync(join(sampleDir, name), 'utf-8');
     const real = [...content.matchAll(EMAIL)]
       .map((m) => m[0])
@@ -168,6 +193,7 @@ function checkSampleEmails(): void {
 }
 
 checkSampleDashboard();
+checkSampleDetail();
 if (existsSync(sampleDir)) checkSampleEmails();
 
 // --- Check 3: Secret scanning ---
