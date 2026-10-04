@@ -133,7 +133,8 @@ pnpm sanitize ../claude-audit-captures/run1 packages/collector/src/adapters/anth
 
 # 3. Review the result by eye, then check it and try it:
 pnpm fork:verify && pnpm secret-scan
-pnpm fixture:tenant --out ../fixture-out      # collect -> check -> dashboard.json from the fixtures, no key
+pnpm fixture                                  # collect -> check -> dashboard.json from the fixtures, no key (writes data/fixture/, gitignored)
+pnpm fixture:tenant --out ../fixture-out      # same, to another directory
 ```
 
 Delete the raw capture after checking; never share or commit it. Only the sanitized fixtures go into a PR. The sanitizer refuses to write when an original value would remain in the output, but it cannot know every free-text field of a future API version, so always review the files.

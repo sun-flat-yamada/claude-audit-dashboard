@@ -171,11 +171,11 @@ const sanitizeCommand: Command = {
 
 const fixtureCommand: Command = {
   name: 'fixture',
-  usage: 'fixture --out <dir> [--fixtures <dir>]',
+  usage: 'fixture [--out <dir>] [--fixtures <dir>]',
   description: 'Run collect, check and dashboard on the fixture tenant (no key needed)',
   async run(c, args) {
-    const out = option(args, '--out');
-    if (!out) throw new Error(`Usage: ${this.usage}`);
+    // Default: the gitignored data/fixture/, read by DASHBOARD_DATA_SOURCE=fixtures.
+    const out = option(args, '--out') ?? 'data/fixture';
     const fixtureDir = resolve(
       c.env.baseDir,
       option(args, '--fixtures') ?? defaultFixtureDir(c.env.baseDir),

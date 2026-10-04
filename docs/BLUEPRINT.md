@@ -393,7 +393,9 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 - 色だけで状態を伝えない (状態はアイコン + ラベル + 色)。系列色はカテゴリ順で固定し、2 系列以上は凡例を出す
 - すべてのグラフに表形式の切替を付ける。二軸グラフは使わない
 - ライト / ダーク両対応 (`prefers-color-scheme`)、幅 390px でも横スクロールしない
-- 依存は React 19、Recharts 3、Tailwind CSS 4 のみ (ルーターなし)
+- 依存は React 19、Recharts 3、Tailwind CSS 4 のみ。ルーティングは自前のハッシュルーター (`#/members` 形式、約 60 行、新規依存なし)。`VITE_BASE_PATH` 配下の静的ホスティング (GitHub Pages) で各画面へディープリンクでき、ブラウザの戻る / 進むが機能する。未知のルートは「ページが見つかりません」を表示する。ナビゲーションは `nav` ランドマーク (名前 `Primary`)、現在ページは `aria-current="page"`、スキップリンクを備える
+- 画面要素は role とアクセシブルネームで特定できること。テスト・E2E のセレクタは `getByRole(role, { name })` を使い、`data-testid` に頼らない (`CONTRIBUTING.md`)
+- 開発・ビルド時のデータ源は `DASHBOARD_DATA_SOURCE` で指定する (`packages/dashboard/scripts/stage-data.mjs`)。未指定は従来どおり (`data/dashboard.json` があればそれ、無ければ `data/sample/dashboard.json`)。`sample` は `data/sample/`、`fixtures` は `pnpm fixture` が書く gitignore 済みの `data/fixture/`、`live` は `data/dashboard.json` (無ければ失敗)。テストと E2E は `sample` または `fixtures` のみを使い、`live` は使わない (`fork:verify` が検査)
 
 ---
 

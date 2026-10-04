@@ -1,0 +1,58 @@
+import type { ReactElement } from 'react';
+import type { DashboardView } from '@claude-audit/core/contracts';
+import type { NavItem } from './components/NavBar';
+import { matchPath } from './lib/router';
+import { Overview } from './pages/Overview';
+
+export interface RouteDef extends NavItem {
+  /** Pattern such as `/members` or `/reports/monthly/:id`. */
+  pattern: string;
+  /** false hides the route from the navigation (parametrised detail pages). */
+  nav: boolean;
+  render(view: DashboardView, params: Record<string, string>): ReactElement;
+}
+
+/** Later work units append their pages here; the router and nav need no other change. */
+export const ROUTES: RouteDef[] = [
+  {
+    path: '/',
+    pattern: '/',
+    label: 'Overview',
+    nav: true,
+    render: (view) => <Overview view={view} />,
+  },
+];
+
+export function findRoute(
+  path: string,
+  routes: RouteDef[] = ROUTES,
+): { route: RouteDef; params: Record<string, string> } | null {
+  for (const route of routes) {
+    const params = matchPath(route.pattern, path);
+    if (params) return { route, params };
+  }
+  return null;
+}
+
+export function NotFound({ path, onHome }: { path: string; onHome: () => void }) {
+  return (
+    <section>
+      <h1 className="text-2xl font-semibold">Page not found</h1>
+      <p className="mt-3 text-[var(--text-secondary)]">
+        There is no page at <code>{path}</code>.
+      </p>
+      <p className="mt-3">
+        <a
+          href="#/"
+          className="underline"
+          onClick={(event) => {
+            event.preventDefault();
+            onHome();
+          }}
+        >
+          Back to the overview
+        </a>
+      </p>
+    </section>
+  );
+}

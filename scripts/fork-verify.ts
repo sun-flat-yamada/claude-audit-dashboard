@@ -56,6 +56,7 @@ const forbiddenPaths = [
   'data/state.json',
   'data/archive',
   'data/raw',
+  'data/fixture',
 ];
 
 const trackedFiles = listTrackedFiles();
@@ -88,6 +89,42 @@ if (trackedFiles) {
 if (errors === 0) {
   pass('No live data files on main branch');
 }
+
+// --- Check 1b: dashboard tests never read live data ---
+console.log('\n🧫 Check 1b: Dashboard test data sources');
+
+const LIVE_SOURCE = /DASHBOARD_DATA_SOURCE[^\n]*live/;
+const LIVE_PATH = /['"]data['"]\s*,\s*['"]dashboard\.json['"]/;
+
+function listTestFiles(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) return entry.name === 'node_modules' ? [] : listTestFiles(full);
+    return /\.(test|spec)\.[cm]?[jt]sx?$/.test(entry.name) ? [full] : [];
+  });
+}
+
+function checkDashboardTestSources(): void {
+  const before = errors;
+  const dashboard = join(ROOT, 'packages', 'dashboard');
+  // scripts/__tests__ exercises stage-data.mjs itself (with temp dirs), so it may name `live`.
+  const files = [
+    ...listTestFiles(join(dashboard, 'src')),
+    ...listTestFiles(join(dashboard, 'e2e')),
+  ];
+  for (const file of files) {
+    const content = readFileSync(file, 'utf-8');
+    if (LIVE_SOURCE.test(content) || LIVE_PATH.test(content))
+      fail(`${file.slice(ROOT.length + 1)} reads live data: tests and E2E use sample or fixtures`);
+  }
+  const pkg = readFileSync(join(dashboard, 'package.json'), 'utf-8');
+  if (/"(test|e2e)[^"]*":\s*"[^"]*DASHBOARD_DATA_SOURCE=live/.test(pkg))
+    fail('packages/dashboard/package.json test scripts must not use DASHBOARD_DATA_SOURCE=live');
+  if (errors === before) pass(`${files.length} dashboard test file(s) use sample or fixtures only`);
+}
+
+checkDashboardTestSources();
 
 // --- Check 2: Sample data validity ---
 console.log('\n📋 Check 2: Sample data presence and validity');

@@ -85,7 +85,12 @@ pnpm install
    npm run secret-scan   # Multi-layered secrets & PII audit (Exit 0 mandatory)
    npm run build         # Production monorepo & dashboard build
    ```
-4. **Test fixtures from a real tenant** (maintainers with a key only): capture with `pnpm collect --capture-raw <dir outside the repo>`, then `pnpm sanitize <dir> packages/collector/src/adapters/anthropic/__tests__/fixtures/tenant`. Commit only the sanitized files (example.com e-mails, synthetic IDs, `192.0.2.0/24` IPs; `fork:verify` and `secret-scan` check this); never commit or share a raw capture. Procedure: [docs/SETUP.md](docs/SETUP.md#capturing-real-responses-as-test-fixtures-maintainers). `pnpm fixture:tenant --out <dir>` runs collect → check → dashboard on the fixtures without a key.
+4. **Test fixtures from a real tenant** (maintainers with a key only): capture with `pnpm collect --capture-raw <dir outside the repo>`, then `pnpm sanitize <dir> packages/collector/src/adapters/anthropic/__tests__/fixtures/tenant`. Commit only the sanitized files (example.com e-mails, synthetic IDs, `192.0.2.0/24` IPs; `fork:verify` and `secret-scan` check this); never commit or share a raw capture. Procedure: [docs/SETUP.md](docs/SETUP.md#capturing-real-responses-as-test-fixtures-maintainers). `pnpm fixture` (alias `pnpm fixture:tenant`, optional `--out <dir>`, default `data/fixture/`, gitignored) runs collect → check → dashboard on the fixtures without a key.
+5. **Dashboard tests** (`packages/dashboard`, Vitest + Testing Library + jsdom, part of `pnpm test`):
+   - **Data source**: tests and E2E use `DASHBOARD_DATA_SOURCE=sample` (committed `data/sample/`) or `fixtures` (`pnpm fixture` output, which `pnpm test` regenerates); never `live` (`fork:verify` enforces). Staging default (`DASHBOARD_DATA_SOURCE` unset) stays: live `data/dashboard.json` if present, else sample.
+   - **Selector convention**: find elements by role and accessible name (`getByRole('link', { name: 'Overview' })`, `getByRole('navigation', { name: 'Primary' })`), then by label or visible text. Do not add `data-testid`. If an element cannot be found this way, fix the markup (landmark, label, `aria-current`) instead of the test; this is also what Playwright and axe rely on in Phase B5.
+   - **Deep links**: screens are hash routes (`#/members`); set `window.location.hash` before `render(<App />)`. Pages hosts the app under `VITE_BASE_PATH`, and only the hash is routed.
+   - **Detail files**: load them with `useDetailFile(path, schema)` (loading / missing / error states, injectable `fetch`) and test the missing state, not only the happy path.
 
 #### Step 5: Rebase onto Base & Create PR
 
