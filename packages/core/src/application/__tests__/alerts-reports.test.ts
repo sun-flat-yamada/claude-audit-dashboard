@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { NOW, activity, costRow, dayString, snapshot, usageRow } from '../../__tests__/fixtures.js';
+import { COMPLIANCE_EXPORT_COLUMNS } from '../../contracts/compliance-export.js';
 import { dashboardViewSchema } from '../../contracts/dashboard-view.js';
 import { buildRuleCatalog } from '../../domain/compliance/catalog.js';
 import { evaluateCompliance } from '../../domain/compliance/engine.js';
@@ -135,6 +136,13 @@ describe('report definitions', () => {
       monthlyReportDefinition.period(new Date('2026-10-01T03:00:00Z')).start.toISOString(),
     ).toBe('2026-09-01T00:00:00.000Z');
     expect(() => complianceReportDefinition.build({ ...ctx(), compliance: null })).toThrow(/check/);
+  });
+
+  it('writes the findings table with the shared export columns (dashboard export parity)', () => {
+    const findings = complianceReportDefinition
+      .build(ctx())
+      .sections.find((s) => s.type === 'table' && s.title === 'Findings');
+    expect(findings).toMatchObject({ columns: [...COMPLIANCE_EXPORT_COLUMNS] });
   });
 });
 

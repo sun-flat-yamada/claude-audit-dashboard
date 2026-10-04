@@ -9,6 +9,7 @@ import {
 } from '../lib/view';
 import { SeverityLabel, StatusBadge } from './Badges';
 import { Empty } from './Card';
+import { ExportButtons } from './ExportButtons';
 
 const FILTER_LABEL: Record<StatusFilter, string> = {
   all: 'All',
@@ -81,13 +82,29 @@ function ResultRow({ result }: { result: DashboardCheckResult }) {
   );
 }
 
-export function ComplianceResults({ results }: { results: readonly DashboardCheckResult[] }) {
+export function ComplianceResults({
+  results,
+  exportFrom,
+}: {
+  results: readonly DashboardCheckResult[];
+  /** Offers CSV / JSON download; the value is the collection time used in file names. */
+  exportFrom?: { collectedAt: string | null };
+}) {
   const [filter, setFilter] = useState<StatusFilter>('all');
   const sorted = useMemo(() => sortResults(results), [results]);
   const counts = useMemo(() => countByStatus(sorted), [sorted]);
   const visible = filterResults(sorted, filter);
   return (
     <div>
+      {exportFrom && (
+        <ExportButtons
+          results={visible}
+          allResults={sorted}
+          collectedAt={exportFrom.collectedAt}
+          filter={filter}
+          filterLabel={FILTER_LABEL[filter]}
+        />
+      )}
       <Filters value={filter} counts={counts} onChange={setFilter} />
       {visible.length === 0 ? (
         <Empty>No results with this status.</Empty>

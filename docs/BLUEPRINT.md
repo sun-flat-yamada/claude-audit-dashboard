@@ -386,6 +386,8 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 | Activity         | 件数上位の type、監視ルールに一致したイベント                                                      |
 | Data coverage    | データセットごとの取得状況・件数・取得元・理由                                                     |
 
+`#/compliance` (B2-1) は結果一覧に CSV / JSON ダウンロード (絞り込み表示分と全件) を備える。先頭列は `COMPLIANCE_EXPORT_COLUMNS` (`@claude-audit/core/contracts`) で `pnpm report:compliance` の CSV と共通、数式インジェクション対策として `=` `+` `-` `@`・タブ・CR で始まるセルに `'` を前置する。
+
 詳細と今後の画面 (Phase B) は [DASHBOARD-FEATURES.md](DASHBOARD-FEATURES.md)。
 
 ### 9.3 表示要件

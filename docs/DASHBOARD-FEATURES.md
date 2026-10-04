@@ -21,7 +21,7 @@
 | ----- | ------------------------------- | -------- | --------------------------------------------------------- | ------------------------------------------------ |
 | F-001 | Organization overview           | P0       | ✅ Phase A                                                | `title`, `organizations`, `collectedAt`, `kpis`  |
 | F-002 | Compliance score and trend      | P0       | ✅ Phase A                                                | `kpis[score]`, `compliance.history`              |
-| F-003 | Compliance results              | P0       | ✅ Phase A (export: Phase B)                              | `compliance.results`, `compliance.byCategory`    |
+| F-003 | Compliance results              | P0       | ✅ Phase A; export ✅ Phase B2 (B2-1)                     | `compliance.results`, `compliance.byCategory`    |
 | F-004 | Usage and cost                  | P0       | ✅ Phase A                                                | `usage.daily`, `usage.byProduct/byModel/byGroup` |
 | F-005 | Activity                        | P0       | 🔶 Aggregates in Phase A; search in Phase B               | `activity`                                       |
 | F-006 | Member view                     | P1       | ⏳ Phase B                                                | separate access-controlled file                  |
@@ -58,7 +58,7 @@
 - Order: fail, error, warning, skipped, pass; then severity; then rule ID.
 - Each row expands to the remediation text and up to 20 evidence items (masked).
 - Failing rules by category as labeled bars (`failed of evaluated`).
-- Phase B: CSV / JSON export from the UI (the compliance report is already written as CSV / JSON / Markdown / HTML by `pnpm report:compliance`).
+- Phase B2 (B2-1): route `#/compliance` with CSV / JSON download. "Export CSV / JSON (<filter>)" exports the filtered view (shown only while a status filter is active); "Export all CSV / JSON" exports every result. The first columns (`COMPLIANCE_EXPORT_COLUMNS`: Rule, Name, Severity, Status, Message) equal the `pnpm report:compliance` CSV; Category, Remediation and Evidence follow. Cells beginning with `=` `+` `-` `@`, tab or CR are prefixed with `'` (spreadsheet formula-injection guard); fields are RFC 4180 quoted. File names: `compliance-results-<collectedAt yyyymmdd>[-<status>].csv|json`.
 
 ### F-004 Usage and cost
 
