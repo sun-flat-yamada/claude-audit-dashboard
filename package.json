@@ -48,6 +48,7 @@
     "collect": "pnpm --filter @claude-audit/collector cli collect",
     "check:compliance": "pnpm --filter @claude-audit/collector cli check",
     "build:data": "pnpm --filter @claude-audit/collector cli dashboard",
+    "build:detail": "pnpm --filter @claude-audit/collector cli detail",
     "pipeline": "pnpm --filter @claude-audit/collector cli pipeline",
     "report:compliance": "pnpm --filter @claude-audit/collector cli report compliance",
     "report:weekly": "pnpm --filter @claude-audit/collector cli report weekly",

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildRuleCatalog } from '@claude-audit/core';
-import { dashboardViewSchema } from '@claude-audit/core/contracts';
+import { checkDetailBundle, dashboardViewSchema } from '@claude-audit/core/contracts';
 import { describe, expect, it } from 'vitest';
 import { silentLogger } from '../../infrastructure/runtime.js';
 import { writeDemoSample } from '../demo.js';
@@ -21,6 +21,11 @@ describe('public sample data (data/sample)', () => {
         );
       }
       dashboardViewSchema.parse(JSON.parse(generated['dashboard.json'] ?? '{}'));
+      const detail = Object.fromEntries(
+        Object.entries(generated).filter(([name]) => name.startsWith('detail/')),
+      );
+      expect(Object.keys(detail).length).toBeGreaterThanOrEqual(5);
+      expect(checkDetailBundle(detail, { requireDemo: true })).toEqual([]);
     } finally {
       await rm(out, { recursive: true, force: true });
     }

@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -85,5 +85,54 @@ describe('stage', () => {
   it('live without data/dashboard.json throws instead of falling back', () => {
     rmSync(join(tmp, 'data', 'dashboard.json'));
     expect(() => stage({ env: { DASHBOARD_DATA_SOURCE: 'live' }, pkgRoot, log: quiet })).toThrow();
+  });
+
+  describe('detail files', () => {
+    const staged = (rel) => join(pkgRoot, 'public', 'data', 'detail', rel);
+
+    beforeEach(() => {
+      write('data/sample/detail/index.json', 'SAMPLE-INDEX');
+      write('data/sample/detail/members.json', 'SAMPLE-MEMBERS');
+      write('data/fixture/detail/index.json', 'FIXTURE-INDEX');
+      write('data/detail/index.json', 'LIVE-INDEX');
+      write('data/detail/activity-2026-09.json', 'LIVE-ACTIVITY');
+    });
+
+    it.each([
+      ['sample', 'SAMPLE-INDEX'],
+      ['fixtures', 'FIXTURE-INDEX'],
+      ['live', 'LIVE-INDEX'],
+      [undefined, 'LIVE-INDEX'],
+    ])("DASHBOARD_DATA_SOURCE=%s stages that source's detail directory", (source, expected) => {
+      stage({ env: { DASHBOARD_DATA_SOURCE: source }, pkgRoot, log: quiet });
+      expect(readFileSync(staged('index.json'), 'utf-8')).toBe(expected);
+    });
+
+    it('copies every file of the directory', () => {
+      stage({ env: { DASHBOARD_DATA_SOURCE: 'live' }, pkgRoot, log: quiet });
+      expect(readFileSync(staged('activity-2026-09.json'), 'utf-8')).toBe('LIVE-ACTIVITY');
+    });
+
+    it('removes a stale staged detail directory when the source has none', () => {
+      stage({ env: { DASHBOARD_DATA_SOURCE: 'sample' }, pkgRoot, log: quiet });
+      expect(existsSync(staged('members.json'))).toBe(true);
+      rmSync(join(tmp, 'data', 'fixture', 'detail'), { recursive: true });
+      stage({ env: { DASHBOARD_DATA_SOURCE: 'fixtures' }, pkgRoot, log: quiet });
+      expect(existsSync(staged('index.json'))).toBe(false);
+      expect(existsSync(staged('members.json'))).toBe(false);
+    });
+
+    it('does not stage a detail directory without a manifest', () => {
+      rmSync(join(tmp, 'data', 'sample', 'detail', 'index.json'));
+      stage({ env: { DASHBOARD_DATA_SOURCE: 'sample' }, pkgRoot, log: quiet });
+      expect(existsSync(staged('members.json'))).toBe(false);
+    });
+
+    it('STAGED_DATA=1 leaves CI-staged detail files untouched', () => {
+      write('packages/dashboard/public/data/dashboard.json', 'CI');
+      write('packages/dashboard/public/data/detail/index.json', 'CI-INDEX');
+      stage({ env: { STAGED_DATA: '1', DASHBOARD_DATA_SOURCE: 'sample' }, pkgRoot, log: quiet });
+      expect(readFileSync(staged('index.json'), 'utf-8')).toBe('CI-INDEX');
+    });
   });
 });

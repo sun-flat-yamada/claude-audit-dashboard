@@ -12,6 +12,7 @@ import {
 import { defaultFixtureDir } from '../adapters/fixture/fixture-source.js';
 import { archiveSnapshots } from '../adapters/storage/archive.js';
 import type { Container } from './container.js';
+import { writeDetail } from './detail.js';
 import { writeDemoSample } from './demo.js';
 import { writeFixtureTenant } from './fixture.js';
 import { sanitizeDirectory } from './sanitize.js';
@@ -70,12 +71,25 @@ const dashboardCommand: Command = {
   },
 };
 
+const detailCommand: Command = {
+  name: 'detail',
+  usage: 'detail',
+  description: 'Write data/detail/*.json (members, API keys, activity, org / groups)',
+  async run(c) {
+    const files = await writeDetail(c);
+    c.logger.info(
+      `Detail data written (${Object.keys(files).length} files, maskPii ${String(c.config.dashboard.maskPii)})`,
+    );
+  },
+};
+
 const pipelineCommand: Command = {
   name: 'pipeline',
   usage: 'pipeline',
-  description: 'collect, check and dashboard in one run',
+  description: 'collect, check, dashboard and detail in one run',
   async run(c, args) {
-    for (const step of [collectCommand, checkCommand, dashboardCommand]) await step.run(c, args);
+    for (const step of [collectCommand, checkCommand, dashboardCommand, detailCommand])
+      await step.run(c, args);
   },
 };
 
@@ -193,6 +207,7 @@ export const COMMANDS = new Registry<Command>((cmd) => cmd.name, 'command').addA
   collectCommand,
   checkCommand,
   dashboardCommand,
+  detailCommand,
   pipelineCommand,
   reportCommand,
   notifyCommand,

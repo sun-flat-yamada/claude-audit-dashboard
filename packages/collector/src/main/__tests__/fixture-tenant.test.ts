@@ -2,7 +2,7 @@ import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dashboardViewSchema } from '@claude-audit/core/contracts';
+import { checkDetailBundle, dashboardViewSchema } from '@claude-audit/core/contracts';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { TENANT_FIXTURE_URL } from '../../__tests__/fixture-sets.js';
 import { rawCaptureEntrySchema } from '../../adapters/anthropic/raw-capture.js';
@@ -32,6 +32,14 @@ describe('fixture tenant (collect → check → dashboard on the tenant-shape fi
     expect(status('AM-001')).toBe('warning');
   });
 
+  it('produces a valid, masked detail bundle', () => {
+    const detail = Object.fromEntries(
+      Object.entries(files).filter(([name]) => name.startsWith('detail/')),
+    );
+    expect(Object.keys(detail)).toContain('detail/index.json');
+    expect(checkDetailBundle(detail, { requireDemo: true })).toEqual([]);
+  });
+
   it('is deterministic: the same fixtures give byte-identical output', async () => {
     expect(await runFixtureTenant({ fixtureDir })).toEqual(files);
   });
@@ -55,7 +63,11 @@ describe('fixture tenant (collect → check → dashboard on the tenant-shape fi
         logger,
       });
       expect(code).toBe(0);
-      expect((await readdir(out)).sort()).toEqual(['compliance-report.json', 'dashboard.json']);
+      expect((await readdir(out)).sort()).toEqual([
+        'compliance-report.json',
+        'dashboard.json',
+        'detail',
+      ]);
       expect(await readFile(join(out, 'dashboard.json'), 'utf8')).toBe(files['dashboard.json']);
       expect(
         await runCli(['fixture'], { env: {}, cwd: out, dataDir: join(out, 'data'), logger }),

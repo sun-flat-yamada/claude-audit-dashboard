@@ -1,0 +1,45 @@
+{
+  "collectedAt": "2026-09-29T12:00:00.000Z",
+  "files": [
+    {
+      "count": 40,
+      "kind": "members",
+      "month": null,
+      "path": "detail/members.json",
+      "reason": null,
+      "schemaVersion": 1,
+      "status": "ok"
+    },
+    {
+      "count": 4,
+      "kind": "api-keys",
+      "month": null,
+      "path": "detail/api-keys.json",
+      "reason": null,
+      "schemaVersion": 1,
+      "status": "ok"
+    },
+    {
+      "count": 79,
+      "kind": "activity",
+      "month": "2026-09",
+      "path": "detail/activity-2026-09.json",
+      "reason": null,
+      "schemaVersion": 1,
+      "status": "ok"
+    },
+    {
+      "count": 4,
+      "kind": "org-groups",
+      "month": null,
+      "path": "detail/org-groups.json",
+      "reason": null,
+      "schemaVersion": 1,
+      "status": "ok"
+    }
+  ],
+  "generatedAt": "2026-09-29T12:00:00.000Z",
+  "maskPii": true,
+  "schemaVersion": 1,
+  "source": "demo"
+}

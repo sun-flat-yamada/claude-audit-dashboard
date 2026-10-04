@@ -5,8 +5,11 @@
 //   sample    data/sample/dashboard.json (synthetic demo tenant; use this in tests and E2E)
 //   fixtures  data/fixture/dashboard.json (written by `pnpm fixture`; gitignored; use this in tests and E2E)
 //   live      data/dashboard.json; fails when absent (never use in tests or E2E)
+// The per-person detail files (`detail/`, see docs/BLUEPRINT.md) are staged from the directory next to
+// the selected dashboard.json (data/sample/detail, data/fixture/detail, data/detail); a stale staged
+// public/data/detail is removed when the source has none, so the SPA shows "not collected".
 // CI stages live data itself and sets STAGED_DATA=1 so this script leaves it untouched.
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -47,6 +50,20 @@ export function resolveSource(requested, repoRoot, exists = existsSync) {
   return { name, file };
 }
 
+/** Copies `<source dir>/detail` to `<public data dir>/detail`, or removes a stale staged copy. */
+export function stageDetail(sourceDir, publicDir, repoRoot, log = console.log) {
+  const from = join(sourceDir, 'detail');
+  const to = join(publicDir, 'detail');
+  rmSync(to, { recursive: true, force: true });
+  if (!existsSync(join(from, 'index.json'))) {
+    log('No detail files in the source: detail pages will show "not collected"');
+    return false;
+  }
+  cpSync(from, to, { recursive: true });
+  log(`Staged ${relative(repoRoot, from)} -> public/data/detail`);
+  return true;
+}
+
 export function stage({ env = process.env, pkgRoot, log = console.log } = {}) {
   const repoRoot = join(pkgRoot, '..', '..');
   const target = join(pkgRoot, 'public', 'data', 'dashboard.json');
@@ -58,6 +75,7 @@ export function stage({ env = process.env, pkgRoot, log = console.log } = {}) {
   mkdirSync(dirname(target), { recursive: true });
   copyFileSync(file, target);
   log(`Staged (${name}) ${relative(repoRoot, file)} -> public/data/dashboard.json`);
+  stageDetail(dirname(file), dirname(target), repoRoot, log);
   return target;
 }
 

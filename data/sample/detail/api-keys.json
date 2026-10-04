@@ -1,0 +1,63 @@
+{
+  "generatedAt": "2026-09-29T12:00:00.000Z",
+  "keys": [
+    {
+      "active": true,
+      "createdAt": "2026-07-31T12:00:00.000Z",
+      "createdBy": "u_fb1d8c8dd150",
+      "expiresAt": null,
+      "id": "k_5fa8cc39f7b0",
+      "lastSeenAt": "2026-09-29T11:30:00.000Z",
+      "name": "Audit dashboard",
+      "scopes": [
+        "read:compliance_activities",
+        "read:compliance_org_data",
+        "read:members",
+        "read:rbac_groups",
+        "read:analytics",
+        "read:spend_limits"
+      ]
+    },
+    {
+      "active": true,
+      "createdAt": "2026-06-01T12:00:00.000Z",
+      "createdBy": "u_a45f06097b5a",
+      "expiresAt": null,
+      "id": "k_90e6fa381f41",
+      "lastSeenAt": null,
+      "name": "eDiscovery (legal hold)",
+      "scopes": [
+        "read:compliance_user_data",
+        "delete:compliance_user_data"
+      ]
+    },
+    {
+      "active": false,
+      "createdAt": "2025-05-17T12:00:00.000Z",
+      "createdBy": null,
+      "expiresAt": null,
+      "id": "k_bdb5f957cc38",
+      "lastSeenAt": null,
+      "name": "Retired pilot key",
+      "scopes": [
+        "read:compliance_activities"
+      ]
+    },
+    {
+      "active": true,
+      "createdAt": "2025-08-25T12:00:00.000Z",
+      "createdBy": "u_a45f06097b5a",
+      "expiresAt": null,
+      "id": "k_4a566c6e6e00",
+      "lastSeenAt": "2026-09-29T10:00:00.000Z",
+      "name": "SIEM export",
+      "scopes": [
+        "read:compliance_activities"
+      ]
+    }
+  ],
+  "maxAgeDays": 180,
+  "schemaVersion": 1,
+  "unusedDays": 30,
+  "usageObservedFrom": "2026-06-01T12:00:00.000Z"
+}

@@ -159,7 +159,7 @@ claude-audit-dashboard/
 3. **API キー**: claude.ai の **Organization settings → API** で primary owner が `read:compliance_activities`、`read:compliance_org_data`、`read:members`、`read:rbac_groups`、`read:analytics`、`read:spend_limits` を付けたキーを作成し、シークレット `ANTHROPIC_ENTERPRISE_API_KEY` に保存します。
 4. **任意のシークレット**: `SLACK_WEBHOOK_URL`、`DISCORD_WEBHOOK_URL`、`SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO`。
 5. **Collect Audit Data** を手動で 1 回実行し、Data coverage を確認してからリポジトリ変数 `ENABLE_SCHEDULED_JOBS=true` を設定します。
-6. 任意の変数: `DASHBOARD_URL` (通知に載せるリンク)、`PAGES_DATA_SOURCE=live` (ライブデータを公開。組織内に限定された Pages のときだけ)。
+6. 任意の変数: `DASHBOARD_URL` (通知に載せるリンク)、`PAGES_DATA_SOURCE=live` (ライブデータを公開。組織内に限定された Pages のときだけ)、`PAGES_DETAIL_DATA=true` (個人単位の詳細データも公開。Private Pages のときだけ、既定オフ)。
 
 手順の詳細: [docs/SETUP.md](docs/SETUP.md)。ホスティングの選択肢: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。
 

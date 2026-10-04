@@ -8,6 +8,18 @@
 
 The published file contains aggregates only (KPIs, rule results, daily totals, top activity types, coverage). E-mail addresses are masked (`dashboard.maskPii`, default `true`), but organization names, rule evidence labels and cost figures are included — treat a live site as confidential.
 
+### Per-person detail files (`PAGES_DETAIL_DATA`)
+
+Member, API key, activity and organization / group views read separate **detail files** (`detail/index.json` manifest, `members.json`, `api-keys.json`, `activity-<yyyy-mm>.json`, `org-groups.json`), never `dashboard.json`. They contain per-person data: e-mail addresses and names are masked and user / key IDs are replaced by stable short hashes while `dashboard.maskPii` is `true`, but with `maskPii=false` they hold raw values.
+
+| `PAGES_DATA_SOURCE` | `PAGES_DETAIL_DATA` | Detail files on Pages                                     |
+| ------------------- | ------------------- | --------------------------------------------------------- |
+| unset (sample)      | any                 | the synthetic sample (`data/sample/detail/`)              |
+| `live`              | unset / not `true`  | **none**; the detail pages show "not published" (default) |
+| `live`              | `true`              | live files from `data/audit` (`data/detail/`)             |
+
+`PAGES_DETAIL_DATA=true` is an explicit owner attestation: the workflow cannot detect Pages visibility, so set it **only for Private Pages (Option 1)**. Locally (`pnpm dev` after `pnpm build:data`) the files are always available.
+
 ---
 
 ## Repository Visibility Requirements
@@ -33,6 +45,7 @@ GitHub Enterprise Cloud supports **private GitHub Pages** that are only accessib
 3. Under **GitHub Pages visibility**, select **"Private"**
 4. Only users with repository access can view the dashboard
 5. Set the repository variable **`PAGES_DATA_SOURCE=live`** and re-run **Deploy Dashboard to GitHub Pages**
+6. Optional: set **`PAGES_DETAIL_DATA=true`** to also publish the per-person detail files (members, API keys, activity, groups); leave it unset to keep them off Pages
 
 ### Characteristics
 
@@ -199,7 +212,7 @@ When setting up a fork for your organization:
 
 - [ ] Set repository to **Private** or **Internal**
 - [ ] Configure secrets (`ANTHROPIC_ENTERPRISE_API_KEY`, notification channels) — see [SETUP.md](SETUP.md)
-- [ ] Choose a deployment option above; set `PAGES_DATA_SOURCE=live` only for access-controlled Pages
+- [ ] Choose a deployment option above; set `PAGES_DATA_SOURCE=live` only for access-controlled Pages, and `PAGES_DETAIL_DATA=true` only for Private Pages (Option 1)
 - [ ] Run the first collection: `workflow_dispatch` on "Collect Audit Data"
 - [ ] Verify the `data/audit` orphan branch was created and contains `data/dashboard.json`
 - [ ] Check the dashboard's Data coverage section (every dataset `Collected`)

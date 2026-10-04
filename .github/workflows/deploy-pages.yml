@@ -41,14 +41,29 @@ jobs:
       - name: Stage dashboard data
         env:
           PAGES_DATA_SOURCE: ${{ vars.PAGES_DATA_SOURCE }}
+          # Explicit owner attestation that the site is Private Pages (docs/DEPLOYMENT.md Option 1):
+          # per-person detail files (members, API keys, activity, groups) are published only then.
+          PAGES_DETAIL_DATA: ${{ vars.PAGES_DETAIL_DATA }}
         run: |
           mkdir -p packages/dashboard/public/data
           if [ "$PAGES_DATA_SOURCE" = "live" ]; then
             git fetch --quiet --depth=1 origin data/audit
             git show FETCH_HEAD:data/dashboard.json > packages/dashboard/public/data/dashboard.json
             echo "Staged live data from data/audit"
+            if [ "$PAGES_DETAIL_DATA" = "true" ]; then
+              git archive FETCH_HEAD data/detail 2>/dev/null | tar -x -C "$RUNNER_TEMP" || true
+              if [ -f "$RUNNER_TEMP/data/detail/index.json" ]; then
+                cp -r "$RUNNER_TEMP/data/detail" packages/dashboard/public/data/detail
+                echo "Staged live per-person detail files (PAGES_DETAIL_DATA=true)"
+              else
+                echo "PAGES_DETAIL_DATA=true but data/audit has no data/detail yet; detail pages show 'not published'"
+              fi
+            else
+              echo "Per-person detail files are not published (set PAGES_DETAIL_DATA=true only for Private Pages)"
+            fi
           else
             cp data/sample/dashboard.json packages/dashboard/public/data/dashboard.json
+            cp -r data/sample/detail packages/dashboard/public/data/detail
             echo "Staged the synthetic sample (set PAGES_DATA_SOURCE=live to publish live data)"
           fi
 

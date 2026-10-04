@@ -1,0 +1,78 @@
+{
+  "currency": "USD",
+  "deviations": [
+    {
+      "message": "1 of 3 organization(s) deviate on ip_allowlist_enabled",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "ruleId": "CF-003",
+      "ruleName": "IP Allowlist Enabled",
+      "severity": "medium",
+      "status": "fail"
+    },
+    {
+      "message": "2 of 3 organization(s) deviate on data_retention_periods",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "ruleId": "CF-005",
+      "ruleName": "Finite Data Retention",
+      "severity": "medium",
+      "status": "fail"
+    },
+    {
+      "message": "2 of 3 organization(s) deviate on data_retention_periods",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "ruleId": "CF-005",
+      "ruleName": "Finite Data Retention",
+      "severity": "medium",
+      "status": "fail"
+    }
+  ],
+  "generatedAt": "2026-09-29T12:00:00.000Z",
+  "groups": [
+    {
+      "id": "rbac_group_demo_engineering",
+      "memberCount": 18,
+      "monthToDateCost": 3343.11,
+      "name": "Engineering",
+      "source": "scim"
+    },
+    {
+      "id": "rbac_group_demo_legal",
+      "memberCount": 6,
+      "monthToDateCost": 573.09,
+      "name": "Legal",
+      "source": "direct"
+    },
+    {
+      "id": "rbac_group_demo_pilot",
+      "memberCount": 0,
+      "monthToDateCost": 0,
+      "name": "Pilot Program",
+      "source": "direct"
+    },
+    {
+      "id": "rbac_group_demo_sales",
+      "memberCount": 9,
+      "monthToDateCost": 1050.69,
+      "name": "Sales",
+      "source": "scim"
+    }
+  ],
+  "organizations": [
+    {
+      "id": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "memberCount": null,
+      "name": "Example Corp Engineering"
+    },
+    {
+      "id": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "memberCount": null,
+      "name": "Example Corp Legal"
+    },
+    {
+      "id": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "memberCount": null,
+      "name": "Example Corp Sales"
+    }
+  ],
+  "schemaVersion": 1
+}
