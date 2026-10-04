@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../App';
@@ -98,5 +98,14 @@ describe('hash routing', () => {
     );
     render(<App />);
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load dashboard data');
+  });
+});
+
+describe('App theme toggle', () => {
+  it.skipIf(SAMPLE === undefined)('shows the theme switch in the primary navigation', async () => {
+    stubFetch(SAMPLE ?? '');
+    render(<App />);
+    const nav = await screen.findByRole('navigation', { name: 'Primary' });
+    expect(within(nav).getByRole('group', { name: 'Theme' })).toBeInTheDocument();
   });
 });

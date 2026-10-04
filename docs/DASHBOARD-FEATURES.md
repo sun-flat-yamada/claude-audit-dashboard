@@ -29,7 +29,7 @@
 | F-008 | Alert history                   | P1       | ⏳ Phase B                                                | notification state                               |
 | F-009 | Monthly cost report view        | P1       | 🔶 Files in Phase A; viewer in Phase B                    | `data/reports/monthly/*`                         |
 | F-010 | Model usage analytics           | P1       | 🔶 Phase A (spend by model, insights); heatmap in Phase B | `usage.byModel`, `insights`                      |
-| F-011 | Light / dark theme              | P2       | ✅ Phase A                                                | —                                                |
+| F-011 | Light / dark theme              | P2       | ✅ Phase A (follows system); toggle UI in Phase B2 (B2-9) | —                                                |
 | F-012 | Organization / group drill-down | P2       | ⏳ Phase B                                                | —                                                |
 | F-013 | Data coverage and retention     | P2       | ✅ coverage in Phase A; archive inventory in Phase B      | `coverage`                                       |
 | F-014 | Configuration view (read-only)  | P2       | ⏳ Phase B                                                | —                                                |
@@ -77,6 +77,7 @@
 ### F-011 Light / dark theme
 
 - Follows `prefers-color-scheme`; `data-theme="light|dark"` on `<html>` forces a theme.
+- Phase B2 (B2-9): a Light / Dark / System switch in the primary navigation (group "Theme", buttons with `aria-pressed`, keyboard operable). The choice is stored in `localStorage` (`claude-audit-theme`); an inline script in `index.html` applies it before first paint. Every storage access is guarded: when storage is blocked the page renders the default (system) theme and the switch still works for the session. "System" removes `data-theme`.
 - Categorical series colors (slots 1–3) validated for both themes; the light-theme third slot is below 3:1 contrast, so every multi-series chart ships a legend and a table view.
 
 ### F-013 Data coverage

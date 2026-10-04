@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavBar } from './components/NavBar';
+import { ThemeToggle } from './components/ThemeToggle';
 import { loadDashboard, type LoadState } from './lib/data';
 import { useHashRoute } from './lib/router';
 import { findRoute, NotFound, ROUTES } from './routes';
@@ -10,7 +11,12 @@ function Shell({ view }: { view: Extract<LoadState, { status: 'ready' }>['view']
   const items = ROUTES.filter((r) => r.nav);
   return (
     <>
-      <NavBar items={items} current={match?.route.path ?? ''} onNavigate={go} />
+      <NavBar
+        items={items}
+        current={match?.route.path ?? ''}
+        onNavigate={go}
+        actions={<ThemeToggle />}
+      />
       <main id="main" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-8 outline-none sm:px-6">
         {match ? (
           match.route.render(view, match.params)

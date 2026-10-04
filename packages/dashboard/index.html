@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // No-flash theme: apply a stored light/dark choice before first paint; blocked storage is ignored.
+      try {
+        var t = window.localStorage.getItem('claude-audit-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
     <title>Claude Audit Dashboard</title>
   </head>
   <body>
