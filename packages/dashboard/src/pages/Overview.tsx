@@ -11,6 +11,7 @@ import {
   SpendBreakdowns,
   TokenSection,
 } from '../components/sections';
+import { stampFrom } from '../lib/export';
 import { formatTimestamp } from '../lib/format';
 
 function Header({ view }: { view: DashboardView }) {
@@ -43,7 +44,10 @@ export function Overview({ view }: { view: DashboardView }) {
       <InsightSection insights={view.insights} />
       <div className="grid gap-6 *:min-w-0 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <ComplianceSection compliance={view.compliance} />
+          <ComplianceSection
+            compliance={view.compliance}
+            stamp={stampFrom(view.collectedAt, view.generatedAt)}
+          />
         </div>
         <CategorySection compliance={view.compliance} />
       </div>

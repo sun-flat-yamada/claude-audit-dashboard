@@ -21,7 +21,7 @@
 | ----- | ------------------------------- | -------- | --------------------------------------------------------- | ------------------------------------------------ |
 | F-001 | Organization overview           | P0       | ✅ Phase A                                                | `title`, `organizations`, `collectedAt`, `kpis`  |
 | F-002 | Compliance score and trend      | P0       | ✅ Phase A                                                | `kpis[score]`, `compliance.history`              |
-| F-003 | Compliance results              | P0       | ✅ Phase A (export: Phase B)                              | `compliance.results`, `compliance.byCategory`    |
+| F-003 | Compliance results              | P0       | ✅ Phase A + CSV / JSON export (B2-1)                     | `compliance.results`, `compliance.byCategory`    |
 | F-004 | Usage and cost                  | P0       | ✅ Phase A                                                | `usage.daily`, `usage.byProduct/byModel/byGroup` |
 | F-005 | Activity                        | P0       | 🔶 Aggregates in Phase A; search in Phase B               | `activity`                                       |
 | F-006 | Member view                     | P1       | ⏳ Phase B                                                | separate access-controlled file                  |
@@ -58,7 +58,9 @@
 - Order: fail, error, warning, skipped, pass; then severity; then rule ID.
 - Each row expands to the remediation text and up to 20 evidence items (masked).
 - Failing rules by category as labeled bars (`failed of evaluated`).
-- Phase B: CSV / JSON export from the UI (the compliance report is already written as CSV / JSON / Markdown / HTML by `pnpm report:compliance`).
+- Own page at `#/compliance` (also on the Overview).
+- Export (client-side, nothing is uploaded): "Export CSV (<filter>)" / "Export JSON (<filter>)" for the filtered view and "Export all CSV" / "Export all JSON" for every result. File names are `compliance-results-<collection date yyyymmdd>[-<status>].csv|json`.
+- CSV: the first five columns (`Rule, Name, Severity, Status, Message`) are `COMPLIANCE_EXPORT_COLUMNS` from `@claude-audit/core/contracts`, shared with `pnpm report:compliance`; then `Category, Remediation, Evidence`. RFC 4180 quoting, CRLF; cells starting with `=` `+` `-` `@`, tab or CR get a leading `'` (spreadsheet formula-injection guard). JSON lists the same fields with a fixed key order and names the filter.
 
 ### F-004 Usage and cost
 

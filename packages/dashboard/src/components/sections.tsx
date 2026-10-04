@@ -20,7 +20,13 @@ import { TimeSeriesChart } from './TimeSeriesChart';
 
 const scoreFormat = (value: number) => formatInteger(value);
 
-export function ComplianceSection({ compliance }: { compliance: DashboardView['compliance'] }) {
+export function ComplianceSection({
+  compliance,
+  stamp,
+}: {
+  compliance: DashboardView['compliance'];
+  stamp?: string | undefined;
+}) {
   const history = compliance.history.map((h) => ({ date: h.date.slice(0, 10), score: h.score }));
   return (
     <Card
@@ -38,7 +44,7 @@ export function ComplianceSection({ compliance }: { compliance: DashboardView['c
           />
         </div>
       )}
-      <ComplianceResults results={compliance.results} />
+      <ComplianceResults results={compliance.results} stamp={stamp} />
     </Card>
   );
 }

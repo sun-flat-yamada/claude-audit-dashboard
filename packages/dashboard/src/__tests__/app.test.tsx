@@ -51,6 +51,20 @@ describe.each(SOURCES)('App with the %s data source', (name, body) => {
       );
       expect(screen.getByRole('main')).toBeInTheDocument();
     });
+
+    it('opens the Compliance page by deep link with the export buttons', async () => {
+      window.location.hash = '#/compliance';
+      render(<App />);
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'Compliance results' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Compliance' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+      expect(screen.getByRole('button', { name: 'Export all CSV' })).toBeEnabled();
+      window.location.hash = '#/';
+    });
   });
 });
 
