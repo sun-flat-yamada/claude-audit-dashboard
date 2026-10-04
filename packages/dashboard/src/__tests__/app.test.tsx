@@ -22,6 +22,11 @@ const FIXTURE = raw(
     import: 'default',
   }),
 );
+const DETAIL = import.meta.glob<string>('../../../../data/sample/detail/{index,members}.json', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+});
 const SOURCES: Array<[string, string | undefined]> = [
   ['sample', SAMPLE],
   ['fixtures', FIXTURE],
@@ -70,6 +75,25 @@ describe.each(SOURCES)('App with the %s data source', (name, body) => {
 
 describe('hash routing', () => {
   beforeEach(() => stubFetch(SAMPLE ?? ''));
+
+  it('opens the Members page by deep link from the sample detail files', async () => {
+    const byName = (name: string) =>
+      Object.entries(DETAIL).find(([path]) => path.endsWith(name))?.[1] ?? '{}';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: RequestInfo | URL) => {
+        const path = String(url);
+        if (path.endsWith('/members.json')) return new Response(byName('/members.json'));
+        if (path.endsWith('/detail/index.json')) return new Response(byName('/index.json'));
+        return new Response(SAMPLE ?? '');
+      }),
+    );
+    window.location.hash = '#/members';
+    render(<App />);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Members' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Members' })).toHaveAttribute('aria-current', 'page');
+    expect(await screen.findByRole('table', { name: 'Members' })).toBeInTheDocument();
+  });
 
   it('shows the not-found page for an unknown deep link and recovers with back/forward', async () => {
     const user = userEvent.setup();

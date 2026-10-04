@@ -7,6 +7,9 @@ const STATUS: Record<string, { icon: string; color: string; label: string }> = {
   skipped: { icon: '–', color: 'var(--status-neutral)', label: 'Skipped' },
   ok: { icon: '✓', color: 'var(--status-good)', label: 'Collected' },
   unavailable: { icon: '–', color: 'var(--status-neutral)', label: 'Unavailable' },
+  active: { icon: '✓', color: 'var(--status-good)', label: 'Active' },
+  inactive: { icon: '!', color: 'var(--status-warning)', label: 'Inactive' },
+  unknown: { icon: '?', color: 'var(--status-neutral)', label: 'Unknown' },
 };
 
 const SEVERITY: Record<string, string> = {
