@@ -25,7 +25,7 @@
 | F-004 | Usage and cost                  | P0       | ✅ Phase A                                                | `usage.daily`, `usage.byProduct/byModel/byGroup` |
 | F-005 | Activity                        | P0       | 🔶 Aggregates in Phase A; search in Phase B               | `activity`                                       |
 | F-006 | Member view                     | P1       | ✅ Phase B2 (B2-4, `#/members`)                           | detail `members.json` (B2-2)                     |
-| F-007 | API key inventory               | P1       | ⏳ Phase B                                                | detail `api-keys.json` (data ready, B2-2)        |
+| F-007 | API key inventory               | P1       | ✅ Phase B2 (B2-5, `#/keys`)                              | detail `api-keys.json` (B2-2)                    |
 | F-008 | Alert history                   | P1       | ⏳ Phase B                                                | notification state                               |
 | F-009 | Monthly cost report view        | P1       | 🔶 Files in Phase A; viewer in Phase B                    | `data/reports/monthly/*`                         |
 | F-010 | Model usage analytics           | P1       | 🔶 Phase A (spend by model, insights); heatmap in Phase B | `usage.byModel`, `insights`                      |
@@ -104,6 +104,14 @@
 - States: loading, not published (file absent), not collected (manifest `unavailable` with its reason), error (alert), no members, no match for the filters.
 - Group membership is not part of the `detail-members` contract (only `organizationId`), so it is not shown; the group drill-down (F-012) carries member counts per group.
 
+### F-007 API key inventory (B2-5)
+
+- Route `#/keys`, reading `detail/api-keys.json` (and the manifest for the `maskPii` note and the reason a dataset is unavailable).
+- Table of key (name and ID as published, masked while `maskPii` is on), scopes, age in days, expiry, last-used time and a rotation recommendation. The recommendation is icon + label + color plus the reason text: Rotate (older than `maxAgeDays`, AK-003, or expired), Unused (no API call within `unusedDays`, AK-001; a never-seen key counts only once usage has been observed for `unusedDays`), Write scope (`write:*` / `delete:*`, AK-002), Rotate soon (from 80% of `maxAgeDays`; a display hint, not a rule), Use unknown (observation window too short), OK, and Deactivated (no action). Thresholds and the evaluation time (`generatedAt`) come from the file, not from constants or the browser clock.
+- AK-001 is judged only for keys with Compliance API scopes, as in the rule. The AK-002 flagged-scope list is not in the file, so the built-in default (write / delete scopes) is used; a tenant that overrides `flaggedScopes` can differ.
+- Search (name, ID, scope), recommendation filter with counts, sort by name / age / last used / recommendation (most urgent first by default).
+- States: loading, not published (file absent), not collected (manifest `unavailable` with its reason), error (alert), no keys, no match for the filters. Key secrets are never collected or shown.
+
 ---
 
 ## Detail data files (B2-2)
@@ -126,7 +134,6 @@ Identifier handling follows `dashboard.maskPii` (default `true`): e-mail address
 
 | ID    | Scope                                                                                                         |
 | ----- | ------------------------------------------------------------------------------------------------------------- |
-| F-007 | Key inventory with scopes, age and last use (AK-001…AK-003).                                                  |
 | F-008 | History of alerts sent (from the notification state) and their acknowledgement status.                        |
 | F-009 | In-app viewer for `data/reports/monthly/*` with charge-back tables per RBAC group.                            |
 | F-010 | Model × group heatmap (sequential single-hue scale with a legend), trend of model mix.                        |
