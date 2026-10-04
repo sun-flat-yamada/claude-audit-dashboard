@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import type { DashboardView } from '@claude-audit/core/contracts';
 import type { NavItem } from './components/NavBar';
 import { matchPath } from './lib/router';
+import { Compliance } from './pages/Compliance';
 import { Overview } from './pages/Overview';
 
 export interface RouteDef extends NavItem {
@@ -20,6 +21,13 @@ export const ROUTES: RouteDef[] = [
     label: 'Overview',
     nav: true,
     render: (view) => <Overview view={view} />,
+  },
+  {
+    path: '/compliance',
+    pattern: '/compliance',
+    label: 'Compliance',
+    nav: true,
+    render: (view) => <Compliance view={view} />,
   },
 ];
 

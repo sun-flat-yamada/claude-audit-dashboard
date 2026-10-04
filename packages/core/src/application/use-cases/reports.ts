@@ -1,4 +1,5 @@
 import type { Insight } from '../../domain/analysis/analyzers.js';
+import { COMPLIANCE_EXPORT_COLUMNS } from '../../contracts/compliance-export.js';
 import { formatScore } from '../../domain/compliance/scoring.js';
 import type { ComplianceReport } from '../../domain/compliance/types.js';
 import { withDefaults, type DatasetMap, type DatasetName } from '../../domain/model/dataset.js';
@@ -99,7 +100,7 @@ const insightSection = (insights: readonly Insight[]): Section => ({
 const findingsSection = (report: ComplianceReport | null, title: string): Section => ({
   type: 'table',
   title,
-  columns: ['Rule', 'Name', 'Severity', 'Status', 'Message'],
+  columns: [...COMPLIANCE_EXPORT_COLUMNS],
   rows: (report?.results ?? [])
     .filter((r) => r.status !== 'pass')
     .map((r) => [r.ruleId, r.ruleName, r.severity, r.status, r.message]),

@@ -374,17 +374,17 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 
 ### 9.2 画面構成 (単一ページ)
 
-| セクション       | 内容                                                                                               |
-| ---------------- | -------------------------------------------------------------------------------------------------- |
-| ヘッダー         | タイトル、組織、収集時刻、デモデータ表示                                                           |
-| KPI              | スコア (ヒーロー表示、評価済みルール数の注記)、未解決件数、メンバー、MAU、シート利用率、当月コスト |
-| Insights         | 分析結果                                                                                           |
-| コンプライアンス | 状態フィルタ付きの結果一覧 (失敗優先、展開で対処と証跡)、カテゴリ別の失敗数、スコア推移            |
-| コスト・トークン | 日次推移 (表の切替あり)                                                                            |
-| 内訳             | プロダクト別・モデル別・グループ別                                                                 |
-| 採用状況         | DAU / WAU / MAU の推移                                                                             |
-| Activity         | 件数上位の type、監視ルールに一致したイベント                                                      |
-| Data coverage    | データセットごとの取得状況・件数・取得元・理由                                                     |
+| セクション       | 内容                                                                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| ヘッダー         | タイトル、組織、収集時刻、デモデータ表示                                                                                                  |
+| KPI              | スコア (ヒーロー表示、評価済みルール数の注記)、未解決件数、メンバー、MAU、シート利用率、当月コスト                                        |
+| Insights         | 分析結果                                                                                                                                  |
+| コンプライアンス | 状態フィルタ付きの結果一覧 (失敗優先、展開で対処と証跡、`#/compliance` でも表示)、CSV / JSON エクスポート、カテゴリ別の失敗数、スコア推移 |
+| コスト・トークン | 日次推移 (表の切替あり)                                                                                                                   |
+| 内訳             | プロダクト別・モデル別・グループ別                                                                                                        |
+| 採用状況         | DAU / WAU / MAU の推移                                                                                                                    |
+| Activity         | 件数上位の type、監視ルールに一致したイベント                                                                                             |
+| Data coverage    | データセットごとの取得状況・件数・取得元・理由                                                                                            |
 
 詳細と今後の画面 (Phase B) は [DASHBOARD-FEATURES.md](DASHBOARD-FEATURES.md)。
 
@@ -394,6 +394,7 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 - すべてのグラフに表形式の切替を付ける。二軸グラフは使わない
 - ライト / ダーク両対応 (`prefers-color-scheme`)、幅 390px でも横スクロールしない。ナビゲーションにライト / ダーク / システムの切替 (グループ名 `Theme`、`aria-pressed` のボタン) を置き、選択は `localStorage` に保存して `<html data-theme>` に反映する (`システム` は属性を外して `prefers-color-scheme` に従う)。`index.html` のインラインスクリプトが初回描画前に適用する。ストレージが使えない場合 (例外) も既定テーマで描画し、そのセッション中は切り替えられる
 - 依存は React 19、Recharts 3、Tailwind CSS 4 のみ。ルーティングは自前のハッシュルーター (`#/members` 形式、約 60 行、新規依存なし)。`VITE_BASE_PATH` 配下の静的ホスティング (GitHub Pages) で各画面へディープリンクでき、ブラウザの戻る / 進むが機能する。未知のルートは「ページが見つかりません」を表示する。ナビゲーションは `nav` ランドマーク (名前 `Primary`)、現在ページは `aria-current="page"`、スキップリンクを備える
+- コンプライアンス結果のエクスポートはブラウザ内で生成する (アップロードしない)。フィルタ後の行 (`Export CSV (Fail)` など) と全件 (`Export all CSV` / `Export all JSON`) を選べ、ファイル名は `compliance-results-<収集日 yyyymmdd>[-<状態>].csv|json` で決定的。先頭 5 列 (`Rule, Name, Severity, Status, Message`) は `@claude-audit/core/contracts` の `COMPLIANCE_EXPORT_COLUMNS` で、`pnpm report:compliance` の CSV と共有する (パリティテストあり)。CSV は RFC 4180 に従い、`=` `+` `-` `@`・タブ・CR で始まるセルは先頭に `'` を付ける (数式インジェクション対策)
 - 画面要素は role とアクセシブルネームで特定できること。テスト・E2E のセレクタは `getByRole(role, { name })` を使い、`data-testid` に頼らない (`CONTRIBUTING.md`)
 - 開発・ビルド時のデータ源は `DASHBOARD_DATA_SOURCE` で指定する (`packages/dashboard/scripts/stage-data.mjs`)。未指定は従来どおり (`data/dashboard.json` があればそれ、無ければ `data/sample/dashboard.json`)。`sample` は `data/sample/`、`fixtures` は `pnpm fixture` が書く gitignore 済みの `data/fixture/`、`live` は `data/dashboard.json` (無ければ失敗)。テストと E2E は `sample` または `fixtures` のみを使い、`live` は使わない (`fork:verify` が検査)
 
