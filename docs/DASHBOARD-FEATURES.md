@@ -24,7 +24,7 @@
 | F-003 | Compliance results              | P0       | ✅ Phase A + CSV / JSON export (B2-1)                     | `compliance.results`, `compliance.byCategory`    |
 | F-004 | Usage and cost                  | P0       | ✅ Phase A                                                | `usage.daily`, `usage.byProduct/byModel/byGroup` |
 | F-005 | Activity                        | P0       | 🔶 Aggregates in Phase A; search in Phase B               | `activity`                                       |
-| F-006 | Member view                     | P1       | ⏳ Phase B                                                | detail `members.json` (data ready, B2-2)         |
+| F-006 | Member view                     | P1       | ✅ Phase B2 (B2-4, `#/members`)                           | detail `members.json` (B2-2)                     |
 | F-007 | API key inventory               | P1       | ⏳ Phase B                                                | detail `api-keys.json` (data ready, B2-2)        |
 | F-008 | Alert history                   | P1       | ⏳ Phase B                                                | notification state                               |
 | F-009 | Monthly cost report view        | P1       | 🔶 Files in Phase A; viewer in Phase B                    | `data/reports/monthly/*`                         |
@@ -96,6 +96,14 @@
 
 - Title and detail of each analyzer result (model concentration, cache efficiency, group concentration, seat utilization) with its priority.
 
+### F-006 Member view (B2-4)
+
+- Route `#/members`, reading `detail/members.json` (and the manifest for the `maskPii` note and the reason a dataset is unavailable).
+- Table of member (name, e-mail), role, last activity date and status. Status is icon + label + color: Active, Inactive (AC-001) and Unknown (activity not collected, never shown as inactive). Inactive rows are also tinted. The inactivity threshold shown is the file's `inactiveDays` (the effective AC-001 value), not a constant.
+- Search (name, e-mail, role), role filter, status filter with counts, sort by name / role / last active / status (inactive first by default). Pending invites are listed in their own table.
+- States: loading, not published (file absent), not collected (manifest `unavailable` with its reason), error (alert), no members, no match for the filters.
+- Group membership is not part of the `detail-members` contract (only `organizationId`), so it is not shown; the group drill-down (F-012) carries member counts per group.
+
 ---
 
 ## Detail data files (B2-2)
@@ -116,17 +124,16 @@ Identifier handling follows `dashboard.maskPii` (default `true`): e-mail address
 
 ## Planned (Phase B and later)
 
-| ID    | Scope                                                                                                                                |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| F-006 | Members with roles, last activity and group membership; inactive members highlighted (AC-001). Needs an access-controlled data file. |
-| F-007 | Key inventory with scopes, age and last use (AK-001…AK-003).                                                                         |
-| F-008 | History of alerts sent (from the notification state) and their acknowledgement status.                                               |
-| F-009 | In-app viewer for `data/reports/monthly/*` with charge-back tables per RBAC group.                                                   |
-| F-010 | Model × group heatmap (sequential single-hue scale with a legend), trend of model mix.                                               |
-| F-012 | Drill-down per linked organization or RBAC group: members, settings deviations (CF-xxx), spend.                                      |
-| F-013 | Archive inventory (years, snapshot counts, sizes).                                                                                   |
-| F-014 | Read-only view of the effective configuration: disabled rules, parameters, custom rules, notification policy.                        |
-| F-015 | Compare two snapshots or two reports: rules that changed status, datasets that changed coverage.                                     |
+| ID    | Scope                                                                                                         |
+| ----- | ------------------------------------------------------------------------------------------------------------- |
+| F-007 | Key inventory with scopes, age and last use (AK-001…AK-003).                                                  |
+| F-008 | History of alerts sent (from the notification state) and their acknowledgement status.                        |
+| F-009 | In-app viewer for `data/reports/monthly/*` with charge-back tables per RBAC group.                            |
+| F-010 | Model × group heatmap (sequential single-hue scale with a legend), trend of model mix.                        |
+| F-012 | Drill-down per linked organization or RBAC group: members, settings deviations (CF-xxx), spend.               |
+| F-013 | Archive inventory (years, snapshot counts, sizes).                                                            |
+| F-014 | Read-only view of the effective configuration: disabled rules, parameters, custom rules, notification policy. |
+| F-015 | Compare two snapshots or two reports: rules that changed status, datasets that changed coverage.              |
 
 ---
 
