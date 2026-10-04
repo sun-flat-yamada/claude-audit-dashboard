@@ -333,15 +333,15 @@ primary owner が claude.ai **Organization settings > API** で「すべての�
 
 ## 10. リスクと未検証の仮定 (Phase B1 で確認)
 
-| ID  | 仮定                                                                                    | 外れた場合の影響                  | 緩和策                                                                            |
-| --- | --------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------- |
-| V1  | 親組織対象のキーで `GET /v1/organizations/users` がテナントのメンバーを返す             | メンバーが一部の組織分だけになる  | members は Compliance 組織ユーザーへの代替経路を持つ (`sources.members.provider`) |
-| V2  | Activity の `api_actor.api_key_id` と実効設定 `api_keys[].id` が同じ ID 体系            | AK-001 が全キーを未使用と誤判定   | 一致する ID が 1 件も無い場合は AK-001 を `skipped` にする                        |
-| V3  | Analytics `users` 期間ロールアップに `last_activity_date` が含まれる                    | 最終活動日が表示できない          | 活動カウンタから「期間内の活動有無」を判定して AC-001 は成立させる                |
-| V4  | 実効設定エンドポイントがテナントで有効                                                  | settings / credentials が取れない | 404 を `unavailable` として扱い OP-002 で可視化                                   |
-| V5  | 既定の除外 activity type (`*_viewed` 等) で収集量が許容範囲                             | 実行時間・データ量の増大          | `sources.activities.excludeTypes` / `includeTypes` で調整                         |
-| V6  | Compliance / Analytics が `x-api-key` ヘッダで認証できる (リファレンス例は Bearer 表記) | 401                               | 認証ヘッダはゲートウェイ設定 1 か所で切替可能                                     |
-| V7  | Analytics の `rbac_group_id` 別コストは所属重複で総額を超え得る                         | 配分表の合計が総額と一致しない    | レポートに注記し、総額は group_by 無しの値を使用                                  |
+| ID  | 仮定                                                                                    | 外れた場合の影響                  | 緩和策                                                                                             |
+| --- | --------------------------------------------------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------- |
+| V1  | 親組織対象のキーで `GET /v1/organizations/users` がテナントのメンバーを返す             | メンバーが一部の組織分だけになる  | members は Compliance 組織ユーザーへの代替経路を持つ (`sources.members.provider`)                  |
+| V2  | Activity の `api_actor.api_key_id` と実効設定 `api_keys[].id` が同じ ID 体系            | AK-001 が全キーを未使用と誤判定   | 一致する ID が 1 件も無い場合は AK-001 を `skipped` にする                                         |
+| V3  | Analytics `users` 期間ロールアップに `last_activity_date` が含まれる                    | 最終活動日が表示できない          | 活動カウンタから「期間内の活動有無」を判定して AC-001 は成立させる                                 |
+| V4  | 実効設定エンドポイントがテナントで有効                                                  | settings / credentials が取れない | 404 を `unavailable` として扱い OP-002 で可視化                                                    |
+| V5  | 既定の除外 activity type (`*_viewed` 等) で収集量が許容範囲                             | 実行時間・データ量の増大          | `sources.activities.excludeTypes` / `includeTypes` で調整                                          |
+| V6  | Compliance / Analytics が `x-api-key` ヘッダで認証できる (リファレンス例は Bearer 表記) | 401                               | `x-api-key` は `http-client.ts` の `request()` に固定 (設定では切替不可)。変更にはコード修正が必要 |
+| V7  | Analytics の `rbac_group_id` 別コストは所属重複で総額を超え得る                         | 配分表の合計が総額と一致しない    | レポートに注記し、総額は group_by 無しの値を使用                                                   |
 
 その他のリスク:
 

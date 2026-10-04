@@ -116,6 +116,28 @@ pnpm report:monthly --month 2026-09
 
 To look at the data collected by Actions locally, restore it first: `.github/scripts/data-branch.sh restore`.
 
+## Capturing real responses as test fixtures (maintainers)
+
+Used to turn the response shapes of a real tenant into the synthetic fixtures under `packages/collector/src/adapters/anthropic/__tests__/fixtures/tenant/` (Phase B1). Needs a key, so run it locally or in a private repository, never in CI and never in a public repository.
+
+```bash
+# 1. Capture (opt-in, off by default). One file per request: endpoint, query, status, body.
+#    Request headers and the key are never stored. Refused when CI=true; the directory must be
+#    outside the repository or under the gitignored data/raw/.
+pnpm collect --capture-raw ../claude-audit-captures/run1     # or: CAPTURE_RAW_DIR=... pnpm collect
+
+# 2. Sanitize into a fresh directory (e-mails -> userN@example.com, IDs -> synthetic IDs with the
+#    same prefix and length, names -> synthetic names, IPs -> 192.0.2.0/24). One real ID always
+#    becomes the same synthetic ID in every file, so Activity api_key_id still matches the key inventory.
+pnpm sanitize ../claude-audit-captures/run1 packages/collector/src/adapters/anthropic/__tests__/fixtures/tenant
+
+# 3. Review the result by eye, then check it and try it:
+pnpm fork:verify && pnpm secret-scan
+pnpm fixture:tenant --out ../fixture-out      # collect -> check -> dashboard.json from the fixtures, no key
+```
+
+Delete the raw capture after checking; never share or commit it. Only the sanitized fixtures go into a PR. The sanitizer refuses to write when an original value would remain in the output, but it cannot know every free-text field of a future API version, so always review the files.
+
 ## Notification channels
 
 - **Slack** — create an [Incoming Webhook](https://api.slack.com/messaging/webhooks) and store its URL as `SLACK_WEBHOOK_URL`.
