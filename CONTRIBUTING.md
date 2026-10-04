@@ -85,6 +85,7 @@ pnpm install
    npm run secret-scan   # Multi-layered secrets & PII audit (Exit 0 mandatory)
    npm run build         # Production monorepo & dashboard build
    ```
+4. **Test fixtures from a real tenant** (maintainers with a key only): capture with `pnpm collect --capture-raw <dir outside the repo>`, then `pnpm sanitize <dir> packages/collector/src/adapters/anthropic/__tests__/fixtures/tenant`. Commit only the sanitized files (example.com e-mails, synthetic IDs, `192.0.2.0/24` IPs; `fork:verify` and `secret-scan` check this); never commit or share a raw capture. Procedure: [docs/SETUP.md](docs/SETUP.md#capturing-real-responses-as-test-fixtures-maintainers). `pnpm fixture:tenant --out <dir>` runs collect → check → dashboard on the fixtures without a key.
 
 #### Step 5: Rebase onto Base & Create PR
 
