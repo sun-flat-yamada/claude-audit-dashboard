@@ -1,0 +1,173 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/cost_report",
+    "query": {
+      "bucket_width": ["1d"],
+      "ending_at": ["2026-09-30T11:58:00.000Z"],
+      "group_by[]": ["product"],
+      "starting_at": ["2026-07-03T00:00:00.000Z"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "ending_at": "2026-09-27T00:00:00Z",
+          "results": [
+            {
+              "amount": "87519.000000",
+              "currency": "USD",
+              "list_amount": "105022",
+              "model": null,
+              "product": "chat",
+              "rbac_group_id": null
+            },
+            {
+              "amount": "49217.000000",
+              "currency": "USD",
+              "list_amount": "59060",
+              "model": null,
+              "product": "claude_code",
+              "rbac_group_id": null
+            },
+            {
+              "amount": "27524.000000",
+              "currency": "USD",
+              "list_amount": "33028",
+              "model": null,
+              "product": "cowork",
+              "rbac_group_id": null
+            }
+          ],
+          "starting_at": "2026-09-26T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-28T00:00:00Z",
+          "results": [
+            {
+              "amount": "70625.000000",
+              "currency": "USD",
+              "list_amount": "84750",
+              "model": null,
+              "product": "chat",
+              "rbac_group_id": null
+            },
+            {
+              "amount": "51719.000000",
+              "currency": "USD",
+              "list_amount": "62062",
+              "model": null,
+              "product": "claude_code",
+              "rbac_group_id": null
+            },
+            {
+              "amount": "82001.000000",
+              "currency": "USD",
+              "list_amount": "98401",
+              "model": null,
+              "product": "cowork",
+              "rbac_group_id": null
+            }
+          ],
+          "starting_at": "2026-09-27T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-29T00:00:00Z",
+          "results": [
+            {
+              "amount": "25887.000000",
+              "currency": "USD",
+              "list_amount": "31064",
+              "model": null,
+              "product": "chat",
+              "rbac_group_id": null
+            },
+            {
+              "amount": "6619.000000",
+              "currency": "USD",
+              "list_amount": "7942",
+              "model": null,
+              "product": "claude_code",
+              "rbac_group_id": null
+            },
+            {
+              "amount": "39368.000000",
+              "currency": "USD",
+              "list_amount": "47241",
+              "model": null,
+              "product": "cowork",
+              "rbac_group_id": null
+            }
+          ],
+          "starting_at": "2026-09-28T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-30T00:00:00Z",
+          "results": [
+            {
+              "amount": "62639.000000",
+              "currency": "USD",
+              "list_amount": "75166",
+              "model": null,
+              "product": "chat",
+              "rbac_group_id": null
+            },
+            {
+              "amount": "26241.000000",
+              "currency": "USD",
+              "list_amount": "31489",
+              "model": null,
+              "product": "claude_code",
+              "rbac_group_id": null
+            },
+            {
+              "amount": "48641.000000",
+              "currency": "USD",
+              "list_amount": "58369",
+              "model": null,
+              "product": "cowork",
+              "rbac_group_id": null
+            }
+          ],
+          "starting_at": "2026-09-29T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-31T00:00:00Z",
+          "results": [
+            {
+              "amount": "41502.000000",
+              "currency": "USD",
+              "list_amount": "49802",
+              "model": null,
+              "product": "chat",
+              "rbac_group_id": null
+            },
+            {
+              "amount": "38194.000000",
+              "currency": "USD",
+              "list_amount": "45832",
+              "model": null,
+              "product": "claude_code",
+              "rbac_group_id": null
+            },
+            {
+              "amount": "82733.000000",
+              "currency": "USD",
+              "list_amount": "99279",
+              "model": null,
+              "product": "cowork",
+              "rbac_group_id": null
+            }
+          ],
+          "starting_at": "2026-09-30T00:00:00Z"
+        }
+      ],
+      "data_refreshed_at": "2026-09-30T06:00:00Z",
+      "has_more": false,
+      "next_page": null,
+      "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9"
+    },
+    "status": 200
+  }
+}

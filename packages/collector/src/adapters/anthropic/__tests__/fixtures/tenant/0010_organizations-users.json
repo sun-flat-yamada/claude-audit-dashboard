@@ -1,0 +1,68 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/users",
+    "query": {
+      "after_id": ["user_53lC7rDeg0bJl3I62QYpDev4"],
+      "limit": ["1000"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "added_at": "2025-09-25T09:08:00Z",
+          "email": "user2@example.com",
+          "id": "user_91BMC6nANnYbmehG8pd3Z1r0",
+          "name": "Synthetic User 9",
+          "role": "user",
+          "type": "user"
+        },
+        {
+          "added_at": "2025-01-01T09:09:00Z",
+          "email": "user9@example.com",
+          "id": "user_882aBvxIWkBDngHQYxk4YSTd",
+          "name": "Synthetic User 10",
+          "role": "user",
+          "type": "user"
+        },
+        {
+          "added_at": "2025-02-04T09:10:00Z",
+          "email": "user13@example.com",
+          "id": "user_46O5Gx09ga45eFhlhpoX4huT",
+          "name": "Synthetic User 11",
+          "role": "user",
+          "type": "user"
+        },
+        {
+          "added_at": "2025-03-07T09:11:00Z",
+          "email": "user14@example.com",
+          "id": "user_92AtJ1VLPjVhLSrwMAwGAP3o",
+          "name": "Synthetic User 12",
+          "role": "user",
+          "type": "user"
+        },
+        {
+          "added_at": "2025-04-10T09:12:00Z",
+          "email": "user15@example.com",
+          "id": "user_889CPUbn4ghQ2gGAvDlLwW3m",
+          "name": "Synthetic User 13",
+          "role": "user",
+          "type": "user"
+        },
+        {
+          "added_at": "2025-05-13T09:13:00Z",
+          "email": "user16@example.com",
+          "id": "user_02DHg97pS6cO71a0Sg0BBSF7",
+          "name": "Synthetic User 14",
+          "role": "user",
+          "type": "user"
+        }
+      ],
+      "first_id": "user_91BMC6nANnYbmehG8pd3Z1r0",
+      "has_more": false,
+      "last_id": "user_02DHg97pS6cO71a0Sg0BBSF7"
+    },
+    "status": 200
+  }
+}

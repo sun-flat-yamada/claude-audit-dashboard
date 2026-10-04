@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { FIXTURES, MOCK_KEY, ORG_A, fakeAnthropic } from '../../../__tests__/fake-anthropic.js';
+import { FIXTURES, MOCK_KEY, ORG_A } from '../../../__tests__/fake-anthropic.js';
+import { FIXTURE_SETS, OFFICIAL_SET, type FixtureSet } from '../../../__tests__/fixture-sets.js';
 import { AdminApi } from '../admin-api.js';
 import { ANALYTICS_EPOCH, AnalyticsApi } from '../analytics-api.js';
 import { ComplianceApi } from '../compliance-api.js';
@@ -8,8 +9,8 @@ import { HttpClient } from '../http-client.js';
 const NOW = new Date('2026-09-30T12:00:00.000Z');
 const range = { start: new Date('2026-08-31T00:00:00.000Z'), end: NOW };
 
-function gateways(overrides = {}) {
-  const api = fakeAnthropic(overrides);
+function gateways(overrides = {}, set: FixtureSet = OFFICIAL_SET) {
+  const api = set.api(overrides);
   const http = new HttpClient({ apiKey: MOCK_KEY, fetchImpl: api.fetch, sleep: async () => {} });
   return {
     api,
@@ -19,7 +20,7 @@ function gateways(overrides = {}) {
   };
 }
 
-describe('ComplianceApi', () => {
+describe('ComplianceApi (official examples)', () => {
   it('polls the activity window with exclusions, sends no undocumented sort parameter, and maps actors', async () => {
     const { compliance, api } = gateways();
     const window = { from: new Date('2026-09-30T06:00:00Z'), to: new Date('2026-09-30T11:58:00Z') };
@@ -104,7 +105,7 @@ describe('ComplianceApi', () => {
   });
 });
 
-describe('AdminApi (Enterprise user management and spend limits)', () => {
+describe('AdminApi (official examples)', () => {
   it('maps members, pending invites and groups with member counts', async () => {
     const { admin, api } = gateways();
     expect(await admin.listMembers()).toContainEqual({
@@ -155,7 +156,7 @@ describe('AdminApi (Enterprise user management and spend limits)', () => {
   });
 });
 
-describe('AnalyticsApi', () => {
+describe('AnalyticsApi (official examples)', () => {
   it('derives activity from counters when last_activity_date is absent', async () => {
     const { analytics, api } = gateways();
     const result = await analytics.listUserActivity(new Date('2025-06-01T00:00:00Z'), NOW);
@@ -212,5 +213,95 @@ describe('AnalyticsApi', () => {
       monthlyAdoptionRate: 70,
       pendingInvites: 1,
     });
+  });
+});
+
+/** Shape contract that every fixture set (official examples and tenant shape) must satisfy. */
+describe.each(FIXTURE_SETS)('gateways on the $name fixtures', (set) => {
+  it('pages through the activity feed and maps every actor kind', async () => {
+    const { compliance, api } = gateways({}, set);
+    const items = await compliance.listActivities(
+      { from: new Date('2026-09-24T12:00:00Z'), to: NOW },
+      { pageSize: 5000, includeTypes: [], excludeTypes: [] },
+    );
+    const calls = api.calls.filter((u) => u.pathname === '/v1/compliance/activities');
+    expect(items).toHaveLength(set.activities);
+    expect(calls.length).toBeGreaterThanOrEqual(2);
+    expect(calls[0]?.searchParams.has('order')).toBe(false);
+    expect(new Set(items.map((i) => i.id)).size).toBe(items.length);
+    expect(items.every((i) => i.id && i.type && i.createdAt && i.actor.kind)).toBe(true);
+    expect(items.some((i) => i.actor.kind === 'api_actor' && i.actor.id)).toBe(true);
+  });
+
+  it('keeps Activity api_key_id and the key inventory id in one ID space (V2 shape)', async () => {
+    const { compliance } = gateways({}, set);
+    const items = await compliance.listActivities(
+      { from: new Date('2026-09-24T12:00:00Z'), to: NOW },
+      { pageSize: 5000, includeTypes: [], excludeTypes: [] },
+    );
+    const credentials = await compliance.listCredentials();
+    const keyIds = new Set(credentials.map((c) => c.id));
+    const used = items.filter((i) => i.actor.kind === 'api_actor').map((i) => i.actor.id);
+    expect(credentials.length).toBeGreaterThan(0);
+    expect(used.some((id) => id !== null && keyIds.has(id))).toBe(true);
+  });
+
+  it('maps effective settings for every organization and fetches each one once', async () => {
+    const { compliance, api } = gateways({}, set);
+    const orgs = await compliance.listOrganizations();
+    const settings = await compliance.listSettings();
+    expect(settings).toHaveLength(orgs.length);
+    for (const s of settings) {
+      expect(s.values).toHaveProperty('sso_claude_ai_enforced');
+      expect(s.values).toMatchObject({
+        sso_provisioning_mode: { type: 'provisioning_mode' },
+        data_retention_periods: { type: 'data_retention' },
+      });
+    }
+    expect(api.calls.filter((u) => u.pathname.endsWith('/settings'))).toHaveLength(orgs.length);
+  });
+
+  it('maps members, pending invites and groups with member counts', async () => {
+    const { admin, api } = gateways({}, set);
+    const members = await admin.listMembers();
+    expect(members).toHaveLength(set.members);
+    expect(new Set(members.map((m) => m.id)).size).toBe(set.members);
+    expect(members.every((m) => m.email.endsWith('@example.com') && m.role)).toBe(true);
+    expect(await admin.listInvites()).toHaveLength(set.invites);
+    expect(api.calls.at(-1)?.searchParams.getAll('statuses[]')).toEqual(['pending']);
+    const groups = await admin.listGroups(10);
+    expect(groups).toHaveLength(set.groups);
+    expect(groups.every((g) => typeof g.memberCount === 'number')).toBe(true);
+    expect((await admin.listGroups(0)).every((g) => g.memberCount === null)).toBe(true);
+  });
+
+  it('converts spend amounts from minor units and keeps null as unlimited', async () => {
+    const { admin } = gateways({}, set);
+    const rows = await admin.listSpendLimits();
+    expect(rows).toHaveLength(set.userSpendLimits);
+    expect(rows.every((r) => r.currency === 'USD' && r.spent >= 0)).toBe(true);
+    expect(rows.some((r) => r.limit === null)).toBe(true);
+    expect(rows.some((r) => r.limit !== null && r.limit > 0 && r.limit < 100_000)).toBe(true);
+  });
+
+  it('derives member activity, summaries, usage and cost', async () => {
+    const { analytics, api } = gateways({}, set);
+    const users = await analytics.listUserActivity(new Date('2025-06-01T00:00:00Z'), NOW);
+    expect(users.items).toHaveLength(set.members);
+    expect(users.items.every((u) => typeof u.active === 'boolean')).toBe(true);
+    expect(users.items.some((u) => u.active)).toBe(true);
+    const summaries = await analytics.listSummaries(range, NOW);
+    expect(summaries.items.length).toBeGreaterThan(0);
+    const usage = await analytics.usageReport(range, NOW);
+    const dimensions = new Set(usage.items.map((r) => r.dimension));
+    expect(dimensions).toEqual(new Set(['total', 'product', 'model', 'group']));
+    const cost = await analytics.costReport(range, NOW);
+    expect(cost.items.length).toBeGreaterThan(0);
+    expect(cost.asOf).toBe(set.costAsOf);
+    expect(
+      api.calls
+        .filter((u) => u.pathname.endsWith('usage_report'))
+        .map((u) => u.searchParams.get('group_by[]')),
+    ).toEqual([null, 'product', 'model', 'rbac_group_id']);
   });
 });

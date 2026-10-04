@@ -1,0 +1,102 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/compliance/activities",
+    "query": {
+      "after_id": ["activity_75ai48aY67Q7IVwvbsVpP5qa"],
+      "limit": ["5000"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "actor": {
+            "email_address": "user7@example.com",
+            "ip_address": "192.0.2.103",
+            "type": "user_actor",
+            "user_agent": "synthetic-agent/1.0",
+            "user_id": "user_38eU822YwzmqgIaVrGVE2oeY"
+          },
+          "claude_chat_id": "claude_chat_81i4vYNjKmtqOkM9Ax5jPnB9",
+          "created_at": "2026-09-30T04:04:21Z",
+          "id": "activity_11IWZLtcHNe9BqPpGWSdyp9q",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "b3edc4d7-e266-4e88-9f5c-1992c1a51983",
+          "type": "claude_chat_created"
+        },
+        {
+          "actor": {
+            "directory_id": "dir_18dx3eWQ0Gepr7b9iMhfnGZc",
+            "ip_address": "2001:db8::1",
+            "type": "scim_directory_actor"
+          },
+          "created_at": "2026-09-30T02:59:31Z",
+          "id": "activity_36vuMG9flIs5WBcUTqRYbylX",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "94b832e3-4b10-4d67-87f6-c26dc34d73ee",
+          "type": "directory_sync_completed"
+        },
+        {
+          "actor": {
+            "ip_address": "192.0.2.155",
+            "service": "billing-reconciler",
+            "type": "service_actor"
+          },
+          "created_at": "2026-09-30T02:07:59Z",
+          "id": "activity_81X9CiD8OAT9sw8W0Zp5jBqd",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "b3edc4d7-e266-4e88-9f5c-1992c1a51983",
+          "type": "future_event_type_not_yet_documented"
+        },
+        {
+          "actor": {
+            "email_address": "user4@example.com",
+            "ip_address": "192.0.2.69",
+            "type": "user_actor",
+            "user_agent": "synthetic-agent/1.0",
+            "user_id": "user_87cKvEypvPM0p5nTWjiOhrsJ"
+          },
+          "created_at": "2026-09-29T22:39:44Z",
+          "id": "activity_03RE7rM4oXAMEeLLDufeMtu7",
+          "invited_email": "user8@example.com",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "b3edc4d7-e266-4e88-9f5c-1992c1a51983",
+          "type": "claude_user_invited"
+        },
+        {
+          "actor": {
+            "api_key_id": "apikey_50jBdoztdPhdveU79A6000Fj",
+            "ip_address": "192.0.2.65",
+            "type": "api_actor",
+            "user_agent": "synthetic-agent/1.0"
+          },
+          "created_at": "2026-09-29T20:29:55Z",
+          "id": "activity_77MrfR9so8kqN9gizdfxGsAh",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "b3edc4d7-e266-4e88-9f5c-1992c1a51983",
+          "type": "compliance_api_accessed"
+        },
+        {
+          "actor": {
+            "email_address": "user9@example.com",
+            "ip_address": "192.0.2.177",
+            "type": "user_actor",
+            "user_agent": "synthetic-agent/1.0",
+            "user_id": "user_882aBvxIWkBDngHQYxk4YSTd"
+          },
+          "claude_chat_id": "claude_chat_54eVsTWNMWL4rhunrQRts5UA",
+          "created_at": "2026-09-29T16:09:09Z",
+          "id": "activity_99jisq7I2JuCFiOoDVpTnob7",
+          "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9",
+          "organization_uuid": "b3edc4d7-e266-4e88-9f5c-1992c1a51983",
+          "type": "claude_chat_created"
+        }
+      ],
+      "first_id": "activity_11IWZLtcHNe9BqPpGWSdyp9q",
+      "has_more": false,
+      "last_id": "activity_99jisq7I2JuCFiOoDVpTnob7"
+    },
+    "status": 200
+  }
+}

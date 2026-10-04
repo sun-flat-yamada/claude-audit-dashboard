@@ -7,7 +7,7 @@
  * 1. No live audit data files are tracked on the code branch
  * 2. Sample data matches the published dashboard contract, comes from the synthetic
  *    demo tenant and contains no real-looking e-mail addresses
- * 3. No secrets in tracked files
+ * 3. No secrets in tracked files; sanitized tenant fixtures use example.com / 192.0.2.0/24 only
  * 4. .gitignore properly configured
  */
 
@@ -55,6 +55,7 @@ const forbiddenPaths = [
   'data/dashboard.json',
   'data/state.json',
   'data/archive',
+  'data/raw',
 ];
 
 const trackedFiles = listTrackedFiles();
@@ -189,6 +190,47 @@ if (errors === errorsBeforeScan) {
   pass('No secrets detected in tracked files');
 }
 
+// --- Check 3b: tenant-shape fixtures (sanitized API responses) ---
+console.log('\n🧪 Check 3b: Tenant fixtures');
+
+const FIXTURE_DIR = join(
+  ROOT,
+  'packages/collector/src/adapters/anthropic/__tests__/fixtures/tenant',
+);
+const IPV4 = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
+
+function checkTenantFixtures(): void {
+  const before = errors;
+  const names = existsSync(FIXTURE_DIR)
+    ? readdirSync(FIXTURE_DIR).filter((n) => n.endsWith('.json'))
+    : [];
+  if (names.length === 0) return fail('Tenant fixtures are missing: fixtures/tenant/*.json');
+  for (const name of names) {
+    const content = readFileSync(join(FIXTURE_DIR, name), 'utf-8');
+    const emails = [...content.matchAll(EMAIL)]
+      .map((m) => m[0])
+      .filter((e) => !SAFE_EMAIL_DOMAIN.test(e));
+    if (emails.length > 0)
+      fail(
+        `Tenant fixture ${name} contains non-example e-mail addresses: ${[...new Set(emails)].slice(0, 3).join(', ')}`,
+      );
+    const ips = [...content.matchAll(IPV4)]
+      .map((m) => m[0])
+      .filter((ip) => !ip.startsWith('192.0.2.'));
+    if (ips.length > 0)
+      fail(
+        `Tenant fixture ${name} contains IP addresses outside 192.0.2.0/24: ${[...new Set(ips)].slice(0, 3).join(', ')}`,
+      );
+    for (const { name: kind, pattern } of SECRET_PATTERNS) {
+      if (pattern.test(content)) fail(`Tenant fixture ${name} contains a ${kind}`);
+    }
+  }
+  if (errors === before)
+    pass(`${names.length} tenant fixtures use example.com and 192.0.2.0/24 only`);
+}
+
+checkTenantFixtures();
+
 // --- Check 4: .gitignore configuration ---
 console.log('\n📝 Check 4: .gitignore configuration');
 
@@ -198,7 +240,7 @@ if (!existsSync(gitignorePath)) {
   fail('.gitignore is missing');
 } else {
   const gitignore = readFileSync(gitignorePath, 'utf-8');
-  const requiredPatterns = ['.env', 'node_modules', 'dist'];
+  const requiredPatterns = ['.env', 'node_modules', 'dist', 'data/raw'];
   for (const pattern of requiredPatterns) {
     if (!gitignore.includes(pattern)) {
       fail(`.gitignore is missing pattern: ${pattern}`);

@@ -1,0 +1,83 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/users",
+    "query": {
+      "limit": ["1000"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "added_at": "2025-01-01T09:00:00Z",
+          "email": "user1@example.com",
+          "id": "user_77Zj2sJYB0AvvQxQccLEOen4",
+          "name": "Synthetic User 1",
+          "role": "primary_owner",
+          "type": "user"
+        },
+        {
+          "added_at": "2025-02-04T09:01:00Z",
+          "email": "user4@example.com",
+          "id": "user_87cKvEypvPM0p5nTWjiOhrsJ",
+          "name": "Synthetic User 2",
+          "role": "owner",
+          "type": "user"
+        },
+        {
+          "added_at": "2025-03-07T09:02:00Z",
+          "email": "user10@example.com",
+          "id": "user_09WkgT35aeGk1df0zmDtdBtJ",
+          "name": "Synthetic User 3",
+          "role": "owner",
+          "type": "user"
+        },
+        {
+          "added_at": "2025-04-10T09:03:00Z",
+          "email": "user3@example.com",
+          "id": "user_44CSBKCZcCuQlJLMskvJG2o7",
+          "name": "Synthetic User 4",
+          "role": "membership_admin",
+          "type": "user"
+        },
+        {
+          "added_at": "2025-05-13T09:04:00Z",
+          "email": "user11@example.com",
+          "id": "user_86ejzwGkIbqrTRjj4Th1RflV",
+          "name": "Synthetic User 5",
+          "role": "managed",
+          "type": "user"
+        },
+        {
+          "added_at": "2025-06-16T09:05:00Z",
+          "email": "user6@example.com",
+          "id": "user_38CpJwewTrVJY6VlhoztYTKE",
+          "name": "Synthetic User 6",
+          "role": "managed",
+          "type": "user"
+        },
+        {
+          "added_at": "2025-07-19T09:06:00Z",
+          "email": "user7@example.com",
+          "id": "user_38eU822YwzmqgIaVrGVE2oeY",
+          "name": "Synthetic User 7",
+          "role": "user",
+          "type": "user"
+        },
+        {
+          "added_at": "2025-08-22T09:07:00Z",
+          "email": "user12@example.com",
+          "id": "user_53lC7rDeg0bJl3I62QYpDev4",
+          "name": "Synthetic User 8",
+          "role": "user",
+          "type": "user"
+        }
+      ],
+      "first_id": "user_77Zj2sJYB0AvvQxQccLEOen4",
+      "has_more": true,
+      "last_id": "user_53lC7rDeg0bJl3I62QYpDev4"
+    },
+    "status": 200
+  }
+}

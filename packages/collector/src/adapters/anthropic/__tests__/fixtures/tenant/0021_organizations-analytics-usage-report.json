@@ -1,0 +1,293 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/usage_report",
+    "query": {
+      "bucket_width": ["1d"],
+      "ending_at": ["2026-09-30T11:58:00.000Z"],
+      "group_by[]": ["product"],
+      "starting_at": ["2026-07-03T00:00:00.000Z"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "ending_at": "2026-09-27T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 416,
+                "ephemeral_5m_input_tokens": 80
+              },
+              "cache_read_input_tokens": 1595,
+              "model": null,
+              "output_tokens": 13667,
+              "product": "chat",
+              "rbac_group_id": null,
+              "requests": 277,
+              "server_tool_use": {
+                "web_search_requests": 8
+              },
+              "uncached_input_tokens": 81145
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 618,
+                "ephemeral_5m_input_tokens": 682
+              },
+              "cache_read_input_tokens": 32910,
+              "model": null,
+              "output_tokens": 8593,
+              "product": "claude_code",
+              "rbac_group_id": null,
+              "requests": 30,
+              "server_tool_use": {
+                "web_search_requests": 8
+              },
+              "uncached_input_tokens": 70535
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 416,
+                "ephemeral_5m_input_tokens": 435
+              },
+              "cache_read_input_tokens": 12737,
+              "model": null,
+              "output_tokens": 9357,
+              "product": "cowork",
+              "rbac_group_id": null,
+              "requests": 91,
+              "server_tool_use": {
+                "web_search_requests": 7
+              },
+              "uncached_input_tokens": 35657
+            }
+          ],
+          "starting_at": "2026-09-26T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-28T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 227,
+                "ephemeral_5m_input_tokens": 407
+              },
+              "cache_read_input_tokens": 16208,
+              "model": null,
+              "output_tokens": 11937,
+              "product": "chat",
+              "rbac_group_id": null,
+              "requests": 146,
+              "server_tool_use": {
+                "web_search_requests": 9
+              },
+              "uncached_input_tokens": 47892
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 481,
+                "ephemeral_5m_input_tokens": 373
+              },
+              "cache_read_input_tokens": 32877,
+              "model": null,
+              "output_tokens": 6953,
+              "product": "claude_code",
+              "rbac_group_id": null,
+              "requests": 266,
+              "server_tool_use": {
+                "web_search_requests": 7
+              },
+              "uncached_input_tokens": 34599
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 369,
+                "ephemeral_5m_input_tokens": 311
+              },
+              "cache_read_input_tokens": 5803,
+              "model": null,
+              "output_tokens": 19423,
+              "product": "cowork",
+              "rbac_group_id": null,
+              "requests": 234,
+              "server_tool_use": {
+                "web_search_requests": 3
+              },
+              "uncached_input_tokens": 11920
+            }
+          ],
+          "starting_at": "2026-09-27T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-29T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 146,
+                "ephemeral_5m_input_tokens": 429
+              },
+              "cache_read_input_tokens": 35594,
+              "model": null,
+              "output_tokens": 18652,
+              "product": "chat",
+              "rbac_group_id": null,
+              "requests": 235,
+              "server_tool_use": {
+                "web_search_requests": 8
+              },
+              "uncached_input_tokens": 18923
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 836,
+                "ephemeral_5m_input_tokens": 261
+              },
+              "cache_read_input_tokens": 37662,
+              "model": null,
+              "output_tokens": 12719,
+              "product": "claude_code",
+              "rbac_group_id": null,
+              "requests": 246,
+              "server_tool_use": {
+                "web_search_requests": 8
+              },
+              "uncached_input_tokens": 6258
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 815,
+                "ephemeral_5m_input_tokens": 12
+              },
+              "cache_read_input_tokens": 33470,
+              "model": null,
+              "output_tokens": 2242,
+              "product": "cowork",
+              "rbac_group_id": null,
+              "requests": 258,
+              "server_tool_use": {
+                "web_search_requests": 3
+              },
+              "uncached_input_tokens": 74947
+            }
+          ],
+          "starting_at": "2026-09-28T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-30T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 887,
+                "ephemeral_5m_input_tokens": 639
+              },
+              "cache_read_input_tokens": 30473,
+              "model": null,
+              "output_tokens": 14397,
+              "product": "chat",
+              "rbac_group_id": null,
+              "requests": 123,
+              "server_tool_use": {
+                "web_search_requests": 8
+              },
+              "uncached_input_tokens": 10720
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 701,
+                "ephemeral_5m_input_tokens": 378
+              },
+              "cache_read_input_tokens": 24350,
+              "model": null,
+              "output_tokens": 15996,
+              "product": "claude_code",
+              "rbac_group_id": null,
+              "requests": 168,
+              "server_tool_use": {
+                "web_search_requests": 5
+              },
+              "uncached_input_tokens": 60319
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 182,
+                "ephemeral_5m_input_tokens": 63
+              },
+              "cache_read_input_tokens": 21056,
+              "model": null,
+              "output_tokens": 20672,
+              "product": "cowork",
+              "rbac_group_id": null,
+              "requests": 182,
+              "server_tool_use": {
+                "web_search_requests": 8
+              },
+              "uncached_input_tokens": 29803
+            }
+          ],
+          "starting_at": "2026-09-29T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-31T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 370,
+                "ephemeral_5m_input_tokens": 180
+              },
+              "cache_read_input_tokens": 21079,
+              "model": null,
+              "output_tokens": 26790,
+              "product": "chat",
+              "rbac_group_id": null,
+              "requests": 105,
+              "server_tool_use": {
+                "web_search_requests": 6
+              },
+              "uncached_input_tokens": 60383
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 663,
+                "ephemeral_5m_input_tokens": 223
+              },
+              "cache_read_input_tokens": 33258,
+              "model": null,
+              "output_tokens": 29212,
+              "product": "claude_code",
+              "rbac_group_id": null,
+              "requests": 91,
+              "server_tool_use": {
+                "web_search_requests": 9
+              },
+              "uncached_input_tokens": 16729
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 56,
+                "ephemeral_5m_input_tokens": 109
+              },
+              "cache_read_input_tokens": 18645,
+              "model": null,
+              "output_tokens": 23277,
+              "product": "cowork",
+              "rbac_group_id": null,
+              "requests": 386,
+              "server_tool_use": {
+                "web_search_requests": 8
+              },
+              "uncached_input_tokens": 61625
+            }
+          ],
+          "starting_at": "2026-09-30T00:00:00Z"
+        }
+      ],
+      "data_refreshed_at": "2026-09-30T06:00:00Z",
+      "has_more": false,
+      "next_page": null,
+      "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9"
+    },
+    "status": 200
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/invites",
+    "query": {
+      "limit": ["1000"],
+      "statuses[]": ["pending"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "accepted_at": null,
+          "email": "user8@example.com",
+          "expires_at": "2026-10-19T10:00:00Z",
+          "id": "invite_23u8rZHCX26w4MRcwrqtffOQ",
+          "invited_at": "2026-09-28T10:00:00Z",
+          "rbac_group_ids": ["rbac_group_69VbrMnSPaA9SkIZwJmdb02z"],
+          "role": "user",
+          "status": "pending",
+          "type": "invite"
+        },
+        {
+          "accepted_at": null,
+          "email": "user17@example.com",
+          "expires_at": "2026-09-23T10:00:00Z",
+          "id": "invite_05Kc93EaL2sunigqQINn52EM",
+          "invited_at": "2026-09-02T10:00:00Z",
+          "rbac_group_ids": [],
+          "role": "user",
+          "status": "pending",
+          "type": "invite"
+        }
+      ],
+      "first_id": "invite_23u8rZHCX26w4MRcwrqtffOQ",
+      "has_more": false,
+      "last_id": "invite_05Kc93EaL2sunigqQINn52EM"
+    },
+    "status": 200
+  }
+}

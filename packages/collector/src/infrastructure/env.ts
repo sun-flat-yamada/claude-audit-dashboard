@@ -13,6 +13,8 @@ const envSchema = z.object({
   ANTHROPIC_ANALYTICS_API_KEY: optional,
   ANTHROPIC_ADMIN_API_KEY: optional,
   ANTHROPIC_BASE_URL: optional,
+  CAPTURE_RAW_DIR: optional,
+  CI: optional,
   DATA_DIR: optional,
   CONFIG_DIR: optional,
   INIT_CWD: optional,
@@ -48,6 +50,10 @@ export interface Environment {
     admin?: string | undefined;
   };
   baseUrl: string | undefined;
+  /** Opt-in raw response capture directory (`CAPTURE_RAW_DIR`; the CLI flag wins). */
+  captureRawDir: string | undefined;
+  /** The `CI` variable; raw capture refuses to run when it is true. */
+  ci: string | undefined;
   /** Directory relative paths resolve against (pnpm's INIT_CWD, else the process cwd). */
   baseDir: string;
   dataDir: string;
@@ -94,6 +100,8 @@ export function readEnvironment(
       admin: env.ANTHROPIC_ADMIN_API_KEY ?? shared,
     },
     baseUrl: env.ANTHROPIC_BASE_URL,
+    captureRawDir: env.CAPTURE_RAW_DIR,
+    ci: env.CI,
     baseDir: base,
     dataDir: resolve(base, env.DATA_DIR ?? 'data'),
     configDir: resolve(base, env.CONFIG_DIR ?? 'config'),

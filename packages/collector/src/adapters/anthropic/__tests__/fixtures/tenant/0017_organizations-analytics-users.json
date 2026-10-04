@@ -1,0 +1,138 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/users",
+    "query": {
+      "limit": ["1000"],
+      "starting_date": ["2026-01-01"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "chat_metrics": {
+            "message_count": 48
+          },
+          "claude_code_metrics": {
+            "core_metrics": {
+              "commit_count": 3
+            }
+          },
+          "user": {
+            "email_address": "user1@example.com",
+            "id": "user_77Zj2sJYB0AvvQxQccLEOen4",
+            "type": "user"
+          },
+          "web_search_count": 3
+        },
+        {
+          "chat_metrics": {
+            "message_count": 6
+          },
+          "last_activity_date": "2026-09-24",
+          "user": {
+            "email_address": "user4@example.com",
+            "id": "user_87cKvEypvPM0p5nTWjiOhrsJ",
+            "type": "user"
+          },
+          "web_search_count": 5
+        },
+        {
+          "chat_metrics": {
+            "message_count": 31
+          },
+          "last_activity_date": "2026-09-23",
+          "user": {
+            "email_address": "user10@example.com",
+            "id": "user_09WkgT35aeGk1df0zmDtdBtJ",
+            "type": "user"
+          },
+          "web_search_count": 1
+        },
+        {
+          "chat_metrics": {
+            "message_count": 20
+          },
+          "user": {
+            "email_address": "user3@example.com",
+            "id": "user_44CSBKCZcCuQlJLMskvJG2o7",
+            "type": "user"
+          },
+          "web_search_count": 5
+        },
+        {
+          "chat_metrics": {
+            "message_count": 40
+          },
+          "claude_code_metrics": {
+            "core_metrics": {
+              "commit_count": 29
+            }
+          },
+          "last_activity_date": "2026-09-25",
+          "user": {
+            "email_address": "user11@example.com",
+            "id": "user_86ejzwGkIbqrTRjj4Th1RflV",
+            "type": "user"
+          },
+          "web_search_count": 3
+        },
+        {
+          "chat_metrics": {
+            "message_count": 24
+          },
+          "last_activity_date": "2026-09-21",
+          "user": {
+            "email_address": "user6@example.com",
+            "id": "user_38CpJwewTrVJY6VlhoztYTKE",
+            "type": "user"
+          },
+          "web_search_count": 3
+        },
+        {
+          "chat_metrics": {
+            "message_count": 51
+          },
+          "user": {
+            "email_address": "user7@example.com",
+            "id": "user_38eU822YwzmqgIaVrGVE2oeY",
+            "type": "user"
+          },
+          "web_search_count": 0
+        },
+        {
+          "chat_metrics": {
+            "message_count": 20
+          },
+          "last_activity_date": "2026-09-29",
+          "user": {
+            "email_address": "user12@example.com",
+            "id": "user_53lC7rDeg0bJl3I62QYpDev4",
+            "type": "user"
+          },
+          "web_search_count": 5
+        },
+        {
+          "chat_metrics": {
+            "message_count": 58
+          },
+          "claude_code_metrics": {
+            "core_metrics": {
+              "commit_count": 17
+            }
+          },
+          "last_activity_date": "2026-09-23",
+          "user": {
+            "email_address": "user2@example.com",
+            "id": "user_91BMC6nANnYbmehG8pd3Z1r0",
+            "type": "user"
+          },
+          "web_search_count": 3
+        }
+      ],
+      "next_page": "page_gxrzppbq4O1lG1TPIrWU"
+    },
+    "status": 200
+  }
+}

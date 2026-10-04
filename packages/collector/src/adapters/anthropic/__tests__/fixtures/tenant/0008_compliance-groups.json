@@ -1,0 +1,45 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/compliance/groups",
+    "query": {
+      "limit": ["1000"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "created_at": null,
+          "description": "Synthetic description",
+          "id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z",
+          "name": "Synthetic Group 1",
+          "roles": ["rbac_role_881Ib3XmpbmwBAJgLI1Sd4wH"],
+          "source_type": "scim",
+          "updated_at": null
+        },
+        {
+          "created_at": null,
+          "description": "",
+          "id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX",
+          "name": "Synthetic Group 2",
+          "roles": ["rbac_role_70PFWOs5zAJH73DvMTt7Wtqd"],
+          "source_type": "direct",
+          "updated_at": null
+        },
+        {
+          "created_at": null,
+          "description": "Synthetic description",
+          "id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+          "name": "Synthetic Group 3",
+          "roles": [],
+          "source_type": "scim",
+          "updated_at": null
+        }
+      ],
+      "has_more": false,
+      "next_page": null
+    },
+    "status": 200
+  }
+}

@@ -1,0 +1,335 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/spend_limits/effective",
+    "query": {
+      "limit": ["1000"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user1@example.com",
+            "name": "Synthetic User 1",
+            "type": "user_actor",
+            "user_id": "user_77Zj2sJYB0AvvQxQccLEOen4"
+          },
+          "amount": "50000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "2483.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_77Zj2sJYB0AvvQxQccLEOen4"
+          },
+          "source": {
+            "seat_tier": "enterprise_standard",
+            "type": "seat_tier"
+          },
+          "spend_limit_id": "spl_99S1ec31A0L4OxSTyAvbIEty"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user4@example.com",
+            "name": "Synthetic User 2",
+            "type": "user_actor",
+            "user_id": "user_87cKvEypvPM0p5nTWjiOhrsJ"
+          },
+          "amount": "50000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "15448.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_87cKvEypvPM0p5nTWjiOhrsJ"
+          },
+          "source": {
+            "type": "organization"
+          },
+          "spend_limit_id": "spl_11kEy2tn47TFAV6Usuov0TE9"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user10@example.com",
+            "name": "Synthetic User 3",
+            "type": "user_actor",
+            "user_id": "user_09WkgT35aeGk1df0zmDtdBtJ"
+          },
+          "amount": "50000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "3746.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_09WkgT35aeGk1df0zmDtdBtJ"
+          },
+          "source": {
+            "seat_tier": "enterprise_standard",
+            "type": "seat_tier"
+          },
+          "spend_limit_id": "spl_3770mv2hojsjMytMXL6GWM2P"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user3@example.com",
+            "name": "Synthetic User 4",
+            "type": "user_actor",
+            "user_id": "user_44CSBKCZcCuQlJLMskvJG2o7"
+          },
+          "amount": "20000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "3767.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_44CSBKCZcCuQlJLMskvJG2o7"
+          },
+          "source": {
+            "type": "organization"
+          },
+          "spend_limit_id": "spl_13mY11aoTJi7sL1GPXzh9hzU"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user11@example.com",
+            "name": "Synthetic User 5",
+            "type": "user_actor",
+            "user_id": "user_86ejzwGkIbqrTRjj4Th1RflV"
+          },
+          "amount": null,
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "14899.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_86ejzwGkIbqrTRjj4Th1RflV"
+          },
+          "source": {
+            "seat_tier": "enterprise_standard",
+            "type": "seat_tier"
+          },
+          "spend_limit_id": "spl_23LIUmbt29aDBoIz5dZwzwii"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user6@example.com",
+            "name": "Synthetic User 6",
+            "type": "user_actor",
+            "user_id": "user_38CpJwewTrVJY6VlhoztYTKE"
+          },
+          "amount": "20000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "16988.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_38CpJwewTrVJY6VlhoztYTKE"
+          },
+          "source": {
+            "type": "organization"
+          },
+          "spend_limit_id": "spl_73pLjwGWUGeH1vRzWEYm8f5n"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user7@example.com",
+            "name": "Synthetic User 7",
+            "type": "user_actor",
+            "user_id": "user_38eU822YwzmqgIaVrGVE2oeY"
+          },
+          "amount": "20000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "13702.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_38eU822YwzmqgIaVrGVE2oeY"
+          },
+          "source": {
+            "seat_tier": "enterprise_standard",
+            "type": "seat_tier"
+          },
+          "spend_limit_id": "spl_920xZGV9jH2teuJLHcypqMrn"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user12@example.com",
+            "name": "Synthetic User 8",
+            "type": "user_actor",
+            "user_id": "user_53lC7rDeg0bJl3I62QYpDev4"
+          },
+          "amount": "20000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "1611.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_53lC7rDeg0bJl3I62QYpDev4"
+          },
+          "source": {
+            "type": "organization"
+          },
+          "spend_limit_id": "spl_71k3XS3box8vGgVEKeuSmvGx"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user2@example.com",
+            "name": "Synthetic User 9",
+            "type": "user_actor",
+            "user_id": "user_91BMC6nANnYbmehG8pd3Z1r0"
+          },
+          "amount": "20000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "12835.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_91BMC6nANnYbmehG8pd3Z1r0"
+          },
+          "source": {
+            "seat_tier": "enterprise_standard",
+            "type": "seat_tier"
+          },
+          "spend_limit_id": "spl_21ajkKAytHZKmOmKwjYXPjo3"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user9@example.com",
+            "name": "Synthetic User 10",
+            "type": "user_actor",
+            "user_id": "user_882aBvxIWkBDngHQYxk4YSTd"
+          },
+          "amount": null,
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "10369.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_882aBvxIWkBDngHQYxk4YSTd"
+          },
+          "source": {
+            "type": "organization"
+          },
+          "spend_limit_id": "spl_11G8UdchBQ3s5lpeuQQrQNja"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user13@example.com",
+            "name": "Synthetic User 11",
+            "type": "user_actor",
+            "user_id": "user_46O5Gx09ga45eFhlhpoX4huT"
+          },
+          "amount": "20000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "17414.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_46O5Gx09ga45eFhlhpoX4huT"
+          },
+          "source": {
+            "seat_tier": "enterprise_standard",
+            "type": "seat_tier"
+          },
+          "spend_limit_id": "spl_26ibSwGqLHowU2vdgHghjEPL"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user14@example.com",
+            "name": "Synthetic User 12",
+            "type": "user_actor",
+            "user_id": "user_92AtJ1VLPjVhLSrwMAwGAP3o"
+          },
+          "amount": "20000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "16964.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_92AtJ1VLPjVhLSrwMAwGAP3o"
+          },
+          "source": {
+            "type": "organization"
+          },
+          "spend_limit_id": "spl_24RxnOEr4DtahHtXmUFJqJbM"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user15@example.com",
+            "name": "Synthetic User 13",
+            "type": "user_actor",
+            "user_id": "user_889CPUbn4ghQ2gGAvDlLwW3m"
+          },
+          "amount": "20000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "1716.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_889CPUbn4ghQ2gGAvDlLwW3m"
+          },
+          "source": {
+            "seat_tier": "enterprise_standard",
+            "type": "seat_tier"
+          },
+          "spend_limit_id": "spl_136YqoXAGofCT9JnmRm1azyT"
+        },
+        {
+          "actor": {
+            "deleted": false,
+            "email_address": "user16@example.com",
+            "name": "Synthetic User 14",
+            "type": "user_actor",
+            "user_id": "user_02DHg97pS6cO71a0Sg0BBSF7"
+          },
+          "amount": "20000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "12943.5",
+          "scope": {
+            "type": "user",
+            "user_id": "user_02DHg97pS6cO71a0Sg0BBSF7"
+          },
+          "source": {
+            "type": "organization"
+          },
+          "spend_limit_id": "spl_77Lsyo8NNeSDy06VPiCJ2hUj"
+        },
+        {
+          "actor": {
+            "scoped_api_key_id": "apikey_98UKcyl8u7hTRu6ThEmD53y6",
+            "type": "scoped_api_key_actor"
+          },
+          "amount": "2500000",
+          "currency": "USD",
+          "period": "monthly",
+          "period_to_date_spend": "812345.25",
+          "scope": {
+            "type": "organization"
+          },
+          "source": {
+            "type": "organization"
+          },
+          "spend_limit_id": "spl_11jc2QIcbwKD2Cr3JG7H4m1B"
+        }
+      ],
+      "next_page": null
+    },
+    "status": 200
+  }
+}

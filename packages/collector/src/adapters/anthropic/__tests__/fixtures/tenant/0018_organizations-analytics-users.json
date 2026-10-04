@@ -1,0 +1,80 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/users",
+    "query": {
+      "limit": ["1000"],
+      "page": ["page_gxrzppbq4O1lG1TPIrWU"],
+      "starting_date": ["2026-01-01"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "chat_metrics": {
+            "message_count": 20
+          },
+          "user": {
+            "email_address": "user9@example.com",
+            "id": "user_882aBvxIWkBDngHQYxk4YSTd",
+            "type": "user"
+          },
+          "web_search_count": 5
+        },
+        {
+          "chat_metrics": {
+            "message_count": 56
+          },
+          "last_activity_date": "2026-09-21",
+          "user": {
+            "email_address": "user13@example.com",
+            "id": "user_46O5Gx09ga45eFhlhpoX4huT",
+            "type": "user"
+          },
+          "web_search_count": 2
+        },
+        {
+          "chat_metrics": {
+            "message_count": 0
+          },
+          "user": {
+            "email_address": "user14@example.com",
+            "id": "user_92AtJ1VLPjVhLSrwMAwGAP3o",
+            "type": "user"
+          },
+          "web_search_count": 0
+        },
+        {
+          "chat_metrics": {
+            "message_count": 45
+          },
+          "claude_code_metrics": {
+            "core_metrics": {
+              "commit_count": 30
+            }
+          },
+          "user": {
+            "email_address": "user15@example.com",
+            "id": "user_889CPUbn4ghQ2gGAvDlLwW3m",
+            "type": "user"
+          },
+          "web_search_count": 2
+        },
+        {
+          "chat_metrics": {
+            "message_count": 0
+          },
+          "user": {
+            "email_address": "user16@example.com",
+            "id": "user_02DHg97pS6cO71a0Sg0BBSF7",
+            "type": "user"
+          },
+          "web_search_count": 4
+        }
+      ],
+      "next_page": null
+    },
+    "status": 200
+  }
+}

@@ -1,0 +1,293 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/usage_report",
+    "query": {
+      "bucket_width": ["1d"],
+      "ending_at": ["2026-09-30T11:58:00.000Z"],
+      "group_by[]": ["rbac_group_id"],
+      "starting_at": ["2026-07-03T00:00:00.000Z"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "ending_at": "2026-09-27T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 478,
+                "ephemeral_5m_input_tokens": 327
+              },
+              "cache_read_input_tokens": 3661,
+              "model": null,
+              "output_tokens": 3435,
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z",
+              "requests": 353,
+              "server_tool_use": {
+                "web_search_requests": 7
+              },
+              "uncached_input_tokens": 83863
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 443,
+                "ephemeral_5m_input_tokens": 61
+              },
+              "cache_read_input_tokens": 17116,
+              "model": null,
+              "output_tokens": 26377,
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX",
+              "requests": 212,
+              "server_tool_use": {
+                "web_search_requests": 1
+              },
+              "uncached_input_tokens": 48834
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 589,
+                "ephemeral_5m_input_tokens": 474
+              },
+              "cache_read_input_tokens": 11180,
+              "model": null,
+              "output_tokens": 12786,
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+              "requests": 15,
+              "server_tool_use": {
+                "web_search_requests": 5
+              },
+              "uncached_input_tokens": 40607
+            }
+          ],
+          "starting_at": "2026-09-26T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-28T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 404,
+                "ephemeral_5m_input_tokens": 160
+              },
+              "cache_read_input_tokens": 2584,
+              "model": null,
+              "output_tokens": 26852,
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z",
+              "requests": 259,
+              "server_tool_use": {
+                "web_search_requests": 4
+              },
+              "uncached_input_tokens": 70112
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 801,
+                "ephemeral_5m_input_tokens": 346
+              },
+              "cache_read_input_tokens": 17440,
+              "model": null,
+              "output_tokens": 5742,
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX",
+              "requests": 302,
+              "server_tool_use": {
+                "web_search_requests": 2
+              },
+              "uncached_input_tokens": 87262
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 48,
+                "ephemeral_5m_input_tokens": 868
+              },
+              "cache_read_input_tokens": 31941,
+              "model": null,
+              "output_tokens": 3436,
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+              "requests": 54,
+              "server_tool_use": {
+                "web_search_requests": 4
+              },
+              "uncached_input_tokens": 32030
+            }
+          ],
+          "starting_at": "2026-09-27T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-29T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 73,
+                "ephemeral_5m_input_tokens": 839
+              },
+              "cache_read_input_tokens": 35128,
+              "model": null,
+              "output_tokens": 2275,
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z",
+              "requests": 25,
+              "server_tool_use": {
+                "web_search_requests": 4
+              },
+              "uncached_input_tokens": 64605
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 1,
+                "ephemeral_5m_input_tokens": 0
+              },
+              "cache_read_input_tokens": 14203,
+              "model": null,
+              "output_tokens": 24502,
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX",
+              "requests": 386,
+              "server_tool_use": {
+                "web_search_requests": 2
+              },
+              "uncached_input_tokens": 67778
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 181,
+                "ephemeral_5m_input_tokens": 92
+              },
+              "cache_read_input_tokens": 35161,
+              "model": null,
+              "output_tokens": 9722,
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+              "requests": 234,
+              "server_tool_use": {
+                "web_search_requests": 4
+              },
+              "uncached_input_tokens": 80739
+            }
+          ],
+          "starting_at": "2026-09-28T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-30T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 263,
+                "ephemeral_5m_input_tokens": 459
+              },
+              "cache_read_input_tokens": 21137,
+              "model": null,
+              "output_tokens": 21525,
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z",
+              "requests": 139,
+              "server_tool_use": {
+                "web_search_requests": 3
+              },
+              "uncached_input_tokens": 42398
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 399,
+                "ephemeral_5m_input_tokens": 464
+              },
+              "cache_read_input_tokens": 38947,
+              "model": null,
+              "output_tokens": 8714,
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX",
+              "requests": 92,
+              "server_tool_use": {
+                "web_search_requests": 2
+              },
+              "uncached_input_tokens": 27493
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 585,
+                "ephemeral_5m_input_tokens": 160
+              },
+              "cache_read_input_tokens": 13133,
+              "model": null,
+              "output_tokens": 14582,
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+              "requests": 332,
+              "server_tool_use": {
+                "web_search_requests": 3
+              },
+              "uncached_input_tokens": 5139
+            }
+          ],
+          "starting_at": "2026-09-29T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-31T00:00:00Z",
+          "results": [
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 583,
+                "ephemeral_5m_input_tokens": 702
+              },
+              "cache_read_input_tokens": 35010,
+              "model": null,
+              "output_tokens": 14230,
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z",
+              "requests": 85,
+              "server_tool_use": {
+                "web_search_requests": 3
+              },
+              "uncached_input_tokens": 56750
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 184,
+                "ephemeral_5m_input_tokens": 521
+              },
+              "cache_read_input_tokens": 21328,
+              "model": null,
+              "output_tokens": 28494,
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX",
+              "requests": 382,
+              "server_tool_use": {
+                "web_search_requests": 1
+              },
+              "uncached_input_tokens": 10160
+            },
+            {
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 104,
+                "ephemeral_5m_input_tokens": 866
+              },
+              "cache_read_input_tokens": 19195,
+              "model": null,
+              "output_tokens": 27805,
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R",
+              "requests": 375,
+              "server_tool_use": {
+                "web_search_requests": 0
+              },
+              "uncached_input_tokens": 87724
+            }
+          ],
+          "starting_at": "2026-09-30T00:00:00Z"
+        }
+      ],
+      "data_refreshed_at": "2026-09-30T06:00:00Z",
+      "has_more": false,
+      "next_page": null,
+      "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9"
+    },
+    "status": 200
+  }
+}

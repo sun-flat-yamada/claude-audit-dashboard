@@ -31,6 +31,8 @@ data/*.csv
 data/snapshots/
 data/reports/
 data/archive/
+# Raw API captures (pnpm collect --capture-raw data/raw/<run>): real tenant data, never committed
+data/raw/
 data/state.json
 data/dashboard.json
 !data/.gitkeep

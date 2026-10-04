@@ -13,7 +13,7 @@
  * Exit code 1 if any non-placeholder match is found.
  */
 
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve, extname, relative, sep } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -113,11 +113,29 @@ function scan(dir: string, depth = 0): void {
   }
 }
 
+/**
+ * Directories that must always be scanned, whatever the depth limit of the walk above:
+ * the sanitized tenant fixtures sit eight levels down.
+ */
+const REQUIRED_DIRS = ['packages/collector/src/adapters/anthropic/__tests__/fixtures/tenant'];
+
 console.log('🔒 Secret Scanner');
 console.log('═'.repeat(40));
 console.log(`Scanning: ${ROOT}\n`);
 
 scan(ROOT);
+
+for (const rel of REQUIRED_DIRS) {
+  const dir = resolve(ROOT, rel);
+  if (!existsSync(dir) || readdirSync(dir).length === 0) {
+    console.error(`🔴 MISSING: required scan directory ${rel} is absent or empty`);
+    findings++;
+  } else {
+    const before = findings;
+    scan(dir, 0);
+    if (findings === before) console.log(`Scanned required directory: ${rel}`);
+  }
+}
 
 if (findings > 0) {
   console.error(`\n💥 FAILED: ${findings} potential secret(s) found`);

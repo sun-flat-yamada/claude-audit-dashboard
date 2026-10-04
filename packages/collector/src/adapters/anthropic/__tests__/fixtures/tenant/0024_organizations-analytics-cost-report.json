@@ -1,0 +1,92 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/cost_report",
+    "query": {
+      "bucket_width": ["1d"],
+      "ending_at": ["2026-09-30T11:58:00.000Z"],
+      "starting_at": ["2026-07-03T00:00:00.000Z"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "ending_at": "2026-09-27T00:00:00Z",
+          "results": [
+            {
+              "amount": "1430.000000",
+              "currency": "USD",
+              "list_amount": "1716",
+              "model": null,
+              "product": null,
+              "rbac_group_id": null
+            }
+          ],
+          "starting_at": "2026-09-26T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-28T00:00:00Z",
+          "results": [
+            {
+              "amount": "51960.000000",
+              "currency": "USD",
+              "list_amount": "62352",
+              "model": null,
+              "product": null,
+              "rbac_group_id": null
+            }
+          ],
+          "starting_at": "2026-09-27T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-29T00:00:00Z",
+          "results": [
+            {
+              "amount": "15363.000000",
+              "currency": "USD",
+              "list_amount": "18435",
+              "model": null,
+              "product": null,
+              "rbac_group_id": null
+            }
+          ],
+          "starting_at": "2026-09-28T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-30T00:00:00Z",
+          "results": [
+            {
+              "amount": "78216.000000",
+              "currency": "USD",
+              "list_amount": "93859",
+              "model": null,
+              "product": null,
+              "rbac_group_id": null
+            }
+          ],
+          "starting_at": "2026-09-29T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-31T00:00:00Z",
+          "results": [
+            {
+              "amount": "18648.000000",
+              "currency": "USD",
+              "list_amount": "22377",
+              "model": null,
+              "product": null,
+              "rbac_group_id": null
+            }
+          ],
+          "starting_at": "2026-09-30T00:00:00Z"
+        }
+      ],
+      "data_refreshed_at": "2026-09-30T06:00:00Z",
+      "has_more": false,
+      "next_page": null,
+      "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9"
+    },
+    "status": 200
+  }
+}
