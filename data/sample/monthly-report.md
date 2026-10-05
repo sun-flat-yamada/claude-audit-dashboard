@@ -75,7 +75,7 @@ Generated: 2026-09-29T12:00:00.000Z
 ## Insights
 
 - claude-opus-5 accounts for 62% of spend — Review whether routine tasks can be routed to a smaller, cheaper model.
-- Only 25% of input tokens were cache reads — Long, repeated context (projects, system prompts, tools) benefits from prompt caching.
+- Only 29.7% of input tokens were cache reads — Long, repeated context (projects, system prompts, tools) benefits from prompt caching.
 
 ## Notes
 

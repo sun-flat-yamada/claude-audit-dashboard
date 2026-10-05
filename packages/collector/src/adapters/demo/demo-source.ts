@@ -337,18 +337,24 @@ function days(range: DateRange, now: Date): string[] {
   return out;
 }
 
+/** Share of a day's tokens read from the cache (0.12-0.32): same for every dimension of the day. */
+const cacheReadShare = (date: string): number => 0.12 + random(`cache:${date}`)() * 0.2;
+
 function usageRow(
   date: string,
   dimension: UsageDimension,
   key: string | null,
   tokens: number,
 ): UsageRow {
+  // The uncached + cache read total keeps its earlier rounding, so token totals stay unchanged.
+  const notWritten = Math.round(tokens * 0.55) + Math.round(tokens * 0.2);
+  const read = Math.round(tokens * cacheReadShare(date));
   return {
     date,
     dimension,
     key,
-    uncachedInputTokens: Math.round(tokens * 0.55),
-    cacheReadInputTokens: Math.round(tokens * 0.2),
+    uncachedInputTokens: notWritten - read,
+    cacheReadInputTokens: read,
     cacheCreationInputTokens: Math.round(tokens * 0.05),
     outputTokens: Math.round(tokens * 0.2),
     webSearchRequests: Math.round(tokens / 400_000),
