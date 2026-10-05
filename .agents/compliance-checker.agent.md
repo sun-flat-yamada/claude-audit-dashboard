@@ -1,4 +1,4 @@
-# 🔍 Compliance Audit & Rules Evaluation Agent (`compliance-checker-agent`)
+# 🔍 Compliance Audit & Rules Evaluation Agent (`compliance-checker`)
 
 Specialized autonomous agent responsible for evaluating organizational compliance rules, calculating security posture scores, and identifying risk anomalies across Claude Enterprise environments.
 

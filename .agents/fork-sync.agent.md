@@ -1,4 +1,4 @@
-# 🍴 Fork Synchronization & Operational Health Agent (`fork-sync-agent`)
+# 🍴 Fork Synchronization & Operational Health Agent (`fork-sync`)
 
 Specialized autonomous agent responsible for downstream fork operations, conflict-free upstream synchronization, and code-data decoupling validation.
 

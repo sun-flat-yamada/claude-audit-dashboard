@@ -1,4 +1,4 @@
-# 📡 Claude Audit Collector Agent (`audit-collector-agent`)
+# 📡 Claude Audit Collector Agent (`audit-collector`)
 
 Specialized autonomous agent responsible for collecting audit logs, directory data, settings, usage, cost and spend limits from the Claude Enterprise APIs.
 
