@@ -23,7 +23,7 @@
 | F-002 | Compliance score and trend      | P0       | ✅ Phase A                                                | `kpis[score]`, `compliance.history`              |
 | F-003 | Compliance results              | P0       | ✅ Phase A + CSV / JSON export (B2-1)                     | `compliance.results`, `compliance.byCategory`    |
 | F-004 | Usage and cost                  | P0       | ✅ Phase A                                                | `usage.daily`, `usage.byProduct/byModel/byGroup` |
-| F-005 | Activity                        | P0       | 🔶 Aggregates in Phase A; search in Phase B               | `activity`                                       |
+| F-005 | Activity                        | P0       | ✅ Phase A aggregates; B2 (B2-3, `#/activity`) search     | `activity`                                       |
 | F-006 | Member view                     | P1       | ✅ Phase B2 (B2-4, `#/members`)                           | detail `members.json` (B2-2)                     |
 | F-007 | API key inventory               | P1       | ✅ Phase B2 (B2-5, `#/keys`)                              | detail `api-keys.json` (B2-2)                    |
 | F-008 | Alert history                   | P1       | ⏳ Phase B                                                | notification state                               |
@@ -69,12 +69,18 @@
 - Spend by product, by model and by RBAC group: horizontal bars with the amount and share at the tip. Group shares can exceed 100% in total because a member can belong to several groups (noted in the card).
 - Phase B: cache read share over time, budget progress (UA-002 already reports month-to-date and forecast).
 
-### F-005 Activity (aggregates)
+### F-005 Activity (aggregates and timeline)
 
 - Total events in the last collection window, with the window bounds.
 - Top 10 activity types as labeled bars.
 - Events matched by activity-watch rules (AM-xxx): time, type, rule, masked actor (up to 30).
-- Phase B: a searchable timeline needs a paged, access-controlled activity export rather than `dashboard.json`.
+- Phase B2 (B2-3): own page `#/activity` reading the detail manifest and the monthly `detail/activity-<yyyy-mm>.json` files (never `dashboard.json`).
+  - Month selector from the manifest (newest first); only the selected month file is fetched. A month that is listed but missing shows "not published"; an unavailable dataset shows the manifest reason.
+  - Search (type, actor ID / e-mail / IP, organization), activity type, actor kind and a date range (inclusive UTC days within the month); filters reset the page to 1.
+  - Timeline table, newest first, 50 rows per page with Previous / Next and "Page n of m". Actor kind is shown as icon + label + color (User, API key, Unauthenticated, ...). Identifiers, e-mail addresses and IPs are printed exactly as published (masked while the manifest says `maskPii: true`) with a note.
+  - A capped month (`truncated`) shows "This month has N activities; the file keeps only the newest M".
+  - Not included yet: filter state in the URL (the router has no query support) and a count-by-day chart.
+  - The demo tenant has three UTC months (July / August routine history, September recent events) so paging and month switching can be tried on the sample.
 
 ### F-011 Light / dark theme
 

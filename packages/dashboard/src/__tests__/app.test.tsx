@@ -23,7 +23,7 @@ const FIXTURE = raw(
   }),
 );
 const DETAIL = import.meta.glob<string>(
-  '../../../../data/sample/detail/{index,members,api-keys}.json',
+  '../../../../data/sample/detail/{index,members,api-keys,activity-*}.json',
   {
     eager: true,
     query: '?raw',
@@ -96,6 +96,26 @@ describe('hash routing', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Members' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Members' })).toHaveAttribute('aria-current', 'page');
     expect(await screen.findByRole('table', { name: 'Members' })).toBeInTheDocument();
+  });
+
+  it('opens the activity timeline by deep link', async () => {
+    const byName = (suffix: string) =>
+      Object.entries(DETAIL).find(([name]) => name.endsWith(suffix))?.[1] ?? '';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: RequestInfo | URL) => {
+        const path = String(url);
+        const month = /activity-(\d{4}-\d{2})\.json$/.exec(path)?.[1];
+        if (month) return new Response(byName(`/activity-${month}.json`));
+        if (path.endsWith('/detail/index.json')) return new Response(byName('/index.json'));
+        return new Response(SAMPLE ?? '');
+      }),
+    );
+    window.location.hash = '#/activity';
+    render(<App />);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Activity' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Activity' })).toHaveAttribute('aria-current', 'page');
+    expect(await screen.findByRole('table', { name: 'Activity timeline' })).toBeInTheDocument();
   });
 
   it('opens the API key inventory by deep link', async () => {

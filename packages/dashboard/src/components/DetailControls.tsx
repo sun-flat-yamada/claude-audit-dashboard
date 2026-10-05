@@ -59,6 +59,34 @@ export function SearchField({
   );
 }
 
+export function DateField({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  min?: string;
+  max?: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1 text-sm">
+      {label}
+      <input
+        type="date"
+        value={value}
+        min={min}
+        max={max}
+        onChange={(e) => onChange(e.target.value)}
+        className={FIELD}
+      />
+    </label>
+  );
+}
+
 export function SortControls<K extends string>({
   keys,
   labels,

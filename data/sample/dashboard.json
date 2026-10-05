@@ -193,28 +193,28 @@
     ],
     "topTypes": [
       {
-        "count": 24,
-        "type": "sso_login_failed"
-      },
-      {
-        "count": 12,
-        "type": "compliance_api_accessed"
-      },
-      {
-        "count": 10,
+        "count": 53,
         "type": "claude_chat_created"
       },
       {
-        "count": 10,
+        "count": 53,
         "type": "claude_file_uploaded"
       },
       {
-        "count": 10,
+        "count": 53,
+        "type": "sso_login_succeeded"
+      },
+      {
+        "count": 52,
         "type": "claude_project_created"
       },
       {
-        "count": 10,
-        "type": "sso_login_succeeded"
+        "count": 33,
+        "type": "compliance_api_accessed"
+      },
+      {
+        "count": 24,
+        "type": "sso_login_failed"
       },
       {
         "count": 1,
@@ -229,9 +229,9 @@
         "type": "org_members_exported"
       }
     ],
-    "total": 79,
+    "total": 271,
     "window": {
-      "from": "2026-09-28T12:00:00.000Z",
+      "from": "2026-06-30T12:00:00.000Z",
       "to": "2026-09-29T12:00:00.000Z"
     }
   },
@@ -959,7 +959,7 @@
   "coverage": [
     {
       "asOf": null,
-      "count": 79,
+      "count": 271,
       "dataset": "activities",
       "reason": null,
       "source": "demo:activities",

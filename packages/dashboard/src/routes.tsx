@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import type { DashboardView } from '@claude-audit/core/contracts';
 import type { NavItem } from './components/NavBar';
 import { matchPath } from './lib/router';
+import { Activity } from './pages/Activity';
 import { Compliance } from './pages/Compliance';
 import { ApiKeys } from './pages/ApiKeys';
 import { Members } from './pages/Members';
@@ -44,6 +45,13 @@ export const ROUTES: RouteDef[] = [
     label: 'API keys',
     nav: true,
     render: () => <ApiKeys />,
+  },
+  {
+    path: '/activity',
+    pattern: '/activity',
+    label: 'Activity',
+    nav: true,
+    render: () => <Activity />,
   },
 ];
 

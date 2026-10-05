@@ -1,0 +1,753 @@
+{
+  "generatedAt": "2026-09-29T12:00:00.000Z",
+  "items": [
+    {
+      "actor": {
+        "email": "g***@example.com",
+        "id": "u_72a89d55cd76",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-31T23:59:59.000Z",
+      "id": "activity_demo_1561",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "b***@example.com",
+        "id": "u_735613831814",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-31T19:14:07.447Z",
+      "id": "activity_demo_1556",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": "e***@example.com",
+        "id": "u_8b6c198a3fa3",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-31T00:43:09.015Z",
+      "id": "activity_demo_1529",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "d***@example.com",
+        "id": "u_17450ffd6926",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-29T15:16:05.203Z",
+      "id": "activity_demo_1548",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": "d***@example.com",
+        "id": "u_3b22301ffb84",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-28T13:37:45.663Z",
+      "id": "activity_demo_1538",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": "c***@example.com",
+        "id": "u_7b983a1ea9f3",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-27T02:31:27.375Z",
+      "id": "activity_demo_1557",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "g***@example.com",
+        "id": "u_e4c2752fe694",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-25T23:47:41.866Z",
+      "id": "activity_demo_1511",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": "f***@example.com",
+        "id": "u_00e578b25993",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-25T09:43:57.993Z",
+      "id": "activity_demo_1510",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": "b***@example.com",
+        "id": "u_a95905a75d79",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-24T17:20:48.581Z",
+      "id": "activity_demo_1506",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": "b***@example.com",
+        "id": "u_a95905a75d79",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-24T11:28:50.302Z",
+      "id": "activity_demo_1546",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": "f***@example.com",
+        "id": "u_e600e1fc3b39",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-24T06:42:16.435Z",
+      "id": "activity_demo_1560",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": null,
+        "id": "k_5fa8cc39f7b0",
+        "ip": null,
+        "kind": "api_actor"
+      },
+      "createdAt": "2026-07-21T14:34:12.877Z",
+      "id": "activity_demo_1513",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "compliance_api_accessed"
+    },
+    {
+      "actor": {
+        "email": "c***@example.com",
+        "id": "u_f6865d116752",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-21T04:18:36.927Z",
+      "id": "activity_demo_1537",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "a***@example.com",
+        "id": "u_3e2b992cb74f",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-20T23:23:02.794Z",
+      "id": "activity_demo_1505",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "h***@example.com",
+        "id": "u_49222785682b",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-20T01:20:39.441Z",
+      "id": "activity_demo_1502",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": "j***@example.com",
+        "id": "u_64783789293b",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-18T17:00:33.220Z",
+      "id": "activity_demo_1544",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": "i***@example.com",
+        "id": "u_97f5edc7241d",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-17T22:49:33.866Z",
+      "id": "activity_demo_1523",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": null,
+        "id": "k_5fa8cc39f7b0",
+        "ip": null,
+        "kind": "api_actor"
+      },
+      "createdAt": "2026-07-17T08:53:19.210Z",
+      "id": "activity_demo_1504",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "compliance_api_accessed"
+    },
+    {
+      "actor": {
+        "email": "a***@example.com",
+        "id": "u_7bf50d3eac66",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-16T14:08:16.873Z",
+      "id": "activity_demo_1515",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": "i***@example.com",
+        "id": "u_54a2e1cd6c41",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-16T13:11:54.176Z",
+      "id": "activity_demo_1543",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": "c***@example.com",
+        "id": "u_6657720365da",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-15T22:57:46.164Z",
+      "id": "activity_demo_1547",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": "g***@example.com",
+        "id": "u_0480ce9f0ca5",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-15T19:44:53.115Z",
+      "id": "activity_demo_1541",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "d***@example.com",
+        "id": "u_17450ffd6926",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-15T18:59:54.506Z",
+      "id": "activity_demo_1508",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": "j***@example.com",
+        "id": "u_3367344307e1",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-15T15:19:44.017Z",
+      "id": "activity_demo_1524",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": null,
+        "id": "k_5fa8cc39f7b0",
+        "ip": null,
+        "kind": "api_actor"
+      },
+      "createdAt": "2026-07-14T19:22:21.894Z",
+      "id": "activity_demo_1540",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "compliance_api_accessed"
+    },
+    {
+      "actor": {
+        "email": "c***@example.com",
+        "id": "u_a062674c11d0",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-13T19:02:27.101Z",
+      "id": "activity_demo_1527",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": "b***@example.com",
+        "id": "u_9dc9842e5c3a",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-13T09:25:54.538Z",
+      "id": "activity_demo_1526",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": "d***@example.com",
+        "id": "u_5cf9db0b0d02",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-11T15:36:49.032Z",
+      "id": "activity_demo_1528",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": "j***@example.com",
+        "id": "u_03e801c2a22a",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-11T07:53:44.448Z",
+      "id": "activity_demo_1534",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": "b***@example.com",
+        "id": "u_735613831814",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-11T05:53:27.909Z",
+      "id": "activity_demo_1516",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": "h***@example.com",
+        "id": "u_9d410da40b42",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-10T16:38:53.947Z",
+      "id": "activity_demo_1552",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": "a***@example.com",
+        "id": "u_fb1d8c8dd150",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-10T04:36:55.747Z",
+      "id": "activity_demo_1525",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "f***@example.com",
+        "id": "u_00e578b25993",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-10T02:34:58.553Z",
+      "id": "activity_demo_1550",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": "h***@example.com",
+        "id": "u_9d410da40b42",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-09T02:27:30.865Z",
+      "id": "activity_demo_1512",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": null,
+        "id": "k_5fa8cc39f7b0",
+        "ip": null,
+        "kind": "api_actor"
+      },
+      "createdAt": "2026-07-08T20:44:27.409Z",
+      "id": "activity_demo_1558",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "compliance_api_accessed"
+    },
+    {
+      "actor": {
+        "email": null,
+        "id": "k_5fa8cc39f7b0",
+        "ip": null,
+        "kind": "api_actor"
+      },
+      "createdAt": "2026-07-08T20:12:04.134Z",
+      "id": "activity_demo_1531",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "compliance_api_accessed"
+    },
+    {
+      "actor": {
+        "email": "i***@example.com",
+        "id": "u_5d651e8c5b71",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-08T17:59:23.203Z",
+      "id": "activity_demo_1553",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "e***@example.com",
+        "id": "u_7ad385507ec5",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-08T14:48:37.837Z",
+      "id": "activity_demo_1559",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": null,
+        "id": "k_5fa8cc39f7b0",
+        "ip": null,
+        "kind": "api_actor"
+      },
+      "createdAt": "2026-07-08T12:37:41.908Z",
+      "id": "activity_demo_1549",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "compliance_api_accessed"
+    },
+    {
+      "actor": {
+        "email": "e***@example.com",
+        "id": "u_7ad385507ec5",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-07T14:51:47.918Z",
+      "id": "activity_demo_1519",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": "h***@example.com",
+        "id": "u_6b6137260020",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-07T06:31:03.649Z",
+      "id": "activity_demo_1532",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": "c***@example.com",
+        "id": "u_6657720365da",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-06T14:30:30.377Z",
+      "id": "activity_demo_1507",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": "a***@example.com",
+        "id": "u_3e2b992cb74f",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-05T17:08:02.666Z",
+      "id": "activity_demo_1545",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "b***@example.com",
+        "id": "u_a45f06097b5a",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-05T10:01:51.454Z",
+      "id": "activity_demo_1536",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": "e***@example.com",
+        "id": "u_f82d3e2df4d7",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-04T07:37:04.110Z",
+      "id": "activity_demo_1539",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": "i***@example.com",
+        "id": "u_fa51f9078653",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-04T04:05:39.092Z",
+      "id": "activity_demo_1533",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "g***@example.com",
+        "id": "u_0480ce9f0ca5",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-03T20:36:32.039Z",
+      "id": "activity_demo_1501",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "g***@example.com",
+        "id": "u_72a89d55cd76",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-03T19:08:12.755Z",
+      "id": "activity_demo_1521",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "c***@example.com",
+        "id": "u_7b983a1ea9f3",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-03T16:52:49.698Z",
+      "id": "activity_demo_1517",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "d***@example.com",
+        "id": "u_a812cfd10359",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-03T13:55:52.424Z",
+      "id": "activity_demo_1518",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": "f***@example.com",
+        "id": "u_3c84e8ca082f",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-03T12:23:54.320Z",
+      "id": "activity_demo_1530",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": "i***@example.com",
+        "id": "u_54a2e1cd6c41",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-03T08:53:58.573Z",
+      "id": "activity_demo_1503",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": "h***@example.com",
+        "id": "u_49222785682b",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-03T05:42:27.360Z",
+      "id": "activity_demo_1542",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": null,
+        "id": "k_5fa8cc39f7b0",
+        "ip": null,
+        "kind": "api_actor"
+      },
+      "createdAt": "2026-07-03T04:22:08.271Z",
+      "id": "activity_demo_1522",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "compliance_api_accessed"
+    },
+    {
+      "actor": {
+        "email": "e***@example.com",
+        "id": "u_d12c07700324",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-02T20:25:40.966Z",
+      "id": "activity_demo_1509",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_file_uploaded"
+    },
+    {
+      "actor": {
+        "email": "a***@example.com",
+        "id": "u_250e8af3f27a",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-02T19:45:07.382Z",
+      "id": "activity_demo_1535",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": "j***@example.com",
+        "id": "u_a25b9bddd5d0",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-02T14:32:06.100Z",
+      "id": "activity_demo_1554",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": "j***@example.com",
+        "id": "u_a25b9bddd5d0",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-02T11:21:01.069Z",
+      "id": "activity_demo_1514",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_project_created"
+    },
+    {
+      "actor": {
+        "email": "g***@example.com",
+        "id": "u_e4c2752fe694",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-02T09:56:53.099Z",
+      "id": "activity_demo_1551",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": "a***@example.com",
+        "id": "u_7bf50d3eac66",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-02T06:27:08.410Z",
+      "id": "activity_demo_1555",
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "type": "sso_login_succeeded"
+    },
+    {
+      "actor": {
+        "email": "f***@example.com",
+        "id": "u_e600e1fc3b39",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-01T19:18:38.776Z",
+      "id": "activity_demo_1520",
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "type": "claude_chat_created"
+    },
+    {
+      "actor": {
+        "email": "f***@example.com",
+        "id": "u_25bc60c28f44",
+        "ip": null,
+        "kind": "user_actor"
+      },
+      "createdAt": "2026-07-01T00:00:00.000Z",
+      "id": "activity_demo_1500",
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "type": "claude_chat_created"
+    }
+  ],
+  "month": "2026-07",
+  "schemaVersion": 1,
+  "total": 62,
+  "truncated": false
+}

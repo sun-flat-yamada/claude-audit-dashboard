@@ -24,6 +24,7 @@ import {
   startOfUtcDay,
   toIsoDate,
 } from '@claude-audit/core';
+import { activityHistory } from './demo-activity-history.js';
 
 /**
  * Deterministic synthetic tenant for `pnpm demo`, sample data and tests.
@@ -214,7 +215,7 @@ function spendLimits(now: Date): SpendLimit[] {
 
 const actor = (m: Member, ip: string) => ({ kind: 'user_actor', id: m.id, email: m.email, ip });
 
-function activities(now: Date): Activity[] {
+function recentActivities(now: Date): Activity[] {
   const people = members(now);
   const rand = random('activities');
   const at = (hoursAgo: number) => new Date(now.getTime() - hoursAgo * 3_600_000).toISOString();
@@ -274,6 +275,17 @@ function activities(now: Date): Activity[] {
     ),
   ];
 }
+
+/** Two months of routine history plus the recent, rule-relevant events. */
+const activities = (now: Date): Activity[] => [
+  ...activityHistory(
+    now,
+    members(now),
+    ORGS.map((o) => o.id),
+    random('activity-history'),
+  ),
+  ...recentActivities(now),
+];
 
 // ─── Usage and cost ─────────────────────────────────────────────────────────
 
@@ -442,7 +454,7 @@ export function createDemoCollectors(): DatasetCollector[] {
       source: 'demo:activities',
       collect: async ({ now }) => ({
         items: activities(now),
-        window: { from: ago(now, 1), to: now.toISOString() },
+        window: { from: ago(now, 91), to: now.toISOString() },
       }),
     },
     {
@@ -450,7 +462,7 @@ export function createDemoCollectors(): DatasetCollector[] {
       source: 'demo:memberActivity',
       collect: async ({ now }) => ({
         items: memberActivity(now),
-        window: { from: ago(now, 90), to: now.toISOString() },
+        window: { from: ago(now, 91), to: now.toISOString() },
       }),
     },
     {
