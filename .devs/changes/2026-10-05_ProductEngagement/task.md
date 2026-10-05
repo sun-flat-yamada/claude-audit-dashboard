@@ -9,5 +9,5 @@
   - [x] Dashboard product engagement section, component test, E2E
 - [x] Phase 4: Blueprint Sync & Local Quality Gate
 - [x] Phase 5: Walkthrough Generation & Evidence Sealing (incl. screenshot check)
-- [/] Phase 6: Rebase onto Base & Create draft PR
+- [/] Phase 6: Rebase onto Base & Create draft PR (rebased onto DashboardView v3)
 - [ ] Phase 7: Rebase & Merge with `pnpm change-dev:finish` (handled by the orchestrating session)
