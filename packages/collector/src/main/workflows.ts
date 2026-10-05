@@ -12,11 +12,12 @@ import {
   buildDashboardView,
   checkLatestSnapshot,
   collectSnapshot,
+  evaluateCompliance,
   gatherDatasets,
   runAnalyzers,
   timestampId,
 } from '@claude-audit/core';
-import { dashboardViewSchema } from '@claude-audit/core/contracts';
+import { SNAPSHOT_ID, dashboardViewSchema } from '@claude-audit/core/contracts';
 import { stableStringify } from '../adapters/storage/file-store.js';
 import type { Container } from './container.js';
 
@@ -43,19 +44,57 @@ export const check = (
     disabled: c.config.compliance.disabledRules,
   });
 
-/** Writes `dashboard.json` (DashboardView v2) from the latest stored data. */
-export async function writeDashboard(c: Container): Promise<DashboardView> {
-  const [snapshot, history] = await Promise.all([
-    c.snapshots.latest(),
-    c.reports.history(HISTORY_LIMIT),
-  ]);
+export interface BuildTarget {
+  snapshot: AuditSnapshot | null;
+  /** The compliance report of that snapshot (stored, else evaluated in memory; never saved). */
+  report: ComplianceReport | null;
+  /** Score history up to and including `report`, oldest first. */
+  history: ComplianceReport[];
+}
+
+/**
+ * What the dashboard and detail builds read: the latest snapshot, or the stored snapshot
+ * `snapshotId` (e.g. one restored from the archive with `pnpm restore`). For a chosen snapshot
+ * without a stored report the rules are evaluated in memory as of its collection time.
+ */
+export async function resolveTarget(c: Container, snapshotId?: string): Promise<BuildTarget> {
+  const reports = await c.reports.history(HISTORY_LIMIT);
+  if (snapshotId === undefined) {
+    const snapshot = await c.snapshots.latest();
+    return { snapshot, report: reports.at(-1) ?? null, history: reports };
+  }
+  if (!SNAPSHOT_ID.test(snapshotId)) throw new Error(`Invalid snapshot id: ${snapshotId}`);
+  const snapshot = await c.snapshots.load(snapshotId);
+  if (!snapshot) {
+    throw new Error(`Snapshot ${snapshotId} is not stored: restore it first (pnpm restore)`);
+  }
+  const history = reports.filter((r) => r.snapshotId <= snapshotId);
+  const stored = history.find((r) => r.snapshotId === snapshotId);
+  const report =
+    stored ??
+    // Round trip through the stored form, so the result equals what `check` would have saved.
+    (JSON.parse(
+      stableStringify(
+        evaluateCompliance(c.rules, snapshot, {
+          now: new Date(snapshot.collectedAt),
+          params: c.config.compliance.params,
+          disabled: c.config.compliance.disabledRules,
+        }),
+      ),
+    ) as ComplianceReport);
+  return { snapshot, report, history: stored ? history : [...history, report] };
+}
+
+/** Writes `dashboard.json` (DashboardView v2) from the latest (or the chosen) stored data. */
+export async function writeDashboard(c: Container, snapshotId?: string): Promise<DashboardView> {
+  const { snapshot, report, history } = await resolveTarget(c, snapshotId);
   const view = buildDashboardView({
     now: c.clock.now(),
     title: c.config.dashboard.title,
     source: c.source,
     maskPii: c.config.dashboard.maskPii,
     snapshot,
-    report: history.at(-1) ?? null,
+    report,
     history,
     insights: snapshot ? runAnalyzers(c.analyzers, snapshot) : [],
   });

@@ -40,5 +40,11 @@
   },
   "retention": {
     "snapshotDays": 365
+  },
+  "capacity": {
+    "maxTotalMiB": 1024,
+    "maxMonthlyGrowthMiB": 50,
+    "warnRatio": 0.8,
+    "windowDays": 30
   }
 }

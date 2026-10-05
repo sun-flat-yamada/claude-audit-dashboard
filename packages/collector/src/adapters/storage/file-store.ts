@@ -51,6 +51,16 @@ export class FileStore {
     }
   }
 
+  /** Raw bytes of a file; null when it does not exist. */
+  async readBytes(relPath: string): Promise<Buffer | null> {
+    try {
+      return await readFile(this.path(relPath));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+      throw error;
+    }
+  }
+
   /** Atomic write (temporary file + rename). */
   async write(relPath: string, content: string | Uint8Array): Promise<void> {
     const full = this.path(relPath);

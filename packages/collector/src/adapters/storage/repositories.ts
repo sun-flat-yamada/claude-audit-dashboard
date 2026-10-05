@@ -10,7 +10,7 @@ import type {
 } from '@claude-audit/core';
 import { isDatasetName, parseState, timestampId } from '@claude-audit/core';
 import { z } from 'zod';
-import type { FileStore } from './file-store.js';
+import { stableStringify, type FileStore } from './file-store.js';
 
 type Item = Record<string, unknown>;
 
@@ -39,6 +39,25 @@ const manifestSchema = z.object({
 });
 
 /**
+ * The files of one snapshot as `[relative path, content]`, in write order: one file per dataset,
+ * the manifest last (it marks a complete snapshot). Pure; also what the synthetic history writes.
+ */
+export function snapshotFiles(dir: string, snapshot: AuditSnapshot): [string, string][] {
+  const base = `${dir}/${snapshot.id}`;
+  const files: [string, string][] = [];
+  for (const [name, items] of Object.entries(snapshot.data)) {
+    if (isDatasetName(name) && items)
+      files.push([`${base}/${name}.json`, stableStringify(sortForStorage(name, items))]);
+  }
+  const { schemaVersion, id, collectedAt, coverage } = snapshot;
+  files.push([
+    `${base}/manifest.json`,
+    stableStringify({ schemaVersion, id, collectedAt, coverage }),
+  ]);
+  return files;
+}
+
+/**
  * `snapshots/<id>/manifest.json` + one file per dataset. The manifest is written last and
  * marks a complete snapshot; directories without one (interrupted runs) are ignored.
  */
@@ -49,18 +68,8 @@ export class FsSnapshotRepository implements SnapshotRepository {
   ) {}
 
   async save(snapshot: AuditSnapshot): Promise<void> {
-    const base = `${this.dir}/${snapshot.id}`;
-    for (const [name, items] of Object.entries(snapshot.data)) {
-      if (isDatasetName(name) && items)
-        await this.store.writeJson(`${base}/${name}.json`, sortForStorage(name, items));
-    }
-    const { schemaVersion, id, collectedAt, coverage } = snapshot;
-    await this.store.writeJson(`${base}/manifest.json`, {
-      schemaVersion,
-      id,
-      collectedAt,
-      coverage,
-    });
+    for (const [path, content] of snapshotFiles(this.dir, snapshot))
+      await this.store.write(path, content);
   }
 
   async ids(): Promise<string[]> {

@@ -10,6 +10,14 @@ import {
 } from '@claude-audit/core';
 import { z } from 'zod';
 
+/** Placeholder defaults; derived from the synthetic history (docs/CHANGE-PLAN.md section 9). */
+const CAPACITY_DEFAULTS = {
+  maxTotalMiB: 1024,
+  maxMonthlyGrowthMiB: 50,
+  warnRatio: 0.8,
+  windowDays: 30,
+} as const;
+
 const datasetName = z.string().refine(isDatasetName, { message: 'Unknown dataset name' });
 
 /** `config/default.json`. Every field has a default, so an absent file is valid. */
@@ -65,6 +73,15 @@ export const appConfigSchema = z.object({
     })
     .prefault({}),
   retention: z.object({ snapshotDays: z.number().int().min(1).default(365) }).prefault({}),
+  /** Size limits of the data/audit history (`pnpm size`). 0 turns a limit off. */
+  capacity: z
+    .object({
+      maxTotalMiB: z.number().min(0).default(CAPACITY_DEFAULTS.maxTotalMiB),
+      maxMonthlyGrowthMiB: z.number().min(0).default(CAPACITY_DEFAULTS.maxMonthlyGrowthMiB),
+      warnRatio: z.number().gt(0).max(1).default(CAPACITY_DEFAULTS.warnRatio),
+      windowDays: z.number().int().min(1).max(366).default(CAPACITY_DEFAULTS.windowDays),
+    })
+    .prefault({}),
 });
 
 export type AppConfig = z.output<typeof appConfigSchema>;

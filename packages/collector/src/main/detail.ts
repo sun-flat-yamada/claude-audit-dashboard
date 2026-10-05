@@ -25,6 +25,7 @@ import { readAlertsInput } from './alerts.js';
 import { configViewInput } from './config-view.js';
 import type { Container } from './container.js';
 import { readUsageMatrixInput } from './usage-matrix.js';
+import { resolveTarget } from './workflows.js';
 
 const positiveInt = (value: unknown, fallback: number): number =>
   typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : fallback;
@@ -56,18 +57,20 @@ const schemaFor = (path: string): z.ZodType => {
  * Writes `detail/*.json` (manifest + entity files, incl. the effective configuration, the
  * archive inventory and the alert history) from the latest stored data. Every file is validated against its contract
  * at this single write site. `archive` replaces the listing of the data directory (the demo
- * supplies a synthetic one), and `matrix` likewise replaces the stored matrix input. Returns path -> content.
+ * supplies a synthetic one), and `matrix` likewise replaces the stored matrix input. `snapshotId`
+ * builds from that stored snapshot instead of the latest. Returns path -> content.
  */
 export async function writeDetail(
   c: Container,
   config: Omit<ConfigViewInput, 'now'> = configViewInput(c),
   archive?: readonly ArchiveEntry[],
   matrix?: UsageMatrixInput,
+  snapshotId?: string,
 ): Promise<Record<string, string>> {
   const entries = archive ?? (await listArchiveEntries(c.store).catch(() => null));
   const alerts = await readAlertsInput(c).catch(() => null);
   const usageMatrix = matrix ?? (await readUsageMatrixInput(c).catch(() => null));
-  const [snapshot, report] = await Promise.all([c.snapshots.latest(), c.reports.latest()]);
+  const { snapshot, report } = await resolveTarget(c, snapshotId);
   const bundle = buildDetailView({
     now: c.clock.now(),
     source: c.source,
