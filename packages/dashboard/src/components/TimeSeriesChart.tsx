@@ -18,7 +18,8 @@ export interface Series {
   color: string;
 }
 
-type Row = { date: string } & Record<string, string | number>;
+/** Optional numeric fields (absent in older views) are allowed; charted series must be present. */
+type Row = { date: string } & Record<string, string | number | undefined>;
 
 interface Props {
   data: readonly Row[];

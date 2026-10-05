@@ -2,7 +2,8 @@
 
 /*
  * Design tokens (validated palette: series slots 1-3 pass the categorical checks in both modes;
- * the light aqua slot is below 3:1, so every chart ships a legend and a table view).
+ * slot 4 (yellow) passes the adjacent-pair checks for lines only; the light aqua and yellow slots
+ * are below 3:1, so every chart ships a legend and a table view).
  */
 :root {
   color-scheme: light;
@@ -18,6 +19,7 @@
   --series-1: #2a78d6;
   --series-2: #eb6834;
   --series-3: #1baf7a;
+  --series-4: #eda100;
   /* single-hue sequential scale (blue 100 -> 700) for magnitude, e.g. the heatmap */
   --seq-lo: #cde2fb;
   --seq-hi: #0d366b;
@@ -42,6 +44,7 @@
     --series-1: #3987e5;
     --series-2: #d95926;
     --series-3: #199e70;
+    --series-4: #c98500;
     --seq-lo: #16304f;
     --seq-hi: #9ec5f4;
   }
@@ -60,6 +63,7 @@
   --series-1: #3987e5;
   --series-2: #d95926;
   --series-3: #199e70;
+  --series-4: #c98500;
   --seq-lo: #16304f;
   --seq-hi: #9ec5f4;
 }
