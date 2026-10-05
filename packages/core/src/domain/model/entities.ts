@@ -28,6 +28,88 @@ export interface MemberActivity {
   active: boolean;
   /** `YYYY-MM-DD`; absent when the organization has last-activity reporting disabled. */
   lastActiveOn: string | null;
+  /**
+   * Per-product activity counters over the same window; absent when the source did not report
+   * them (or in snapshots stored before they were collected). A `null` counter is unknown.
+   */
+  engagement?: MemberEngagement;
+}
+
+/** Proposals of one Claude Code file-modification tool that the member accepted or rejected. */
+export interface ToolDecisions {
+  accepted: number;
+  rejected: number;
+}
+
+/** Claude Code file-modification tools with accept / reject counts. Order is the display order. */
+export const CODE_TOOLS = [
+  { tool: 'edit', label: 'Edit' },
+  { tool: 'multiEdit', label: 'MultiEdit' },
+  { tool: 'write', label: 'Write' },
+  { tool: 'notebookEdit', label: 'NotebookEdit' },
+] as const;
+
+export type CodeTool = (typeof CODE_TOOLS)[number]['tool'];
+
+export interface ChatEngagement {
+  messages: number | null;
+  conversations: number | null;
+  projectsCreated: number | null;
+  artifactsCreated: number | null;
+  filesUploaded: number | null;
+  connectorCalls: number | null;
+  thinkingMessages: number | null;
+}
+
+export interface CodeEngagement {
+  sessions: number | null;
+  commits: number | null;
+  pullRequests: number | null;
+  addedLines: number | null;
+  removedLines: number | null;
+  artifactsCreated: number | null;
+  tools: Partial<Record<CodeTool, ToolDecisions>>;
+}
+
+export interface CoworkEngagement {
+  messages: number | null;
+  sessions: number | null;
+  actions: number | null;
+  dispatchTurns: number | null;
+  skillCalls: number | null;
+  artifactsCreated: number | null;
+}
+
+export interface DesignEngagement {
+  messages: number | null;
+  sessions: number | null;
+  projectsCreated: number | null;
+}
+
+/** Summed over the Office apps (Excel, Outlook, PowerPoint, Word). */
+export interface OfficeEngagement {
+  messages: number | null;
+  sessions: number | null;
+  skillCalls: number | null;
+  connectorCalls: number | null;
+}
+
+export interface ScienceEngagement {
+  messages: number | null;
+  sessions: number | null;
+  delegations: number | null;
+  computeJobs: number | null;
+}
+
+/** One member's activity per product over the analytics window; a missing product was not reported. */
+export interface MemberEngagement {
+  chat?: ChatEngagement;
+  claudeCode?: CodeEngagement;
+  cowork?: CoworkEngagement;
+  design?: DesignEngagement;
+  office?: OfficeEngagement;
+  science?: ScienceEngagement;
+  webSearches?: number | null;
 }
 
 export interface Invite {

@@ -161,6 +161,52 @@ const adoption = z.object({
     .optional(),
 });
 
+const engagementCounter = z.object({
+  key: z.string(),
+  label: z.string(),
+  /** Sum over members; null when no member reported it. */
+  value: z.number().nullable(),
+});
+
+const toolDecisions = z.object({
+  accepted: z.number(),
+  rejected: z.number(),
+  /** Accepted as a percent of accepted + rejected (one decimal), null when there were none. */
+  acceptRate: z.number().nullable(),
+});
+
+/**
+ * Product engagement over the member-activity window (AN-3). Aggregates only: no per-person
+ * values. Absent when the source reported no metrics or in a `dashboard.json` written before it.
+ */
+const engagement = z.object({
+  window: z.object({ from: z.string(), to: z.string() }).nullable(),
+  /** Members with a reported activity row in the window. */
+  members: z.number(),
+  products: z.array(
+    z.object({
+      product: z.string(),
+      label: z.string(),
+      /** Members with any positive counter for this product. */
+      activeMembers: z.number(),
+      messages: z.number().nullable(),
+      sessions: z.number().nullable(),
+      counters: z.array(engagementCounter),
+    }),
+  ),
+  claudeCode: toolDecisions
+    .extend({
+      sessions: z.number().nullable(),
+      commits: z.number().nullable(),
+      pullRequests: z.number().nullable(),
+      addedLines: z.number().nullable(),
+      removedLines: z.number().nullable(),
+      tools: z.array(toolDecisions.extend({ tool: z.string(), label: z.string() })),
+    })
+    .nullable(),
+  webSearches: z.number().nullable(),
+});
+
 const activity = z.object({
   total: z.number(),
   window: z.object({ from: z.string(), to: z.string() }).nullable(),
@@ -207,6 +253,7 @@ export const dashboardViewSchema = z.object({
   usage: usage.nullable(),
   adoption: adoption.nullable(),
   activity: activity.nullable(),
+  engagement: engagement.optional(),
   insights: z.array(insight),
   /** null when the optional collection is off (`sources.usageMatrix.enabled`). */
   modelMatrix: modelMatrix.nullable(),
@@ -220,6 +267,7 @@ export type DashboardCoverage = z.infer<typeof coverageEntry>;
 export type DashboardUsage = z.infer<typeof usage>;
 export type DashboardAdoption = z.infer<typeof adoption>;
 export type DashboardActivity = z.infer<typeof activity>;
+export type DashboardEngagement = z.infer<typeof engagement>;
 export type DashboardInsight = z.infer<typeof insight>;
 export type DashboardModelMatrix = z.infer<typeof modelMatrix>;
 export type DashboardModelMatrixData = z.infer<typeof matrixData>;
