@@ -83,6 +83,8 @@ Locally, `pnpm dev` / `pnpm build:dashboard` stage `data/dashboard.json` when it
 ### Data Retention & Archival
 
 - Raw snapshots: `retention.snapshotDays` (default 365), then `pnpm archive` moves them to `data/archive/<year>/` (gzip)
+- Archiving shrinks the working tree, **not the git history**: the archived snapshots' blobs stay in `data/audit` and the `.json.gz` files are added. `pnpm size --repo . --ref data/audit` measures the history (`git count-objects -v`, reachable size, growth per 30 days, blobs per dataset) against `capacity.*` in `config/default.json`; the collect workflow runs it before the save, notifies through the usual channels (key `capacity:<level>`, cooldown applies) and never fails the collection because of it (`--warn-only`). Bound the size with the yearly orphan-branch rotation in `docs/DEPLOYMENT.md`.
+- `pnpm cli restore <id|year> [--out <dir>]` writes `archive/<year>/<id>.json.gz` back to `snapshots/<id>/` (byte-identical, never overwriting); `pnpm build:data --snapshot <id>` / `pnpm build:detail --snapshot <id>` rebuild the dashboard and detail files from it.
 - Compliance, weekly and monthly reports: retained indefinitely
 - Archived data: retained indefinitely
 - Anthropic Compliance API retains audit logs for 6 years, but this system stores independently for longer-term access

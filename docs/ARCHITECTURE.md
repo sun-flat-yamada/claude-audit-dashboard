@@ -334,6 +334,8 @@ export const inactiveMembers = defineRule({
 | `pnpm pipeline`          | `pipeline`          | collect → check → dashboard                          | `collect-audit.yml` (6 時間ごと) |
 | `pnpm notify`            | `notify`            | アラートポリシーに従い通知                           | `collect-audit.yml`              |
 | `pnpm archive`           | `archive`           | 保持期間超過のスナップショットを圧縮                 | `collect-audit.yml` (commit 前)  |
+| `pnpm size`              | `size`              | `data/audit` のサイズ計測と `capacity.*` 閾値判定    | `collect-audit.yml` (非致命)     |
+| `pnpm restore`           | `restore`           | `archive/*.json.gz` を `snapshots/<id>/` へ復元      | —                                |
 | `pnpm report:compliance` | `report compliance` | 最新評価のレポート                                   | —                                |
 | `pnpm report:weekly`     | `report weekly`     | 週次レポート生成・配信 (`--notify`)                  | `weekly-report.yml`              |
 | `pnpm report:monthly`    | `report monthly`    | 月次コストレポート生成・配信 (`--month`, `--notify`) | `monthly-report.yml`             |

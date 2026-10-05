@@ -68,7 +68,7 @@ Schedules once enabled:
 
 | Workflow             | When                                                         | What                                                   |
 | -------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
-| `collect-audit.yml`  | Every 6 hours                                                | Collect, check, dashboard data, archive, alerts        |
+| `collect-audit.yml`  | Every 6 hours                                                | Collect, check, dashboard data, archive, alerts, size  |
 | `weekly-report.yml`  | Mondays 09:00 UTC                                            | Weekly digest (previous 7 days), sent to every channel |
 | `monthly-report.yml` | 1st of the month 03:00 UTC                                   | Cost report for the previous month (or a chosen month) |
 | `deploy-pages.yml`   | Push to main; after collection when `PAGES_DATA_SOURCE=live` | Dashboard build and deployment                         |
@@ -96,6 +96,8 @@ Schedules once enabled:
 
 `config/custom-rules.json` — add configuration baselines (`CF-xxx`) and activity watches (`AM-xxx`) without code; see [BLUEPRINT §7.3](BLUEPRINT.md#73-カスタムルール-コード不要). Invalid values stop the run with a precise message instead of being ignored.
 
+Manual runs of **Collect Audit Data** accept two optional inputs: `retention_days` (archive snapshots older than this many days, 1-99999; empty uses `retention.snapshotDays`) and `dry_run` (run everything but send no alerts and save nothing to `data/audit`). Each run also measures the size of `data/audit` (`pnpm size`, see [DEPLOYMENT.md](DEPLOYMENT.md#long-term-retention-size-monitoring-and-rotation-of-dataaudit)); the step only ever warns and never fails the collection.
+
 ## Local runs
 
 ```bash
@@ -114,6 +116,9 @@ pnpm dev                # now shows your data (data/ is gitignored)
 pnpm usage-matrix       # optional model x group cost (set sources.usageMatrix.enabled in config/default.json); pnpm pipeline runs it after collect
 pnpm report:weekly
 pnpm report:monthly --month 2026-09   # also writes data/detail/monthly/ for the dashboard's monthly cost report
+pnpm size --repo . --ref data/audit      # size of the data/audit history against capacity.* in config/default.json
+pnpm restore 2024-05-01T06-00-00Z --out ./restored   # archive/<year>/<id>.json.gz back to snapshots/<id>/ (an id or a year)
+pnpm build:data --snapshot <id>          # dashboard.json from a stored (e.g. restored) snapshot; pnpm build:detail accepts it too
 ```
 
 To look at the data collected by Actions locally, restore it first: `.github/scripts/data-branch.sh restore`.
