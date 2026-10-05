@@ -1076,7 +1076,7 @@
       "id": "cache-efficiency",
       "kind": "recommendation",
       "priority": "low",
-      "title": "Only 25% of input tokens were cache reads"
+      "title": "Only 27.1% of input tokens were cache reads"
     }
   ],
   "kpis": [
@@ -1202,193 +1202,287 @@
         "value": 756.59
       }
     ],
+    "cacheHitRate": 27.1,
     "currency": "USD",
     "daily": [
       {
+        "cacheCreationInputTokens": 217651,
+        "cacheReadInputTokens": 1366342,
         "cost": 87.06,
         "date": "2026-08-30",
         "inputTokens": 3482409,
-        "outputTokens": 870602
+        "outputTokens": 870602,
+        "uncachedInputTokens": 1898416
       },
       {
+        "cacheCreationInputTokens": 452371,
+        "cacheReadInputTokens": 1610087,
         "cost": 180.95,
         "date": "2026-08-31",
         "inputTokens": 7237936,
-        "outputTokens": 1809484
+        "outputTokens": 1809484,
+        "uncachedInputTokens": 5175478
       },
       {
+        "cacheCreationInputTokens": 412360,
+        "cacheReadInputTokens": 1599337,
         "cost": 164.94,
         "date": "2026-09-01",
         "inputTokens": 6597764,
-        "outputTokens": 1649441
+        "outputTokens": 1649441,
+        "uncachedInputTokens": 4586067
       },
       {
+        "cacheCreationInputTokens": 440831,
+        "cacheReadInputTokens": 2657267,
         "cost": 176.33,
         "date": "2026-09-02",
         "inputTokens": 7053292,
-        "outputTokens": 1763323
+        "outputTokens": 1763323,
+        "uncachedInputTokens": 3955194
       },
       {
+        "cacheCreationInputTokens": 444856,
+        "cacheReadInputTokens": 2442066,
         "cost": 177.94,
         "date": "2026-09-03",
         "inputTokens": 7117693,
-        "outputTokens": 1779423
+        "outputTokens": 1779423,
+        "uncachedInputTokens": 4230771
       },
       {
+        "cacheCreationInputTokens": 420866,
+        "cacheReadInputTokens": 2523469,
         "cost": 168.35,
         "date": "2026-09-04",
         "inputTokens": 6733852,
-        "outputTokens": 1683463
+        "outputTokens": 1683463,
+        "uncachedInputTokens": 3789517
       },
       {
+        "cacheCreationInputTokens": 203956,
+        "cacheReadInputTokens": 1258401,
         "cost": 81.58,
         "date": "2026-09-05",
         "inputTokens": 3263300,
-        "outputTokens": 815825
+        "outputTokens": 815825,
+        "uncachedInputTokens": 1800943
       },
       {
+        "cacheCreationInputTokens": 192197,
+        "cacheReadInputTokens": 1074820,
         "cost": 76.88,
         "date": "2026-09-06",
         "inputTokens": 3075148,
-        "outputTokens": 768787
+        "outputTokens": 768787,
+        "uncachedInputTokens": 1808131
       },
       {
+        "cacheCreationInputTokens": 408491,
+        "cacheReadInputTokens": 1488332,
         "cost": 163.4,
         "date": "2026-09-07",
         "inputTokens": 6535857,
-        "outputTokens": 1633964
+        "outputTokens": 1633964,
+        "uncachedInputTokens": 4639034
       },
       {
+        "cacheCreationInputTokens": 449635,
+        "cacheReadInputTokens": 1563624,
         "cost": 179.85,
         "date": "2026-09-08",
         "inputTokens": 7194153,
-        "outputTokens": 1798538
+        "outputTokens": 1798538,
+        "uncachedInputTokens": 5180894
       },
       {
+        "cacheCreationInputTokens": 454583,
+        "cacheReadInputTokens": 1635713,
         "cost": 181.83,
         "date": "2026-09-09",
         "inputTokens": 7273331,
-        "outputTokens": 1818333
+        "outputTokens": 1818333,
+        "uncachedInputTokens": 5183035
       },
       {
+        "cacheCreationInputTokens": 459586,
+        "cacheReadInputTokens": 2036193,
         "cost": 183.83,
         "date": "2026-09-10",
         "inputTokens": 7353379,
-        "outputTokens": 1838345
+        "outputTokens": 1838345,
+        "uncachedInputTokens": 4857600
       },
       {
+        "cacheCreationInputTokens": 480406,
+        "cacheReadInputTokens": 1944002,
         "cost": 192.16,
         "date": "2026-09-11",
         "inputTokens": 7686500,
-        "outputTokens": 1921625
+        "outputTokens": 1921625,
+        "uncachedInputTokens": 5262092
       },
       {
+        "cacheCreationInputTokens": 187532,
+        "cacheReadInputTokens": 476628,
         "cost": 75.01,
         "date": "2026-09-12",
         "inputTokens": 3000505,
-        "outputTokens": 750126
+        "outputTokens": 750126,
+        "uncachedInputTokens": 2336345
       },
       {
+        "cacheCreationInputTokens": 186285,
+        "cacheReadInputTokens": 647206,
         "cost": 74.51,
         "date": "2026-09-13",
         "inputTokens": 2980563,
-        "outputTokens": 745141
+        "outputTokens": 745141,
+        "uncachedInputTokens": 2147072
       },
       {
+        "cacheCreationInputTokens": 483328,
+        "cacheReadInputTokens": 1729865,
         "cost": 193.33,
         "date": "2026-09-14",
         "inputTokens": 7733248,
-        "outputTokens": 1933312
+        "outputTokens": 1933312,
+        "uncachedInputTokens": 5520055
       },
       {
+        "cacheCreationInputTokens": 409123,
+        "cacheReadInputTokens": 1348566,
         "cost": 163.65,
         "date": "2026-09-15",
         "inputTokens": 6545973,
-        "outputTokens": 1636493
+        "outputTokens": 1636493,
+        "uncachedInputTokens": 4788284
       },
       {
+        "cacheCreationInputTokens": 440010,
+        "cacheReadInputTokens": 2262247,
         "cost": 176,
         "date": "2026-09-16",
         "inputTokens": 7040157,
-        "outputTokens": 1760039
+        "outputTokens": 1760039,
+        "uncachedInputTokens": 4337900
       },
       {
+        "cacheCreationInputTokens": 485429,
+        "cacheReadInputTokens": 1883046,
         "cost": 194.17,
         "date": "2026-09-17",
         "inputTokens": 7766857,
-        "outputTokens": 1941714
+        "outputTokens": 1941714,
+        "uncachedInputTokens": 5398382
       },
       {
+        "cacheCreationInputTokens": 437592,
+        "cacheReadInputTokens": 1255366,
         "cost": 175.04,
         "date": "2026-09-18",
         "inputTokens": 7001478,
-        "outputTokens": 1750370
+        "outputTokens": 1750370,
+        "uncachedInputTokens": 5308520
       },
       {
+        "cacheCreationInputTokens": 188003,
+        "cacheReadInputTokens": 1164620,
         "cost": 75.2,
         "date": "2026-09-19",
         "inputTokens": 3008044,
-        "outputTokens": 752011
+        "outputTokens": 752011,
+        "uncachedInputTokens": 1655421
       },
       {
+        "cacheCreationInputTokens": 184764,
+        "cacheReadInputTokens": 534882,
         "cost": 73.91,
         "date": "2026-09-20",
         "inputTokens": 2956227,
-        "outputTokens": 739057
+        "outputTokens": 739057,
+        "uncachedInputTokens": 2236581
       },
       {
+        "cacheCreationInputTokens": 448198,
+        "cacheReadInputTokens": 1638991,
         "cost": 179.28,
         "date": "2026-09-21",
         "inputTokens": 7171166,
-        "outputTokens": 1792791
+        "outputTokens": 1792791,
+        "uncachedInputTokens": 5083977
       },
       {
+        "cacheCreationInputTokens": 455857,
+        "cacheReadInputTokens": 1465043,
         "cost": 182.34,
         "date": "2026-09-22",
         "inputTokens": 7293707,
-        "outputTokens": 1823427
+        "outputTokens": 1823427,
+        "uncachedInputTokens": 5372807
       },
       {
+        "cacheCreationInputTokens": 410124,
+        "cacheReadInputTokens": 2230769,
         "cost": 164.05,
         "date": "2026-09-23",
         "inputTokens": 6561983,
-        "outputTokens": 1640496
+        "outputTokens": 1640496,
+        "uncachedInputTokens": 3921090
       },
       {
+        "cacheCreationInputTokens": 434659,
+        "cacheReadInputTokens": 1464149,
         "cost": 173.86,
         "date": "2026-09-24",
         "inputTokens": 6954549,
-        "outputTokens": 1738637
+        "outputTokens": 1738637,
+        "uncachedInputTokens": 5055741
       },
       {
+        "cacheCreationInputTokens": 437738,
+        "cacheReadInputTokens": 2439145,
         "cost": 175.1,
         "date": "2026-09-25",
         "inputTokens": 7003808,
-        "outputTokens": 1750952
+        "outputTokens": 1750952,
+        "uncachedInputTokens": 4126925
       },
       {
+        "cacheCreationInputTokens": 200168,
+        "cacheReadInputTokens": 1089778,
         "cost": 80.07,
         "date": "2026-09-26",
         "inputTokens": 3202689,
-        "outputTokens": 800672
+        "outputTokens": 800672,
+        "uncachedInputTokens": 1912743
       },
       {
+        "cacheCreationInputTokens": 211006,
+        "cacheReadInputTokens": 1156154,
         "cost": 84.4,
         "date": "2026-09-27",
         "inputTokens": 3376100,
-        "outputTokens": 844025
+        "outputTokens": 844025,
+        "uncachedInputTokens": 2008940
       },
       {
+        "cacheCreationInputTokens": 1488766,
+        "cacheReadInputTokens": 6070984,
         "cost": 595.51,
         "date": "2026-09-28",
         "inputTokens": 23820261,
-        "outputTokens": 5955065
+        "outputTokens": 5955065,
+        "uncachedInputTokens": 16260511
       },
       {
+        "cacheCreationInputTokens": 483409,
+        "cacheReadInputTokens": 2533981,
         "cost": 193.36,
         "date": "2026-09-29",
         "inputTokens": 7734548,
-        "outputTokens": 1933637
+        "outputTokens": 1933637,
+        "uncachedInputTokens": 4717158
       }
     ]
   }
