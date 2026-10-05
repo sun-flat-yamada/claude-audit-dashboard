@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-09-29T12:00:00.000Z",
+  "reports": [
+    {
+      "currency": "USD",
+      "generatedAt": "2026-09-29T12:00:00.000Z",
+      "id": "monthly-2026-08",
+      "month": "2026-08",
+      "path": "detail/monthly/monthly-2026-08.json",
+      "status": "ok",
+      "totalCost": 4531.2
+    },
+    {
+      "currency": "USD",
+      "generatedAt": "2026-09-29T12:00:00.000Z",
+      "id": "monthly-2026-07",
+      "month": "2026-07",
+      "path": "detail/monthly/monthly-2026-07.json",
+      "status": "ok",
+      "totalCost": 4678.56
+    },
+    {
+      "currency": "USD",
+      "generatedAt": "2026-09-29T12:00:00.000Z",
+      "id": "monthly-2026-06",
+      "month": "2026-06",
+      "path": "detail/monthly/monthly-2026-06.json",
+      "status": "ok",
+      "totalCost": 4579.58
+    }
+  ],
+  "schemaVersion": 1
+}

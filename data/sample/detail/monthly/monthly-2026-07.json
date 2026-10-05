@@ -1,0 +1,77 @@
+{
+  "byGroup": [
+    {
+      "amount": 3275.01,
+      "key": "rbac_group_demo_engineering",
+      "name": "Engineering",
+      "share": 70
+    },
+    {
+      "amount": 1029.29,
+      "key": "rbac_group_demo_sales",
+      "name": "Sales",
+      "share": 22
+    },
+    {
+      "amount": 561.44,
+      "key": "rbac_group_demo_legal",
+      "name": "Legal",
+      "share": 12
+    }
+  ],
+  "byModel": [
+    {
+      "amount": 2900.71,
+      "key": "claude-opus-5",
+      "name": "claude-opus-5",
+      "share": 62
+    },
+    {
+      "amount": 1543.97,
+      "key": "claude-sonnet-5",
+      "name": "claude-sonnet-5",
+      "share": 33
+    },
+    {
+      "amount": 233.93,
+      "key": "claude-haiku-4-5",
+      "name": "claude-haiku-4-5",
+      "share": 5
+    }
+  ],
+  "byProduct": [
+    {
+      "amount": 2105.39,
+      "key": "chat",
+      "name": "chat",
+      "share": 45
+    },
+    {
+      "amount": 1871.41,
+      "key": "claude_code",
+      "name": "claude_code",
+      "share": 40
+    },
+    {
+      "amount": 701.8,
+      "key": "cowork",
+      "name": "cowork",
+      "share": 15
+    }
+  ],
+  "currency": "USD",
+  "generatedAt": "2026-09-29T12:00:00.000Z",
+  "id": "monthly-2026-07",
+  "month": "2026-07",
+  "notes": [
+    "Analytics cost data can be revised for up to 30 days; re-run this report later for invoicing-grade totals. Group rows attribute a member to every group they belonged to, so group shares can add up to more than 100%."
+  ],
+  "period": {
+    "from": "2026-07-01T00:00:00.000Z",
+    "to": "2026-08-01T00:00:00.000Z"
+  },
+  "reason": null,
+  "schemaVersion": 1,
+  "status": "ok",
+  "totalCost": 4678.56
+}

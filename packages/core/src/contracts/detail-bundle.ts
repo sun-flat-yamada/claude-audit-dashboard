@@ -9,6 +9,12 @@ import {
   type DetailManifest,
   type DetailManifestFile,
 } from './detail-view.js';
+import {
+  MONTHLY_DIR,
+  MONTHLY_INDEX_PATH,
+  monthlyReportIndexSchema,
+  monthlyReportSchema,
+} from './monthly-report.js';
 
 /** Contents of a `detail/` directory keyed by path relative to the data directory. */
 export type DetailBundleFiles = Readonly<Record<string, string>>;
@@ -134,6 +140,33 @@ function listedErrors(manifest: DetailManifest, files: DetailBundleFiles): strin
     });
 }
 
+const isMonthly = (path: string): boolean => path.startsWith(`${MONTHLY_DIR}/`);
+
+/** `detail/monthly/*`: index <-> files consistency, schemas, and example.* e-mails only. */
+function monthlyErrors(files: DetailBundleFiles): string[] {
+  const paths = Object.keys(files).filter(isMonthly);
+  if (paths.length === 0) return [];
+  const indexText = files[MONTHLY_INDEX_PATH];
+  const index = monthlyReportIndexSchema.safeParse(
+    indexText === undefined ? undefined : parseJson(indexText),
+  );
+  if (!index.success) return [`${MONTHLY_INDEX_PATH}: missing or does not match the contract`];
+  const listed = new Set(index.data.reports.map((e) => e.path));
+  const unlisted = paths
+    .filter((p) => p !== MONTHLY_INDEX_PATH && !listed.has(p))
+    .map((p) => `${p}: not listed in the monthly index`);
+  const entries = index.data.reports.flatMap((entry) => {
+    const text = files[entry.path];
+    if (text === undefined) return [`${entry.path}: listed in the monthly index but missing`];
+    const report = monthlyReportSchema.safeParse(parseJson(text));
+    if (!report.success) return [`${entry.path}: does not match the monthly report contract`];
+    return report.data.id === entry.id && report.data.month === entry.month
+      ? emailErrors(entry.path, text, true)
+      : [`${entry.path}: id or month differs from the monthly index`];
+  });
+  return [...unlisted, ...entries, ...emailErrors(MONTHLY_INDEX_PATH, indexText ?? '', true)];
+}
+
 /**
  * Validates a whole `detail/` directory (manifest, every listed file, nothing unlisted) and
  * returns human-readable problems; an empty list means the bundle is publishable as a sample.
@@ -156,8 +189,9 @@ export function checkDetailBundle(
       ? [`${DETAIL_MANIFEST_PATH}: maskPii must be true`]
       : []),
     ...Object.keys(files)
-      .filter((p) => p !== DETAIL_MANIFEST_PATH && !listed.has(p))
+      .filter((p) => p !== DETAIL_MANIFEST_PATH && !listed.has(p) && !isMonthly(p))
       .map((p) => `${p}: not listed in the manifest`),
     ...listedErrors(manifest, files),
+    ...monthlyErrors(files),
   ];
 }

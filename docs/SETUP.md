@@ -112,7 +112,7 @@ cp .env.example .env    # fill in ANTHROPIC_ENTERPRISE_API_KEY (never commit .en
 pnpm pipeline           # collect → check → data/dashboard.json
 pnpm dev                # now shows your data (data/ is gitignored)
 pnpm report:weekly
-pnpm report:monthly --month 2026-09
+pnpm report:monthly --month 2026-09   # also writes data/detail/monthly/ for the dashboard's monthly cost report
 ```
 
 To look at the data collected by Actions locally, restore it first: `.github/scripts/data-branch.sh restore`.

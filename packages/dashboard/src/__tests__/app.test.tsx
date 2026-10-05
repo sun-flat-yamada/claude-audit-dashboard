@@ -30,6 +30,11 @@ const DETAIL = import.meta.glob<string>(
     import: 'default',
   },
 );
+const MONTHLY = import.meta.glob<string>('../../../../data/sample/detail/monthly/*.json', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+});
 const SOURCES: Array<[string, string | undefined]> = [
   ['sample', SAMPLE],
   ['fixtures', FIXTURE],
@@ -127,6 +132,38 @@ describe('hash routing', () => {
     window.location.hash = '#/groups/rbac_group_demo_sales';
     render(<App />);
     expect(await screen.findByRole('heading', { level: 1, name: 'Sales' })).toBeInTheDocument();
+  });
+
+  it('opens the monthly cost report by deep link, with a month deep link keeping the nav item current', async () => {
+    const monthly = (file: string) =>
+      Object.entries(MONTHLY).find(([name]) => name.endsWith(`/${file}`))?.[1] ?? '';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: RequestInfo | URL) => {
+        const file = /\/detail\/monthly\/([^/]+\.json)$/.exec(String(url))?.[1];
+        return new Response(file ? monthly(file) : (SAMPLE ?? ''));
+      }),
+    );
+    window.location.hash = '#/reports/monthly';
+    const { unmount } = render(<App />);
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Monthly cost report' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Monthly report' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(
+      await screen.findByRole('table', { name: 'Chargeback by RBAC group' }),
+    ).toBeInTheDocument();
+    unmount();
+    window.location.hash = '#/reports/monthly/monthly-2026-06';
+    render(<App />);
+    expect(await screen.findByRole('combobox', { name: 'Month' })).toHaveValue('monthly-2026-06');
+    expect(screen.getByRole('link', { name: 'Monthly report' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
   });
 
   it('opens the activity timeline by deep link', async () => {

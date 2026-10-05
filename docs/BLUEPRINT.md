@@ -150,17 +150,18 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 
 ### 4.2 データの保存場所
 
-| データ                   | パス                                                                              | ブランチ     | main にコミット |
-| ------------------------ | --------------------------------------------------------------------------------- | ------------ | --------------- |
-| ソースコード             | `packages/`                                                                       | `main`       | する            |
-| 合成サンプル             | `data/sample/` (`pnpm demo` が生成)                                               | `main`       | する            |
-| スナップショット         | `data/snapshots/<id>/<dataset>.json` + `manifest.json`                            | `data/audit` | しない          |
-| コンプライアンスレポート | `data/reports/compliance/<snapshot id>.json`                                      | `data/audit` | しない          |
-| 週次・月次レポート       | `data/reports/{weekly,monthly}/`                                                  | `data/audit` | しない          |
-| ダッシュボード JSON      | `data/dashboard.json`                                                             | `data/audit` | しない          |
-| 詳細データ (個人単位)    | `data/detail/{index,members,api-keys,org-groups}.json`, `activity-<yyyy-mm>.json` | `data/audit` | しない          |
-| コレクタ状態             | `data/state.json` (カーソル、投影状態、通知記録)                                  | `data/audit` | しない          |
-| アーカイブ               | `data/archive/<year>/<id>.json.gz`                                                | `data/audit` | しない          |
+| データ                   | パス                                                                                  | ブランチ     | main にコミット |
+| ------------------------ | ------------------------------------------------------------------------------------- | ------------ | --------------- |
+| ソースコード             | `packages/`                                                                           | `main`       | する            |
+| 合成サンプル             | `data/sample/` (`pnpm demo` が生成)                                                   | `main`       | する            |
+| スナップショット         | `data/snapshots/<id>/<dataset>.json` + `manifest.json`                                | `data/audit` | しない          |
+| コンプライアンスレポート | `data/reports/compliance/<snapshot id>.json`                                          | `data/audit` | しない          |
+| 週次・月次レポート       | `data/reports/{weekly,monthly}/`                                                      | `data/audit` | しない          |
+| ダッシュボード JSON      | `data/dashboard.json`                                                                 | `data/audit` | しない          |
+| 詳細データ (個人単位)    | `data/detail/{index,members,api-keys,org-groups}.json`, `activity-<yyyy-mm>.json`     | `data/audit` | しない          |
+| 月次コスト公開データ     | `data/detail/monthly/{index,<id>}.json` (個人単位データなし。`report monthly` が生成) | `data/audit` | しない          |
+| コレクタ状態             | `data/state.json` (カーソル、投影状態、通知記録)                                      | `data/audit` | しない          |
+| アーカイブ               | `data/archive/<year>/<id>.json.gz`                                                    | `data/audit` | しない          |
 
 `data/audit` への読み書きは `.github/scripts/data-branch.sh` (`restore` / `save`) に集約する。`save` は直前の `restore` を必須とし、アーカイブによる削除も反映する。サンプルと `.gitkeep` は保存しない。書き込むワークフローは同じ `concurrency` グループ (`audit-data`) で直列化する。
 
@@ -375,6 +376,8 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 
 個人単位のデータ (メンバー、API キー、アクティビティ検索、組織/グループ) は `dashboard.json` に入れず、別の**詳細データファイル**で配る (`DETAIL_SCHEMA_VERSION = 1`、`contracts/detail-view.ts`)。`detail/index.json` (マニフェスト: `maskPii`・`source`・各ファイルの `kind`/`path`/`status`/`count`) と、`members.json`・`api-keys.json`・`activity-<yyyy-mm>.json` (月ごと、新しい順、最大 2000 行。`total`/`truncated` で実数を示す)・`org-groups.json` から成り、各ファイルが自前の `schemaVersion` を持つ (`DashboardView` は v2 のまま)。`maskPii=true` では、メールは `j***@example.com`、氏名はイニシャル、IP は除去、ユーザー/キー/招待 ID は `u_`/`k_`/`i_` + 12 桁 hex の安定ハッシュ (ファイル間で結合可能) にする。`maskPii=false` では生値になりマニフェストに記録される。生成は純粋なプレゼンタ (`core/application/presenters/detail-*.ts`) と `collector/src/main/detail.ts` (`pnpm build:detail`、`pnpm pipeline` に含む。書き込み時に zod 検証)。`checkDetailBundle()` (`contracts/detail-bundle.ts`) がマニフェストとファイルの整合・`example.*`・マスクを検査し、`fork:verify` がサンプルに適用する。
 
+月次コストレポートの公開データ (F-009) は `detail/monthly/index.json` (月の一覧、新しい順) と `detail/monthly/<id>.json` (`MONTHLY_REPORT_SCHEMA_VERSION = 1`、`contracts/monthly-report.ts`) で、コレクタの月次レポート (`ReportDocument`) から純粋なプレゼンタ (`core/application/presenters/monthly-report-view.ts`) が小さな公開スキーマへ写像する (レポート文書そのものは契約に含めない)。組織の総額は未グルーピングの値で、グループ別の行は所属の重複により合計が総額を超え得るため合算しない。個人単位データは含まないがコストは機密のため、`detail/` 配下に置いて同じ公開条件に従う。`report monthly` が `collector/src/main/monthly-report.ts` で書き込み (zod 検証、インデックスは読み込み・マージ・書き込み)、`checkDetailBundle()` が `detail/monthly/` も検査する。
+
 公開条件: サンプル配備では `data/sample/detail/` を配る。`PAGES_DATA_SOURCE=live` でも、リポジトリ変数 `PAGES_DETAIL_DATA=true` (Private Pages であることの明示的な宣言。既定オフ) が無ければ詳細データは Pages に載せず、UI は「未公開」を表示する ([DEPLOYMENT.md](DEPLOYMENT.md) Option 1)。
 
 ### 9.2 画面構成 (単一ページ)
@@ -391,6 +394,7 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 | メンバー         | `#/members`: 役割・最終アクティビティ日・状態 (アクティブ / 非アクティブ / 不明) の一覧。非アクティブ (AC-001、しきい値は `detail/members.json` の `inactiveDays`) は行の強調とアイコン + ラベルで示す。検索・役割 / 状態フィルタ・並べ替え、保留中の招待。未公開 / 未収集 / 空の各状態を表示                                                                                                                                                                                                                                             |
 | API キー         | `#/keys`: スコープ・経過日数・有効期限・最終使用・ローテーション推奨 (ローテーション AK-003 / 未使用 AK-001 / 書き込みスコープ AK-002 / まもなくローテーション / 使用状況不明 / 問題なし / 無効化済み) をアイコン + ラベルで示す。しきい値と基準時刻は `detail/api-keys.json` の値 (`maxAgeDays`・`unusedDays`・`generatedAt`) を使い、キー本体は収集・表示しない。検索・推奨フィルタ・並べ替え。未公開 / 未収集 / 空の各状態を表示                                                                                                       |
 | アクティビティ   | `#/activity`: マニフェストから月を選び (新しい順)、選んだ月の `detail/activity-<yyyy-mm>.json` だけを取得する。検索 (type・アクター ID / メール / IP・組織)・type / アクター種別・日付範囲 (月内、UTC 日) の絞り込み、新しい順のタイムライン (50 件ごとのページ送り)。アクター種別はアイコン + ラベル + 色。識別子・メール・IP は公開値のまま表示し (`maskPii` に従いマスク済み)、月ファイルが上限で切り詰められている (`truncated`) 場合は総件数と保持件数を注記する。未公開 / 未収集 / 空 / 該当なしの各状態を表示                      |
+| 月次コスト       | `#/reports/monthly` / `#/reports/monthly/<id>` (`<id>` = `monthly-yyyy-mm`): `detail/monthly/index.json` から月を選び、その月の `detail/monthly/<id>.json` だけを取得する。組織の総額 (未グルーピング)、RBAC グループ別チャージバック表 (金額と総額比)、モデル別・プロダクト別。グループの所属重複で合計が総額を超え得る旨の注記 (CHANGE-PLAN §10 V7) を常に表示し、超過時は強調する。グループ金額は合算しない。検索。未公開 / 未収集 (理由つき) / エラー / 空 / 該当なし / 不明な月の各状態を表示                                        |
 | 組織・グループ   | `#/orgs` (一覧) / `#/orgs/<id>` / `#/groups/<id>`: `detail/org-groups.json` (組織ページは `detail/members.json` も参照)。組織ごとの設定乖離 (CF-xxx、重大度・状態はアイコン + ラベル + 色) とメンバー (`organizationId` で結合)、グループごとの種別・メンバー数・当月支出 (グループは重複するため合算しない)。証拠 ID が組織に一致しない乖離 (`organizationId: null`) は「Unattributed」に集約する。グループは `memberCount` のみ (メンバー一覧は契約に無く結合しない)。未公開 / 未収集 / エラー / 空 / 該当なし / 不明 ID の各状態を表示 |
 | Activity (概要)  | 件数上位の type、監視ルールに一致したイベント                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Data coverage    | データセットごとの取得状況・件数・取得元・理由                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
