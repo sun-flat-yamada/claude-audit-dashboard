@@ -22,6 +22,7 @@ import { SNAPSHOT_ID, dashboardViewSchema } from '@claude-audit/core/contracts';
 import { stableStringify } from '../adapters/storage/file-store.js';
 import type { Container } from './container.js';
 import { readUsageMatrixInput } from './usage-matrix.js';
+import { saveSummary, summaryFor } from './summaries.js';
 
 const HISTORY_LIMIT = 90;
 
@@ -34,17 +35,33 @@ export const collect = (c: Container): Promise<AuditSnapshot> =>
     clock: c.clock,
   });
 
-export const check = (
+/** Per-call changes of the judgement (the demo scenarios); the configuration still applies. */
+export interface CheckOverrides {
+  params?: Readonly<Record<string, unknown>> | undefined;
+  disabledRules?: readonly string[] | undefined;
+}
+
+/**
+ * Judges the newest snapshot, stores the compliance report and, next to it, the time-point
+ * summary (`summaries/<snapshot id>.json`, F-015) that keeps the point comparable after the
+ * snapshot is archived.
+ */
+export async function check(
   c: Container,
-): Promise<{ snapshot: AuditSnapshot; report: ComplianceReport }> =>
-  checkLatestSnapshot({
+  overrides: CheckOverrides = {},
+): Promise<{ snapshot: AuditSnapshot; report: ComplianceReport }> {
+  const disabled = [...c.config.compliance.disabledRules, ...(overrides.disabledRules ?? [])];
+  const result = await checkLatestSnapshot({
     snapshots: c.snapshots,
     reports: c.reports,
     rules: c.rules,
     clock: c.clock,
-    params: c.config.compliance.params,
-    disabled: c.config.compliance.disabledRules,
+    params: { ...c.config.compliance.params, ...overrides.params },
+    disabled,
   });
+  await saveSummary(c, summaryFor(result.snapshot, result.report, disabled));
+  return result;
+}
 
 export interface BuildTarget {
   snapshot: AuditSnapshot | null;

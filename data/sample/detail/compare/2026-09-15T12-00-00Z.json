@@ -1,0 +1,321 @@
+{
+  "assessed": 25,
+  "collectedAt": "2026-09-15T12:00:00.000Z",
+  "datasets": [
+    {
+      "count": 271,
+      "name": "activities",
+      "status": "ok"
+    },
+    {
+      "count": 31,
+      "name": "adoption",
+      "status": "ok"
+    },
+    {
+      "count": 310,
+      "name": "cost",
+      "status": "ok"
+    },
+    {
+      "count": 2,
+      "name": "credentialUsage",
+      "status": "ok"
+    },
+    {
+      "count": 4,
+      "name": "credentials",
+      "status": "ok"
+    },
+    {
+      "count": null,
+      "name": "groups",
+      "status": "error"
+    },
+    {
+      "count": null,
+      "name": "invites",
+      "status": "error"
+    },
+    {
+      "count": 36,
+      "name": "memberActivity",
+      "status": "ok"
+    },
+    {
+      "count": 43,
+      "name": "members",
+      "status": "ok"
+    },
+    {
+      "count": 3,
+      "name": "organizations",
+      "status": "ok"
+    },
+    {
+      "count": 3,
+      "name": "settings",
+      "status": "ok"
+    },
+    {
+      "count": null,
+      "name": "spendLimits",
+      "status": "unavailable"
+    },
+    {
+      "count": 310,
+      "name": "usage",
+      "status": "ok"
+    }
+  ],
+  "disabledRules": [
+    "AK-002"
+  ],
+  "id": "2026-09-15T12-00-00Z",
+  "kpis": [
+    {
+      "id": "score",
+      "label": "Compliance score",
+      "unit": "score",
+      "value": 78
+    },
+    {
+      "id": "open-findings",
+      "label": "Open findings",
+      "unit": "count",
+      "value": 11
+    },
+    {
+      "id": "members",
+      "label": "Members",
+      "unit": "count",
+      "value": 43
+    },
+    {
+      "id": "mau",
+      "label": "Monthly active users",
+      "unit": "count",
+      "value": 35
+    },
+    {
+      "id": "seat-utilization",
+      "label": "Seat utilization (30d)",
+      "unit": "percent",
+      "value": 77.8
+    },
+    {
+      "id": "mtd-cost",
+      "label": "Month-to-date cost",
+      "unit": "currency",
+      "value": 4961.23
+    }
+  ],
+  "rules": [
+    {
+      "category": "access-control",
+      "id": "AC-001",
+      "name": "Inactive Members",
+      "severity": "medium",
+      "status": "fail"
+    },
+    {
+      "category": "access-control",
+      "id": "AC-002",
+      "name": "Excessive Administrative Roles",
+      "severity": "high",
+      "status": "fail"
+    },
+    {
+      "category": "access-control",
+      "id": "AC-003",
+      "name": "Single Primary Owner",
+      "severity": "critical",
+      "status": "pass"
+    },
+    {
+      "category": "access-control",
+      "id": "AC-004",
+      "name": "Stale Pending Invites",
+      "severity": "low",
+      "status": "skipped"
+    },
+    {
+      "category": "api-key-management",
+      "id": "AK-001",
+      "name": "Unused API Keys",
+      "severity": "medium",
+      "status": "fail"
+    },
+    {
+      "category": "api-key-management",
+      "id": "AK-003",
+      "name": "API Key Age",
+      "severity": "medium",
+      "status": "fail"
+    },
+    {
+      "category": "usage-anomaly",
+      "id": "UA-001",
+      "name": "Usage Spike Detection",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "category": "usage-anomaly",
+      "id": "UA-002",
+      "name": "Cost Budget Threshold",
+      "severity": "critical",
+      "status": "warning"
+    },
+    {
+      "category": "usage-anomaly",
+      "id": "UA-003",
+      "name": "Members Without Spend Limit",
+      "severity": "medium",
+      "status": "skipped"
+    },
+    {
+      "category": "usage-anomaly",
+      "id": "UA-004",
+      "name": "Spend Limit Nearly Exhausted",
+      "severity": "low",
+      "status": "skipped"
+    },
+    {
+      "category": "data-governance",
+      "id": "DG-001",
+      "name": "Empty Groups",
+      "severity": "low",
+      "status": "skipped"
+    },
+    {
+      "category": "operational",
+      "id": "OP-001",
+      "name": "Collection Freshness",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "category": "operational",
+      "id": "OP-002",
+      "name": "Data Source Coverage",
+      "severity": "high",
+      "status": "fail"
+    },
+    {
+      "category": "configuration",
+      "id": "CF-001",
+      "name": "SSO Enforced for claude.ai",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "id": "CF-002",
+      "name": "SCIM Provisioning",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "id": "CF-003",
+      "name": "IP Allowlist Enabled",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "id": "CF-004",
+      "name": "Session Duration Limited",
+      "severity": "low",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "id": "CF-005",
+      "name": "Finite Data Retention",
+      "severity": "medium",
+      "status": "fail"
+    },
+    {
+      "category": "configuration",
+      "id": "CF-006",
+      "name": "Public Projects Disabled",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "id": "CF-007",
+      "name": "Code Execution Egress Restricted",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "id": "CF-008",
+      "name": "Claude Code Permission Bypass Disabled",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "id": "CF-009",
+      "name": "Invite Domains Restricted",
+      "severity": "low",
+      "status": "pass"
+    },
+    {
+      "category": "activity-monitoring",
+      "id": "AM-001",
+      "name": "Privileged Role Changes",
+      "severity": "high",
+      "status": "warning"
+    },
+    {
+      "category": "activity-monitoring",
+      "id": "AM-002",
+      "name": "Identity Provider Changes",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "category": "activity-monitoring",
+      "id": "AM-003",
+      "name": "Network Restriction Changes",
+      "severity": "medium",
+      "status": "warning"
+    },
+    {
+      "category": "activity-monitoring",
+      "id": "AM-004",
+      "name": "API Key Lifecycle",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "category": "activity-monitoring",
+      "id": "AM-005",
+      "name": "Data Export Events",
+      "severity": "medium",
+      "status": "warning"
+    },
+    {
+      "category": "activity-monitoring",
+      "id": "AM-006",
+      "name": "Authentication Failure Burst",
+      "severity": "medium",
+      "status": "warning"
+    },
+    {
+      "category": "activity-monitoring",
+      "id": "AM-007",
+      "name": "Data Protection Changes",
+      "severity": "high",
+      "status": "pass"
+    }
+  ],
+  "schemaVersion": 1,
+  "score": 78,
+  "total": 29
+}
