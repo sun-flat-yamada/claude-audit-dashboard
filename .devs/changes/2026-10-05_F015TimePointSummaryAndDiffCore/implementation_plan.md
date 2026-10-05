@@ -6,7 +6,7 @@ Closes #106 (Work-Unit Issue, sub-issue of #42), Refs #42 (F-015 snapshot / repo
 
 > [!IMPORTANT]
 > Owner decisions applied here: (1) selectable time points are capped at 90; (2) the persistent store is `data/summaries/<snapshot id>.json` on `data/audit` (a summary is written next to each judged snapshot and outlives archiving); (3) the committed sample trend is widened to three points: `data/sample/dashboard.json` `compliance.history` now carries T1, T2 and T3, so everything that relied on the one-point "not enough history" display changes deliberately (listed in the PR).
-> `DashboardView` stays v2 (no schema change); only the sample VALUE of `compliance.history` changes. The detail manifest gains the kind `compare` (additive; `DETAIL_SCHEMA_VERSION` stays 1 like `usage-matrix`, `alerts`), the new files carry their own `schemaVersion`.
+> `DashboardView` keeps the version of main (v3 after the model x group aggregate landed while this PR was open; this PR makes no schema change); only the sample VALUE of `compliance.history` changes. The detail manifest gains the kind `compare` (additive; `DETAIL_SCHEMA_VERSION` stays 1 like `alerts`), the new files carry their own `schemaVersion`.
 
 > [!WARNING]
 > - To get a three-point `compliance.history` honestly, `pnpm demo` now collects and judges T1, T2 and T3 in ONE store, oldest first, like a real pipeline accumulates reports. The root files other than `dashboard.json` must stay byte-identical (checked by diff); `history/<id>/*` files must stay byte-identical.
