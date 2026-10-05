@@ -33,7 +33,7 @@
 | F-012 | Organization / group drill-down | P2       | ✅ B2-10 (`#/orgs`, `#/orgs/<id>`, `#/groups/<id>`)           | detail `org-groups.json`, `members.json`                |
 | F-013 | Data coverage and retention     | P2       | ✅ coverage in Phase A; archive inventory B2-11 (`#/archive`) | `coverage`, detail `archive.json`                       |
 | F-014 | Configuration view (read-only)  | P2       | ✅ B2-12 (`#/config`)                                         | detail `config.json`                                    |
-| F-015 | Snapshot comparison             | P3       | ⏳ Later                                                      | —                                                       |
+| F-015 | Snapshot comparison             | P3       | ⏳ Planned (multi-time-point sample data available, #101)     | — (planned: detail `compare/*`)                         |
 | F-016 | Adoption (DAU / WAU / MAU)      | P1       | ✅ Phase A                                                    | `adoption`                                              |
 | F-017 | Insights                        | P1       | ✅ Phase A                                                    | `insights`                                              |
 
@@ -205,6 +205,8 @@ Identifier handling follows `dashboard.maskPii` (default `true`): e-mail address
 | ID    | Scope                                                                                            |
 | ----- | ------------------------------------------------------------------------------------------------ |
 | F-015 | Compare two snapshots or two reports: rules that changed status, datasets that changed coverage. |
+
+F-015 status: **Planned**. Multi-time-point data is available: `pnpm demo` collects and judges the synthetic tenant at three fixed-clock time points. The latest point is the unchanged `data/sample/`; the two earlier points are written to `data/sample/history/<snapshot id>/` (`dashboard.json`, `compliance-report.json`) with every status transition, rule add / remove, coverage change and member / MAU / cost change the comparison needs. The design is settled (per-time-point summary files `detail/compare/*` under the `PAGES_DETAIL_DATA` gate, a pure diff in `@claude-audit/core`, `#/compare?base=&target=`); the diff core, the compare UI and export, the archived-snapshot integration test and the E2E additions follow in later PRs (#42).
 
 ---
 

@@ -149,9 +149,9 @@ const relative = (dir: string): string =>
     .split('\\')
     .join('/');
 
-function checkSampleDashboard(dir: string = sampleDir): void {
-  const name = `${relative(dir)}/dashboard.json`;
-  const file = join(dir, 'dashboard.json');
+function checkSampleDashboard(dir: string = sampleDir, sub = ''): void {
+  const name = `${relative(dir)}/${sub}dashboard.json`;
+  const file = join(dir, sub, 'dashboard.json');
   if (!existsSync(file)) return fail(`${name} is missing`);
   let data: unknown;
   try {
@@ -164,7 +164,30 @@ function checkSampleDashboard(dir: string = sampleDir): void {
     return fail(`${name} does not match the dashboard contract: ${parsed.error.message}`);
   if (parsed.data.source !== 'demo')
     return fail(`${name} must be generated from the demo tenant (\`pnpm demo\`)`);
-  pass(`${relative(dir)} dashboard data matches the published contract (demo source)`);
+  pass(`${relative(dir)}/${sub} dashboard data matches the published contract (demo source)`);
+}
+
+/**
+ * The earlier time points of the multi-point demo history (F-015): `history/<snapshot id>/`
+ * holds a dashboard view (published contract, demo source) and its compliance report.
+ */
+function checkSampleHistory(dir: string = sampleDir): void {
+  const root = join(dir, 'history');
+  if (!existsSync(root)) return fail(`${relative(dir)}/history/ is missing (run \`pnpm demo\`)`);
+  const ids = readdirSync(root, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+  if (ids.length < 2)
+    return fail(`${relative(dir)}/history/ must hold at least two earlier time points`);
+  const before = errors;
+  for (const id of ids) {
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z$/.test(id))
+      fail(`${relative(dir)}/history/${id} is not a snapshot id`);
+    checkSampleDashboard(dir, `history/${id}/`);
+    if (!existsSync(join(root, id, 'compliance-report.json')))
+      fail(`${relative(dir)}/history/${id}/compliance-report.json is missing`);
+  }
+  if (errors === before) pass(`${ids.length} ${relative(dir)} history time points are valid`);
 }
 
 /** Relative paths (forward slashes) of every file below `dir`. */
@@ -210,10 +233,12 @@ function checkSampleEmails(dir: string = sampleDir): void {
 }
 
 checkSampleDashboard();
+checkSampleHistory();
 checkSampleDetail();
 if (existsSync(sampleDir)) checkSampleEmails();
 if (existsSync(profileDir)) {
   checkSampleDashboard(profileDir);
+  checkSampleHistory(profileDir);
   checkSampleDetail(profileDir);
   checkSampleEmails(profileDir);
 }

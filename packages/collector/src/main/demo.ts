@@ -23,6 +23,7 @@ import { stableStringify } from '../adapters/storage/file-store.js';
 import { appConfigSchema } from '../infrastructure/config.js';
 import { fixedClock } from '../infrastructure/runtime.js';
 import { createContainer, type Container } from './container.js';
+import { writeDemoHistory } from './demo-history.js';
 import { writeDetail } from './detail.js';
 import { writeMonthlyView } from './monthly-report.js';
 import { writeFiles } from './write-files.js';
@@ -142,6 +143,8 @@ function demoConfigInput(profile: DemoProfile): Omit<ConfigViewInput, 'now'> {
 /**
  * Runs collect → check → dashboard → weekly / monthly reports on the synthetic tenant with a
  * fixed clock, then writes the public sample files. Output is deterministic (golden-tested).
+ * The files in the root are the LATEST time point; the earlier points of the multi-point
+ * history (F-015) are added under `history/<snapshot id>/` (`demo-history.ts`).
  */
 export async function writeDemoSample(
   outDir: string,
@@ -183,6 +186,7 @@ export async function writeDemoSample(
       'monthly-report.md': toMarkdown(monthly.document),
       ...detail,
       ...monthlyView,
+      ...(await writeDemoHistory(options)),
     };
     await writeFiles(outDir, files);
     return files;
