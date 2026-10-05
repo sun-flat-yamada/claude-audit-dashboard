@@ -6,7 +6,7 @@ import { z } from 'zod';
  * Identifiers are stable short hashes and e-mail addresses / names are masked while the
  * manifest says `maskPii: true`. Bump `DETAIL_SCHEMA_VERSION` on breaking changes.
  */
-export const DETAIL_SCHEMA_VERSION = 1;
+export const DETAIL_SCHEMA_VERSION = 2;
 
 export const DETAIL_DIR = 'detail';
 export const DETAIL_MANIFEST_PATH = `${DETAIL_DIR}/index.json`;
@@ -34,7 +34,6 @@ export const DETAIL_KINDS = [
   'config',
   'archive',
   'alerts',
-  'usage-matrix',
 ] as const;
 export type DetailKind = (typeof DETAIL_KINDS)[number];
 

@@ -7,7 +7,7 @@
       "month": null,
       "path": "detail/members.json",
       "reason": null,
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "status": "ok"
     },
     {
@@ -16,7 +16,7 @@
       "month": null,
       "path": "detail/api-keys.json",
       "reason": null,
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "status": "ok"
     },
     {
@@ -25,7 +25,7 @@
       "month": "2026-07",
       "path": "detail/activity-2026-07.json",
       "reason": null,
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "status": "ok"
     },
     {
@@ -34,7 +34,7 @@
       "month": "2026-08",
       "path": "detail/activity-2026-08.json",
       "reason": null,
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "status": "ok"
     },
     {
@@ -43,7 +43,7 @@
       "month": "2026-09",
       "path": "detail/activity-2026-09.json",
       "reason": null,
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "status": "ok"
     },
     {
@@ -52,7 +52,7 @@
       "month": null,
       "path": "detail/org-groups.json",
       "reason": null,
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "status": "ok"
     },
     {
@@ -81,19 +81,10 @@
       "reason": null,
       "schemaVersion": 1,
       "status": "ok"
-    },
-    {
-      "count": 45,
-      "kind": "usage-matrix",
-      "month": null,
-      "path": "detail/usage-matrix.json",
-      "reason": null,
-      "schemaVersion": 1,
-      "status": "ok"
     }
   ],
   "generatedAt": "2026-09-29T12:00:00.000Z",
   "maskPii": true,
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": "demo"
 }

@@ -951,7 +951,7 @@
     }
   ],
   "month": "2026-09",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "total": 79,
   "truncated": false
 }

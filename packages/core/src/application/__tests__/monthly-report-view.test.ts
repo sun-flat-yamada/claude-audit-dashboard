@@ -140,7 +140,7 @@ describe('monthly files in the detail bundle check', () => {
     const report = buildMonthlyReportView(overlapping(), NOW);
     if (!report) throw new Error('fixture');
     const manifest = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       generatedAt: NOW.toISOString(),
       collectedAt: null,
       source: 'demo',

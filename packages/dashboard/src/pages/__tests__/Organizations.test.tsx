@@ -16,7 +16,7 @@ const NOW = '2026-09-29T12:00:00.000Z';
 const O1 = 'org-1';
 const O2 = 'org-2';
 const orgGroups = (over: Record<string, unknown> = {}) => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: NOW,
   currency: 'USD',
   organizations: [
@@ -67,14 +67,14 @@ const member = (id: string, organizationId: string | null, name: string, email: 
   lastActiveOn: null,
 });
 const membersFile = (members: unknown[]) => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: NOW,
   inactiveDays: 60,
   members,
   invites: [],
 });
 const manifest = (over: Record<string, unknown> = {}, files: unknown[] = []) => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: NOW,
   collectedAt: NOW,
   source: 'demo',
@@ -85,7 +85,7 @@ const manifest = (over: Record<string, unknown> = {}, files: unknown[] = []) => 
 const unavailable = (kind: string, reason: string) => ({
   kind,
   path: `detail/${kind}.json`,
-  schemaVersion: 1,
+  schemaVersion: 2,
   status: 'unavailable',
   reason,
   count: null,

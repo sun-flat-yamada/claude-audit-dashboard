@@ -169,16 +169,11 @@ export async function writeDemoSample(
     await new FsAckRepository(c.store).save(demoAckStore(DEMO_NOW));
     await collect(c);
     const { report } = await check(c);
-    const view = await writeDashboard(c);
+    const view = await writeDashboard(c, undefined, demoUsageMatrixInput(DEMO_NOW));
     const weekly = await generateReport(c, 'weekly');
     const monthly = await generateReport(c, 'monthly');
     const monthlyView = await writeDemoMonths(c);
-    const detail = await writeDetail(
-      c,
-      demoConfigInput(profile),
-      demoArchiveEntries(),
-      demoUsageMatrixInput(DEMO_NOW),
-    );
+    const detail = await writeDetail(c, demoConfigInput(profile), demoArchiveEntries());
     const files: Record<string, string> = {
       'dashboard.json': stableStringify(view),
       'compliance-report.json': stableStringify(report),

@@ -33,7 +33,7 @@ const member = (id: string, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 const membersFile = (over: Record<string, unknown> = {}) => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: NOW,
   inactiveDays: 60,
   members: [
@@ -59,7 +59,7 @@ const membersFile = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 const manifest = (over: Record<string, unknown> = {}) => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: NOW,
   collectedAt: NOW,
   source: 'demo',
@@ -68,7 +68,7 @@ const manifest = (over: Record<string, unknown> = {}) => ({
     {
       kind: 'members',
       path: 'detail/members.json',
-      schemaVersion: 1,
+      schemaVersion: 2,
       status: 'ok',
       reason: null,
       count: 3,
@@ -177,7 +177,7 @@ describe('Members page', () => {
         {
           kind: 'members',
           path: 'detail/members.json',
-          schemaVersion: 1,
+          schemaVersion: 2,
           status: 'unavailable',
           reason: 'users endpoint not permitted',
           count: null,

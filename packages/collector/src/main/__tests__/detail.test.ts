@@ -52,7 +52,7 @@ describe('detail command and pipeline', () => {
     expect(manifest.files.every((f) => f.status === 'ok')).toBe(true);
     expect(checkDetailBundle(bundle)).toEqual([]);
     expect(await readFile(join(dir, 'data/dashboard.json'), 'utf8')).toContain(
-      '"schemaVersion": 2',
+      '"schemaVersion": 3',
     );
   });
 

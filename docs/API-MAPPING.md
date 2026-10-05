@@ -106,7 +106,7 @@ Enterprise のロールは `user`, `managed`, `owner`, `membership_admin`, `prim
 
 `summaries` の製品別アクティブユーザー (AN-2): 同じ呼び出しの `<product>_{daily,weekly,monthly}_active_user_count` (`product` = `chat` / `claude_code` / `cowork` / `claude_design` / `office_agent` / `science`) を `AdoptionDay.byProduct { product, dau, wau, mau }[]` に写像する。公式リファレンスでは `cowork_*` が必須、他は optional / nullable (製品別内訳が組織で有効でない間は省略) だが、すべて寛容 (`nullish`) に読み、3 値のどれかが欠落または `null` の製品は含めない (収集は失敗させない)。`science_entitled_user_count` は写像しない。追加の API 呼び出しは無い。
 
-任意収集 (`sources.usageMatrix.enabled`、既定 off、スナップショットのデータセットではない): `cost_report` に `group_by[]=model&group_by[]=rbac_group_id` (モデル × グループ、重なりあり) と `group_by[]=model` (加算可能なモデル構成比) を `bucket_width=1d` で取得し、月次に集計して `detail/usage-matrix.json` にする (F-010)。`group_by[]` が配列パラメータであることは Admin Usage / Cost API リファレンスで確認済み。Analytics API が 2 値を同時に受け付けるかは**未確認 (推定)**で、拒否された場合は `unavailable` として扱う (実テナントでの確認は `--capture-raw` で行う)。
+任意収集 (`sources.usageMatrix.enabled`、既定 off、スナップショットのデータセットではない): `cost_report` に `group_by[]=model&group_by[]=rbac_group_id` (モデル × グループ、重なりあり) と `group_by[]=model` (加算可能なモデル構成比) を `bucket_width=1d` で取得し、月次に集計して `dashboard.json` の `modelMatrix` にする (F-010、`DashboardView` v3)。`group_by[]` が配列パラメータであることは Admin Usage / Cost API リファレンスで確認済み。Analytics API が 2 値を同時に受け付けるかは**未確認 (推定)**で、拒否された場合は `unavailable` として扱う (実テナントでの確認は `--capture-raw` で行う)。
 
 `rbac_group_id` 別の値は「所属していた全グループに計上」されるため合計が総額を超え得る。総額は group_by 無しの行を使う。各バケットは上位 100 グループまで。
 

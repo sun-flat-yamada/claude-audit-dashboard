@@ -1,5 +1,6 @@
 import type { DashboardView } from '@claude-audit/core/contracts';
 import { KpiTiles } from '../components/KpiTiles';
+import { ModelMatrixCard } from '../components/ModelMatrixCard';
 import {
   ActivitySection,
   AdoptionSection,
@@ -58,6 +59,7 @@ export function Overview({ view }: { view: DashboardView }) {
       <div className="grid gap-6 *:min-w-0 lg:grid-cols-3">
         <SpendBreakdowns usage={view.usage} />
       </div>
+      <ModelMatrixCard matrix={view.modelMatrix} />
       <AdoptionSection adoption={view.adoption} />
       <ActivitySection activity={view.activity} />
       <CoverageSection coverage={view.coverage} />

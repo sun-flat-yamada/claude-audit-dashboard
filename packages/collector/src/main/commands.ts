@@ -66,7 +66,7 @@ const usageMatrixCommand: Command = {
     const status = await collectUsageMatrix(c);
     if (status === null) c.logger.info('Model x group matrix is off (sources.usageMatrix.enabled)');
     else if (status === 'ok') c.logger.info('Model x group matrix collected');
-    else c.logger.warn(`Model x group matrix ${status}: see detail/usage-matrix.json status`);
+    else c.logger.warn(`Model x group matrix ${status}: see modelMatrix in dashboard.json`);
   },
 };
 
@@ -100,13 +100,7 @@ const detailCommand: Command = {
   usage: 'detail [--snapshot <id>]',
   description: 'Write data/detail/*.json (members, API keys, activity, org / groups)',
   async run(c, args) {
-    const files = await writeDetail(
-      c,
-      undefined,
-      undefined,
-      undefined,
-      valueOf(args, '--snapshot'),
-    );
+    const files = await writeDetail(c, undefined, undefined, valueOf(args, '--snapshot'));
     c.logger.info(
       `Detail data written (${Object.keys(files).length} files, maskPii ${String(c.config.dashboard.maskPii)})`,
     );

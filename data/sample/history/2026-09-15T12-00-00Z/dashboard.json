@@ -237,6 +237,50 @@
   },
   "adoption": {
     "assignedSeats": 45,
+    "byProduct": [
+      {
+        "dau": 20,
+        "label": "Chat",
+        "mau": 29,
+        "product": "chat",
+        "wau": 25
+      },
+      {
+        "dau": 15,
+        "label": "Claude Code",
+        "mau": 22,
+        "product": "claude_code",
+        "wau": 19
+      },
+      {
+        "dau": 7,
+        "label": "Cowork",
+        "mau": 10,
+        "product": "cowork",
+        "wau": 9
+      },
+      {
+        "dau": 3,
+        "label": "Claude Design",
+        "mau": 4,
+        "product": "claude_design",
+        "wau": 4
+      },
+      {
+        "dau": 2,
+        "label": "Claude in Office",
+        "mau": 4,
+        "product": "office_agent",
+        "wau": 3
+      },
+      {
+        "dau": 1,
+        "label": "Claude Science",
+        "mau": 2,
+        "product": "science",
+        "wau": 2
+      }
+    ],
     "daily": [
       {
         "date": "2026-08-16",
@@ -426,7 +470,350 @@
       }
     ],
     "monthlyAdoptionRate": 77.8,
-    "pendingInvites": 3
+    "pendingInvites": 3,
+    "productWeekly": [
+      {
+        "date": "2026-08-16",
+        "wau": {
+          "chat": 24,
+          "claude_code": 12,
+          "claude_design": 3,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-17",
+        "wau": {
+          "chat": 23,
+          "claude_code": 14,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-18",
+        "wau": {
+          "chat": 24,
+          "claude_code": 14,
+          "claude_design": 3,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-19",
+        "wau": {
+          "chat": 23,
+          "claude_code": 14,
+          "claude_design": 3,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-20",
+        "wau": {
+          "chat": 25,
+          "claude_code": 13,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-21",
+        "wau": {
+          "chat": 27,
+          "claude_code": 14,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-22",
+        "wau": {
+          "chat": 24,
+          "claude_code": 16,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-23",
+        "wau": {
+          "chat": 23,
+          "claude_code": 15,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-24",
+        "wau": {
+          "chat": 22,
+          "claude_code": 13,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-25",
+        "wau": {
+          "chat": 27,
+          "claude_code": 16,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-26",
+        "wau": {
+          "chat": 24,
+          "claude_code": 16,
+          "claude_design": 4,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-27",
+        "wau": {
+          "chat": 25,
+          "claude_code": 17,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-28",
+        "wau": {
+          "chat": 24,
+          "claude_code": 15,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-08-29",
+        "wau": {
+          "chat": 26,
+          "claude_code": 15,
+          "claude_design": 3,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-08-30",
+        "wau": {
+          "chat": 27,
+          "claude_code": 17,
+          "claude_design": 4,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-31",
+        "wau": {
+          "chat": 26,
+          "claude_code": 18,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-01",
+        "wau": {
+          "chat": 24,
+          "claude_code": 16,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-02",
+        "wau": {
+          "chat": 23,
+          "claude_code": 16,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-03",
+        "wau": {
+          "chat": 25,
+          "claude_code": 16,
+          "claude_design": 4,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-04",
+        "wau": {
+          "chat": 27,
+          "claude_code": 17,
+          "claude_design": 4,
+          "cowork": 10,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-05",
+        "wau": {
+          "chat": 25,
+          "claude_code": 16,
+          "claude_design": 4,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-06",
+        "wau": {
+          "chat": 29,
+          "claude_code": 19,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-07",
+        "wau": {
+          "chat": 25,
+          "claude_code": 17,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-08",
+        "wau": {
+          "chat": 28,
+          "claude_code": 19,
+          "claude_design": 3,
+          "cowork": 10,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-09",
+        "wau": {
+          "chat": 26,
+          "claude_code": 17,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-10",
+        "wau": {
+          "chat": 23,
+          "claude_code": 15,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-11",
+        "wau": {
+          "chat": 22,
+          "claude_code": 16,
+          "claude_design": 3,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-12",
+        "wau": {
+          "chat": 26,
+          "claude_code": 17,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-13",
+        "wau": {
+          "chat": 24,
+          "claude_code": 19,
+          "claude_design": 4,
+          "cowork": 10,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-14",
+        "wau": {
+          "chat": 26,
+          "claude_code": 18,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-15",
+        "wau": {
+          "chat": 25,
+          "claude_code": 19,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      }
+    ]
   },
   "collectedAt": "2026-09-15T12:00:00.000Z",
   "compliance": {
@@ -1046,7 +1433,7 @@
       "id": "cache-efficiency",
       "kind": "recommendation",
       "priority": "low",
-      "title": "Only 25% of input tokens were cache reads"
+      "title": "Only 28.6% of input tokens were cache reads"
     }
   ],
   "kpis": [
@@ -1093,6 +1480,7 @@
       "value": 4961.23
     }
   ],
+  "modelMatrix": null,
   "organizations": [
     {
       "id": "5f0c7a1e-1111-4a1a-9a11-000000000001",
@@ -1107,7 +1495,7 @@
       "name": "Example Corp Sales"
     }
   ],
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "source": "demo",
   "title": "Claude Enterprise Audit Dashboard",
   "usage": {
@@ -1172,193 +1560,287 @@
         "value": 1379.26
       }
     ],
+    "cacheHitRate": 28.6,
     "currency": "USD",
     "daily": [
       {
+        "cacheCreationInputTokens": 243828,
+        "cacheReadInputTokens": 1236001,
         "cost": 146.3,
         "date": "2026-08-16",
         "inputTokens": 3901256,
-        "outputTokens": 975314
+        "outputTokens": 975314,
+        "uncachedInputTokens": 2421427
       },
       {
+        "cacheCreationInputTokens": 561919,
+        "cacheReadInputTokens": 3547043,
         "cost": 337.16,
         "date": "2026-08-17",
         "inputTokens": 8990704,
-        "outputTokens": 2247676
+        "outputTokens": 2247676,
+        "uncachedInputTokens": 4881742
       },
       {
+        "cacheCreationInputTokens": 499685,
+        "cacheReadInputTokens": 1764097,
         "cost": 299.81,
         "date": "2026-08-18",
         "inputTokens": 7994963,
-        "outputTokens": 1998740
+        "outputTokens": 1998740,
+        "uncachedInputTokens": 5731181
       },
       {
+        "cacheCreationInputTokens": 487106,
+        "cacheReadInputTokens": 2794565,
         "cost": 292.27,
         "date": "2026-08-19",
-        "inputTokens": 7793698,
-        "outputTokens": 1948424
+        "inputTokens": 7793699,
+        "outputTokens": 1948424,
+        "uncachedInputTokens": 4512028
       },
       {
+        "cacheCreationInputTokens": 518462,
+        "cacheReadInputTokens": 2895458,
         "cost": 311.08,
         "date": "2026-08-20",
         "inputTokens": 8295394,
-        "outputTokens": 2073848
+        "outputTokens": 2073848,
+        "uncachedInputTokens": 4881474
       },
       {
+        "cacheCreationInputTokens": 502867,
+        "cacheReadInputTokens": 3176683,
         "cost": 301.72,
         "date": "2026-08-21",
         "inputTokens": 8045866,
-        "outputTokens": 2011466
+        "outputTokens": 2011466,
+        "uncachedInputTokens": 4366316
       },
       {
+        "cacheCreationInputTokens": 250356,
+        "cacheReadInputTokens": 1220042,
         "cost": 150.21,
         "date": "2026-08-22",
         "inputTokens": 4005697,
-        "outputTokens": 1001424
+        "outputTokens": 1001424,
+        "uncachedInputTokens": 2535299
       },
       {
+        "cacheCreationInputTokens": 223943,
+        "cacheReadInputTokens": 1427050,
         "cost": 134.37,
         "date": "2026-08-23",
         "inputTokens": 3583078,
-        "outputTokens": 895769
+        "outputTokens": 895769,
+        "uncachedInputTokens": 1932085
       },
       {
+        "cacheCreationInputTokens": 511988,
+        "cacheReadInputTokens": 3055981,
         "cost": 307.19,
         "date": "2026-08-24",
-        "inputTokens": 8191816,
-        "outputTokens": 2047954
+        "inputTokens": 8191815,
+        "outputTokens": 2047954,
+        "uncachedInputTokens": 4623846
       },
       {
+        "cacheCreationInputTokens": 548786,
+        "cacheReadInputTokens": 2371897,
         "cost": 329.27,
         "date": "2026-08-25",
-        "inputTokens": 8780584,
-        "outputTokens": 2195146
+        "inputTokens": 8780583,
+        "outputTokens": 2195146,
+        "uncachedInputTokens": 5859900
       },
       {
+        "cacheCreationInputTokens": 558796,
+        "cacheReadInputTokens": 2616560,
         "cost": 335.29,
         "date": "2026-08-26",
-        "inputTokens": 8940734,
-        "outputTokens": 2235184
+        "inputTokens": 8940733,
+        "outputTokens": 2235184,
+        "uncachedInputTokens": 5765377
       },
       {
+        "cacheCreationInputTokens": 541422,
+        "cacheReadInputTokens": 2164775,
         "cost": 324.85,
         "date": "2026-08-27",
         "inputTokens": 8662759,
-        "outputTokens": 2165690
+        "outputTokens": 2165690,
+        "uncachedInputTokens": 5956562
       },
       {
+        "cacheCreationInputTokens": 550373,
+        "cacheReadInputTokens": 2559583,
         "cost": 330.23,
         "date": "2026-08-28",
-        "inputTokens": 8805974,
-        "outputTokens": 2201494
+        "inputTokens": 8805973,
+        "outputTokens": 2201494,
+        "uncachedInputTokens": 5696017
       },
       {
+        "cacheCreationInputTokens": 252743,
+        "cacheReadInputTokens": 1045646,
         "cost": 151.65,
         "date": "2026-08-29",
-        "inputTokens": 4043884,
-        "outputTokens": 1010971
+        "inputTokens": 4043883,
+        "outputTokens": 1010971,
+        "uncachedInputTokens": 2745494
       },
       {
+        "cacheCreationInputTokens": 261181,
+        "cacheReadInputTokens": 1639610,
         "cost": 156.71,
         "date": "2026-08-30",
         "inputTokens": 4178890,
-        "outputTokens": 1044722
+        "outputTokens": 1044722,
+        "uncachedInputTokens": 2278099
       },
       {
+        "cacheCreationInputTokens": 542845,
+        "cacheReadInputTokens": 1932104,
         "cost": 325.71,
         "date": "2026-08-31",
         "inputTokens": 8685523,
-        "outputTokens": 2171381
+        "outputTokens": 2171381,
+        "uncachedInputTokens": 6210574
       },
       {
+        "cacheCreationInputTokens": 494832,
+        "cacheReadInputTokens": 1919204,
         "cost": 296.89,
         "date": "2026-09-01",
-        "inputTokens": 7917317,
-        "outputTokens": 1979329
+        "inputTokens": 7917316,
+        "outputTokens": 1979329,
+        "uncachedInputTokens": 5503280
       },
       {
+        "cacheCreationInputTokens": 528997,
+        "cacheReadInputTokens": 3188720,
         "cost": 317.39,
         "date": "2026-09-02",
-        "inputTokens": 8463951,
-        "outputTokens": 2115988
+        "inputTokens": 8463950,
+        "outputTokens": 2115988,
+        "uncachedInputTokens": 4746233
       },
       {
+        "cacheCreationInputTokens": 533827,
+        "cacheReadInputTokens": 2930479,
         "cost": 320.29,
         "date": "2026-09-03",
-        "inputTokens": 8541232,
-        "outputTokens": 2135308
+        "inputTokens": 8541231,
+        "outputTokens": 2135308,
+        "uncachedInputTokens": 5076925
       },
       {
+        "cacheCreationInputTokens": 505039,
+        "cacheReadInputTokens": 3028163,
         "cost": 303.03,
         "date": "2026-09-04",
-        "inputTokens": 8080623,
-        "outputTokens": 2020156
+        "inputTokens": 8080622,
+        "outputTokens": 2020156,
+        "uncachedInputTokens": 4547420
       },
       {
+        "cacheCreationInputTokens": 244747,
+        "cacheReadInputTokens": 1510081,
         "cost": 146.84,
         "date": "2026-09-05",
         "inputTokens": 3915960,
-        "outputTokens": 978990
+        "outputTokens": 978990,
+        "uncachedInputTokens": 2161132
       },
       {
+        "cacheCreationInputTokens": 230636,
+        "cacheReadInputTokens": 1289784,
         "cost": 138.38,
         "date": "2026-09-06",
         "inputTokens": 3690177,
-        "outputTokens": 922544
+        "outputTokens": 922544,
+        "uncachedInputTokens": 2169757
       },
       {
+        "cacheCreationInputTokens": 490189,
+        "cacheReadInputTokens": 1785998,
         "cost": 294.12,
         "date": "2026-09-07",
         "inputTokens": 7843028,
-        "outputTokens": 1960757
+        "outputTokens": 1960757,
+        "uncachedInputTokens": 5566841
       },
       {
+        "cacheCreationInputTokens": 539562,
+        "cacheReadInputTokens": 1876349,
         "cost": 323.73,
         "date": "2026-09-08",
         "inputTokens": 8632984,
-        "outputTokens": 2158246
+        "outputTokens": 2158246,
+        "uncachedInputTokens": 6217073
       },
       {
+        "cacheCreationInputTokens": 545500,
+        "cacheReadInputTokens": 1962856,
         "cost": 327.29,
         "date": "2026-09-09",
         "inputTokens": 8727998,
-        "outputTokens": 2182000
+        "outputTokens": 2182000,
+        "uncachedInputTokens": 6219642
       },
       {
+        "cacheCreationInputTokens": 551503,
+        "cacheReadInputTokens": 2443432,
         "cost": 330.89,
         "date": "2026-09-10",
         "inputTokens": 8824055,
-        "outputTokens": 2206014
+        "outputTokens": 2206014,
+        "uncachedInputTokens": 5829120
       },
       {
+        "cacheCreationInputTokens": 576487,
+        "cacheReadInputTokens": 2332802,
         "cost": 345.89,
         "date": "2026-09-11",
-        "inputTokens": 9223800,
-        "outputTokens": 2305950
+        "inputTokens": 9223799,
+        "outputTokens": 2305950,
+        "uncachedInputTokens": 6314510
       },
       {
+        "cacheCreationInputTokens": 225038,
+        "cacheReadInputTokens": 571954,
         "cost": 135.02,
         "date": "2026-09-12",
-        "inputTokens": 3600605,
-        "outputTokens": 900151
+        "inputTokens": 3600606,
+        "outputTokens": 900151,
+        "uncachedInputTokens": 2803614
       },
       {
+        "cacheCreationInputTokens": 223542,
+        "cacheReadInputTokens": 776647,
         "cost": 134.12,
         "date": "2026-09-13",
         "inputTokens": 3576675,
-        "outputTokens": 894169
+        "outputTokens": 894169,
+        "uncachedInputTokens": 2576486
       },
       {
+        "cacheCreationInputTokens": 2087977,
+        "cacheReadInputTokens": 7473017,
         "cost": 1252.78,
         "date": "2026-09-14",
-        "inputTokens": 33407631,
-        "outputTokens": 8351908
+        "inputTokens": 33407630,
+        "outputTokens": 8351908,
+        "uncachedInputTokens": 23846636
       },
       {
+        "cacheCreationInputTokens": 490948,
+        "cacheReadInputTokens": 1618279,
         "cost": 294.57,
         "date": "2026-09-15",
         "inputTokens": 7855168,
-        "outputTokens": 1963792
+        "outputTokens": 1963792,
+        "uncachedInputTokens": 5745941
       }
     ]
   }

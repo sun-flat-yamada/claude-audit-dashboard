@@ -46,7 +46,7 @@ flowchart LR
         UC["application/use-cases<br/>collect · evaluate · dashboard · report · notify"]
         PORTS["application/ports"]
         DOM["domain<br/>model · rules · factories · analyzers · projections"]
-        CT["contracts<br/>DashboardView v2"]
+        CT["contracts<br/>DashboardView v3"]
     end
 
     UI["@claude-audit/dashboard (React)"]
@@ -88,7 +88,7 @@ packages/
 │       │   ├── documents.ts      汎用レポート文書 (ReportDocument)
 │       │   ├── use-cases/        collect-snapshot / check-compliance / reports / alerts
 │       │   └── presenters/       DashboardView への変換 (PII マスク)
-│       └── contracts/            UI 向け公開契約 (DashboardView v2 と zod スキーマ)
+│       └── contracts/            UI 向け公開契約 (DashboardView v3 と zod スキーマ)
 ├── collector/                    @claude-audit/collector — Node 実行環境
 │   └── src/
 │       ├── adapters/
@@ -176,7 +176,7 @@ interface DatasetMeta {
 | `collectSnapshot`                            | コレクタ一覧、投影一覧、前回状態                 | スナップショット (+ 次回用カーソル・投影状態) | `DatasetCollector`, `Projection`, `SnapshotRepository`, `StateRepository`, `Clock` |
 | `evaluateCompliance` / `checkLatestSnapshot` | ルール一覧、スナップショット、引数、無効化リスト | コンプライアンスレポート (保存は後者)         | — (純粋) / `SnapshotRepository`, `ComplianceReportRepository`                      |
 | `runAnalyzers`                               | 分析一覧、スナップショット                       | Insight 一覧                                  | — (純粋)                                                                           |
-| `buildDashboardView`                         | 最新スナップショット、レポート履歴、Insight      | `DashboardView` v2                            | — (純粋)                                                                           |
+| `buildDashboardView`                         | 最新スナップショット、レポート履歴、Insight      | `DashboardView` v3                            | — (純粋)                                                                           |
 | `ReportDefinition.build`                     | `ReportContext` (期間、スナップショット、履歴)   | `ReportDocument`                              | `DocumentRenderer` で出力 (collector の `generateReport` が組み立て)               |
 | `planComplianceAlert` / `dispatchAlert`      | レポート、ポリシー、前回送信記録                 | 送信する通知                                  | `Notifier`, `StateRepository`                                                      |
 

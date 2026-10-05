@@ -83,7 +83,7 @@ export const ROUTES: RouteDef[] = [
     pattern: '/models',
     label: 'Models',
     nav: true,
-    render: () => <Models />,
+    render: (view) => <Models view={view} />,
   },
   {
     path: '/config',

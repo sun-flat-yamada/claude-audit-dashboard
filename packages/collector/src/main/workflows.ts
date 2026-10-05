@@ -6,6 +6,7 @@ import type {
   ReportContext,
   ReportDefinition,
   ReportDocument,
+  UsageMatrixInput,
 } from '@claude-audit/core';
 import {
   SNAPSHOT_SCHEMA_VERSION,
@@ -20,6 +21,7 @@ import {
 import { SNAPSHOT_ID, dashboardViewSchema } from '@claude-audit/core/contracts';
 import { stableStringify } from '../adapters/storage/file-store.js';
 import type { Container } from './container.js';
+import { readUsageMatrixInput } from './usage-matrix.js';
 
 const HISTORY_LIMIT = 90;
 
@@ -85,9 +87,17 @@ export async function resolveTarget(c: Container, snapshotId?: string): Promise<
   return { snapshot, report, history: stored ? history : [...history, report] };
 }
 
-/** Writes `dashboard.json` (DashboardView v2) from the latest (or the chosen) stored data. */
-export async function writeDashboard(c: Container, snapshotId?: string): Promise<DashboardView> {
+/**
+ * Writes `dashboard.json` (DashboardView v3) from the latest (or the chosen) stored data.
+ * `matrix` replaces the stored optional model x group input (the demo supplies a synthetic one).
+ */
+export async function writeDashboard(
+  c: Container,
+  snapshotId?: string,
+  matrix?: UsageMatrixInput,
+): Promise<DashboardView> {
   const { snapshot, report, history } = await resolveTarget(c, snapshotId);
+  const usageMatrix = matrix ?? (await readUsageMatrixInput(c).catch(() => null));
   const view = buildDashboardView({
     now: c.clock.now(),
     title: c.config.dashboard.title,
@@ -97,6 +107,7 @@ export async function writeDashboard(c: Container, snapshotId?: string): Promise
     report,
     history,
     insights: snapshot ? runAnalyzers(c.analyzers, snapshot) : [],
+    usageMatrix,
   });
   // Enforce the published contract at the only place that writes it.
   await c.artifacts.write('dashboard.json', stableStringify(dashboardViewSchema.parse(view)));

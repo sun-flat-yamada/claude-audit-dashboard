@@ -18,7 +18,7 @@ const mkItem = (month: string, n: number, over: Record<string, unknown> = {}) =>
   ...over,
 });
 const monthFile = (month: string, count: number, over: Record<string, unknown> = {}) => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: NOW,
   month,
   total: count,
@@ -29,7 +29,7 @@ const monthFile = (month: string, count: number, over: Record<string, unknown> =
 const entry = (month: string | null, over: Record<string, unknown> = {}) => ({
   kind: 'activity',
   path: month ? `detail/activity-${month}.json` : 'detail/activity-*.json',
-  schemaVersion: 1,
+  schemaVersion: 2,
   status: 'ok',
   reason: null,
   count: 0,
@@ -37,7 +37,7 @@ const entry = (month: string | null, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 const manifest = (files: unknown[], over: Record<string, unknown> = {}) => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: NOW,
   collectedAt: NOW,
   source: 'demo',
