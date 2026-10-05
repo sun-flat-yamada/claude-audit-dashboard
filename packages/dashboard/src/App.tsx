@@ -13,7 +13,7 @@ function Shell({ view }: { view: Extract<LoadState, { status: 'ready' }>['view']
     <>
       <NavBar
         items={items}
-        current={match?.route.path ?? ''}
+        current={match?.route.navPath ?? match?.route.path ?? ''}
         onNavigate={go}
         actions={<ThemeToggle />}
       />

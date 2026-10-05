@@ -5,7 +5,10 @@ import { matchPath } from './lib/router';
 import { Activity } from './pages/Activity';
 import { Compliance } from './pages/Compliance';
 import { ApiKeys } from './pages/ApiKeys';
+import { GroupDetail } from './pages/GroupDetail';
 import { Members } from './pages/Members';
+import { OrganizationDetail } from './pages/OrganizationDetail';
+import { Organizations } from './pages/Organizations';
 import { Overview } from './pages/Overview';
 
 export interface RouteDef extends NavItem {
@@ -13,6 +16,8 @@ export interface RouteDef extends NavItem {
   pattern: string;
   /** false hides the route from the navigation (parametrised detail pages). */
   nav: boolean;
+  /** Nav item highlighted for a parametrised sub-route (defaults to `path`). */
+  navPath?: string;
   render(view: DashboardView, params: Record<string, string>): ReactElement;
 }
 
@@ -52,6 +57,29 @@ export const ROUTES: RouteDef[] = [
     label: 'Activity',
     nav: true,
     render: () => <Activity />,
+  },
+  {
+    path: '/orgs',
+    pattern: '/orgs',
+    label: 'Organizations',
+    nav: true,
+    render: () => <Organizations />,
+  },
+  {
+    path: '/orgs/:id',
+    pattern: '/orgs/:id',
+    label: 'Organization',
+    nav: false,
+    navPath: '/orgs',
+    render: (_view, params) => <OrganizationDetail id={params.id ?? ''} />,
+  },
+  {
+    path: '/groups/:id',
+    pattern: '/groups/:id',
+    label: 'Group',
+    nav: false,
+    navPath: '/orgs',
+    render: (_view, params) => <GroupDetail id={params.id ?? ''} />,
   },
 ];
 
