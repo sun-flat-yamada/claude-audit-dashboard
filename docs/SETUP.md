@@ -41,6 +41,7 @@ Missing scopes do not break collection: the affected datasets are reported as `u
 | ------------------------------------------------------------------------------------------ | -------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ANTHROPIC_ENTERPRISE_API_KEY`                                                             | Secret   | Yes      | The key from Step 1                                                                                                                                                    |
 | `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY` | Secret   | No       | Per-API overrides                                                                                                                                                      |
+| `ANTHROPIC_CONSOLE_ADMIN_API_KEY`                                                          | Secret   | No       | Console organization Admin key for the optional sources — see [Optional sources](#optional-sources-console-admin-api-and-claude-code-analytics)                        |
 | `SLACK_WEBHOOK_URL`                                                                        | Secret   | No       | Slack Incoming Webhook URL                                                                                                                                             |
 | `DISCORD_WEBHOOK_URL`                                                                      | Secret   | No       | Discord webhook URL                                                                                                                                                    |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`                                      | Secret   | No       | SMTP server (`SMTP_SECURE=true` is implied for port 465)                                                                                                               |
@@ -51,6 +52,45 @@ Missing scopes do not break collection: the affected datasets are reported as `u
 | `PAGES_DETAIL_DATA`                                                                        | Variable | No       | `true` (with `PAGES_DATA_SOURCE=live`) also publishes per-person detail files and the effective configuration; Private Pages only — see [DEPLOYMENT.md](DEPLOYMENT.md) |
 
 Workflows declare their own token permissions; no change to the repository's default workflow permissions is needed.
+
+## Optional sources: Console Admin API and Claude Code Analytics
+
+Two optional adapters (B4) collect data that Claude Enterprise keys cannot reach. **Both are off by default**: nothing is requested, the 13 built-in datasets, their coverage, rule OP-002 and the score stay exactly as they are, and the dashboard shows nothing new.
+
+| Source            | Config flag                  | Datasets (Data coverage rows)                                        | Endpoints                                                                                 |
+| ----------------- | ---------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Console Admin API | `sources.console.enabled`    | `consoleWorkspaces`, `consoleApiKeys`, `consoleUsage`, `consoleCost` | `GET /v1/organizations/workspaces`, `/api_keys`, `/usage_report/messages`, `/cost_report` |
+| Claude Code       | `sources.claudeCode.enabled` | `claudeCodeActivity`                                                 | `GET /v1/organizations/usage_report/claude_code` (one request series per day)             |
+
+To enable them:
+
+1. In the Claude Console organization linked to your Enterprise tenant, create an **Admin API key** (`sk-ant-admin...`, read-only use). This is a different credential from the Enterprise key and from `ANTHROPIC_ADMIN_API_KEY` (the Enterprise admin override).
+2. Store it as `ANTHROPIC_CONSOLE_ADMIN_API_KEY` (repository secret, or `.env` locally). It never falls back to `ANTHROPIC_ENTERPRISE_API_KEY`.
+3. In `config/default.json` set the flag(s):
+
+   ```json
+   {
+     "sources": {
+       "console": { "enabled": true, "lookbackDays": 30 },
+       "claudeCode": { "enabled": true, "lookbackDays": 7 }
+     }
+   }
+   ```
+
+   `lookbackDays` is the report period (Console: 1-366, Claude Code: 1-31; Claude Code needs one request series per day). A dataset can still be switched off individually with `sources.disabled`.
+
+4. Run `pnpm pipeline`. The datasets appear in Data coverage and in `#/config` (Data sources).
+
+What happens when something is missing:
+
+- Enabled but no key, or HTTP 401 / 403 / 404: the datasets are `unavailable` with the reason (the message names `ANTHROPIC_CONSOLE_ADMIN_API_KEY`), and rule OP-002 fails until you fix it or turn the flag off.
+- A response that does not match the documented shape (schema drift) or another API error: the dataset is `error`.
+- Either way every other dataset keeps collecting.
+
+> [!NOTE]
+> `claudeCodeActivity` rows are per user (e-mail) or per API key name. They are stored only in the snapshot files on the `data/audit` branch, like `members`, and are **never published**: the dashboard shows only the coverage row (status and record count). Verification against a real tenant has not been done yet; capture and sanitize responses as described in "Capturing real responses" below.
+
+To try the optional sources without a key: `pnpm demo --profile optional-sources` (synthetic tenant, writes the gitignored `data/sample-optional-sources/`) and `pnpm fixture --optional-sources` (tenant-shape fixtures plus official-shape examples, writes `data/fixture-optional-sources/`). Plain `pnpm demo` / `pnpm fixture` are unchanged.
 
 ## Step 3: GitHub Pages
 
