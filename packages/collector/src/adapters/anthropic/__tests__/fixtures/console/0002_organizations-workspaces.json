@@ -1,0 +1,29 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/workspaces",
+    "query": {
+      "after_id": ["wrkspc_01DemoExampleStag00002"],
+      "include_archived": ["true"],
+      "limit": ["1000"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "archived_at": "2026-08-30T09:00:00Z",
+          "created_at": "2025-10-20T14:15:00Z",
+          "display_color": "#B8860B",
+          "id": "wrkspc_01DemoExampleSand00003",
+          "name": "Example Sandbox",
+          "type": "workspace"
+        }
+      ],
+      "first_id": "wrkspc_01DemoExampleSand00003",
+      "has_more": false,
+      "last_id": "wrkspc_01DemoExampleSand00003"
+    },
+    "status": 200
+  }
+}

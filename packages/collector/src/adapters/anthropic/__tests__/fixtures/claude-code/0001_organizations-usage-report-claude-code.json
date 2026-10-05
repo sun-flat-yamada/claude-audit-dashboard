@@ -1,0 +1,124 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/usage_report/claude_code",
+    "query": {
+      "limit": ["1000"],
+      "starting_at": ["2026-09-30"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "actor": {
+            "email_address": "alice.engineer@example.com",
+            "type": "user_actor"
+          },
+          "core_metrics": {
+            "commits_by_claude_code": 3,
+            "lines_of_code": {
+              "added": 240,
+              "removed": 70
+            },
+            "num_sessions": 5,
+            "pull_requests_by_claude_code": 1
+          },
+          "customer_type": "subscription",
+          "date": "2026-09-30T00:00:00Z",
+          "model_breakdown": [
+            {
+              "estimated_cost": {
+                "amount": 340,
+                "currency": "USD"
+              },
+              "model": "claude-demo-large",
+              "tokens": {
+                "cache_creation": 24000,
+                "cache_read": 310000,
+                "input": 90000,
+                "output": 22000
+              }
+            }
+          ],
+          "organization_id": "00000000-0000-4000-8000-000000000001",
+          "subscription_type": "enterprise",
+          "terminal_type": "iTerm.app",
+          "tool_actions": {
+            "edit_tool": {
+              "accepted": 40,
+              "rejected": 6
+            },
+            "multi_edit_tool": {
+              "accepted": 2,
+              "rejected": 0
+            },
+            "notebook_edit_tool": {
+              "accepted": 0,
+              "rejected": 0
+            },
+            "write_tool": {
+              "accepted": 1,
+              "rejected": 1
+            }
+          }
+        },
+        {
+          "actor": {
+            "api_key_name": "ci-code-review-bot",
+            "type": "api_actor"
+          },
+          "core_metrics": {
+            "commits_by_claude_code": 0,
+            "lines_of_code": {
+              "added": 35,
+              "removed": 12
+            },
+            "num_sessions": 2,
+            "pull_requests_by_claude_code": 0
+          },
+          "customer_type": "api",
+          "date": "2026-09-30T00:00:00Z",
+          "model_breakdown": [
+            {
+              "estimated_cost": {
+                "amount": 21,
+                "currency": "USD"
+              },
+              "model": "claude-demo-small",
+              "tokens": {
+                "cache_creation": 0,
+                "cache_read": 0,
+                "input": 18000,
+                "output": 4000
+              }
+            }
+          ],
+          "organization_id": "00000000-0000-4000-8000-000000000001",
+          "terminal_type": "non-interactive",
+          "tool_actions": {
+            "edit_tool": {
+              "accepted": 8,
+              "rejected": 1
+            },
+            "multi_edit_tool": {
+              "accepted": 2,
+              "rejected": 0
+            },
+            "notebook_edit_tool": {
+              "accepted": 0,
+              "rejected": 0
+            },
+            "write_tool": {
+              "accepted": 1,
+              "rejected": 1
+            }
+          }
+        }
+      ],
+      "has_more": true,
+      "next_page": "page_demo_claude_code_2"
+    },
+    "status": 200
+  }
+}

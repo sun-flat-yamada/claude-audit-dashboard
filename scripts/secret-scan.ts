@@ -22,6 +22,11 @@ let findings = 0;
 const PATTERNS: { name: string; pattern: RegExp }[] = [
   { name: 'Anthropic Admin Key', pattern: /sk-ant-admin[A-Za-z0-9_-]{20,}/ },
   { name: 'Anthropic API Key', pattern: /sk-ant-api[A-Za-z0-9_-]{20,}/ },
+  {
+    // A literal value assigned to the Console Admin key variable (the key itself is caught above)
+    name: 'Console Admin Key assignment',
+    pattern: /ANTHROPIC_CONSOLE_ADMIN_API_KEY\s*(?:=\s*['"]?|:\s*['"])[A-Za-z0-9_-]{16,}/,
+  },
   { name: 'GitHub PAT (classic)', pattern: /ghp_[A-Za-z0-9]{36,}/ },
   { name: 'GitHub PAT (fine-grained)', pattern: /github_pat_[A-Za-z0-9_]{30,}/ },
   { name: 'GitHub OAuth Token', pattern: /gho_[A-Za-z0-9]{36,}/ },
@@ -117,7 +122,11 @@ function scan(dir: string, depth = 0): void {
  * Directories that must always be scanned, whatever the depth limit of the walk above:
  * the sanitized tenant fixtures sit eight levels down.
  */
-const REQUIRED_DIRS = ['packages/collector/src/adapters/anthropic/__tests__/fixtures/tenant'];
+const REQUIRED_DIRS = [
+  'packages/collector/src/adapters/anthropic/__tests__/fixtures/tenant',
+  'packages/collector/src/adapters/anthropic/__tests__/fixtures/console',
+  'packages/collector/src/adapters/anthropic/__tests__/fixtures/claude-code',
+];
 
 console.log('🔒 Secret Scanner');
 console.log('═'.repeat(40));

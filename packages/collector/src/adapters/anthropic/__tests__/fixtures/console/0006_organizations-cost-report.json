@@ -1,0 +1,65 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/cost_report",
+    "query": {
+      "bucket_width": ["1d"],
+      "group_by[]": ["workspace_id", "description"],
+      "limit": ["31"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "ending_at": "2026-09-29T00:00:00Z",
+          "results": [
+            {
+              "amount": "4210.5",
+              "context_window": "0-200k",
+              "cost_type": "tokens",
+              "currency": "USD",
+              "description": "Claude Demo Large Usage - Input Tokens",
+              "model": "claude-demo-large",
+              "service_tier": "standard",
+              "token_type": "uncached_input_tokens",
+              "workspace_id": "wrkspc_01DemoExampleProd00001"
+            },
+            {
+              "amount": "126.25",
+              "context_window": "0-200k",
+              "cost_type": "tokens",
+              "currency": "USD",
+              "description": "Claude Demo Small Usage - Input Tokens",
+              "model": "claude-demo-small",
+              "service_tier": "standard",
+              "token_type": "uncached_input_tokens",
+              "workspace_id": "wrkspc_01DemoExampleStag00002"
+            }
+          ],
+          "starting_at": "2026-09-28T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-30T00:00:00Z",
+          "results": [
+            {
+              "amount": "12.0",
+              "context_window": "0-200k",
+              "cost_type": "web_search",
+              "currency": "USD",
+              "description": "Web search usage",
+              "model": null,
+              "service_tier": "standard",
+              "token_type": null,
+              "workspace_id": "wrkspc_01DemoExampleProd00001"
+            }
+          ],
+          "starting_at": "2026-09-29T00:00:00Z"
+        }
+      ],
+      "has_more": true,
+      "next_page": "page_demo_cost_2"
+    },
+    "status": 200
+  }
+}

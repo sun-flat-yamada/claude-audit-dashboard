@@ -1,0 +1,86 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/usage_report/messages",
+    "query": {
+      "bucket_width": ["1d"],
+      "group_by[]": ["workspace_id", "model"],
+      "limit": ["31"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "ending_at": "2026-09-29T00:00:00Z",
+          "results": [
+            {
+              "api_key_id": null,
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 40000,
+                "ephemeral_5m_input_tokens": 10000
+              },
+              "cache_read_input_tokens": 800000,
+              "context_window": null,
+              "inference_geo": null,
+              "model": "claude-demo-large",
+              "output_tokens": 310000,
+              "server_tool_use": {
+                "web_search_requests": 4
+              },
+              "service_tier": null,
+              "uncached_input_tokens": 1200000,
+              "workspace_id": "wrkspc_01DemoExampleProd00001"
+            },
+            {
+              "api_key_id": null,
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 0,
+                "ephemeral_5m_input_tokens": 0
+              },
+              "cache_read_input_tokens": 0,
+              "context_window": null,
+              "inference_geo": null,
+              "model": "claude-demo-small",
+              "output_tokens": 90000,
+              "server_tool_use": {
+                "web_search_requests": 0
+              },
+              "service_tier": null,
+              "uncached_input_tokens": 420000,
+              "workspace_id": "wrkspc_01DemoExampleStag00002"
+            }
+          ],
+          "starting_at": "2026-09-28T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-30T00:00:00Z",
+          "results": [
+            {
+              "api_key_id": null,
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 0,
+                "ephemeral_5m_input_tokens": 0
+              },
+              "cache_read_input_tokens": 0,
+              "context_window": null,
+              "inference_geo": null,
+              "model": "claude-demo-small",
+              "output_tokens": 3000,
+              "server_tool_use": {
+                "web_search_requests": 0
+              },
+              "service_tier": null,
+              "uncached_input_tokens": 15000,
+              "workspace_id": null
+            }
+          ],
+          "starting_at": "2026-09-29T00:00:00Z"
+        }
+      ],
+      "has_more": true,
+      "next_page": "page_demo_usage_2"
+    },
+    "status": 200
+  }
+}

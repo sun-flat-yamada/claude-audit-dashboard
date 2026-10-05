@@ -61,21 +61,40 @@ function modelUsage(m: z.output<typeof modelSchema>): ClaudeCodeModelUsage {
   };
 }
 
-function toActivity(row: Row): ClaudeCodeActivity {
+/** Edit / write tool proposals summed over every tool the API reports. */
+function toolTotals(row: Row): { toolAccepted: number; toolRejected: number } {
   const tools = Object.values(row.tool_actions ?? {});
   return {
-    date: row.date.slice(0, 10),
-    actorKind: ACTOR_KIND[row.actor.type] ?? row.actor.type,
-    actor: row.actor.email_address ?? row.actor.api_key_name ?? null,
-    customerType: row.customer_type ?? null,
-    terminalType: row.terminal_type ?? null,
-    sessions: row.core_metrics.num_sessions,
-    linesAdded: row.core_metrics.lines_of_code?.added ?? 0,
-    linesRemoved: row.core_metrics.lines_of_code?.removed ?? 0,
-    commits: row.core_metrics.commits_by_claude_code,
-    pullRequests: row.core_metrics.pull_requests_by_claude_code,
     toolAccepted: tools.reduce((sum, t) => sum + t.accepted, 0),
     toolRejected: tools.reduce((sum, t) => sum + t.rejected, 0),
+  };
+}
+
+function who(actor: Row['actor']): Pick<ClaudeCodeActivity, 'actorKind' | 'actor'> {
+  return {
+    actorKind: ACTOR_KIND[actor.type] ?? actor.type,
+    actor: actor.email_address ?? actor.api_key_name ?? null,
+  };
+}
+
+function metrics(core: Row['core_metrics']) {
+  return {
+    sessions: core.num_sessions,
+    linesAdded: core.lines_of_code?.added ?? 0,
+    linesRemoved: core.lines_of_code?.removed ?? 0,
+    commits: core.commits_by_claude_code,
+    pullRequests: core.pull_requests_by_claude_code,
+  };
+}
+
+function toActivity(row: Row): ClaudeCodeActivity {
+  return {
+    date: row.date.slice(0, 10),
+    ...who(row.actor),
+    customerType: row.customer_type ?? null,
+    terminalType: row.terminal_type ?? null,
+    ...metrics(row.core_metrics),
+    ...toolTotals(row),
     models: (row.model_breakdown ?? []).map(modelUsage),
   };
 }

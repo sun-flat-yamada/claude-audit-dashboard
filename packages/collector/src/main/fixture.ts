@@ -3,20 +3,41 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Logger } from '@claude-audit/core';
 import {
+  FIXTURE_CONSOLE_KEY,
+  optionalFixturesRoot,
+  withOptionalFixtures,
+} from '../adapters/fixture/optional-fixture.js';
+import {
   FIXTURE_ENV,
   FIXTURE_NOW,
   fixtureState,
   createFixtureFetch,
 } from '../adapters/fixture/fixture-source.js';
 import { stableStringify } from '../adapters/storage/file-store.js';
+import type { AppConfig } from '../infrastructure/config.js';
 import { fixedClock } from '../infrastructure/runtime.js';
 import { createContainer } from './container.js';
 import { writeDetail } from './detail.js';
 import { writeFiles } from './write-files.js';
 import { check, collect, writeDashboard } from './workflows.js';
 
+/** The fixture profile with both optional sources on; one day of Claude Code history is recorded. */
+const enableOptionalSources = (config: AppConfig): AppConfig => ({
+  ...config,
+  sources: {
+    ...config.sources,
+    console: { enabled: true, lookbackDays: 30 },
+    claudeCode: { enabled: true, lookbackDays: 1 },
+  },
+});
+
 export interface FixtureTenantOptions {
   fixtureDir: string;
+  /**
+   * Also enable the optional sources (Console Admin, Claude Code Analytics) with a synthetic
+   * Console key and replay their official-shape fixtures next to the tenant.
+   */
+  optionalSources?: boolean | undefined;
   cwd?: string | undefined;
   logger?: Logger | undefined;
 }
@@ -32,9 +53,16 @@ export async function runFixtureTenant(
 ): Promise<Record<string, string>> {
   const workDir = await mkdtemp(join(tmpdir(), 'claude-audit-fixture-'));
   try {
-    const replay = await createFixtureFetch(options.fixtureDir);
+    const tenant = await createFixtureFetch(options.fixtureDir);
+    const optional = options.optionalSources === true;
+    const replay = optional
+      ? await withOptionalFixtures(tenant, optionalFixturesRoot(options.fixtureDir))
+      : tenant;
     const c = await createContainer({
-      env: FIXTURE_ENV,
+      env: optional
+        ? { ...FIXTURE_ENV, ANTHROPIC_CONSOLE_ADMIN_API_KEY: FIXTURE_CONSOLE_KEY }
+        : FIXTURE_ENV,
+      configPatch: optional ? enableOptionalSources : undefined,
       cwd: options.cwd,
       logger: options.logger,
       dataDir: workDir,

@@ -1,0 +1,85 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/usage_report/claude_code",
+    "query": {
+      "limit": ["1000"],
+      "page": ["page_demo_claude_code_2"],
+      "starting_at": ["2026-09-30"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "actor": {
+            "email_address": "bob.analyst@example.com",
+            "type": "user_actor"
+          },
+          "core_metrics": {
+            "commits_by_claude_code": 1,
+            "lines_of_code": {
+              "added": 80,
+              "removed": 20
+            },
+            "num_sessions": 3,
+            "pull_requests_by_claude_code": 0
+          },
+          "customer_type": "api",
+          "date": "2026-09-30T00:00:00Z",
+          "model_breakdown": [
+            {
+              "estimated_cost": {
+                "amount": 150,
+                "currency": "USD"
+              },
+              "model": "claude-demo-large",
+              "tokens": {
+                "cache_creation": 8000,
+                "cache_read": 120000,
+                "input": 40000,
+                "output": 9000
+              }
+            },
+            {
+              "estimated_cost": {
+                "amount": 4,
+                "currency": "USD"
+              },
+              "model": "claude-demo-small",
+              "tokens": {
+                "cache_creation": 0,
+                "cache_read": 0,
+                "input": 5000,
+                "output": 1000
+              }
+            }
+          ],
+          "organization_id": "00000000-0000-4000-8000-000000000001",
+          "terminal_type": "vscode",
+          "tool_actions": {
+            "edit_tool": {
+              "accepted": 12,
+              "rejected": 3
+            },
+            "multi_edit_tool": {
+              "accepted": 2,
+              "rejected": 0
+            },
+            "notebook_edit_tool": {
+              "accepted": 0,
+              "rejected": 0
+            },
+            "write_tool": {
+              "accepted": 1,
+              "rejected": 1
+            }
+          }
+        }
+      ],
+      "has_more": false,
+      "next_page": null
+    },
+    "status": 200
+  }
+}
