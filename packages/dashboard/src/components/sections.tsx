@@ -6,7 +6,7 @@ import {
   formatPercent,
   formatTimestamp,
 } from '../lib/format';
-import { humanize } from '../lib/view';
+import { humanize, tokenSeries, tokenSubtitle } from '../lib/view';
 import { StatusBadge } from './Badges';
 import { Card, Empty } from './Card';
 import { ComplianceResults } from './ComplianceResults';
@@ -94,13 +94,13 @@ export function CostSection({ usage }: { usage: DashboardView['usage'] }) {
 
 export function TokenSection({ usage }: { usage: DashboardView['usage'] }) {
   if (!usage) return null;
-  const series = [
-    { key: 'inputTokens', label: 'Input tokens', color: 'var(--series-1)' },
-    { key: 'outputTokens', label: 'Output tokens', color: 'var(--series-2)' },
-  ];
   return (
-    <Card title="Daily tokens" subtitle="Input includes cache reads and writes">
-      <TimeSeriesChart data={usage.daily} series={series} format={formatCompact} />
+    <Card title="Daily tokens" subtitle={tokenSubtitle(usage)}>
+      <TimeSeriesChart
+        data={usage.daily}
+        series={tokenSeries(usage.daily)}
+        format={formatCompact}
+      />
     </Card>
   );
 }

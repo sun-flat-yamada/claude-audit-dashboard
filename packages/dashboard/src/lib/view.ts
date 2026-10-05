@@ -1,4 +1,8 @@
-import type { DashboardCheckResult, DashboardKpi } from '@claude-audit/core/contracts';
+import type {
+  DashboardCheckResult,
+  DashboardKpi,
+  DashboardUsage,
+} from '@claude-audit/core/contracts';
 import { formatCompact, formatInteger, formatMoneyHeadline, formatPercent } from './format';
 
 /** Pure view helpers: everything the components derive from the published contract lives here. */
@@ -50,4 +54,53 @@ const ACRONYMS = /\b(api|ip|sso|scim|rbac|mcp)\b/gi;
 export const humanize = (id: string): string => {
   const words = id.replace(/[-_]+/g, ' ').trim();
   return (words.charAt(0).toUpperCase() + words.slice(1)).replace(ACRONYMS, (w) => w.toUpperCase());
+};
+
+export interface TokenSeries {
+  key: string;
+  label: string;
+  color: string;
+}
+
+/**
+ * Output sits before cache write so that the two lines that usually run close together
+ * (cache read and output) get the orange / aqua slots instead of the weaker orange / yellow pair.
+ */
+const TOKEN_TYPES: readonly TokenSeries[] = [
+  { key: 'uncachedInputTokens', label: 'Uncached input', color: 'var(--series-1)' },
+  { key: 'cacheReadInputTokens', label: 'Cache read', color: 'var(--series-2)' },
+  { key: 'outputTokens', label: 'Output', color: 'var(--series-3)' },
+  { key: 'cacheCreationInputTokens', label: 'Cache write', color: 'var(--series-4)' },
+];
+
+const LEGACY_TOKENS: readonly TokenSeries[] = [
+  { key: 'inputTokens', label: 'Input tokens', color: 'var(--series-1)' },
+  { key: 'outputTokens', label: 'Output tokens', color: 'var(--series-2)' },
+];
+
+/** True when every day carries the input breakdown (a `dashboard.json` from before AN-1 has none). */
+export const hasTokenBreakdown = (daily: DashboardUsage['daily']): boolean =>
+  daily.length > 0 &&
+  daily.every(
+    (d) =>
+      d.uncachedInputTokens !== undefined &&
+      d.cacheReadInputTokens !== undefined &&
+      d.cacheCreationInputTokens !== undefined,
+  );
+
+/** Token chart series by type, or the summed input / output pair for an older view. */
+export const tokenSeries = (daily: DashboardUsage['daily']): readonly TokenSeries[] =>
+  hasTokenBreakdown(daily) ? TOKEN_TYPES : LEGACY_TOKENS;
+
+/** Subtitle of the token card: the period cache hit rate when the view carries one. */
+export const tokenSubtitle = (usage: DashboardUsage): string => {
+  const rate = usage.cacheHitRate;
+  const hit =
+    rate === undefined
+      ? null
+      : `Cache hit rate ${rate === null ? '—' : formatPercent(rate)} (cache reads ÷ all input)`;
+  const base = hasTokenBreakdown(usage.daily)
+    ? 'Tokens per day by type'
+    : 'Input includes cache reads and writes';
+  return hit ? `${base} · ${hit}` : base;
 };
