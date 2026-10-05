@@ -5,7 +5,7 @@ category: 'rules'
 type: 'specification'
 status: 'active'
 date: 2026-10-03
-updated: 2026-10-03
+updated: 2026-10-05
 lang: 'en'
 tags:
   - 'rules'
@@ -37,11 +37,11 @@ A repository definition always replaces the environment default it conflicts wit
 ## 3. Conflicts: apply, then report (no stopping, no asking)
 
 - Apply the repository definition and keep working. Do not pause the task, ask for confirmation, or add a PR / issue comment about the conflict.
-- Report it **only in the result** (the final reply to the user), in a section titled `Conflicts with default instructions` (in the language the user writes in), one row per conflict:
+- Report it **only in the result** (the final reply to the user), in a section titled `既定指示との競合` (replies are Japanese, see `language-rules-output.md`), one row per conflict:
 
-  | Default instruction      | Repository definition applied                            | Result                      |
-  | :----------------------- | :------------------------------------------------------- | :-------------------------- |
-  | Create the PR as a draft | `development-workflow.md` Step 6 (Auto-Pilot on = ready) | PR created ready for review |
+  | 既定指示           | 適用したリポジトリ定義                                    | 結果                   |
+  | :----------------- | :-------------------------------------------------------- | :--------------------- |
+  | PR は draft で作る | `development-workflow.md` Step 6 (Auto-Pilot on は ready) | PR を ready で作成した |
 
 - No conflict means no section.
 
