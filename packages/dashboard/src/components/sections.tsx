@@ -10,6 +10,7 @@ import { humanize, tokenSeries, tokenSubtitle } from '../lib/view';
 import { StatusBadge } from './Badges';
 import { Card, Empty } from './Card';
 import { ComplianceResults } from './ComplianceResults';
+import { ProductActiveUsers } from './ProductActiveUsers';
 import { ShareBars } from './ShareBars';
 import { TimeSeriesChart } from './TimeSeriesChart';
 import { ScrollRegion } from './ScrollRegion';
@@ -157,6 +158,7 @@ export function AdoptionSection({ adoption }: { adoption: DashboardView['adoptio
   return (
     <Card title="Active users" subtitle={facts.join(' · ')}>
       <TimeSeriesChart data={adoption.daily} series={series} format={formatInteger} />
+      <ProductActiveUsers adoption={adoption} />
     </Card>
   );
 }
