@@ -49,6 +49,7 @@ export * from './application/presenters/config-view.js';
 export * from './application/presenters/archive-view.js';
 export * from './application/presenters/alerts-view.js';
 export * from './application/presenters/usage-matrix-view.js';
+export * from './application/presenters/time-point-summary.js';
 export * from './application/alerts-history.js';
 export * from './application/capacity-alert.js';
 

@@ -1,4 +1,9 @@
-import { COMPLIANCE_EXPORT_COLUMNS, type DashboardCheckResult } from '@claude-audit/core/contracts';
+import {
+  COMPLIANCE_EXPORT_COLUMNS,
+  csvText,
+  escapeCsvCell,
+  type DashboardCheckResult,
+} from '@claude-audit/core/contracts';
 import type { StatusFilter } from './view';
 
 /** Client-side export of the compliance results. Pure and deterministic: same input, same bytes. */
@@ -9,15 +14,8 @@ export type ExportFormat = 'csv' | 'json';
 export const EXTRA_COLUMNS = ['Category', 'Remediation', 'Evidence'] as const;
 export const EXPORT_COLUMNS: readonly string[] = [...COMPLIANCE_EXPORT_COLUMNS, ...EXTRA_COLUMNS];
 
-const FORMULA_PREFIX = /^[=+\-@\t\r]/;
-const NEEDS_QUOTES = /[",\r\n]/;
-
-/** Spreadsheet formula-injection guard first (leading `'`), then RFC 4180 quoting. */
-export function escapeCsvCell(value: string | null): string {
-  const text = value ?? '';
-  const safe = FORMULA_PREFIX.test(text) ? `'${text}` : text;
-  return NEEDS_QUOTES.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
-}
+/** The shared CSV cell escaping (formula-injection guard + RFC 4180), kept exported from here. */
+export { escapeCsvCell };
 
 const evidenceText = (result: DashboardCheckResult): string =>
   result.evidence.map((e) => e.label).join('; ');
@@ -34,10 +32,8 @@ const csvRow = (result: DashboardCheckResult): string[] => [
 ];
 
 /** CRLF line ends and a trailing CRLF, like the collector's CSV renderer. */
-export function complianceCsv(results: readonly DashboardCheckResult[]): string {
-  const lines = [EXPORT_COLUMNS as readonly string[], ...results.map(csvRow)];
-  return lines.map((row) => row.map(escapeCsvCell).join(',')).join('\r\n') + '\r\n';
-}
+export const complianceCsv = (results: readonly DashboardCheckResult[]): string =>
+  csvText([EXPORT_COLUMNS, ...results.map(csvRow)]);
 
 /** Fixed key order (the CSV column order) so the file is byte-stable. */
 export function complianceJson(

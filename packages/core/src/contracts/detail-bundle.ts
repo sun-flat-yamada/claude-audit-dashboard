@@ -13,6 +13,15 @@ import {
   type DetailManifestFile,
 } from './detail-view.js';
 import {
+  COMPARE_DIR,
+  COMPARE_INDEX_PATH,
+  COMPARE_POINT_LIMIT,
+  compareIndexSchema,
+  comparePointPath,
+  timePointSummarySchema,
+  type TimePointSummary,
+} from './time-point-summary.js';
+import {
   MONTHLY_DIR,
   MONTHLY_INDEX_PATH,
   monthlyReportIndexSchema,
@@ -40,6 +49,7 @@ const SCHEMAS = {
   config: detailConfigSchema,
   archive: detailArchiveSchema,
   alerts: detailAlertsSchema,
+  compare: compareIndexSchema,
 } as const;
 
 type Json = Record<string, unknown>;
@@ -174,6 +184,7 @@ function alertsErrors(path: string, data: Json): string[] {
 }
 
 function countOf(entry: DetailManifestFile, data: Json): number {
+  if (entry.kind === 'compare') return rows(data, 'points').length;
   if (entry.kind === 'alerts') return rows(data, 'alerts').length;
   if (entry.kind === 'archive') return Number((data.totals as Json | undefined)?.snapshots);
   if (entry.kind === 'config') return rows(data, 'rules').length;
@@ -190,6 +201,7 @@ function kindErrors(entry: DetailManifestFile, data: Json): string[] {
   if (entry.kind === 'alerts')
     return [...configLeakErrors(path, data), ...alertsErrors(path, data)];
   if (entry.kind === 'archive') return archiveErrors(path, data);
+  if (entry.kind === 'compare') return configLeakErrors(path, data);
   return [];
 }
 
@@ -248,6 +260,103 @@ function monthlyErrors(files: DetailBundleFiles): string[] {
   return [...unlisted, ...entries, ...emailErrors(MONTHLY_INDEX_PATH, indexText ?? '', true)];
 }
 
+const isComparePoint = (path: string): boolean =>
+  path.startsWith(`${COMPARE_DIR}/`) && path !== COMPARE_INDEX_PATH;
+
+const NOT_ASSESSED = new Set(['skipped', 'error']);
+
+const duplicates = (values: readonly string[]): boolean => new Set(values).size !== values.length;
+
+/** One summary file on its own: counts equal the rows, ids are unique, nothing sensitive. */
+function summaryErrors(path: string, summary: TimePointSummary, text: string): string[] {
+  const ruleIds = summary.rules.map((r) => r.id);
+  const assessed = summary.rules.filter((r) => !NOT_ASSESSED.has(r.status)).length;
+  return [
+    ...(summary.total === summary.rules.length && summary.assessed === assessed
+      ? []
+      : [`${path}: total or assessed differs from the rule rows`]),
+    ...(duplicates(ruleIds) || duplicates(summary.datasets.map((d) => d.name))
+      ? [`${path}: duplicate rule or dataset rows`]
+      : []),
+    ...(summary.disabledRules.some((id) => ruleIds.includes(id))
+      ? [`${path}: a disabled rule also has a result`]
+      : []),
+    ...(path === comparePointPath(summary.id) ? [] : [`${path}: file name differs from the id`]),
+    ...emailErrors(path, text, false),
+    ...configLeakErrors(path, JSON.parse(text) as Json),
+  ];
+}
+
+/** An archived point is listed by id only: no score and no summary file. */
+function archivedPointErrors(
+  path: string,
+  point: { score: number | null; assessed: number | null },
+  text: string | undefined,
+): string[] {
+  return [
+    ...(point.score === null && point.assessed === null
+      ? []
+      : [`${path}: an archived point must not carry a score`]),
+    ...(text === undefined ? [] : [`${path}: an archived point has no summary file`]),
+  ];
+}
+
+function pointErrors(
+  files: DetailBundleFiles,
+  point: {
+    id: string;
+    collectedAt: string | null;
+    state: string;
+    score: number | null;
+    assessed: number | null;
+  },
+): string[] {
+  const path = comparePointPath(point.id);
+  const text = files[path];
+  if (point.state === 'archived') return archivedPointErrors(path, point, text);
+  if (text === undefined) return [`${path}: listed in the compare index but missing`];
+  const parsed = timePointSummarySchema.safeParse(parseJson(text));
+  if (!parsed.success) return [`${path}: does not match the time-point summary contract`];
+  const s = parsed.data;
+  return [
+    ...(s.id === point.id &&
+    s.collectedAt === point.collectedAt &&
+    s.score === point.score &&
+    s.assessed === point.assessed
+      ? []
+      : [`${path}: differs from its compare index entry`]),
+    ...summaryErrors(path, s, text),
+  ];
+}
+
+/** `detail/compare/*`: index <-> files consistency, summary consistency, nothing sensitive. */
+function compareErrors(files: DetailBundleFiles): string[] {
+  const paths = Object.keys(files).filter(isComparePoint);
+  const indexText = files[COMPARE_INDEX_PATH];
+  if (paths.length === 0 && indexText === undefined) return [];
+  const index = compareIndexSchema.safeParse(
+    indexText === undefined ? undefined : parseJson(indexText),
+  );
+  if (!index.success) return [`${COMPARE_INDEX_PATH}: missing or does not match the contract`];
+  const { points } = index.data;
+  const ids = points.map((p) => p.id);
+  const listed = new Set(ids);
+  return [
+    ...paths
+      .filter((p) => !points.some((pt) => comparePointPath(pt.id) === p))
+      .map((p) => `${p}: not listed in the compare index`),
+    ...(duplicates(ids) ? [`${COMPARE_INDEX_PATH}: duplicate point ids`] : []),
+    ...(ids.every((id, i) => i === 0 || (ids[i - 1] ?? '') > id)
+      ? []
+      : [`${COMPARE_INDEX_PATH}: points must be newest first`]),
+    ...(points.length > COMPARE_POINT_LIMIT
+      ? [`${COMPARE_INDEX_PATH}: more than ${String(COMPARE_POINT_LIMIT)} points`]
+      : []),
+    ...points.flatMap((point) => pointErrors(files, point)),
+    ...(listed.size === 0 ? [] : emailErrors(COMPARE_INDEX_PATH, indexText ?? '', false)),
+  ];
+}
+
 /**
  * Validates a whole `detail/` directory (manifest, every listed file, nothing unlisted) and
  * returns human-readable problems; an empty list means the bundle is publishable as a sample.
@@ -270,9 +379,12 @@ export function checkDetailBundle(
       ? [`${DETAIL_MANIFEST_PATH}: maskPii must be true`]
       : []),
     ...Object.keys(files)
-      .filter((p) => p !== DETAIL_MANIFEST_PATH && !listed.has(p) && !isMonthly(p))
+      .filter(
+        (p) => p !== DETAIL_MANIFEST_PATH && !listed.has(p) && !isMonthly(p) && !isComparePoint(p),
+      )
       .map((p) => `${p}: not listed in the manifest`),
     ...listedErrors(manifest, files),
     ...monthlyErrors(files),
+    ...compareErrors(files),
   ];
 }
