@@ -22,6 +22,9 @@ export * from './domain/analysis/analyzers.js';
 export * from './domain/projections/index.js';
 export * from './domain/activity-window.js';
 
+// ─── Domain: capacity (data branch size) ─────────────────────────────────────
+export * from './domain/capacity/capacity.js';
+
 // ─── Domain: utilities ───────────────────────────────────────────────────────
 export * from './domain/util/time.js';
 export * from './domain/util/numbers.js';
@@ -45,6 +48,7 @@ export * from './application/presenters/archive-view.js';
 export * from './application/presenters/alerts-view.js';
 export * from './application/presenters/usage-matrix-view.js';
 export * from './application/alerts-history.js';
+export * from './application/capacity-alert.js';
 
 // ─── Contracts ───────────────────────────────────────────────────────────────
 export * from './contracts/index.js';
