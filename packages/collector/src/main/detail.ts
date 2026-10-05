@@ -4,6 +4,8 @@ import {
   type ArchiveEntry,
   type ConfigViewInput,
   type DetailThresholds,
+  errorMessage,
+  type TimePointSummary,
 } from '@claude-audit/core';
 import {
   DETAIL_MANIFEST_PATH,
@@ -15,6 +17,10 @@ import {
   detailManifestSchema,
   detailMembersSchema,
   detailOrgGroupsSchema,
+  COMPARE_DIR,
+  COMPARE_INDEX_PATH,
+  compareIndexSchema,
+  timePointSummarySchema,
 } from '@claude-audit/core/contracts';
 import type { z } from 'zod';
 import { listArchiveEntries } from '../adapters/storage/archive-inventory.js';
@@ -22,6 +28,7 @@ import { stableStringify } from '../adapters/storage/file-store.js';
 import { readAlertsInput } from './alerts.js';
 import { configViewInput } from './config-view.js';
 import type { Container } from './container.js';
+import { backfillSummaries, readSummaries, saveSummary, summaryFor } from './summaries.js';
 import { resolveTarget } from './workflows.js';
 
 const positiveInt = (value: unknown, fallback: number): number =>
@@ -46,15 +53,57 @@ const schemaFor = (path: string): z.ZodType => {
   if (path.endsWith('/config.json')) return detailConfigSchema;
   if (path.endsWith('/archive.json')) return detailArchiveSchema;
   if (path.endsWith('/alerts.json')) return detailAlertsSchema;
+  if (path === COMPARE_INDEX_PATH) return compareIndexSchema;
+  if (path.startsWith(`${COMPARE_DIR}/`)) return timePointSummarySchema;
   return detailActivitySchema;
 };
+
+/**
+ * The stored time-point summaries for the compare files: first the missing ones of stored
+ * snapshots are written (existing data, or a snapshot just restored); with `snapshotId` that
+ * point's summary is written when absent, so a restored archived point becomes comparable.
+ */
+async function loadSummaries(
+  c: Container,
+  target: Awaited<ReturnType<typeof resolveTarget>>,
+  snapshotId: string | undefined,
+): Promise<TimePointSummary[] | null> {
+  try {
+    await backfillSummaries(c);
+    const { snapshot, report } = target;
+    const stored = await readSummaries(c);
+    if (
+      snapshotId !== undefined &&
+      snapshot &&
+      report &&
+      !stored.some((s) => s.id === snapshotId)
+    ) {
+      await saveSummary(c, summaryFor(snapshot, report, c.config.compliance.disabledRules));
+      return await readSummaries(c);
+    }
+    return stored;
+  } catch (error) {
+    c.logger.warn(`Time-point summaries could not be read: ${errorMessage(error)}`);
+    return null;
+  }
+}
+
+/** Removes the per-point files of `detail/compare/` that the new index no longer lists. */
+async function removeStaleComparePoints(c: Container, keep: ReadonlySet<string>): Promise<void> {
+  for (const entry of await c.store.list(COMPARE_DIR)) {
+    const path = `${COMPARE_DIR}/${entry.name}`;
+    if (!entry.directory && entry.name.endsWith('.json') && !keep.has(path))
+      await c.store.remove(path);
+  }
+}
 
 /**
  * Writes `detail/*.json` (manifest + entity files, incl. the effective configuration, the
  * archive inventory and the alert history) from the latest stored data. Every file is validated against its contract
  * at this single write site. `archive` replaces the listing of the data directory (the demo
- * supplies a synthetic one). `snapshotId`
- * builds from that stored snapshot instead of the latest. Returns path -> content.
+ * supplies a synthetic one). `snapshotId` builds from that stored snapshot instead of the latest. The compare files (F-015) list the
+ * newest 90 stored summaries; missing summaries of stored snapshots are backfilled first.
+ * Returns path -> content.
  */
 export async function writeDetail(
   c: Container,
@@ -64,7 +113,9 @@ export async function writeDetail(
 ): Promise<Record<string, string>> {
   const entries = archive ?? (await listArchiveEntries(c.store).catch(() => null));
   const alerts = await readAlertsInput(c).catch(() => null);
-  const { snapshot, report } = await resolveTarget(c, snapshotId);
+  const target = await resolveTarget(c, snapshotId);
+  const { snapshot, report } = target;
+  const summaries = await loadSummaries(c, target, snapshotId);
   const bundle = buildDetailView({
     now: c.clock.now(),
     source: c.source,
@@ -75,6 +126,7 @@ export async function writeDetail(
     config,
     archive: { snapshotDays: c.config.retention.snapshotDays, entries },
     alerts,
+    summaries,
   });
   const out: Record<string, string> = {
     [DETAIL_MANIFEST_PATH]: stableStringify(detailManifestSchema.parse(bundle.manifest)),
@@ -82,5 +134,6 @@ export async function writeDetail(
   for (const file of bundle.files)
     out[file.path] = stableStringify(schemaFor(file.path).parse(file.content));
   await Promise.all(Object.entries(out).map(([path, content]) => c.artifacts.write(path, content)));
+  await removeStaleComparePoints(c, new Set(Object.keys(out)));
   return out;
 }

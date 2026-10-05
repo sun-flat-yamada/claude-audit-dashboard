@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-09-29T12:00:00.000Z",
+  "points": [
+    {
+      "assessed": 30,
+      "collectedAt": "2026-09-29T12:00:00.000Z",
+      "id": "2026-09-29T12-00-00Z",
+      "score": 70,
+      "state": "summary"
+    },
+    {
+      "assessed": 25,
+      "collectedAt": "2026-09-15T12:00:00.000Z",
+      "id": "2026-09-15T12-00-00Z",
+      "score": 78,
+      "state": "summary"
+    },
+    {
+      "assessed": 27,
+      "collectedAt": "2026-09-01T12:00:00.000Z",
+      "id": "2026-09-01T12-00-00Z",
+      "score": 73,
+      "state": "summary"
+    }
+  ],
+  "schemaVersion": 1
+}

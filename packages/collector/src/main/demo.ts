@@ -144,7 +144,9 @@ function demoConfigInput(profile: DemoProfile): Omit<ConfigViewInput, 'now'> {
  * Runs collect → check → dashboard → weekly / monthly reports on the synthetic tenant with a
  * fixed clock, then writes the public sample files. Output is deterministic (golden-tested).
  * The files in the root are the LATEST time point; the earlier points of the multi-point
- * history (F-015) are added under `history/<snapshot id>/` (`demo-history.ts`).
+ * history (F-015) are judged first in the same store (so `compliance.history` and the compare
+ * files carry all three points) and their own views are added under `history/<snapshot id>/`
+ * (`demo-history.ts`).
  */
 export async function writeDemoSample(
   outDir: string,
@@ -153,6 +155,9 @@ export async function writeDemoSample(
   const workDir = await mkdtemp(join(tmpdir(), 'claude-audit-demo-'));
   try {
     const profile = options.profile ?? 'default';
+    // The earlier points first, in the same store: the latest dashboard then carries every
+    // point in `compliance.history` and the detail build lists every point's summary.
+    const history = await writeDemoHistory(workDir, options);
     const c = await createContainer({
       env: options.env,
       cwd: options.cwd,
@@ -181,7 +186,7 @@ export async function writeDemoSample(
       'monthly-report.md': toMarkdown(monthly.document),
       ...detail,
       ...monthlyView,
-      ...(await writeDemoHistory(options)),
+      ...history,
     };
     await writeFiles(outDir, files);
     return files;

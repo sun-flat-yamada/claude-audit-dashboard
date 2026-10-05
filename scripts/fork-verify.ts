@@ -60,6 +60,7 @@ const forbiddenPaths = [
   'data/detail',
   'data/alerts',
   'data/usage-matrix',
+  'data/summaries',
   // Generated profiles of `pnpm demo --profile optional-sources` / `pnpm fixture --optional-sources`
   'data/sample-optional-sources',
   'data/fixture-optional-sources',
