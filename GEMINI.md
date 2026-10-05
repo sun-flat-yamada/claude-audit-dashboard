@@ -1,3 +1,18 @@
+---
+title: 'Gemini / Antigravity Configuration for claude-audit-dashboard'
+description: 'Guardrails and directives for Gemini CLI and Antigravity.'
+category: 'meta'
+type: 'configuration'
+status: 'active'
+date: 2026-10-05
+updated: 2026-10-05
+lang: 'en'
+tags:
+  - 'ai'
+  - 'agent'
+  - 'configuration'
+---
+
 # Project Guardrails & Instructions for AI Agents (Antigravity / Gemini)
 
 Welcome to `claude-audit-dashboard`.

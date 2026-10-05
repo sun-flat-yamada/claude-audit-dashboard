@@ -5,7 +5,7 @@ category: 'rules'
 type: 'specification'
 status: 'active'
 date: 2026-10-03
-updated: 2026-10-03
+updated: 2026-10-05
 lang: 'en'
 tags:
   - 'rules'
@@ -52,8 +52,8 @@ A branch is named after the change it carries, so that `git branch -r`, the PR l
 
 ## 3. Language of Commits and Pull Requests
 
-Commit messages and PR titles use the English Conventional Commits prefix; PR bodies follow `.github/PULL_REQUEST_TEMPLATE.md`.
+See [`language-rules-output.md`](language-rules-output.md): commit messages in English, PR titles keep the English Conventional Commits prefix, PR descriptions (filled `.github/PULL_REQUEST_TEMPLATE.md`) in Japanese.
 
 ## 4. Pre-Commit Verification
 
-Before committing, run the quality gate defined in `AGENTS.md` (Core Rule 5). `pnpm secret-scan` is mandatory.
+Before committing, run the quality gate defined in [`quality-rules-gate.md`](quality-rules-gate.md). `pnpm secret-scan` is mandatory.

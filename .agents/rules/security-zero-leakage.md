@@ -1,7 +1,19 @@
 ---
 name: security-zero-leakage
-description: Enforce zero-leakage security guardrails preventing AI agents from outputting or committing secrets, credentials, and internal PII.
+title: 'Security & Zero-Leakage Policy'
+description: 'Enforce zero-leakage security guardrails preventing AI agents from outputting or committing secrets, credentials, and internal PII.'
 trigger: always_on
+category: 'rules'
+type: 'specification'
+status: 'active'
+date: 2026-10-05
+updated: 2026-10-05
+lang: 'en'
+tags:
+  - 'rules'
+  - 'security'
+  - 'zero-leakage'
+alwaysApply: true
 ---
 
 # 🔒 Security & Zero-Leakage Policy for AI Agents

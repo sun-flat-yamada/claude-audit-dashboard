@@ -1,3 +1,19 @@
+---
+title: 'Compliance Rules Management'
+description: 'Synchronization of compliance rule code, tests, docs/BLUEPRINT.md, READMEs and sample data; rule contract and ID convention.'
+category: 'rules'
+type: 'specification'
+status: 'active'
+date: 2026-10-05
+updated: 2026-10-05
+lang: 'en'
+tags:
+  - 'rules'
+  - 'compliance'
+  - 'blueprint'
+alwaysApply: true
+---
+
 # Compliance Rules Management
 
 ## Rule Synchronization Policy
