@@ -14,6 +14,7 @@ import type {
   Member,
   MemberActivity,
   OrgSettings,
+  ProductActiveUsers,
   SentRecord,
   SpendLimit,
   UsageDimension,
@@ -395,20 +396,56 @@ function breakdown<T>(
   });
 }
 
-const adoption = (range: DateRange, now: Date): AdoptionDay[] =>
-  days(range, now).map((date) => {
+/**
+ * Share of the organization's active users per product: Chat leads, Claude Code grows over the
+ * period (`growth` 0 -> 1), Cowork next, then the smaller Design / Office / Science products.
+ */
+const PRODUCT_SHARES: readonly {
+  product: ProductActiveUsers['product'];
+  share: (growth: number) => number;
+}[] = [
+  { product: 'chat', share: () => 0.86 },
+  { product: 'claude_code', share: (growth) => 0.48 + 0.14 * growth },
+  { product: 'cowork', share: () => 0.3 },
+  { product: 'claude_design', share: () => 0.12 },
+  { product: 'office_agent', share: () => 0.1 },
+  { product: 'science', share: () => 0.05 },
+];
+
+/** One jitter per product and day keeps DAU <= WAU <= MAU within each product. */
+const productActive = (
+  date: string,
+  growth: number,
+  totals: { dau: number; wau: number; mau: number },
+): ProductActiveUsers[] =>
+  PRODUCT_SHARES.map(({ product, share }) => {
+    const factor = share(growth) * (0.92 + random(`adoption:${date}:${product}`)() * 0.16);
+    return {
+      product,
+      dau: Math.round(totals.dau * factor),
+      wau: Math.round(totals.wau * factor),
+      mau: Math.round(totals.mau * factor),
+    };
+  });
+
+const adoption = (range: DateRange, now: Date): AdoptionDay[] => {
+  const dates = days(range, now);
+  return dates.map((date, index) => {
     const r = random(`adoption:${date}`);
     const monthly = 30 + Math.round(r() * 3);
+    const totals = { dau: 18 + Math.round(r() * 8), wau: 27 + Math.round(r() * 4), mau: monthly };
     return {
       date,
-      dailyActiveUsers: 18 + Math.round(r() * 8),
-      weeklyActiveUsers: 27 + Math.round(r() * 4),
+      dailyActiveUsers: totals.dau,
+      weeklyActiveUsers: totals.wau,
       monthlyActiveUsers: monthly,
       assignedSeats: 45,
       monthlyAdoptionRate: round((monthly / 45) * 100, 1),
       pendingInvites: 3,
+      byProduct: productActive(date, index / Math.max(dates.length - 1, 1), totals),
     };
   });
+};
 
 const invites = (now: Date): DatasetMap['invites'] => [
   {
