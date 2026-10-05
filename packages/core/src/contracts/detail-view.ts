@@ -26,7 +26,14 @@ const header = {
   generatedAt: z.string(),
 };
 
-export const DETAIL_KINDS = ['members', 'api-keys', 'activity', 'org-groups', 'config'] as const;
+export const DETAIL_KINDS = [
+  'members',
+  'api-keys',
+  'activity',
+  'org-groups',
+  'config',
+  'archive',
+] as const;
 export type DetailKind = (typeof DETAIL_KINDS)[number];
 
 const manifestFile = z.object({

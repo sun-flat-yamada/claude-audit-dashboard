@@ -67,14 +67,20 @@ describe('detail command and pipeline', () => {
     expect(checkDetailBundle(bundle)).toEqual([]);
   });
 
-  it('without keys every collected entry is unavailable; only the effective configuration is written', async () => {
+  it('without keys every collected entry is unavailable; only the configuration and the (empty) archive inventory are written', async () => {
     expect(await run({})).toBe(0);
     const bundle = await readBundle();
-    expect(Object.keys(bundle).sort()).toEqual(['detail/config.json', 'detail/index.json']);
+    expect(Object.keys(bundle).sort()).toEqual([
+      'detail/archive.json',
+      'detail/config.json',
+      'detail/index.json',
+    ]);
     const manifest = detailManifestSchema.parse(JSON.parse(bundle['detail/index.json'] ?? ''));
     // The effective configuration does not depend on collected data, so it is always published.
     expect(
-      manifest.files.filter((f) => f.kind !== 'config').every((f) => f.status === 'unavailable'),
+      manifest.files
+        .filter((f) => f.kind !== 'config' && f.kind !== 'archive')
+        .every((f) => f.status === 'unavailable'),
     ).toBe(true);
     expect(manifest.files.find((f) => f.kind === 'config')?.status).toBe('ok');
   });
@@ -96,5 +102,22 @@ describe('detailThresholds', () => {
         'AK-003': { maxAgeDays: '9' },
       }),
     ).toEqual({ inactiveDays: 14, unusedDays: 30, maxAgeDays: 180 });
+  });
+});
+
+describe('archive inventory in the detail bundle', () => {
+  it('lists a real archive directory and reports it in the manifest', async () => {
+    await mkdir(join(dir, 'data/archive/2024'), { recursive: true });
+    await writeFile(join(dir, 'data/archive/2024/2024-05-01T06-00-00Z.json.gz'), Buffer.alloc(42));
+    expect(await run({ ANTHROPIC_ENTERPRISE_API_KEY: MOCK_KEY })).toBe(0);
+    const bundle = await readBundle();
+    const archive = JSON.parse(bundle['detail/archive.json'] ?? '{}') as {
+      totals: { snapshots: number; bytes: number };
+      snapshotDays: number;
+    };
+    expect(archive.totals).toMatchObject({ snapshots: 1, bytes: 42 });
+    expect(archive.snapshotDays).toBe(365);
+    expect(bundle['detail/archive.json']).not.toContain(dir);
+    expect(checkDetailBundle(bundle)).toEqual([]);
   });
 });

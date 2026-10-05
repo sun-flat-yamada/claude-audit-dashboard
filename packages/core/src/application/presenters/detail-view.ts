@@ -1,3 +1,5 @@
+import type { DetailArchive } from '../../contracts/archive-view.js';
+import { ARCHIVE_VIEW_SCHEMA_VERSION, DETAIL_ARCHIVE_PATH } from '../../contracts/archive-view.js';
 import type { DetailConfig } from '../../contracts/config-view.js';
 import { CONFIG_VIEW_SCHEMA_VERSION, DETAIL_CONFIG_PATH } from '../../contracts/config-view.js';
 import type {
@@ -20,6 +22,7 @@ import type { ComplianceReport } from '../../domain/compliance/types.js';
 import { withDefaults, type DatasetMap, type DatasetName } from '../../domain/model/dataset.js';
 import type { AuditSnapshot } from '../../domain/model/snapshot.js';
 import { identityMasker, type IdentityMasker } from '../../domain/util/mask.js';
+import { buildArchiveView, type ArchiveEntry } from './archive-view.js';
 import { buildConfigView, type ConfigViewInput } from './config-view.js';
 import { buildDetailActivity } from './detail-activity.js';
 import { buildDetailApiKeys } from './detail-api-keys.js';
@@ -49,12 +52,18 @@ export interface DetailInput {
   thresholds: DetailThresholds;
   /** Effective configuration (allowlist input); omitted when the caller has none to publish. */
   config?: Omit<ConfigViewInput, 'now'> | undefined;
+  /**
+   * The archive listing (I/O stays with the caller); `entries: null` means it could not be
+   * listed. Omitted when the caller has no archive to report on.
+   */
+  archive?: { snapshotDays: number; entries: readonly ArchiveEntry[] | null } | undefined;
 }
 
 export interface DetailFile {
   path: string;
   /** Plain object, parsed by its schema at the single write site. */
-  content: DetailMembers | DetailApiKeys | DetailActivity | DetailOrgGroups | DetailConfig;
+  content:
+    DetailMembers | DetailApiKeys | DetailActivity | DetailOrgGroups | DetailConfig | DetailArchive;
 }
 
 export interface DetailBundle {
@@ -202,6 +211,42 @@ function configPart(c: Ctx): Part {
   };
 }
 
+function archivePart(c: Ctx): Part {
+  if (!c.archive) return { files: [], entries: [] };
+  if (c.archive.entries === null)
+    return {
+      files: [],
+      entries: [
+        {
+          kind: 'archive',
+          path: DETAIL_ARCHIVE_PATH,
+          schemaVersion: ARCHIVE_VIEW_SCHEMA_VERSION,
+          status: 'unavailable',
+          reason: 'the archive could not be listed',
+          count: null,
+          month: null,
+        },
+      ],
+    };
+  const content = buildArchiveView({
+    now: c.now,
+    snapshotDays: c.archive.snapshotDays,
+    entries: c.archive.entries,
+  });
+  return {
+    files: [{ path: DETAIL_ARCHIVE_PATH, content }],
+    entries: [
+      available(
+        'archive',
+        DETAIL_ARCHIVE_PATH,
+        content.totals.snapshots,
+        null,
+        ARCHIVE_VIEW_SCHEMA_VERSION,
+      ),
+    ],
+  };
+}
+
 /** Builds the manifest and the entity files; pure and deterministic for the same input. */
 export function buildDetailView(input: DetailInput): DetailBundle {
   const ctx: Ctx = {
@@ -215,6 +260,7 @@ export function buildDetailView(input: DetailInput): DetailBundle {
     activityPart(ctx),
     orgGroupsPart(ctx),
     configPart(ctx),
+    archivePart(ctx),
   ];
   return {
     manifest: {

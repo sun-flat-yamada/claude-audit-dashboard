@@ -17,25 +17,25 @@
 
 ## Feature matrix
 
-| ID    | Feature                         | Priority | Status                                                    | Contract fields                                  |
-| ----- | ------------------------------- | -------- | --------------------------------------------------------- | ------------------------------------------------ |
-| F-001 | Organization overview           | P0       | ✅ Phase A                                                | `title`, `organizations`, `collectedAt`, `kpis`  |
-| F-002 | Compliance score and trend      | P0       | ✅ Phase A                                                | `kpis[score]`, `compliance.history`              |
-| F-003 | Compliance results              | P0       | ✅ Phase A + CSV / JSON export (B2-1)                     | `compliance.results`, `compliance.byCategory`    |
-| F-004 | Usage and cost                  | P0       | ✅ Phase A                                                | `usage.daily`, `usage.byProduct/byModel/byGroup` |
-| F-005 | Activity                        | P0       | ✅ Phase A aggregates; B2 (B2-3, `#/activity`) search     | `activity`                                       |
-| F-006 | Member view                     | P1       | ✅ Phase B2 (B2-4, `#/members`)                           | detail `members.json` (B2-2)                     |
-| F-007 | API key inventory               | P1       | ✅ Phase B2 (B2-5, `#/keys`)                              | detail `api-keys.json` (B2-2)                    |
-| F-008 | Alert history                   | P1       | ⏳ Phase B                                                | notification state                               |
-| F-009 | Monthly cost report view        | P1       | ✅ B2-7 (`#/reports/monthly`, `#/reports/monthly/<id>`)   | detail `monthly/index.json`, `monthly/<id>.json` |
-| F-010 | Model usage analytics           | P1       | 🔶 Phase A (spend by model, insights); heatmap in Phase B | `usage.byModel`, `insights`                      |
-| F-011 | Light / dark theme              | P2       | ✅ Phase A (follows system); toggle UI in Phase B2 (B2-9) | —                                                |
-| F-012 | Organization / group drill-down | P2       | ✅ B2-10 (`#/orgs`, `#/orgs/<id>`, `#/groups/<id>`)       | detail `org-groups.json`, `members.json`         |
-| F-013 | Data coverage and retention     | P2       | ✅ coverage in Phase A; archive inventory in Phase B      | `coverage`                                       |
-| F-014 | Configuration view (read-only)  | P2       | ✅ B2-12 (`#/config`)                                     | detail `config.json`                             |
-| F-015 | Snapshot comparison             | P3       | ⏳ Later                                                  | —                                                |
-| F-016 | Adoption (DAU / WAU / MAU)      | P1       | ✅ Phase A                                                | `adoption`                                       |
-| F-017 | Insights                        | P1       | ✅ Phase A                                                | `insights`                                       |
+| ID    | Feature                         | Priority | Status                                                        | Contract fields                                  |
+| ----- | ------------------------------- | -------- | ------------------------------------------------------------- | ------------------------------------------------ |
+| F-001 | Organization overview           | P0       | ✅ Phase A                                                    | `title`, `organizations`, `collectedAt`, `kpis`  |
+| F-002 | Compliance score and trend      | P0       | ✅ Phase A                                                    | `kpis[score]`, `compliance.history`              |
+| F-003 | Compliance results              | P0       | ✅ Phase A + CSV / JSON export (B2-1)                         | `compliance.results`, `compliance.byCategory`    |
+| F-004 | Usage and cost                  | P0       | ✅ Phase A                                                    | `usage.daily`, `usage.byProduct/byModel/byGroup` |
+| F-005 | Activity                        | P0       | ✅ Phase A aggregates; B2 (B2-3, `#/activity`) search         | `activity`                                       |
+| F-006 | Member view                     | P1       | ✅ Phase B2 (B2-4, `#/members`)                               | detail `members.json` (B2-2)                     |
+| F-007 | API key inventory               | P1       | ✅ Phase B2 (B2-5, `#/keys`)                                  | detail `api-keys.json` (B2-2)                    |
+| F-008 | Alert history                   | P1       | ⏳ Phase B                                                    | notification state                               |
+| F-009 | Monthly cost report view        | P1       | ✅ B2-7 (`#/reports/monthly`, `#/reports/monthly/<id>`)       | detail `monthly/index.json`, `monthly/<id>.json` |
+| F-010 | Model usage analytics           | P1       | 🔶 Phase A (spend by model, insights); heatmap in Phase B     | `usage.byModel`, `insights`                      |
+| F-011 | Light / dark theme              | P2       | ✅ Phase A (follows system); toggle UI in Phase B2 (B2-9)     | —                                                |
+| F-012 | Organization / group drill-down | P2       | ✅ B2-10 (`#/orgs`, `#/orgs/<id>`, `#/groups/<id>`)           | detail `org-groups.json`, `members.json`         |
+| F-013 | Data coverage and retention     | P2       | ✅ coverage in Phase A; archive inventory B2-11 (`#/archive`) | `coverage`, detail `archive.json`                |
+| F-014 | Configuration view (read-only)  | P2       | ✅ B2-12 (`#/config`)                                         | detail `config.json`                             |
+| F-015 | Snapshot comparison             | P3       | ⏳ Later                                                      | —                                                |
+| F-016 | Adoption (DAU / WAU / MAU)      | P1       | ✅ Phase A                                                    | `adoption`                                       |
+| F-017 | Insights                        | P1       | ✅ Phase A                                                    | `insights`                                       |
 
 ---
 
@@ -123,6 +123,15 @@
 - States: loading, not published (file absent), not collected (manifest `unavailable` with its reason), error (alert), empty (no entries), no match (search).
 - Publication: under `detail/`, so the detail rule applies: on Pages only with `PAGES_DATA_SOURCE=live` and `PAGES_DETAIL_DATA=true`; always in the synthetic sample. Written by `pnpm build:detail` / `pnpm pipeline`; it does not depend on collected data, so it is present even when every dataset is unavailable. The sample's configuration (a disabled rule, an overridden parameter, two custom rules, a notification policy with Slack and e-mail on) is **illustrative**: `pnpm demo` fixes it independently of the local config and does not apply it to the sample compliance results, so the other sample files are unchanged.
 
+### F-013 Archive inventory (B2-11)
+
+- Route `#/archive` ("Archive" in the nav), reading `detail/archive.json` (`ARCHIVE_VIEW_SCHEMA_VERSION = 1`, listed in the manifest as `kind: archive`; the manifest count is the number of archived snapshots). Read-only.
+- Content: totals (archived snapshots, compressed size, years covered, oldest and newest snapshot, the retention setting `retention.snapshotDays` after which snapshots are archived) and one row per year (newest year first): snapshot count, compressed size, share of the total size, oldest and newest snapshot. Sizes are binary (1 KB = 1,024 bytes) and shown up to PB. A status badge (icon + label + color) says Archived, No archives yet, or Unrecognized files (some entries of the archive directory are not `<snapshot id>.json.gz`; they are only counted, never named). A search box filters years by year or snapshot date.
+- **What the file can hold:** snapshot ids (validated shape `yyyy-mm-ddThh-mm-ssZ`), years, counts and byte sizes. No file name, path or snapshot content can be represented, so there is no PII, secret or absolute path; `checkDetailBundle()` (and so `pnpm fork:verify`) also checks that the totals equal the per-year rows.
+- Aggregation: `summarizeArchiveEntries()` (core, pure, order-independent; a repeated id counts once) turns listed entries (year directory, file name, compressed bytes) into the inventory; the collector lists `archive/<year>/*` and stats the sizes behind the small `ArchiveListing` port (`adapters/storage/archive-inventory.ts`, `summarizeArchive(store)`). Phase B3 (#38) reuses it for the capacity measurement. This unit is tested with the synthetic sample and temporary directories only; verification against a real archive is B3.
+- States: loading, not published (file absent), not collected (manifest `unavailable` with its reason, e.g. the archive could not be listed), error (alert), empty (no archives yet), no match (search).
+- Publication: under `detail/`, so the detail rule applies: on Pages only with `PAGES_DATA_SOURCE=live` and `PAGES_DETAIL_DATA=true`; always in the synthetic sample. Written by `pnpm build:detail` / `pnpm pipeline` (the inventory reflects the archive at that time; the scheduled workflow archives before it writes the detail files). `pnpm demo` supplies a synthetic archive (84 snapshots over 2023 to 2025 with deterministic sizes and one unrelated file) without touching the other sample files.
+
 ### F-017 Insights
 
 - Title and detail of each analyzer result (model concentration, cache efficiency, group concentration, seat utilization) with its priority.
@@ -147,18 +156,19 @@
 
 ## Detail data files (B2-2)
 
-The screens of F-005 (search), F-006, F-007, F-009, F-012 and F-014 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 1`, zod schemas in `@claude-audit/core/contracts`).
+The screens of F-005 (search), F-006, F-007, F-009, F-012, F-013 (archive) and F-014 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 1`, zod schemas in `@claude-audit/core/contracts`).
 
-| File                             | Content                                                                                                                             |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `detail/index.json`              | Manifest: `maskPii`, `source`, and per file `kind`, `path`, `status` (`ok` / `unavailable` + reason), `count`                       |
-| `detail/members.json`            | Members (role, organization, `active`, `lastActiveOn`), invites, the AC-001 `inactiveDays` threshold                                |
-| `detail/api-keys.json`           | Keys (scopes, active, created / expires, creator, `lastSeenAt`), AK-001 / AK-003 thresholds, usage window start                     |
-| `detail/activity-<yyyy-mm>.json` | One file per UTC month, newest first, capped at 2000 rows (`total` and `truncated` give the real count)                             |
-| `detail/org-groups.json`         | Organizations, RBAC groups (member count, month-to-date spend; groups overlap), CF-xxx deviations                                   |
-| `detail/config.json`             | Effective configuration (allowlisted): rules with state / origin / effective parameters, custom rules, notification policy, sources |
-| `detail/monthly/index.json`      | Monthly cost reports: month list (newest first), status, organization total (no per-person data; written by `report monthly`)       |
-| `detail/monthly/<id>.json`       | One month: organization total, cost by RBAC group / model / product (amount, share), notes; group rows overlap                      |
+| File                             | Content                                                                                                                                               |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `detail/index.json`              | Manifest: `maskPii`, `source`, and per file `kind`, `path`, `status` (`ok` / `unavailable` + reason), `count`                                         |
+| `detail/members.json`            | Members (role, organization, `active`, `lastActiveOn`), invites, the AC-001 `inactiveDays` threshold                                                  |
+| `detail/api-keys.json`           | Keys (scopes, active, created / expires, creator, `lastSeenAt`), AK-001 / AK-003 thresholds, usage window start                                       |
+| `detail/activity-<yyyy-mm>.json` | One file per UTC month, newest first, capped at 2000 rows (`total` and `truncated` give the real count)                                               |
+| `detail/org-groups.json`         | Organizations, RBAC groups (member count, month-to-date spend; groups overlap), CF-xxx deviations                                                     |
+| `detail/config.json`             | Effective configuration (allowlisted): rules with state / origin / effective parameters, custom rules, notification policy, sources                   |
+| `detail/archive.json`            | Archive inventory: per-year snapshot count, compressed bytes, oldest / newest snapshot id, totals, retention setting (ids, years, counts, bytes only) |
+| `detail/monthly/index.json`      | Monthly cost reports: month list (newest first), status, organization total (no per-person data; written by `report monthly`)                         |
+| `detail/monthly/<id>.json`       | One month: organization total, cost by RBAC group / model / product (amount, share), notes; group rows overlap                                        |
 
 Identifier handling follows `dashboard.maskPii` (default `true`): e-mail addresses become `j***@example.com`, names become initials (`A*** E***`), IP addresses are dropped, and user / key / invite IDs become `u_` / `k_` / `i_` plus 12 hex characters, stable across files so rows stay joinable. With `maskPii=false` raw values are written (and the manifest says so). A missing file with an `unavailable` manifest entry means the dataset was not collected; absence of the whole directory means "not published". `pnpm build:detail` (part of `pnpm pipeline`) writes `data/detail/`; `pnpm demo` writes the synthetic `data/sample/detail/`, validated by `pnpm fork:verify` (contract, `example.*` e-mails only, masked identifiers).
 
@@ -171,7 +181,6 @@ Identifier handling follows `dashboard.maskPii` (default `true`): e-mail address
 | F-008 | History of alerts sent (from the notification state) and their acknowledgement status.           |
 | F-010 | Model × group heatmap (sequential single-hue scale with a legend), trend of model mix.           |
 | F-012 | Drill-down per linked organization or RBAC group: members, settings deviations (CF-xxx), spend.  |
-| F-013 | Archive inventory (years, snapshot counts, sizes).                                               |
 | F-015 | Compare two snapshots or two reports: rules that changed status, datasets that changed coverage. |
 
 ---

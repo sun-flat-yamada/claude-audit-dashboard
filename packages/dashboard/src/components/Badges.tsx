@@ -22,6 +22,9 @@ const STATUS: Record<string, { icon: string; color: string; label: string }> = {
   'config-overridden': { icon: '!', color: 'var(--status-warning)', label: 'Overridden' },
   'config-default': { icon: '=', color: 'var(--status-neutral)', label: 'Default' },
   'config-invalid': { icon: '✕', color: 'var(--status-critical)', label: 'Invalid' },
+  'archive-ok': { icon: '✓', color: 'var(--status-good)', label: 'Archived' },
+  'archive-empty': { icon: '–', color: 'var(--status-neutral)', label: 'No archives yet' },
+  'archive-ignored': { icon: '!', color: 'var(--status-warning)', label: 'Unrecognized files' },
   'actor-user_actor': { icon: 'U', color: 'var(--status-good)', label: 'User' },
   'actor-api_actor': { icon: 'K', color: 'var(--status-neutral)', label: 'API key' },
   'actor-unauthenticated_user_actor': {
