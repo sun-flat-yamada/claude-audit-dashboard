@@ -1,6 +1,8 @@
 // ─── Domain: model ───────────────────────────────────────────────────────────
 export * from './domain/model/entities.js';
 export * from './domain/model/dataset.js';
+export * from './domain/model/optional-entities.js';
+export * from './domain/model/optional-datasets.js';
 export * from './domain/model/snapshot.js';
 export * from './domain/model/metrics.js';
 export * from './domain/model/vocabulary.js';
