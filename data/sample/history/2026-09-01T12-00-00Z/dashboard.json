@@ -1164,6 +1164,190 @@
       "status": "ok"
     }
   ],
+  "engagement": {
+    "claudeCode": {
+      "acceptRate": 88.8,
+      "accepted": 29613,
+      "addedLines": 227501,
+      "commits": 1168,
+      "pullRequests": 347,
+      "rejected": 3726,
+      "removedLines": 76245,
+      "sessions": 1724,
+      "tools": [
+        {
+          "acceptRate": 88.8,
+          "accepted": 20739,
+          "label": "Edit",
+          "rejected": 2625,
+          "tool": "edit"
+        },
+        {
+          "acceptRate": 84.8,
+          "accepted": 4379,
+          "label": "MultiEdit",
+          "rejected": 786,
+          "tool": "multiEdit"
+        },
+        {
+          "acceptRate": 93.8,
+          "accepted": 4384,
+          "label": "Write",
+          "rejected": 289,
+          "tool": "write"
+        },
+        {
+          "acceptRate": 81,
+          "accepted": 111,
+          "label": "NotebookEdit",
+          "rejected": 26,
+          "tool": "notebookEdit"
+        }
+      ]
+    },
+    "members": 36,
+    "products": [
+      {
+        "activeMembers": 34,
+        "counters": [
+          {
+            "key": "conversations",
+            "label": "Conversations",
+            "value": 2219
+          },
+          {
+            "key": "projectsCreated",
+            "label": "Projects created",
+            "value": 106
+          },
+          {
+            "key": "artifactsCreated",
+            "label": "Artifacts created",
+            "value": 626
+          },
+          {
+            "key": "filesUploaded",
+            "label": "Files uploaded",
+            "value": 762
+          }
+        ],
+        "label": "Chat",
+        "messages": 14554,
+        "product": "chat",
+        "sessions": null
+      },
+      {
+        "activeMembers": 13,
+        "counters": [
+          {
+            "key": "commits",
+            "label": "Commits",
+            "value": 1168
+          },
+          {
+            "key": "pullRequests",
+            "label": "Pull requests",
+            "value": 347
+          },
+          {
+            "key": "addedLines",
+            "label": "Lines added",
+            "value": 227501
+          },
+          {
+            "key": "removedLines",
+            "label": "Lines removed",
+            "value": 76245
+          }
+        ],
+        "label": "Claude Code",
+        "messages": null,
+        "product": "claude_code",
+        "sessions": 1724
+      },
+      {
+        "activeMembers": 9,
+        "counters": [
+          {
+            "key": "actions",
+            "label": "Actions",
+            "value": 5470
+          },
+          {
+            "key": "dispatchTurns",
+            "label": "Dispatch turns",
+            "value": 268
+          },
+          {
+            "key": "artifactsCreated",
+            "label": "Artifacts created",
+            "value": 81
+          }
+        ],
+        "label": "Cowork",
+        "messages": 1434,
+        "product": "cowork",
+        "sessions": 214
+      },
+      {
+        "activeMembers": 8,
+        "counters": [
+          {
+            "key": "projectsCreated",
+            "label": "Projects created",
+            "value": 55
+          }
+        ],
+        "label": "Claude Design",
+        "messages": 1272,
+        "product": "claude_design",
+        "sessions": 181
+      },
+      {
+        "activeMembers": 5,
+        "counters": [
+          {
+            "key": "skillCalls",
+            "label": "Skill calls",
+            "value": 64
+          },
+          {
+            "key": "connectorCalls",
+            "label": "Connector calls",
+            "value": 37
+          }
+        ],
+        "label": "Claude in Office",
+        "messages": 415,
+        "product": "office_agent",
+        "sessions": 119
+      },
+      {
+        "activeMembers": 3,
+        "counters": [
+          {
+            "key": "delegations",
+            "label": "Delegations",
+            "value": 35
+          },
+          {
+            "key": "computeJobs",
+            "label": "Remote compute jobs",
+            "value": 14
+          }
+        ],
+        "label": "Claude Science",
+        "messages": 205,
+        "product": "science",
+        "sessions": 27
+      }
+    ],
+    "webSearches": 1719,
+    "window": {
+      "from": "2026-06-03T00:00:00.000Z",
+      "to": "2026-09-01T12:00:00.000Z"
+    }
+  },
   "generatedAt": "2026-09-01T12:00:00.000Z",
   "insights": [
     {
