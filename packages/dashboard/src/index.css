@@ -11,7 +11,8 @@
   --border: rgba(11, 11, 11, 0.1);
   --text-primary: #0b0b0b;
   --text-secondary: #52514e;
-  --text-muted: #898781;
+  /* 5.1:1 on the page, surface and warning-tinted rows (WCAG 1.4.3); the dark value passes as is */
+  --text-muted: #6b6a65;
   --grid: #e1e0d9;
   --axis: #c3c2b7;
   --series-1: #2a78d6;
@@ -35,7 +36,7 @@
     --border: rgba(255, 255, 255, 0.1);
     --text-primary: #ffffff;
     --text-secondary: #c3c2b7;
-    --text-muted: #898781;
+    --text-muted: #a8a69e;
     --grid: #2c2c2a;
     --axis: #383835;
     --series-1: #3987e5;
@@ -53,7 +54,7 @@
   --border: rgba(255, 255, 255, 0.1);
   --text-primary: #ffffff;
   --text-secondary: #c3c2b7;
-  --text-muted: #898781;
+  --text-muted: #a8a69e;
   --grid: #2c2c2a;
   --axis: #383835;
   --series-1: #3987e5;
@@ -76,4 +77,16 @@ body {
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* No motion for people who ask for none; charts also render without animation. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

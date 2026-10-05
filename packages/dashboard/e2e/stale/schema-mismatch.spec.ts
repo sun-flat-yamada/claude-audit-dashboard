@@ -1,0 +1,64 @@
+import { DASHBOARD_VIEW_SCHEMA_VERSION } from '@claude-audit/core/contracts';
+import { openRoute } from '../support/app';
+import { STATIC_ROUTES } from '../support/routes';
+import { expect, test } from '../support/test';
+
+test.describe('stale dashboard.json (schemaVersion mismatch)', () => {
+  test.beforeEach(({}, info) => {
+    test.skip(info.project.name !== 'stale-dashboard', 'runs on the stale-dashboard profile');
+  });
+
+  test('names the versions and the command that regenerates the data', async ({ page }) => {
+    await page.goto('./');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Claude Audit Dashboard' }),
+    ).toBeVisible();
+    const alert = page.getByRole('alert');
+    await expect(alert).toContainText('Failed to load dashboard data');
+    await expect(alert).toContainText(
+      `schemaVersion 999; expected ${DASHBOARD_VIEW_SCHEMA_VERSION}`,
+    );
+    await expect(alert).toContainText('pnpm build:data');
+    await expect(alert).toContainText('pnpm demo');
+    await expect(page.getByRole('navigation', { name: 'Primary' })).toHaveCount(0);
+  });
+
+  test('the same message appears on a deep link', async ({ page }) => {
+    await page.goto('./#/members');
+    await expect(page.getByRole('alert')).toContainText('Unsupported dashboard data');
+  });
+});
+
+test.describe('stale detail files (schemaVersion mismatch)', () => {
+  test.beforeEach(({}, info) => {
+    test.skip(info.project.name !== 'stale-detail', 'runs on the stale-detail profile');
+  });
+
+  test('the overview still renders from the valid dashboard.json', async ({ page }) => {
+    await openRoute(page, '/');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Claude Enterprise Audit Dashboard' }),
+    ).toBeVisible();
+    await expect(page.getByRole('alert')).toHaveCount(0);
+  });
+
+  const detailScreens = STATIC_ROUTES.filter((r) => r.path !== '/' && r.path !== '/compliance');
+  for (const screen of detailScreens) {
+    test(`${screen.path} reports the outdated file and how to regenerate it`, async ({ page }) => {
+      await openRoute(page, screen.path);
+      const alert = page.getByRole('alert');
+      await expect(alert).toBeVisible();
+      await expect(alert).toContainText('Failed to load');
+      await expect(alert).toContainText('schemaVersion 999');
+      await expect(alert).toContainText('pnpm build:detail');
+      // No raw validator output.
+      await expect(alert).not.toContainText('invalid_value');
+    });
+  }
+
+  test('an organization page names the problem as well', async ({ page }) => {
+    await openRoute(page, '/orgs/5f0c7a1e-1111-4a1a-9a11-000000000001');
+    await expect(page.getByRole('heading', { level: 1, name: 'Organization' })).toBeVisible();
+    await expect(page.getByRole('alert')).toContainText('schemaVersion 999');
+  });
+});

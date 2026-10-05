@@ -20,6 +20,7 @@ import {
   type MonthlyReportIndex,
 } from '../lib/monthly-view';
 import { formatHash, navigate } from '../lib/router';
+import { ScrollRegion } from '../components/ScrollRegion';
 
 export interface MonthlyReportProps {
   /** Route parameter: report id such as `monthly-2026-08`; the newest month when absent. */
@@ -91,7 +92,7 @@ function CostTable({
   if (rows.length === 0) return <Empty>No {caption.toLowerCase()} in this month.</Empty>;
   if (shown.length === 0) return <Empty>No rows match “{query}”.</Empty>;
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion label={caption} className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>
@@ -119,7 +120,7 @@ function CostTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 

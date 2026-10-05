@@ -57,6 +57,7 @@ export function GroupDetail({ id, ...options }: { id: string } & DrilldownOption
   return (
     <div className="space-y-6">
       <BackLink />
+      {file.status !== 'ready' && <h1 className="text-2xl font-semibold">Group</h1>}
       {notice && <Notice role={notice.role}>{notice.text}</Notice>}
       {file.status === 'ready' && <GroupContent data={file.data} id={id} />}
     </div>

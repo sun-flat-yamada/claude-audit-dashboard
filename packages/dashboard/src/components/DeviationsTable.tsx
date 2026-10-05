@@ -1,6 +1,7 @@
 import type { Deviation } from '../lib/drilldown-view';
 import { SeverityLabel, StatusBadge } from './Badges';
 import { CELL, HEAD } from './DetailControls';
+import { ScrollRegion } from './ScrollRegion';
 
 /** Configuration deviations (CF-xxx): severity and status as icon / dot + label + color. */
 export function DeviationsTable({
@@ -11,7 +12,7 @@ export function DeviationsTable({
   deviations: readonly Deviation[];
 }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion label={caption} className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>
@@ -50,6 +51,6 @@ export function DeviationsTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }

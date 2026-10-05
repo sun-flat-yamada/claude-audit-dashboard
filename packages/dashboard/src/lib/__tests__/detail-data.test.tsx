@@ -35,7 +35,18 @@ describe('loadDetailFile', () => {
     const http = await loadDetailFile('/', 'x.json', asNumber, respond(500));
     expect(http).toEqual({ status: 'error', message: 'HTTP 500 for x.json' });
     const schema = await loadDetailFile('/', 'x.json', asNumber, respond(200, { n: 'a' }));
-    expect(schema).toEqual({ status: 'error', message: 'n must be a number' });
+    expect(schema).toEqual({
+      status: 'error',
+      message:
+        'x.json is not in the supported format (schemaVersion undefined). Re-run `pnpm build:detail` (or `pnpm demo` for the sample data) to regenerate it.',
+    });
+    const outdated = await loadDetailFile(
+      '/',
+      'x.json',
+      asNumber,
+      respond(200, { schemaVersion: 0 }),
+    );
+    expect(outdated).toMatchObject({ message: expect.stringContaining('schemaVersion 0') });
     const network = await loadDetailFile('/', 'x.json', asNumber, (async () => {
       throw new Error('offline');
     }) as unknown as typeof fetch);

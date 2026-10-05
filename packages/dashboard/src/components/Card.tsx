@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ScrollRegion } from './ScrollRegion';
 
 export function Card({
   title,
@@ -29,7 +30,7 @@ export function TableView({ columns, rows }: { columns: string[]; rows: (string 
   return (
     <details className="mt-3 text-sm">
       <summary className="cursor-pointer text-[var(--text-secondary)]">View as table</summary>
-      <div className="mt-2 max-h-64 overflow-auto">
+      <ScrollRegion label="Chart data" className="mt-2 max-h-64 overflow-auto">
         <table className="tabular w-full text-left">
           <thead>
             <tr>
@@ -52,7 +53,7 @@ export function TableView({ columns, rows }: { columns: string[]; rows: (string 
             ))}
           </tbody>
         </table>
-      </div>
+      </ScrollRegion>
     </details>
   );
 }

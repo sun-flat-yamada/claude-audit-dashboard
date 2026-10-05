@@ -31,6 +31,7 @@ import {
 } from '../lib/config-view';
 import { useDetailFile } from '../lib/detail-data';
 import { formatTimestamp } from '../lib/format';
+import { ScrollRegion } from '../components/ScrollRegion';
 
 export interface ConfigProps {
   baseUrl?: string;
@@ -61,7 +62,7 @@ function Table({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion label={caption} className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>
@@ -75,7 +76,7 @@ function Table({
         </thead>
         <tbody>{children}</tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 

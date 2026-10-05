@@ -35,6 +35,8 @@ pnpm lint && pnpm format:check
 pnpm audit:deps
 ```
 
+The browser suite (`pnpm test:e2e`: Playwright E2E and axe accessibility checks of the dashboard) is not part of `pnpm test`. CI runs it as the `E2E and accessibility` job; run it locally when you change `packages/dashboard` (`CONTRIBUTING.md`, Step 4 item 6).
+
 `pnpm format` (`prettier --write .`) fixes formatting, `pnpm lint:fix` fixes auto-fixable lint findings.
 
 ## 3. Blueprint Alignment

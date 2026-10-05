@@ -617,6 +617,13 @@ pnpm fork:verify && pnpm typecheck && pnpm test && pnpm secret-scan && pnpm buil
 pnpm lint && pnpm format:check && pnpm audit:deps
 ```
 
+ブラウザを使う E2E / アクセシビリティ検証は `pnpm test` に含めず、別コマンドで実行する (CI では `E2E and accessibility` ジョブ。必須チェックへの登録手順は `CONTRIBUTING.md`)。
+
+```bash
+pnpm test:e2e                      # collector をビルドし、データプロファイルを用意して Playwright を実行
+pnpm test:e2e --repeat-each=5      # 安定性の確認 (リトライなしで全件パスすること)
+```
+
 ### 18.3 テスト戦略
 
 | レベル           | 対象                                                                                       |
@@ -627,6 +634,16 @@ pnpm lint && pnpm format:check && pnpm audit:deps
 | ゴールデン       | `pnpm demo` の出力と `data/sample/` の完全一致                                             |
 | ドキュメント同期 | 本書 §7.1 と README のルール表が実装のルール一覧と一致 (AGENTS.md 規則 8)                  |
 | UI               | 表示用の純粋関数とデータ読み込み (dashboard)                                               |
+| E2E / a11y       | Playwright + axe (`packages/dashboard/e2e`)。詳細は下記                                    |
+
+**E2E / a11y (B5)**
+
+- **構成**: `scripts/e2e-prepare.mjs` が SPA を Pages と同じ base path (`/claude-audit-dashboard/`) で 1 回ビルドし、データプロファイルごとに `data/` を差し替えたコピーを `packages/dashboard/.e2e/` (gitignore) に作る。`scripts/e2e-serve.mjs` が `vite preview` で各プロファイルを配信し、Playwright の project 1 つが 1 プロファイルに対応する。
+- **プロファイル** (すべて合成データ): `sample` (`data/sample`、既定)、`fixtures` (`pnpm fixture`)、`optional-sources` (`pnpm demo --profile optional-sources`、B4 の 5 データセットが収集済み)、`optional-unavailable` (同じ構成で Console キーなし: 5 データセットが Unavailable と理由)、`unavailable` (詳細ファイルが 404)、`empty` (詳細ファイルは公開済みだが行なし)、`stale-detail` / `stale-dashboard` (`schemaVersion` 不一致)。派生プロファイルは公開契約のスキーマで検証してから作る。
+- **ライブデータ禁止**: `DASHBOARD_DATA_SOURCE=live` など `sample` / `fixtures` 以外の指定、`source` が `demo` でない `dashboard.json` は即座に失敗する。`fork:verify` は `e2e/` のスペックが live データを参照していないことも検査する。
+- **決定的な描画**: `reducedMotion: 'reduce'`、`en-US`、`UTC`、チャートのアニメーションなし、外部通信なし (ローカルのプレビューサーバー以外へのリクエストはテスト失敗)、`retries: 0`。
+- **対象**: Phase A の全画面、B1 フィクスチャテナント、B2 (F-003 のダウンロード内容、F-005 から F-014)、B3 (アーカイブの件数・サイズ)、B4 (Data coverage の新データセットと Unavailable の理由、既定プロファイルは不変)、空 / 未公開 / 不一致の表示、キーボードのみの操作、390px で横スクロールなし。
+- **アクセシビリティ**: axe の `wcag2a` / `wcag2aa` を全ルート × ライト / ダークで実行し、critical / serious は 0 件。結果は各テストに JSON で添付する。
 
 ### 18.4 コミット規約
 

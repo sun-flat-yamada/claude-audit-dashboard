@@ -11,6 +11,10 @@ export type DetailState<T> =
   | { status: 'error'; message: string }
   | { status: 'ready'; data: T };
 
+/** Version of a published file, for the message of an outdated or malformed one. */
+const versionOf = (json: unknown): string =>
+  String((json as { schemaVersion?: unknown } | null)?.schemaVersion);
+
 /**
  * Fetches `<baseUrl>data/<path>` and validates it. A 404 is "not collected / not published"
  * (`missing`), never an error screen; other failures are `error`.
@@ -25,7 +29,17 @@ export async function loadDetailFile<T>(
     const response = await fetchImpl(`${baseUrl}data/${path}`);
     if (response.status === 404) return { status: 'missing' };
     if (!response.ok) return { status: 'error', message: `HTTP ${response.status} for ${path}` };
-    return { status: 'ready', data: schema.parse(await response.json()) };
+    const json: unknown = await response.json();
+    try {
+      return { status: 'ready', data: schema.parse(json) };
+    } catch {
+      // A schema mismatch means the files predate this dashboard: say how to regenerate them
+      // instead of printing the validator's output.
+      return {
+        status: 'error',
+        message: `${path} is not in the supported format (schemaVersion ${versionOf(json)}). Re-run \`pnpm build:detail\` (or \`pnpm demo\` for the sample data) to regenerate it.`,
+      };
+    }
   } catch (error) {
     return { status: 'error', message: error instanceof Error ? error.message : String(error) };
   }

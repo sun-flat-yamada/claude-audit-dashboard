@@ -34,6 +34,7 @@ import {
   type SortKey,
   type StatusFilter,
 } from '../lib/members-view';
+import { ScrollRegion } from '../components/ScrollRegion';
 
 export interface MembersProps {
   baseUrl?: string;
@@ -143,7 +144,7 @@ function MemberRow({ member }: { member: Member }) {
 
 function MembersTable({ members }: { members: readonly Member[] }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion label="Members" className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Members</caption>
         <thead>
@@ -168,13 +169,13 @@ function MembersTable({ members }: { members: readonly Member[] }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 
 function InvitesTable({ invites }: { invites: DetailMembers['invites'] }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion label="Pending invites" className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Pending invites</caption>
         <thead>
@@ -212,7 +213,7 @@ function InvitesTable({ invites }: { invites: DetailMembers['invites'] }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 

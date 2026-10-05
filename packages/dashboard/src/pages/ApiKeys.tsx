@@ -37,6 +37,7 @@ import {
   type KeySortKey,
   type SortDirection,
 } from '../lib/keys-view';
+import { ScrollRegion } from '../components/ScrollRegion';
 
 export interface ApiKeysProps {
   baseUrl?: string;
@@ -160,7 +161,7 @@ const COLUMNS = ['Key', 'Scopes', 'Age', 'Expires', 'Last used', 'Recommendation
 
 function KeysTable({ keys, ctx }: { keys: readonly ApiKey[]; ctx: KeyContext }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion label="API keys" className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">API keys</caption>
         <thead>
@@ -178,7 +179,7 @@ function KeysTable({ keys, ctx }: { keys: readonly ApiKey[]; ctx: KeyContext }) 
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 

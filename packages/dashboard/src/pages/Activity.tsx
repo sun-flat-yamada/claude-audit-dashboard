@@ -38,6 +38,7 @@ import {
 } from '../lib/activity-view';
 import { useDetailFile } from '../lib/detail-data';
 import { formatTimestamp } from '../lib/format';
+import { ScrollRegion } from '../components/ScrollRegion';
 
 export interface ActivityProps {
   baseUrl?: string;
@@ -118,7 +119,7 @@ function Identity({ actor }: { actor: ActivityItem['actor'] }) {
 
 function Timeline({ rows }: { rows: readonly ActivityItem[] }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion label="Activity timeline" className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Activity timeline</caption>
         <thead>
@@ -148,7 +149,7 @@ function Timeline({ rows }: { rows: readonly ActivityItem[] }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 

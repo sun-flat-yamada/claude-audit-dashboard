@@ -14,6 +14,7 @@ import {
 import { formatInteger, formatMoney } from '../lib/format';
 import { formatHash } from '../lib/router';
 import { useOrgGroups, type DrilldownOptions } from './useOrgGroups';
+import { ScrollRegion } from '../components/ScrollRegion';
 
 export const countText = (value: number | null): string =>
   value === null ? 'Not available' : formatInteger(value);
@@ -23,7 +24,7 @@ export const costText = (group: Group, currency: string): string =>
 
 function OrganizationsTable({ rows }: { rows: readonly OrgSummary[] }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion label="Linked organizations" className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Linked organizations</caption>
         <thead>
@@ -53,13 +54,13 @@ function OrganizationsTable({ rows }: { rows: readonly OrgSummary[] }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 
 function GroupsTable({ groups, currency }: { groups: readonly Group[]; currency: string }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion label="RBAC groups" className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">RBAC groups</caption>
         <thead>
@@ -93,7 +94,7 @@ function GroupsTable({ groups, currency }: { groups: readonly Group[]; currency:
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 

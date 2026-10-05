@@ -8,11 +8,13 @@
     "build": "node scripts/stage-data.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "clean": "rimraf dist",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.e2e.json",
     "test": "vitest run",
     "test:unit": "vitest run",
     "lint": "eslint src",
-    "lint:fix": "eslint src --fix"
+    "lint:fix": "eslint src --fix",
+    "test:e2e": "node scripts/e2e-prepare.mjs && playwright test",
+    "test:e2e:report": "playwright show-report .e2e/report"
   },
   "dependencies": {
     "@claude-audit/core": "workspace:*",
@@ -22,6 +24,8 @@
     "recharts": "^3.10.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.0.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

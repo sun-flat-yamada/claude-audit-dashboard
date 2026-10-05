@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Playwright E2E and axe accessibility suite for the dashboard (B5, #40): `pnpm test:e2e` builds the SPA with the Pages base path and runs journeys of every screen (Phase A, B1 fixture tenant, B2 F-003 / F-005 to F-014, B3 archive size, B4 optional datasets) on eight synthetic data profiles, WCAG 2.1 AA axe scans of every route in light and dark, keyboard-only checks and a guard against live data; new `E2E and accessibility` CI job (not part of `pnpm test`)
 - Optional adapters (B4, key-free part of #39): the linked Claude Console organization Admin API (workspaces, API key inventory, Usage and Cost reports) and the Claude Code Analytics API, as five new datasets (`consoleWorkspaces`, `consoleApiKeys`, `consoleUsage`, `consoleCost`, `claudeCodeActivity`) registered only when `sources.console.enabled` / `sources.claudeCode.enabled` is set (both default `false`, so coverage, OP-002 and the score of existing tenants are unchanged). New secret `ANTHROPIC_CONSOLE_ADMIN_API_KEY` (never a fallback of the Enterprise key). Enabled without a key or with 401 / 403 / 404 the datasets are `unavailable`, schema drift is `error`, and the other datasets keep collecting. Per-person Claude Code rows are never published (aggregate-only)
 - `pnpm demo --profile optional-sources` and `pnpm fixture --optional-sources` (gitignored output) with both sources on; official-shape fixtures for both APIs; `secret-scan` / `fork:verify` cover the new variable, the fixtures and the generated profile
 - Long-term operation tooling (B3, key-free part of #38): `pnpm size` measures the `data/audit` history (object counts, reachable size, growth per 30 days, blobs per dataset, archive inventory shared with the dashboard's F-013 aggregation) and judges it against the new `capacity.*` limits with a pure function; the collect workflow runs it non-fatally before the save and alerts through the existing channels
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Dashboard accessibility (found by the axe scans): muted text meets 4.5:1 in both themes, wide tables that scroll inside their own box are keyboard-focusable named regions, the organization / group pages keep a level-1 heading while loading or failing, and an outdated detail file now says how to regenerate it instead of printing the validator output
 - `change-workflow` agent, skill and rule replaced by `change-dev`: implementation plan with user approval gate, plan / task / walkthrough artifacts in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` committed with each change, `.devs/` otherwise gitignored
 
 ## [0.2.0] - 2026-10-01
