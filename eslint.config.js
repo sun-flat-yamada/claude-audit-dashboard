@@ -25,7 +25,14 @@ const restrict = (files, groups, message) => ({
 
 export default defineConfig(
   {
-    ignores: ['**/dist/**', '**/coverage/**', '**/node_modules/**', 'packages/dashboard/public/**'],
+    ignores: [
+      '**/dist/**',
+      '**/coverage/**',
+      '**/node_modules/**',
+      'packages/dashboard/public/**',
+      // Playwright output: the build, the data profiles, traces and the HTML report.
+      'packages/dashboard/.e2e/**',
+    ],
   },
   js.configs.recommended,
   tseslint.configs.recommended,
@@ -39,6 +46,13 @@ export default defineConfig(
   {
     files: ['packages/dashboard/src/**/*.{ts,tsx}'],
     languageOptions: { globals: { ...globals.browser } },
+  },
+  {
+    // E2E specs run in Node, but their page.evaluate callbacks run in the browser.
+    files: ['packages/dashboard/e2e/**/*.ts'],
+    languageOptions: { globals: { ...globals.browser } },
+    // Playwright requires fixtures to be destructured: `({}, testInfo)` is its idiom for none.
+    rules: { 'no-empty-pattern': 'off' },
   },
   {
     // Keep units small so additions do not accumulate complexity.

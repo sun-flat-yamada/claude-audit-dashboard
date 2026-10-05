@@ -4,6 +4,7 @@ The contribution guide lives in the repository root: **[CONTRIBUTING.md](../CONT
 
 Related references:
 
+- [E2E and accessibility tests](../CONTRIBUTING.md#step-4-implement--run-local-quality-gate) (item 6 of Step 4) — `pnpm test:e2e`, the data profiles, axe, the CI job and how to register it as a required check.
 - [Development workflow rules](../.agents/rules/development-workflow.md)
 - [Compliance rule synchronization policy](../.agents/rules/compliance-rules-management.md) — when adding a rule, update
   the rule in `packages/core/src/domain/compliance/rules/` (or a definition in `factories/defaults.ts`), its tests,

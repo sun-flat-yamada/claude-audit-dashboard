@@ -21,10 +21,11 @@ import { memberStatus, roleLabel } from '../lib/members-view';
 import { BackLink, NotFoundNotice } from './DrilldownParts';
 import { countText } from './Organizations';
 import { useOrgGroups, type DrilldownOptions } from './useOrgGroups';
+import { ScrollRegion } from '../components/ScrollRegion';
 
 function MemberRows({ members }: { members: readonly Member[] }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion label="Organization members" className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Organization members</caption>
         <thead>
@@ -57,7 +58,7 @@ function MemberRows({ members }: { members: readonly Member[] }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 
@@ -135,6 +136,7 @@ export function OrganizationDetail({ id, ...options }: { id: string } & Drilldow
   return (
     <div className="space-y-6">
       <BackLink />
+      {file.status !== 'ready' && <h1 className="text-2xl font-semibold">Organization</h1>}
       {notice && <Notice role={notice.role}>{notice.text}</Notice>}
       {file.status === 'ready' && (
         <OrganizationContent data={file.data} id={id} options={options} />

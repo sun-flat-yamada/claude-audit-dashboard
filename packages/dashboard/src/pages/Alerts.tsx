@@ -31,6 +31,7 @@ import {
 } from '../lib/alerts-view';
 import { useDetailFile } from '../lib/detail-data';
 import { formatInteger, formatTimestamp } from '../lib/format';
+import { ScrollRegion } from '../components/ScrollRegion';
 
 export interface AlertsProps {
   baseUrl?: string;
@@ -107,7 +108,7 @@ function Acknowledgement({ alert }: { alert: AlertEntry }) {
 
 function AlertsTable({ alerts }: { alerts: readonly AlertEntry[] }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion label="Alert history" className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Alert history</caption>
         <thead>
@@ -141,7 +142,7 @@ function AlertsTable({ alerts }: { alerts: readonly AlertEntry[] }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 

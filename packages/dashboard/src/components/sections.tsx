@@ -12,6 +12,7 @@ import { Card, Empty } from './Card';
 import { ComplianceResults } from './ComplianceResults';
 import { ShareBars } from './ShareBars';
 import { TimeSeriesChart } from './TimeSeriesChart';
+import { ScrollRegion } from './ScrollRegion';
 
 /**
  * Dashboard sections. Each one takes the published view and renders a self-contained card;
@@ -197,7 +198,7 @@ function NotableEvents({
 }) {
   if (notable.length === 0) return <Empty>No events matched an activity watch.</Empty>;
   return (
-    <div className="max-h-80 overflow-auto">
+    <ScrollRegion label="Events matched by activity watches" className="max-h-80 overflow-auto">
       <table className="tabular w-full text-left text-sm">
         <caption className="mb-2 text-left text-[var(--text-secondary)]">
           Events matched by activity watches
@@ -224,7 +225,7 @@ function NotableEvents({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 
@@ -234,7 +235,7 @@ export function CoverageSection({ coverage }: { coverage: DashboardView['coverag
       title="Data coverage"
       subtitle="Rules that need a dataset that was not collected are reported as skipped, never as passed"
     >
-      <div className="overflow-x-auto">
+      <ScrollRegion label="Data coverage" className="overflow-x-auto">
         <table className="tabular w-full text-left text-sm">
           <thead>
             <tr className="text-[var(--text-secondary)]">
@@ -267,7 +268,7 @@ export function CoverageSection({ coverage }: { coverage: DashboardView['coverag
             ))}
           </tbody>
         </table>
-      </div>
+      </ScrollRegion>
     </Card>
   );
 }

@@ -210,10 +210,10 @@ Identifier handling follows `dashboard.maskPii` (default `true`): e-mail address
 
 ## Non-functional requirements
 
-| Area          | Requirement                                                                                    |
-| ------------- | ---------------------------------------------------------------------------------------------- |
-| Compatibility | The UI rejects `dashboard.json` with another `schemaVersion` and explains how to regenerate it |
-| Performance   | One JSON file (aggregates); no runtime API calls; code-split React bundle                      |
-| Accessibility | Table view for every chart; status never color-only; keyboard-operable filters and details     |
-| Privacy       | E-mail addresses masked by default (`dashboard.maskPii`); sample data uses `example.com` only  |
-| Testing       | Unit tests for view helpers and data loading; E2E (Playwright) in Phase B                      |
+| Area          | Requirement                                                                                                                               |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Compatibility | The UI rejects `dashboard.json` with another `schemaVersion` and explains how to regenerate it                                            |
+| Performance   | One JSON file (aggregates); no runtime API calls; code-split React bundle                                                                 |
+| Accessibility | Table view for every chart; status never color-only; keyboard-operable filters and details                                                |
+| Privacy       | E-mail addresses masked by default (`dashboard.maskPii`); sample data uses `example.com` only                                             |
+| Testing       | Unit tests for view helpers and data loading; E2E and axe (WCAG 2.1 AA) with Playwright (`pnpm test:e2e`, CI job `E2E and accessibility`) |

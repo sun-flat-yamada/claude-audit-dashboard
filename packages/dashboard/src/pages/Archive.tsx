@@ -13,6 +13,7 @@ import { CELL, detailNotice, HEAD, Notice, SearchField } from '../components/Det
 import { filterYears, formatBytes, formatSnapshotId, sizeShare } from '../lib/archive-view';
 import { useDetailFile } from '../lib/detail-data';
 import { formatInteger, formatPercent, formatTimestamp } from '../lib/format';
+import { ScrollRegion } from '../components/ScrollRegion';
 
 export interface ArchiveProps {
   baseUrl?: string;
@@ -69,7 +70,7 @@ const COLUMNS = ['Year', 'Snapshots', 'Compressed size', 'Share of size', 'Oldes
 
 function YearsTable({ years, totalBytes }: { years: readonly ArchiveYear[]; totalBytes: number }) {
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion label="Archive by year" className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Archive by year</caption>
         <thead>
@@ -96,7 +97,7 @@ function YearsTable({ years, totalBytes }: { years: readonly ArchiveYear[]; tota
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 

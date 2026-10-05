@@ -29,6 +29,7 @@ import {
   type Period,
   type UsageMatrix,
 } from '../lib/usage-matrix-view';
+import { ScrollRegion } from '../components/ScrollRegion';
 
 export interface ModelsProps {
   baseUrl?: string;
@@ -82,7 +83,7 @@ function HeatTable({ grid, currency }: { grid: HeatGrid; currency: string }) {
   const nameOf = (list: { key: string; name: string }[], key: string): string =>
     list.find((x) => x.key === key)?.name ?? key;
   return (
-    <div className="max-h-96 max-w-full overflow-auto">
+    <ScrollRegion label="Model by group spend" className="max-h-96 max-w-full overflow-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Model by group spend</caption>
         <thead>
@@ -107,7 +108,7 @@ function HeatTable({ grid, currency }: { grid: HeatGrid; currency: string }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 
@@ -141,7 +142,7 @@ function ModelTotals({ grid, currency }: { grid: HeatGrid; currency: string }) {
 
 function MixTable({ months, currency }: { months: readonly MixMonth[]; currency: string }) {
   return (
-    <div className="max-h-96 max-w-full overflow-auto">
+    <ScrollRegion label="Model mix by month" className="max-h-96 max-w-full overflow-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Model mix by month</caption>
         <thead>
@@ -168,7 +169,7 @@ function MixTable({ months, currency }: { months: readonly MixMonth[]; currency:
           )}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 
