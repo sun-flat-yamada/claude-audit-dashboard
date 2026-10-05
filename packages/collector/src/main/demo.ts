@@ -13,6 +13,7 @@ import {
   createDemoCollectors,
   demoAckStore,
   demoState,
+  demoUsageMatrixInput,
 } from '../adapters/demo/demo-source.js';
 import { toMarkdown } from '../adapters/renderers/markdown.js';
 import { FsAckRepository } from '../adapters/storage/ack-store.js';
@@ -150,7 +151,12 @@ export async function writeDemoSample(
     const weekly = await generateReport(c, 'weekly');
     const monthly = await generateReport(c, 'monthly');
     const monthlyView = await writeDemoMonths(c);
-    const detail = await writeDetail(c, demoConfigInput(), demoArchiveEntries());
+    const detail = await writeDetail(
+      c,
+      demoConfigInput(),
+      demoArchiveEntries(),
+      demoUsageMatrixInput(DEMO_NOW),
+    );
     const files: Record<string, string> = {
       'dashboard.json': stableStringify(view),
       'compliance-report.json': stableStringify(report),

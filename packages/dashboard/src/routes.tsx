@@ -10,6 +10,7 @@ import { Config } from './pages/Config';
 import { ApiKeys } from './pages/ApiKeys';
 import { GroupDetail } from './pages/GroupDetail';
 import { Members } from './pages/Members';
+import { Models } from './pages/Models';
 import { MonthlyReport } from './pages/MonthlyReport';
 import { OrganizationDetail } from './pages/OrganizationDetail';
 import { Organizations } from './pages/Organizations';
@@ -76,6 +77,13 @@ export const ROUTES: RouteDef[] = [
     nav: false,
     navPath: '/reports/monthly',
     render: (_view, params) => <MonthlyReport id={params.id ?? ''} />,
+  },
+  {
+    path: '/models',
+    pattern: '/models',
+    label: 'Models',
+    nav: true,
+    render: () => <Models />,
   },
   {
     path: '/config',

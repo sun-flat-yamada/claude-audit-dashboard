@@ -301,10 +301,13 @@ export const FIXTURES: Record<string, Handler> = {
               output_tokens: 300,
               server_tool_use: { web_search_requests: 2 },
               requests: 7,
-              model: url.searchParams.get('group_by[]') === 'model' ? 'claude-opus-5' : null,
-              product: url.searchParams.get('group_by[]') === 'product' ? 'chat' : null,
-              rbac_group_id:
-                url.searchParams.get('group_by[]') === 'rbac_group_id' ? 'rbac_group_01' : null,
+              model: url.searchParams.getAll('group_by[]').includes('model')
+                ? 'claude-opus-5'
+                : null,
+              product: url.searchParams.getAll('group_by[]').includes('product') ? 'chat' : null,
+              rbac_group_id: url.searchParams.getAll('group_by[]').includes('rbac_group_id')
+                ? 'rbac_group_01'
+                : null,
             },
           ],
         },
@@ -326,10 +329,13 @@ export const FIXTURES: Record<string, Handler> = {
               amount: '41280.000000',
               list_amount: '50000',
               currency: 'USD',
-              model: url.searchParams.get('group_by[]') === 'model' ? 'claude-opus-5' : null,
-              product: url.searchParams.get('group_by[]') === 'product' ? 'chat' : null,
-              rbac_group_id:
-                url.searchParams.get('group_by[]') === 'rbac_group_id' ? 'rbac_group_01' : null,
+              model: url.searchParams.getAll('group_by[]').includes('model')
+                ? 'claude-opus-5'
+                : null,
+              product: url.searchParams.getAll('group_by[]').includes('product') ? 'chat' : null,
+              rbac_group_id: url.searchParams.getAll('group_by[]').includes('rbac_group_id')
+                ? 'rbac_group_01'
+                : null,
             },
           ],
         },

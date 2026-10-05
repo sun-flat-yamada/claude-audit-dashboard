@@ -111,6 +111,7 @@ pnpm dev         # http://localhost:5173/claude-audit-dashboard/
 cp .env.example .env    # fill in ANTHROPIC_ENTERPRISE_API_KEY (never commit .env)
 pnpm pipeline           # collect → check → data/dashboard.json
 pnpm dev                # now shows your data (data/ is gitignored)
+pnpm usage-matrix       # optional model x group cost (set sources.usageMatrix.enabled in config/default.json); pnpm pipeline runs it after collect
 pnpm report:weekly
 pnpm report:monthly --month 2026-09   # also writes data/detail/monthly/ for the dashboard's monthly cost report
 ```

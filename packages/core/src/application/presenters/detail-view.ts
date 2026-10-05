@@ -20,6 +20,11 @@ import {
   DETAIL_SCHEMA_VERSION,
   detailActivityPath,
 } from '../../contracts/detail-view.js';
+import type { DetailUsageMatrix } from '../../contracts/usage-matrix.js';
+import {
+  DETAIL_USAGE_MATRIX_PATH,
+  USAGE_MATRIX_SCHEMA_VERSION,
+} from '../../contracts/usage-matrix.js';
 import type { ComplianceReport } from '../../domain/compliance/types.js';
 import { withDefaults, type DatasetMap, type DatasetName } from '../../domain/model/dataset.js';
 import type { AuditSnapshot } from '../../domain/model/snapshot.js';
@@ -31,6 +36,7 @@ import { buildDetailActivity } from './detail-activity.js';
 import { buildDetailApiKeys } from './detail-api-keys.js';
 import { buildDetailMembers } from './detail-members.js';
 import { buildDetailOrgGroups } from './detail-org-groups.js';
+import { buildUsageMatrixView, type UsageMatrixInput } from './usage-matrix-view.js';
 
 /** Effective thresholds of the rules whose verdicts the detail screens explain. */
 export interface DetailThresholds {
@@ -65,6 +71,11 @@ export interface DetailInput {
    * not be read. Omitted when the caller has no alert history to report on.
    */
   alerts?: Omit<AlertsViewInput, 'now'> | null | undefined;
+  /**
+   * The collected model x group matrix (I/O stays with the caller). Omitted when the optional
+   * collection is off, so the manifest then has no entry; `null` means it could not be read.
+   */
+  usageMatrix?: UsageMatrixInput | null | undefined;
 }
 
 export interface DetailFile {
@@ -77,7 +88,8 @@ export interface DetailFile {
     | DetailOrgGroups
     | DetailConfig
     | DetailArchive
-    | DetailAlerts;
+    | DetailAlerts
+    | DetailUsageMatrix;
 }
 
 export interface DetailBundle {
@@ -293,6 +305,40 @@ function alertsPart(c: Ctx): Part {
   };
 }
 
+function usageMatrixPart(c: Ctx): Part {
+  if (c.usageMatrix === undefined) return { files: [], entries: [] };
+  const unavailable = (reason: string): Part => ({
+    files: [],
+    entries: [
+      {
+        kind: 'usage-matrix',
+        path: DETAIL_USAGE_MATRIX_PATH,
+        schemaVersion: USAGE_MATRIX_SCHEMA_VERSION,
+        status: 'unavailable',
+        reason,
+        count: null,
+        month: null,
+      },
+    ],
+  });
+  if (c.usageMatrix === null) return unavailable('the matrix input could not be read');
+  if (c.usageMatrix.status !== 'ok') return unavailable(c.usageMatrix.reason);
+  const names = new Map(c.data.groups.map((g) => [g.id, g.name]));
+  const content = buildUsageMatrixView(c.usageMatrix, names, c.now);
+  return {
+    files: [{ path: DETAIL_USAGE_MATRIX_PATH, content }],
+    entries: [
+      available(
+        'usage-matrix',
+        DETAIL_USAGE_MATRIX_PATH,
+        content.cells.length,
+        null,
+        USAGE_MATRIX_SCHEMA_VERSION,
+      ),
+    ],
+  };
+}
+
 /** Builds the manifest and the entity files; pure and deterministic for the same input. */
 export function buildDetailView(input: DetailInput): DetailBundle {
   const ctx: Ctx = {
@@ -308,6 +354,7 @@ export function buildDetailView(input: DetailInput): DetailBundle {
     configPart(ctx),
     archivePart(ctx),
     alertsPart(ctx),
+    usageMatrixPart(ctx),
   ];
   return {
     manifest: {

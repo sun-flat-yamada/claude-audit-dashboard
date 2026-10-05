@@ -10,16 +10,19 @@ import type {
   DatasetName,
   DateRange,
   Group,
+  MatrixCostRow,
   Member,
   MemberActivity,
   OrgSettings,
   SentRecord,
   SpendLimit,
   UsageDimension,
+  UsageMatrixInput,
   UsageRow,
 } from '@claude-audit/core';
 import {
   addDays,
+  aggregateMatrixRows,
   alertId,
   earlierOf,
   initialState,
@@ -574,3 +577,79 @@ export const demoState = (now: Date): CollectorState => ({
     },
   },
 });
+
+// ─── Model x group matrix (F-010) ───────────────────────────────────────────
+
+/** Months of the synthetic matrix, spend per month and the ungrouped model mix per month. */
+const MATRIX_MONTHS: Readonly<
+  Record<string, { total: number; mix: Readonly<Record<string, number>> }>
+> = {
+  '2026-06': {
+    total: 18000,
+    mix: { 'claude-opus-5': 0.7, 'claude-sonnet-5': 0.26, 'claude-haiku-4-5': 0.04 },
+  },
+  '2026-07': {
+    total: 21000,
+    mix: { 'claude-opus-5': 0.64, 'claude-sonnet-5': 0.31, 'claude-haiku-4-5': 0.05 },
+  },
+  '2026-08': {
+    total: 24000,
+    mix: { 'claude-opus-5': 0.58, 'claude-sonnet-5': 0.36, 'claude-haiku-4-5': 0.06 },
+  },
+};
+
+/**
+ * Share of a model's spend that is attributed to each group. Members belong to several groups,
+ * so every row adds up to more than 1 (the overlap the page warns about); one cell is exactly 0.
+ */
+const MATRIX_GROUP_SHARES: Readonly<Record<string, Readonly<Record<string, number>>>> = {
+  'claude-opus-5': {
+    rbac_group_demo_engineering: 0.78,
+    rbac_group_demo_sales: 0.3,
+    rbac_group_demo_legal: 0.08,
+    rbac_group_demo_pilot: 0.12,
+    none: 0.04,
+  },
+  'claude-sonnet-5': {
+    rbac_group_demo_engineering: 0.6,
+    rbac_group_demo_sales: 0.4,
+    rbac_group_demo_legal: 0.25,
+    rbac_group_demo_pilot: 0.05,
+    none: 0.05,
+  },
+  'claude-haiku-4-5': {
+    rbac_group_demo_engineering: 0.5,
+    rbac_group_demo_sales: 0.3,
+    rbac_group_demo_legal: 0,
+    rbac_group_demo_pilot: 0.1,
+    none: 0.02,
+  },
+};
+
+/** The synthetic stored input of the matrix collection: 2026-06 .. 2026-08, deterministic. */
+export function demoUsageMatrixInput(now: Date): UsageMatrixInput {
+  const pairs: MatrixCostRow[] = [];
+  const byModel: MatrixCostRow[] = [];
+  for (const [month, { total, mix }] of Object.entries(MATRIX_MONTHS)) {
+    for (const [model, share] of Object.entries(mix)) {
+      const date = `${month}-15`;
+      byModel.push({ date, model, group: null, amount: round(total * share), currency: 'USD' });
+      for (const [group, groupShare] of Object.entries(MATRIX_GROUP_SHARES[model] ?? {})) {
+        const amount = round(total * share * groupShare);
+        pairs.push({
+          date,
+          model,
+          group: group === 'none' ? null : group,
+          amount,
+          currency: 'USD',
+        });
+      }
+    }
+  }
+  return {
+    status: 'ok',
+    asOf: '2026-09-29T08:00:00.000Z',
+    window: { from: '2026-06-01T00:00:00.000Z', to: now.toISOString() },
+    data: aggregateMatrixRows(pairs, byModel),
+  };
+}

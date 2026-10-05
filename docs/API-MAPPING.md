@@ -104,6 +104,8 @@ Enterprise のロールは `user`, `managed`, `owner`, `membership_admin`, `prim
 | `GET /analytics/usage_report` | `starting_at = 今日 − 30 日 00:00Z`、`bucket_width=1d`、`limit=31`、`group_by[]` を total / `product` / `model` / `rbac_group_id` で 4 回 | `UsageRow { date, dimension, key, uncachedInputTokens, cacheReadInputTokens, cacheCreationInputTokens (5m + 1h), outputTokens, webSearchRequests, requests }`、`data_refreshed_at` → coverage `asOf` |
 | `GET /analytics/cost_report`  | 同上                                                                                                                                      | `CostRow { date, dimension, key, amount ← amount ÷ 100, listAmount ← list_amount ÷ 100, currency }`                                                                                                  |
 
+任意収集 (`sources.usageMatrix.enabled`、既定 off、スナップショットのデータセットではない): `cost_report` に `group_by[]=model&group_by[]=rbac_group_id` (モデル × グループ、重なりあり) と `group_by[]=model` (加算可能なモデル構成比) を `bucket_width=1d` で取得し、月次に集計して `detail/usage-matrix.json` にする (F-010)。`group_by[]` が配列パラメータであることは Admin Usage / Cost API リファレンスで確認済み。Analytics API が 2 値を同時に受け付けるかは**未確認 (推定)**で、拒否された場合は `unavailable` として扱う (実テナントでの確認は `--capture-raw` で行う)。
+
 `rbac_group_id` 別の値は「所属していた全グループに計上」されるため合計が総額を超え得る。総額は group_by 無しの行を使う。各バケットは上位 100 グループまで。
 
 ---

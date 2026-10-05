@@ -12,6 +12,7 @@ import {
   type DetailManifest,
   type DetailManifestFile,
 } from './detail-view.js';
+import { detailUsageMatrixSchema } from './usage-matrix.js';
 import {
   MONTHLY_DIR,
   MONTHLY_INDEX_PATH,
@@ -40,6 +41,7 @@ const SCHEMAS = {
   config: detailConfigSchema,
   archive: detailArchiveSchema,
   alerts: detailAlertsSchema,
+  'usage-matrix': detailUsageMatrixSchema,
 } as const;
 
 type Json = Record<string, unknown>;
@@ -173,7 +175,34 @@ function alertsErrors(path: string, data: Json): string[] {
   ];
 }
 
+/** Every cell / mix row refers to a listed model, group and month, and the lists have no repeats. */
+function usageMatrixErrors(path: string, data: Json): string[] {
+  const models = new Set(rows(data, 'models').map((m) => String(m.key)));
+  const groups = new Set(rows(data, 'groups').map((g) => String(g.key)));
+  const months = new Set((Array.isArray(data.months) ? data.months : []).map(String));
+  const stray = (list: Json[], keys: [string, Set<string>][]): number =>
+    list.filter((r) => keys.some(([field, known]) => !known.has(String(r[field])))).length;
+  const unknownCells = stray(rows(data, 'cells'), [
+    ['model', models],
+    ['group', groups],
+    ['month', months],
+  ]);
+  const unknownMix = stray(rows(data, 'mix'), [
+    ['model', models],
+    ['month', months],
+  ]);
+  return [
+    ...(unknownCells + unknownMix === 0
+      ? []
+      : [`${path}: cells or mix rows refer to an unlisted model, group or month`]),
+    ...(models.size === rows(data, 'models').length && groups.size === rows(data, 'groups').length
+      ? []
+      : [`${path}: duplicate model or group keys`]),
+  ];
+}
+
 function countOf(entry: DetailManifestFile, data: Json): number {
+  if (entry.kind === 'usage-matrix') return rows(data, 'cells').length;
   if (entry.kind === 'alerts') return rows(data, 'alerts').length;
   if (entry.kind === 'archive') return Number((data.totals as Json | undefined)?.snapshots);
   if (entry.kind === 'config') return rows(data, 'rules').length;
@@ -181,6 +210,17 @@ function countOf(entry: DetailManifestFile, data: Json): number {
   if (entry.kind === 'api-keys') return rows(data, 'keys').length;
   if (entry.kind === 'activity') return rows(data, 'items').length;
   return rows(data, 'groups').length;
+}
+
+/** Consistency rules that only apply to one kind of file. */
+function kindErrors(entry: DetailManifestFile, data: Json): string[] {
+  const path = entry.path;
+  if (entry.kind === 'config') return configLeakErrors(path, data);
+  if (entry.kind === 'alerts')
+    return [...configLeakErrors(path, data), ...alertsErrors(path, data)];
+  if (entry.kind === 'archive') return archiveErrors(path, data);
+  if (entry.kind === 'usage-matrix') return usageMatrixErrors(path, data);
+  return [];
 }
 
 function fileErrors(manifest: DetailManifest, entry: DetailManifestFile, text: string): string[] {
@@ -194,11 +234,7 @@ function fileErrors(manifest: DetailManifest, entry: DetailManifestFile, text: s
     ...(entry.kind === 'activity' && data.month !== entry.month
       ? [`${entry.path}: month differs from the manifest`]
       : []),
-    ...(entry.kind === 'config' || entry.kind === 'alerts'
-      ? configLeakErrors(entry.path, data)
-      : []),
-    ...(entry.kind === 'alerts' ? alertsErrors(entry.path, data) : []),
-    ...(entry.kind === 'archive' ? archiveErrors(entry.path, data) : []),
+    ...kindErrors(entry, data),
     ...emailErrors(entry.path, text, manifest.maskPii),
     ...(manifest.maskPii ? maskErrors(entry, entry.path, data) : []),
   ];

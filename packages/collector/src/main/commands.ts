@@ -19,6 +19,7 @@ import { writeDetail } from './detail.js';
 import { writeMonthlyView } from './monthly-report.js';
 import { writeDemoSample } from './demo.js';
 import { writeFixtureTenant } from './fixture.js';
+import { collectUsageMatrix } from './usage-matrix.js';
 import { sanitizeDirectory } from './sanitize.js';
 import { check, collect, generateReport, writeDashboard } from './workflows.js';
 
@@ -47,6 +48,18 @@ const collectCommand: Command = {
     for (const [name, meta] of entries.filter(([, m]) => m.status !== 'ok')) {
       c.logger.warn(`${name} ${meta.status}: ${meta.reason ?? 'no reason'}`);
     }
+  },
+};
+
+const usageMatrixCommand: Command = {
+  name: 'usage-matrix',
+  usage: 'usage-matrix',
+  description: 'Collect the optional model x group cost matrix (sources.usageMatrix.enabled)',
+  async run(c) {
+    const status = await collectUsageMatrix(c);
+    if (status === null) c.logger.info('Model x group matrix is off (sources.usageMatrix.enabled)');
+    else if (status === 'ok') c.logger.info('Model x group matrix collected');
+    else c.logger.warn(`Model x group matrix ${status}: see detail/usage-matrix.json status`);
   },
 };
 
@@ -92,7 +105,13 @@ const pipelineCommand: Command = {
   usage: 'pipeline',
   description: 'collect, check, dashboard and detail in one run',
   async run(c, args) {
-    for (const step of [collectCommand, checkCommand, dashboardCommand, detailCommand])
+    for (const step of [
+      collectCommand,
+      usageMatrixCommand,
+      checkCommand,
+      dashboardCommand,
+      detailCommand,
+    ])
       await step.run(c, args);
   },
 };
@@ -274,6 +293,7 @@ const fixtureCommand: Command = {
 
 export const COMMANDS = new Registry<Command>((cmd) => cmd.name, 'command').addAll([
   collectCommand,
+  usageMatrixCommand,
   checkCommand,
   dashboardCommand,
   detailCommand,

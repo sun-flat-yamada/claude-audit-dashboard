@@ -56,6 +56,7 @@
     "notify": "pnpm --filter @claude-audit/collector cli notify",
     "archive": "pnpm --filter @claude-audit/collector cli archive",
     "alerts": "pnpm --filter @claude-audit/collector cli alerts",
+    "usage-matrix": "pnpm --filter @claude-audit/collector cli usage-matrix",
     "demo": "pnpm --filter @claude-audit/collector cli demo",
     "sanitize": "pnpm --filter @claude-audit/collector cli sanitize",
     "fixture": "pnpm --filter @claude-audit/collector cli fixture",

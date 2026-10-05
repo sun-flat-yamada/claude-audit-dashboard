@@ -43,6 +43,7 @@ export * from './application/presenters/monthly-report-view.js';
 export * from './application/presenters/config-view.js';
 export * from './application/presenters/archive-view.js';
 export * from './application/presenters/alerts-view.js';
+export * from './application/presenters/usage-matrix-view.js';
 export * from './application/alerts-history.js';
 
 // ─── Contracts ───────────────────────────────────────────────────────────────

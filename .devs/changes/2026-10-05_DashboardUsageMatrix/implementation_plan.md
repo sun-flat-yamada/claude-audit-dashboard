@@ -40,7 +40,7 @@ Outcome: **plausible, so implement it, opt-in and fail-soft.** Because it is not
 
 - `[MODIFY] adapters/anthropic/analytics-api.ts`: `AnalyticsApi.costMatrix(range, now)` issues `cost_report` with `group_by[]=model&group_by[]=rbac_group_id` and, for the additive mix, `group_by[]=model`; tolerant zod read (`looseObject`, key fields nullish); the existing single-dimension requests are unchanged.
 - `[MODIFY] infrastructure/config.ts`: `sources.usageMatrix { enabled (false), lookbackDays (90) }`; `main/container.ts` wires an optional matrix source only when enabled and an analytics key exists.
-- `[NEW] main/usage-matrix.ts`: `collectUsageMatrix(c)` (fail-soft, writes `usage-matrix/input.json` with a `schemaVersion`), `readUsageMatrixInput(c)` (tolerant read). `main/commands.ts`: `usage-matrix` command, included in `pipeline` after `collect`. `main/detail.ts`: passes the input and the group names. `config-view`/B2-12 allowlist: `usageMatrix.enabled` is shown as a source setting.
+- `[NEW] main/usage-matrix.ts`: `collectUsageMatrix(c)` (fail-soft, writes `usage-matrix/input.json` with a `schemaVersion`), `readUsageMatrixInput(c)` (tolerant read). `main/commands.ts`: `usage-matrix` command, included in `pipeline` after `collect`. `main/detail.ts`: passes the input and the group names.
 - `main/demo.ts`: synthetic 3-month matrix (2026-06..2026-08, the demo models x groups, a zero cell, a dominant model, overlapping groups) written to `data/sample/detail/usage-matrix.json`; the manifest gains one entry, every other sample file stays byte-identical.
 
 ### Staging / publication

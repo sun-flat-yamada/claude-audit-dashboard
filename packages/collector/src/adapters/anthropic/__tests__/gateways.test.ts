@@ -156,6 +156,51 @@ describe('AdminApi (official examples)', () => {
   });
 });
 
+describe('AnalyticsApi model x group matrix (assumed shape, see docs/API-MAPPING.md)', () => {
+  it('sends a pairwise group_by[] plus an ungrouped-by-group model request', async () => {
+    const { analytics, api } = gateways();
+    const result = await analytics.costMatrix(range, NOW);
+    expect(api.calls.map((u) => u.searchParams.getAll('group_by[]'))).toEqual([
+      ['model', 'rbac_group_id'],
+      ['model'],
+    ]);
+    expect(api.calls[0]?.pathname).toBe('/v1/organizations/analytics/cost_report');
+    expect(api.calls[0]?.searchParams.get('bucket_width')).toBe('1d');
+    expect(result.items.pairs).toEqual([
+      {
+        date: '2026-09-29',
+        model: 'claude-opus-5',
+        group: 'rbac_group_01',
+        amount: 412.8,
+        currency: 'USD',
+      },
+    ]);
+    expect(result.items.byModel).toEqual([
+      { date: '2026-09-29', model: 'claude-opus-5', group: null, amount: 412.8, currency: 'USD' },
+    ]);
+    expect(result.asOf).toBe('2026-09-30T06:00:00Z');
+  });
+
+  it('reads rows without a group or model key as null and ignores unknown fields', async () => {
+    const { analytics } = gateways({
+      '/v1/organizations/analytics/cost_report': () => ({
+        body: {
+          data: [
+            {
+              starting_at: '2026-09-29T00:00:00Z',
+              results: [{ amount: '100', currency: 'USD', rbac_group_id: null, extra: { a: 1 } }],
+            },
+          ],
+          next_page: null,
+        },
+      }),
+    });
+    const result = await analytics.costMatrix(range, NOW);
+    expect(result.items.pairs[0]).toMatchObject({ model: null, group: null, amount: 1 });
+    expect(result.asOf).toBeUndefined();
+  });
+});
+
 describe('AnalyticsApi (official examples)', () => {
   it('derives activity from counters when last_activity_date is absent', async () => {
     const { analytics, api } = gateways();
