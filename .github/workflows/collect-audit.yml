@@ -5,6 +5,17 @@ on:
     # Every 6 hours. The activity feed is polled by time window, so a missed run loses nothing.
     - cron: '0 */6 * * *'
   workflow_dispatch:
+    inputs:
+      retention_days:
+        description: 'Archive snapshots older than this many days (1-99999). Empty: retention.snapshotDays. Use a short value only on a verification fork.'
+        required: false
+        type: string
+        default: ''
+      dry_run:
+        description: 'Run everything but do not send alerts and do not save to the data/audit branch'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -29,6 +40,15 @@ jobs:
         with:
           build: build:collector
 
+      # Inputs reach the script through the environment only and are checked against an
+      # allowlist; later steps read the validated outputs, never `inputs.*` directly.
+      - name: Validate manual inputs
+        id: inputs
+        run: bash .github/scripts/validate-dispatch-inputs.sh
+        env:
+          RETENTION_DAYS: ${{ inputs.retention_days }}
+          DRY_RUN: ${{ inputs.dry_run }}
+
       - name: Restore stored data
         run: .github/scripts/data-branch.sh restore
 
@@ -43,13 +63,44 @@ jobs:
 
       - name: Archive snapshots past retention
         if: steps.pipeline.outcome == 'success'
-        run: pnpm archive
+        run: pnpm archive ${RETENTION_DAYS:+--days "$RETENTION_DAYS"}
+        env:
+          RETENTION_DAYS: ${{ steps.inputs.outputs.retention_days }}
 
+      # A dry run sends nothing (and saves nothing, below).
       - name: Send alerts
-        if: always() && steps.pipeline.outcome != 'skipped'
+        if: always() && steps.pipeline.outcome != 'skipped' && steps.inputs.outputs.dry_run != 'true'
         run: pnpm notify --collect-status "$COLLECT_STATUS"
         env:
           COLLECT_STATUS: ${{ steps.pipeline.outcome }}
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+
+      # Size of the data/audit history against the capacity.* limits (config/default.json).
+      # Never fatal: a failed measurement is a warning, and so is a failed notification. It runs
+      # before the save so the alert cooldown it records is persisted with the state.
+      - name: Measure data/audit size
+        if: always() && steps.pipeline.outcome == 'success'
+        continue-on-error: true
+        run: |
+          if ! git ls-remote --exit-code --heads origin data/audit >/dev/null 2>&1; then
+            echo "No data/audit branch yet: nothing to measure"
+            exit 0
+          fi
+          shallow=""
+          if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then shallow="--unshallow"; fi
+          git fetch --quiet --no-tags $shallow origin '+refs/heads/data/audit:refs/audit-size/head'
+          if [ "$DRY_RUN" = "true" ]; then notify=""; else notify="--notify"; fi
+          pnpm size --repo . --ref refs/audit-size/head --warn-only $notify
+        env:
+          DRY_RUN: ${{ steps.inputs.outputs.dry_run }}
           DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -67,6 +118,6 @@ jobs:
 
       # Saved after notify so the alert cooldown state is persisted too.
       - name: Save data to the data/audit branch
-        if: always() && steps.pipeline.outcome == 'success'
+        if: always() && steps.pipeline.outcome == 'success' && steps.inputs.outputs.dry_run != 'true'
         run: |
           .github/scripts/data-branch.sh save "chore: audit data $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
