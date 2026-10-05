@@ -16,7 +16,7 @@ import {
   DEFAULT_SETTING_BASELINES,
 } from '../../domain/compliance/factories/defaults.js';
 import { describeExpectation } from '../../domain/compliance/factories/setting-baseline.js';
-import { DATASET_NAMES } from '../../domain/model/dataset.js';
+import { DATASET_NAMES, type DatasetName } from '../../domain/model/dataset.js';
 
 /** Largest list shown for one parameter value, and longest text kept. */
 const MAX_ITEMS = 20;
@@ -38,6 +38,8 @@ export interface ConfigViewInput {
   /** Configured parameters per rule id; only keys the rule declares are shown. */
   ruleParams: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
   disabledDatasets: readonly string[];
+  /** Optional datasets whose source is enabled in config (B4); absent datasets are not listed. */
+  enabledOptionalDatasets?: readonly DatasetName[] | undefined;
   membersProvider: string;
   memberActivityLookbackDays: number;
   groupMemberRequestLimit: number;
@@ -180,7 +182,7 @@ const unknownIds = (ids: Iterable<string>, known: ReadonlySet<string>): string[]
 
 function sourcesOf(input: ConfigViewInput): DetailConfig['sources'] {
   return {
-    datasets: DATASET_NAMES.map((name) => ({
+    datasets: [...DATASET_NAMES, ...(input.enabledOptionalDatasets ?? [])].map((name) => ({
       name,
       enabled: !input.disabledDatasets.includes(name),
     })),

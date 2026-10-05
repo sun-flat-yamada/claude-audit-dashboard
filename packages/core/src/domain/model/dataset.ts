@@ -13,12 +13,18 @@ import type {
   SpendLimit,
   UsageRow,
 } from './entities.js';
+import {
+  OPTIONAL_DATASET_NAMES,
+  emptyOptionalData,
+  isOptionalDatasetName,
+  type OptionalDatasetMap,
+} from './optional-datasets.js';
 
 /**
  * Every dataset a snapshot can carry. Adding a data source starts with one line here;
  * rules and analyzers then declare the datasets they need in `requires`.
  */
-export interface DatasetMap {
+export interface DatasetMap extends OptionalDatasetMap {
   organizations: Organization[];
   members: Member[];
   memberActivity: MemberActivity[];
@@ -40,6 +46,7 @@ export type DatasetData = Partial<DatasetMap>;
 
 /** All datasets empty; the return type guarantees the list stays complete. */
 export const emptyData = (): DatasetMap => ({
+  ...emptyOptionalData(),
   organizations: [],
   members: [],
   memberActivity: [],
@@ -55,10 +62,22 @@ export const emptyData = (): DatasetMap => ({
   spendLimits: [],
 });
 
-export const DATASET_NAMES = Object.keys(emptyData()) as DatasetName[];
+/**
+ * The built-in datasets: always collected unless listed in `sources.disabled`. The optional
+ * ones (`OPTIONAL_DATASET_NAMES`) exist only while their source is enabled in config.
+ */
+export const DATASET_NAMES = Object.keys(emptyData()).filter(
+  (name) => !isOptionalDatasetName(name),
+) as DatasetName[];
+
+/** Every dataset name, built-in or optional. */
+export const ALL_DATASET_NAMES: readonly DatasetName[] = [
+  ...DATASET_NAMES,
+  ...OPTIONAL_DATASET_NAMES,
+];
 
 export const isDatasetName = (value: string): value is DatasetName =>
-  (DATASET_NAMES as string[]).includes(value);
+  (ALL_DATASET_NAMES as string[]).includes(value);
 
 /**
  * - `ok`: collected (possibly zero items — zero is then a fact, not a gap)
