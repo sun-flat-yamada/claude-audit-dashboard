@@ -26,6 +26,7 @@ import { countBy, sortedByValue, sumBy, totalsBy } from '../../domain/util/colle
 import { maskEmails } from '../../domain/util/mask.js';
 import { percent, round } from '../../domain/util/numbers.js';
 import { monthKey } from '../../domain/util/time.js';
+import { productEngagement } from './dashboard-engagement.js';
 import { buildModelMatrix, type UsageMatrixInput } from './usage-matrix-view.js';
 
 export interface DashboardInput {
@@ -338,6 +339,14 @@ function activity(input: DashboardInput, data: DatasetMap, mask: Mask): Dashboar
   };
 }
 
+/** Product engagement from the member-activity rows; absent without data (older views lack it). */
+function engagement(snapshot: AuditSnapshot | null, data: DatasetMap) {
+  if (!collected(snapshot, 'memberActivity')) return {};
+  const window = snapshot?.coverage.memberActivity?.window ?? null;
+  const view = productEngagement(data.memberActivity, window);
+  return view ? { engagement: view } : {};
+}
+
 /** Builds the published dashboard contract: aggregates only, PII masked when requested. */
 export function buildDashboardView(input: DashboardInput): DashboardView {
   const mask: Mask = input.maskPii ? maskEmails : (text) => text;
@@ -355,6 +364,7 @@ export function buildDashboardView(input: DashboardInput): DashboardView {
     usage: usage(input.snapshot, data),
     adoption: adoption(input.snapshot, data),
     activity: activity(input, data, mask),
+    ...engagement(input.snapshot, data),
     insights: input.insights.map(({ id, kind, priority, title, detail }) => ({
       id,
       kind,
