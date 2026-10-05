@@ -4,6 +4,10 @@
 
 Implements the data half of F-015 (#42) as Work-Unit #106: per-time-point summaries, the pure diff and export formatters in `@claude-audit/core/contracts`, the collector's summary store and `detail/compare/*` files, validation, and the widening of the sample trend to three points. No UI page (PR3). Owner decisions applied: 90 selectable points, persistent store `data/summaries/`, sample trend widened to 3 points.
 
+## Rebase note
+
+Rebased onto main after the model x group aggregate moved into `DashboardView` v3 (usage-matrix detail file removed): the `compare` additions were re-applied on top of the new detail contract, `writeDetail` has no `matrix` parameter any more, and `data/sample/` was regenerated on the rebased code.
+
 ## Changes Made
 
 ### Core
@@ -45,7 +49,7 @@ Implements the data half of F-015 (#42) as Work-Unit #106: per-time-point summar
 | :----------------------- | :------------------------------------- | :----------------------------------------------- |
 | Code-Data Decoupling     | `pnpm fork:verify`                     | Clean (exit 0)                                   |
 | TypeScript Check         | `pnpm typecheck`                       | Pass (exit 0)                                    |
-| Unit & Integration Tests | `pnpm test`                            | core 278, collector 281, dashboard 351, scripts 32 pass |
+| Unit & Integration Tests | `pnpm test`                            | core 281, collector 281, dashboard 352, scripts 32 pass |
 | Zero Secret / PII Scan   | `pnpm secret-scan`                     | 0 leaks (exit 0)                                 |
 | Production Build         | `pnpm build`                           | Built                                            |
 | Lint / Format (CI)       | `pnpm lint && pnpm format:check`       | Clean                                            |

@@ -291,7 +291,7 @@ describe('summary store', () => {
     const r = await judged(restored);
     await rm(r.store.path(summaryStorePath(T3)));
     await rm(r.store.path(`reports/compliance/${T3}.json`));
-    await writeDetail(r, undefined, undefined, undefined, T3);
+    await writeDetail(r, undefined, undefined, T3);
     const stored = timePointSummarySchema.parse(await r.store.readJson(summaryStorePath(T3)));
     expect(stored.id).toBe(T3);
     expect(stored.rules.length).toBeGreaterThan(0);
