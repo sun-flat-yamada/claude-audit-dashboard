@@ -257,7 +257,61 @@ describe('AnalyticsApi (official examples)', () => {
       assignedSeats: 50,
       monthlyAdoptionRate: 70,
       pendingInvites: 1,
+      byProduct: [
+        { product: 'chat', dau: 16, wau: 26, mau: 31 },
+        { product: 'claude_code', dau: 9, wau: 14, mau: 17 },
+        { product: 'cowork', dau: 2, wau: 4, mau: 6 },
+        { product: 'claude_design', dau: 1, wau: 2, mau: 3 },
+        { product: 'office_agent', dau: 1, wau: 3, mau: 5 },
+        { product: 'science', dau: 0, wau: 1, mau: 1 },
+      ],
     });
+  });
+
+  const summaryDay = (extra: Record<string, unknown>) => ({
+    '/v1/organizations/analytics/summaries': () => ({
+      body: {
+        data: [
+          {
+            starting_at: '2026-09-29T00:00:00Z',
+            ending_at: '2026-09-30T00:00:00Z',
+            daily_active_user_count: 20,
+            weekly_active_user_count: 30,
+            monthly_active_user_count: 35,
+            assigned_seat_count: null,
+            monthly_adoption_rate: null,
+            pending_invite_count: null,
+            ...extra,
+          },
+        ],
+        next_page: null,
+      },
+    }),
+  });
+
+  it('skips per-product counts the API omits (breakdown not enabled), cowork included', async () => {
+    const { analytics } = gateways(summaryDay({}));
+    const [day] = (await analytics.listSummaries(range, NOW)).items;
+    expect(day).toMatchObject({ dailyActiveUsers: 20, byProduct: [] });
+  });
+
+  it('skips products reported as null or incomplete and keeps the rest', async () => {
+    const { analytics } = gateways(
+      summaryDay({
+        cowork_daily_active_user_count: 1,
+        cowork_weekly_active_user_count: 2,
+        cowork_monthly_active_user_count: 3,
+        chat_daily_active_user_count: null,
+        chat_weekly_active_user_count: null,
+        chat_monthly_active_user_count: null,
+        claude_code_daily_active_user_count: 4,
+        claude_code_weekly_active_user_count: null,
+        claude_code_monthly_active_user_count: 9,
+        science_entitled_user_count: null,
+      }),
+    );
+    const [day] = (await analytics.listSummaries(range, NOW)).items;
+    expect(day?.byProduct).toEqual([{ product: 'cowork', dau: 1, wau: 2, mau: 3 }]);
   });
 });
 
@@ -337,6 +391,10 @@ describe.each(FIXTURE_SETS)('gateways on the $name fixtures', (set) => {
     expect(users.items.some((u) => u.active)).toBe(true);
     const summaries = await analytics.listSummaries(range, NOW);
     expect(summaries.items.length).toBeGreaterThan(0);
+    // Cowork counts are required by the API; the other products appear only when enabled.
+    for (const day of summaries.items) {
+      expect(day.byProduct?.map((p) => p.product)).toContain('cowork');
+    }
     const usage = await analytics.usageReport(range, NOW);
     const dimensions = new Set(usage.items.map((r) => r.dimension));
     expect(dimensions).toEqual(new Set(['total', 'product', 'model', 'group']));
