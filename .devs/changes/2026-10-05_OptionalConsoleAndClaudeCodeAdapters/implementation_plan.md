@@ -56,12 +56,13 @@ One Work-Unit Issue (#87) and one PR carry both adapters, as separate atomic com
 
 ## Extension-point findings (existing code touched beyond pure registration)
 
-Recorded here and in the walkthrough; follow-up Issues are filed for the ones that should be fixed at the extension point.
+Recorded here and in the walkthrough; the follow-up Issue #88 asks to fix them at the extension point.
 
 1. `config-view.ts` presenter enumerates `DATASET_NAMES` instead of the registry (needs `enabledOptionalDatasets`).
 2. `env.ts` / `container.ts` know every key family by name; a new family needs an edit there (no key-family registry).
 3. `SORT_KEYS` in `repositories.ts` is a hand-kept per-dataset table (default `id` sort is wrong for rows without `id`).
 4. `synthetic-history.ts` `CHANGE_PERIOD` is `Record<DatasetName, number>` (test support).
+5. `classify` (unavailable / error mapping) was private to `collectors.ts` and is now exported; `createContainer` gained a `configPatch` option so profiles can enable the flags without a temporary config directory.
 
 ## Verification Plan
 

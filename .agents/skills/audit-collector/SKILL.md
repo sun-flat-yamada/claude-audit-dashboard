@@ -12,6 +12,7 @@ Use this skill when developing, testing, or executing data collection against Cl
 ## 🎯 Scope & Capabilities
 
 1. **Datasets** (13): organizations, members, memberActivity, invites, groups, settings, credentials, credentialUsage (projection), activities, usage, cost, adoption, spendLimits — see `docs/BLUEPRINT.md` §5.2 and `docs/API-MAPPING.md`.
+   Optional datasets (B4, registered only when `sources.console.enabled` / `sources.claudeCode.enabled`, default off): consoleWorkspaces, consoleApiKeys, consoleUsage, consoleCost, claudeCodeActivity. They need `ANTHROPIC_CONSOLE_ADMIN_API_KEY` (never a fallback of the Enterprise key); see `docs/BLUEPRINT.md` §5.4.
 2. **Activity Feed**: window polling (`created_at.gte/lt`, default newest-first order with no sort parameter, 2-minute lag, 10-minute overlap) with ID de-duplication; `after_id` pages within the window. Never page "forward" with `after_id` from the newest event (it returns older events).
 3. **Resilience**: retries in `HttpClient` (429 `retry-after`; 500/502/503/504/529 exponential back-off up to 60 s; `x-should-retry: false` stops). Analytics 410 restarts the cursor once.
 4. **Coverage**: throw `DataUnavailableError` for missing keys, 401/403/404; other failures mark the dataset `error`. One failing dataset never stops the others.

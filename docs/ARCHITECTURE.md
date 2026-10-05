@@ -146,6 +146,8 @@ interface DatasetMeta {
 }
 ```
 
+任意アダプタ (B4) のデータセット (`consoleWorkspaces` / `consoleApiKeys` / `consoleUsage` / `consoleCost` / `claudeCodeActivity`) も `DatasetMap` に登録されるが、`OptionalDatasetMap` (`domain/model/optional-datasets.ts`) に分けて持ち、`DATASET_NAMES` は組み込み 13 件のまま。設定の `sources.<flag>.enabled` が真のときだけコレクタが登録されるため、無効の間は coverage に現れない (§8.3)。
+
 `status` の意味:
 
 - `ok` — 取得成功 (0 件を含む)。ルールは「0 件」を事実として扱ってよい。
@@ -292,6 +294,8 @@ export const inactiveMembers = defineRule({
 2. ゲートウェイにメソッド + zod スキーマ + 写像
 3. `collectors.ts` に `DatasetCollector` を 1 件登録
 4. 利用するルール・分析は `requires: ['newThing']` を宣言
+
+**任意 (opt-in) のデータセット** にする場合 (既存の利用者に `unavailable` → OP-002 の fail という回帰を起こさないため): 1 を `OptionalDatasetMap` と `OPTIONAL_SOURCES` (有効化する設定フラグ) に書き、3 を `createOptionalCollectors` に登録する。フラグが偽の間はコレクタを返さないので coverage に現れない。有効でキー未設定・401・403・404 は `unavailable`、スキーマ差異は `error`。B4 の Console Admin API / Claude Code Analytics がこの形 (`adapters/anthropic/optional-collectors.ts`)。
 
 ### 8.4 API の変更 (項目名・ページング・バージョン) に追随する
 

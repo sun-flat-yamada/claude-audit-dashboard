@@ -92,6 +92,7 @@
 
 - One row per dataset: status badge (Collected / Unavailable / Error), record count, source endpoint (or `projection:<name>`), and the reason or `as of` time.
 - Rules that need an uncollected dataset are listed as skipped, never as passed.
+- Optional sources (B4, `sources.console.enabled` / `sources.claudeCode.enabled`, default off): while off, their five datasets (`consoleWorkspaces`, `consoleApiKeys`, `consoleUsage`, `consoleCost`, `claudeCodeActivity`) have no row, so existing tenants see the same 13 rows. When enabled they appear like any other dataset (a missing key or 401 / 403 / 404 is `unavailable` with the reason, schema drift is `error`) and in `#/config` Data sources. Publication is aggregate-only: no per-person Claude Code row is written to `dashboard.json` or the detail files.
 
 ### F-016 Adoption
 

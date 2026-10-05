@@ -60,6 +60,7 @@ jobs:
           ANTHROPIC_COMPLIANCE_API_KEY: ${{ secrets.ANTHROPIC_COMPLIANCE_API_KEY }}
           ANTHROPIC_ANALYTICS_API_KEY: ${{ secrets.ANTHROPIC_ANALYTICS_API_KEY }}
           ANTHROPIC_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_ADMIN_API_KEY }}
+          ANTHROPIC_CONSOLE_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_CONSOLE_ADMIN_API_KEY }}
 
       - name: Archive snapshots past retention
         if: steps.pipeline.outcome == 'success'

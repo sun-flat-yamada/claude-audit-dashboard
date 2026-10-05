@@ -120,18 +120,50 @@ Enterprise のロールは `user`, `managed`, `owner`, `membership_admin`, `prim
 
 ---
 
-## 6. 使わない API と理由
+## 6. 任意アダプタ (Phase B4、既定オフ)
+
+**リンクされた Console 組織の Admin API** と **Claude Code Analytics API** を、設定で有効にしたときだけ収集する。どちらも **Console 組織の Admin API キー** (`sk-ant-admin...`、環境変数 `ANTHROPIC_CONSOLE_ADMIN_API_KEY`) が必要で、Enterprise キーや `ANTHROPIC_ADMIN_API_KEY` (Enterprise の Admin 系統の上書き) にはフォールバックしない。API 仕様の差異は [api-spec-mismatch-findings.md](api-spec-mismatch-findings.md) §4 を参照。**実テナントでの疎通は未確認** (人手のタスク。`--capture-raw` で採取しサニタイズしてフィクスチャに反映する)。
+
+| 設定                         | データセット                                                            | 無効時                                            |
+| ---------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------- |
+| `sources.console.enabled`    | `consoleWorkspaces` / `consoleApiKeys` / `consoleUsage` / `consoleCost` | 登録されず coverage に現れない (既存の挙動と同一) |
+| `sources.claudeCode.enabled` | `claudeCodeActivity`                                                    | 同上                                              |
+
+有効でキー未設定、または 401 / 403 / 404 は `unavailable` (理由にキー名を含む。OP-002 が設定漏れを知らせる)、スキーマ差異は `error`。他のデータセットの収集は止まらない。
+
+### 6.1 Console Admin API (`/v1/organizations/*`)
+
+| エンドポイント               | 取得パラメータ                                                                                                        | ページング                                        | ドメイン                                                                                                                                                                 |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /workspaces`            | `include_archived=true`、`limit=1000`                                                                                 | ID カーソル (`after_id` / `has_more` / `last_id`) | `ConsoleWorkspace { id, name, createdAt ← created_at, archivedAt ← archived_at }`                                                                                        |
+| `GET /api_keys`              | `limit=1000`                                                                                                          | ID カーソル                                       | `ConsoleApiKey { id, name, status, workspaceId ← workspace_id (default ワークスペースは null)、createdAt, createdBy ← created_by.id }` (`partial_key_hint` は保存しない) |
+| `GET /usage_report/messages` | `starting_at = 今日 − lookbackDays 00:00Z`、`bucket_width=1d`、`limit=31`、`group_by[]=workspace_id&group_by[]=model` | ページトークン (`page` / `next_page`)             | `ConsoleUsageRow { date, workspaceId, model, uncachedInputTokens, cacheReadInputTokens, cacheCreationInputTokens (5m + 1h), outputTokens, webSearchRequests }`           |
+| `GET /cost_report`           | 同上、`group_by[]=workspace_id&group_by[]=description`                                                                | ページトークン                                    | `ConsoleCostRow { date, workspaceId, model, costType ← cost_type, amount ← amount ÷ 100 (セント単位の小数文字列)、currency }`                                            |
+
+`workspace_id: null` は default ワークスペース。Priority Tier のコストは `cost_report` に含まれない。
+
+### 6.2 Claude Code Analytics API
+
+| エンドポイント                  | 取得パラメータ                                                      | ページング                            | ドメイン                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------- | ------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /usage_report/claude_code` | `starting_at=YYYY-MM-DD` (1 日分。日ごとに系列を取得)、`limit=1000` | ページトークン (`page` / `next_page`) | `ClaudeCodeActivity { date, actorKind ← actor.type (`user_actor`→`user`、`api_actor`→`api`)、actor ← email_address / api_key_name、customerType, terminalType, sessions, linesAdded / linesRemoved, commits, pullRequests, toolAccepted / toolRejected (全ツール合計)、models[] ← model_breakdown (トークンと estimated_cost ÷ 100) }` |
+
+行はユーザー (メールアドレス) または API キー名単位の個人データ。スナップショット (`data/audit`) にだけ保存し、`dashboard.json` と詳細ファイルには**公開しない** (集計のみ: coverage の件数)。
+
+---
+
+## 7. 使わない API と理由
 
 | API                                                                      | 理由                                                                                                                      |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | Compliance の chats / files / projects / sessions                        | 本文・添付・トランスクリプトの閲覧権限 (`read:compliance_user_data`) を要する。監査ダッシュボードの目的を超えるため対象外 |
 | 書き込み・削除系 (`write:*`, `delete:*`)                                 | 読み取り専用の監査基盤とするため                                                                                          |
-| Admin API の workspaces / api_keys / usage_report / cost_report          | Claude Console 組織向け。Enterprise には存在しない (リンクされた Console 組織への対応は Phase B4 の任意アダプタ)          |
-| Claude Code Analytics API (`/v1/organizations/usage_report/claude_code`) | Admin API キー (Console) が必要。Phase B4 の任意アダプタ                                                                  |
+| Admin API の workspaces / api_keys / usage_report / cost_report          | Claude Console 組織向け。Enterprise キーでは使えない (リンクされた Console 組織への対応は §6 の任意アダプタ)              |
+| Claude Code Analytics API (`/v1/organizations/usage_report/claude_code`) | Console の Admin API キーが必要。§6 の任意アダプタ (既定オフ)                                                             |
 
 ---
 
-## 7. 一次情報
+## 8. 一次情報
 
 - Compliance API: <https://platform.claude.com/docs/en/manage-claude/compliance-api>
 - Set up the Compliance API (キー種別・スコープ): <https://platform.claude.com/docs/en/manage-claude/compliance-api-access>
@@ -146,3 +178,6 @@ Enterprise のロールは `user`, `managed`, `owner`, `membership_admin`, `prim
 - Analytics APIs: <https://platform.claude.com/docs/en/manage-claude/analytics-api>
 - Enterprise Analytics reference: <https://platform.claude.com/docs/en/api/beta/organization/analytics>
 - Spend Limits API: <https://platform.claude.com/docs/en/manage-claude/spend-limits-api>
+- Admin API (workspaces / api_keys): <https://platform.claude.com/docs/en/api/admin/workspaces/list>, <https://platform.claude.com/docs/en/api/admin/api_keys/list>
+- Usage and Cost API: <https://platform.claude.com/docs/en/api/admin/usage_report/retrieve_messages>, <https://platform.claude.com/docs/en/api/admin/cost_report/retrieve>
+- Claude Code Analytics API: <https://platform.claude.com/docs/en/api/claude-code-analytics-api>
