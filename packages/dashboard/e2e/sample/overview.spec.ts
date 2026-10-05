@@ -80,6 +80,27 @@ test.describe('first load (Phase A)', () => {
     }
   });
 
+  test('lists active users by product with a weekly sparkline per product (AN-2)', async ({
+    page,
+    request,
+  }) => {
+    const view = await readData<DashboardView>(request, 'dashboard.json');
+    const products = view.adoption?.byProduct ?? [];
+    expect(products.length).toBeGreaterThan(0);
+    await openRoute(page, '/');
+    const card = page.locator('section', {
+      has: page.getByRole('heading', { level: 2, name: 'Active users' }),
+    });
+    await expect(card.getByRole('heading', { level: 3, name: 'By product' })).toBeVisible();
+    for (const product of products) {
+      const row = card.getByRole('row').filter({
+        has: page.getByRole('rowheader', { name: product.label, exact: true }),
+      });
+      await expect(row.getByRole('cell').nth(1)).toHaveText(String(product.wau));
+      await expect(row.getByRole('img', { name: /weekly active users/ })).toBeVisible();
+    }
+  });
+
   test('lists every dataset in Data coverage; the default profile has no optional datasets', async ({
     page,
     request,
