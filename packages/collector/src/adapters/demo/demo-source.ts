@@ -32,6 +32,7 @@ import {
   toIsoDate,
 } from '@claude-audit/core';
 import { activityHistory } from './demo-activity-history.js';
+import { demoEngagement } from './demo-engagement.js';
 
 /**
  * Deterministic synthetic tenant for `pnpm demo`, sample data and tests.
@@ -89,8 +90,9 @@ function members(now: Date): Member[] {
   });
 }
 
-const memberActivity = (now: Date): MemberActivity[] =>
-  members(now).flatMap((m, i) =>
+function memberActivity(now: Date): MemberActivity[] {
+  const rnd = random('demo-engagement');
+  return members(now).flatMap((m, i) =>
     INACTIVE.has(i)
       ? []
       : [
@@ -99,9 +101,11 @@ const memberActivity = (now: Date): MemberActivity[] =>
             email: m.email,
             active: true,
             lastActiveOn: toIsoDate(addDays(now, -(1 + (i % 15)))),
+            engagement: demoEngagement(m.name.split(' ')[1] ?? '', i, rnd),
           },
         ],
   );
+}
 
 const retention = (duration: number | null, timescale = 'day') =>
   duration === null
@@ -511,7 +515,8 @@ export function createDemoCollectors(): DatasetCollector[] {
       source: 'demo:memberActivity',
       collect: async ({ now }) => ({
         items: memberActivity(now),
-        window: { from: ago(now, 91), to: now.toISOString() },
+        // Like the Analytics users roll-up: from the start of the day 90 days ago.
+        window: { from: `${toIsoDate(addDays(now, -90))}T00:00:00.000Z`, to: now.toISOString() },
       }),
     },
     {

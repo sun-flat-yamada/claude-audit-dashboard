@@ -1,3 +1,4 @@
+import type { MemberActivity } from '@claude-audit/core';
 import { describe, expect, it } from 'vitest';
 import { FIXTURES, MOCK_KEY, ORG_A } from '../../../__tests__/fake-anthropic.js';
 import { FIXTURE_SETS, OFFICIAL_SET, type FixtureSet } from '../../../__tests__/fixture-sets.js';
@@ -7,6 +8,13 @@ import { ComplianceApi } from '../compliance-api.js';
 import { HttpClient } from '../http-client.js';
 
 const NOW = new Date('2026-09-30T12:00:00.000Z');
+
+const activityOnly = ({ userId, email, active, lastActiveOn }: MemberActivity) => ({
+  userId,
+  email,
+  active,
+  lastActiveOn,
+});
 const range = { start: new Date('2026-08-31T00:00:00.000Z'), end: NOW };
 
 function gateways(overrides = {}, set: FixtureSet = OFFICIAL_SET) {
@@ -208,7 +216,8 @@ describe('AnalyticsApi (official examples)', () => {
     expect(api.calls[0]?.searchParams.get('starting_date')).toBe(
       ANALYTICS_EPOCH.toISOString().slice(0, 10),
     );
-    expect(result.items).toEqual([
+    // Engagement (AN-3) is asserted separately; activity and last-active day are unchanged.
+    expect(result.items.map(activityOnly)).toEqual([
       { userId: 'user_01', email: 'owner@example.com', active: true, lastActiveOn: '2026-09-28' },
       { userId: 'user_02', email: 'member@example.com', active: true, lastActiveOn: null },
     ]);
