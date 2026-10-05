@@ -268,6 +268,16 @@ interface DatasetMeta {
 | スナップショット         | 365 日を過ぎたら `archive/<year>/` へ gzip (在庫は `detail/archive.json`、§9) | `retention.snapshotDays` |
 | コンプライアンスレポート | 保持 (履歴はダッシュボードのスコア推移に使用)                                 | —                        |
 | Activity                 | スナップショットに差分として保持                                              | —                        |
+| `data/audit` のサイズ    | 総量 1,024 MiB・30 日あたり増分 50 MiB を超える前 (80%) で警告 (§6.4)         | `capacity.*`             |
+
+### 6.4 長期運用: 容量計測・復元・ローテーション
+
+`data/audit` は git ブランチなので、**アーカイブは作業ツリーを小さくするがリポジトリ (履歴) は小さくしない**: 圧縮した元のスナップショットの blob は履歴に残り、`archive/<year>/<id>.json.gz` が追加される (gzip は他のアーカイブと重複排除・差分圧縮されない)。履歴の再編 (年次の orphan ブランチのローテーション、旧履歴のタグ / Release アセット / 外部ストレージへの退避) の手順は `docs/DEPLOYMENT.md`、容量の目安 (合成履歴での計測値。実データで再検証する) は `docs/CHANGE-PLAN.md` §9.4。
+
+- **計測** (`pnpm size [--repo <dir>] [--ref <ref>] [--notify] [--warn-only] [--json]`): 対象は git リポジトリのディレクトリ (引数)。`git count-objects -v` (パックとルーズのバイト数)、`rev-list --objects --disk-usage` (参照から到達できる全体のサイズ)、コミット数と期間、直近 `capacity.windowDays` 日の増分 (その時点のコミットとの差。履歴が短ければ全体を期間で按分)、データセット別の重複排除後の blob 数とサイズ、先端ツリーのアーカイブ在庫を、件数とサイズだけで返す (`adapters/storage/git-size.ts`、`git` は `execFile` で起動し ref・パスは検証する)。アーカイブ在庫は F-013 と同じ純粋な集計 `summarizeArchiveEntries()` を共用し、画面の表示値と実測値が一致することをテストで保証する。
+- **判定** (純粋関数 `judgeCapacity()`、`core/domain/capacity/capacity.ts`): 総量と 30 日あたり増分を `capacity.maxTotalMiB` / `maxMonthlyGrowthMiB` と比べ、`limit * warnRatio` 以上で警告、超過で `exceeded`。0 でその判定を無効化。通知は既存の経路 (`capacityAlert()` → `dispatchAlert`、キー `capacity:<level>`、`notifications.cooldownMinutes` の冷却) で、新しいコンプライアンスルールは追加しない。計測や通知の失敗は警告として扱い (`--warn-only`、ワークフローのステップは `continue-on-error`)、収集を失敗させない。
+- **復元** (`pnpm cli restore <id|year> [--out <dir>]`): `archive/<year>/<id>.json.gz` を展開・検証し (id がファイル名と一致、スキーマ v2)、収集時と同じライタで `snapshots/<id>/` に書く (全データセットがバイト単位で一致)。既存のスナップショットは上書きせず、アーカイブも変更しない。`pnpm build:data --snapshot <id>` / `pnpm build:detail --snapshot <id>` が復元したスナップショットから `dashboard.json` と詳細ファイルを再生成する (保存済みレポートが無ければその時点でルールをメモリ上で評価)。
+- **検証手段**: テストは `src/__tests__/synthetic-history.ts` が固定クロックでデモ合成テナントから任意日数 × 6 時間間隔の履歴を作り (データセットごとに変化頻度が異なる)、一時 git リポジトリにコミットごとに記録する (`git fast-import`)。`collect-audit.yml` の手動実行には `retention_days` (保持日数の上書き) と `dry_run` (通知・保存なし) があり、環境変数経由で厳格に検証する。
 
 ---
 
@@ -472,14 +482,14 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 
 ### 12.1 ワークフロー
 
-| ワークフロー         | トリガー                                         | 内容                                                                                     |
-| -------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `ci.yml`             | push / PR (main)                                 | fork:verify、lint、typecheck、format:check、test、build、`pnpm audit --audit-level=high` |
-| `collect-audit.yml`  | 6 時間ごと (要 `ENABLE_SCHEDULED_JOBS`) / 手動   | restore → pipeline → archive → notify → save                                             |
-| `weekly-report.yml`  | 毎週月曜 09:00 UTC (同上) / 手動                 | restore → `report:weekly --notify` → save                                                |
-| `monthly-report.yml` | 毎月 1 日 03:00 UTC (同上) / 手動 (対象月指定可) | restore → `report:monthly --notify` → save                                               |
-| `deploy-pages.yml`   | main への push、収集完了 (live 時のみ)、手動     | サンプルまたはライブデータでダッシュボードをビルドしデプロイ                             |
-| `secret-scan.yml`    | push / PR                                        | 独自スキャナと gitleaks                                                                  |
+| ワークフロー         | トリガー                                                                     | 内容                                                                                     |
+| -------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `ci.yml`             | push / PR (main)                                                             | fork:verify、lint、typecheck、format:check、test、build、`pnpm audit --audit-level=high` |
+| `collect-audit.yml`  | 6 時間ごと (要 `ENABLE_SCHEDULED_JOBS`) / 手動 (`retention_days`, `dry_run`) | restore → pipeline → archive → notify → size (非致命) → save                             |
+| `weekly-report.yml`  | 毎週月曜 09:00 UTC (同上) / 手動                                             | restore → `report:weekly --notify` → save                                                |
+| `monthly-report.yml` | 毎月 1 日 03:00 UTC (同上) / 手動 (対象月指定可)                             | restore → `report:monthly --notify` → save                                               |
+| `deploy-pages.yml`   | main への push、収集完了 (live 時のみ)、手動                                 | サンプルまたはライブデータでダッシュボードをビルドしデプロイ                             |
+| `secret-scan.yml`    | push / PR                                                                    | 独自スキャナと gitleaks                                                                  |
 
 共通のセットアップは複合アクション `.github/actions/setup` に集約し、Dependabot の更新対象に含める。
 
@@ -610,28 +620,32 @@ pnpm lint && pnpm format:check && pnpm audit:deps
 
 `config/default.json` (すべて省略可、zod で検証。不正値は起動時にエラー):
 
-| キー                                      | 既定                                | 内容                                          |
-| ----------------------------------------- | ----------------------------------- | --------------------------------------------- |
-| `dashboard.title`                         | `Claude Enterprise Audit Dashboard` | 表示名                                        |
-| `dashboard.maskPii`                       | `true`                              | ダッシュボードのメールアドレスをマスク        |
-| `sources.disabled`                        | `[]`                                | 収集しないデータセット                        |
-| `sources.members.provider`                | `admin`                             | `admin` / `compliance`                        |
-| `sources.memberActivity.lookbackDays`     | `90`                                | 最終活動を探す期間 (1〜366)                   |
-| `sources.groups.maxMemberRequests`        | `200`                               | グループメンバー取得の上限リクエスト数        |
-| `sources.usageMatrix.enabled`             | `false`                             | モデル×グループのコスト収集 (任意、F-010)     |
-| `sources.usageMatrix.lookbackDays`        | `90`                                | その収集期間 (1〜366)                         |
-| `sources.activities.initialLookbackHours` | `168`                               | 初回の取得期間                                |
-| `sources.activities.overlapMinutes`       | `10`                                | 時間窓の重複                                  |
-| `sources.activities.lagMinutes`           | `2`                                 | 取得遅延                                      |
-| `sources.activities.pageSize`             | `5000`                              | 1 ページの件数 (最大 5000)                    |
-| `sources.activities.includeTypes`         | `[]`                                | 取得する type (空 = すべて)                   |
-| `sources.activities.excludeTypes`         | 閲覧系 8 種                         | 除外する type                                 |
-| `compliance.disabledRules`                | `[]`                                | 無効にするルール ID                           |
-| `compliance.params.<ID>`                  | `{}`                                | ルールごとの引数 (例: `UA-002.monthlyBudget`) |
-| `notifications.statuses`                  | `["fail", "warning"]`               | 通知する状態                                  |
-| `notifications.minSeverity`               | `high`                              | 通知する最低重大度                            |
-| `notifications.cooldownMinutes`           | `360`                               | 同じ内容を再送しない時間                      |
-| `retention.snapshotDays`                  | `365`                               | アーカイブまでの日数                          |
+| キー                                      | 既定                                | 内容                                           |
+| ----------------------------------------- | ----------------------------------- | ---------------------------------------------- |
+| `dashboard.title`                         | `Claude Enterprise Audit Dashboard` | 表示名                                         |
+| `dashboard.maskPii`                       | `true`                              | ダッシュボードのメールアドレスをマスク         |
+| `sources.disabled`                        | `[]`                                | 収集しないデータセット                         |
+| `sources.members.provider`                | `admin`                             | `admin` / `compliance`                         |
+| `sources.memberActivity.lookbackDays`     | `90`                                | 最終活動を探す期間 (1〜366)                    |
+| `sources.groups.maxMemberRequests`        | `200`                               | グループメンバー取得の上限リクエスト数         |
+| `sources.usageMatrix.enabled`             | `false`                             | モデル×グループのコスト収集 (任意、F-010)      |
+| `sources.usageMatrix.lookbackDays`        | `90`                                | その収集期間 (1〜366)                          |
+| `sources.activities.initialLookbackHours` | `168`                               | 初回の取得期間                                 |
+| `sources.activities.overlapMinutes`       | `10`                                | 時間窓の重複                                   |
+| `sources.activities.lagMinutes`           | `2`                                 | 取得遅延                                       |
+| `sources.activities.pageSize`             | `5000`                              | 1 ページの件数 (最大 5000)                     |
+| `sources.activities.includeTypes`         | `[]`                                | 取得する type (空 = すべて)                    |
+| `sources.activities.excludeTypes`         | 閲覧系 8 種                         | 除外する type                                  |
+| `compliance.disabledRules`                | `[]`                                | 無効にするルール ID                            |
+| `compliance.params.<ID>`                  | `{}`                                | ルールごとの引数 (例: `UA-002.monthlyBudget`)  |
+| `notifications.statuses`                  | `["fail", "warning"]`               | 通知する状態                                   |
+| `notifications.minSeverity`               | `high`                              | 通知する最低重大度                             |
+| `notifications.cooldownMinutes`           | `360`                               | 同じ内容を再送しない時間                       |
+| `retention.snapshotDays`                  | `365`                               | アーカイブまでの日数                           |
+| `capacity.maxTotalMiB`                    | `1024`                              | `data/audit` の総量の上限 MiB (0 = 判定しない) |
+| `capacity.maxMonthlyGrowthMiB`            | `50`                                | 30 日あたり増分の上限 MiB (0 = 判定しない)     |
+| `capacity.warnRatio`                      | `0.8`                               | 上限のこの割合以上で警告 (0 より大きく 1 以下) |
+| `capacity.windowDays`                     | `30`                                | 増分を測る期間 (1〜366)                        |
 
 環境変数: `ANTHROPIC_ENTERPRISE_API_KEY` ほか §12.2、`ANTHROPIC_BASE_URL` (テスト用)、`DATA_DIR` (既定 `data`)、`CONFIG_DIR` (既定 `config`)、`DASHBOARD_URL`、`SMTP_SECURE`。相対パスは pnpm を起動したディレクトリ基準で解決する。
 

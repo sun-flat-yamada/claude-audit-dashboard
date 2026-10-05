@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Long-term operation tooling (B3, key-free part of #38): `pnpm size` measures the `data/audit` history (object counts, reachable size, growth per 30 days, blobs per dataset, archive inventory shared with the dashboard's F-013 aggregation) and judges it against the new `capacity.*` limits with a pure function; the collect workflow runs it non-fatally before the save and alerts through the existing channels
+- `pnpm restore <id|year> [--out <dir>]` restores `archive/<year>/<id>.json.gz` to `snapshots/<id>/` byte-identically; `pnpm build:data --snapshot <id>` and `pnpm build:detail --snapshot <id>` rebuild from a stored snapshot
+- `collect-audit.yml` manual inputs `retention_days` and `dry_run`, validated through the environment by `.github/scripts/validate-dispatch-inputs.sh`
+- Test support that synthesizes 400+ days of 6-hourly history and commits it into a temporary git repository (dedup, archive-does-not-shrink and threshold tests); capacity guideline and the yearly orphan-branch rotation procedure in `docs/CHANGE-PLAN.md` section 9.4 and `docs/DEPLOYMENT.md` (figures are synthetic-based, to be re-validated with real data)
+
 ### Changed
 
 - `change-workflow` agent, skill and rule replaced by `change-dev`: implementation plan with user approval gate, plan / task / walkthrough artifacts in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` committed with each change, `.devs/` otherwise gitignored

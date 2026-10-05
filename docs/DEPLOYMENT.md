@@ -199,6 +199,61 @@ Users download the artifact and open `index.html` locally:
 
 ---
 
+## Long-Term Retention, Size Monitoring and Rotation of `data/audit`
+
+`data/audit` is a git branch, so its size only ever grows: a snapshot that `pnpm archive` moves to `archive/<year>/<id>.json.gz` stays in the history as the blobs it had before, and the `.json.gz` file is added on top (gzip output does not deduplicate or delta against other archives). **Archiving shrinks the working tree, not the repository.** To bound the repository size you rotate the branch (below). The numbers behind the defaults are in [CHANGE-PLAN.md](CHANGE-PLAN.md) section 9.4; they are measured on a synthetic tenant and must be re-validated with your own data.
+
+### Measuring
+
+```bash
+pnpm size --repo . --ref data/audit      # totals, growth per 30 days, archive, blobs per dataset
+pnpm size --repo . --ref data/audit --json
+pnpm size --repo . --ref data/audit --notify --warn-only   # what the collect workflow runs
+```
+
+`--repo` is any clone that has the branch (fetch the full history first: `git fetch origin data/audit`; the collect workflow runs `restore` with `--depth=1`, so it fetches the history separately and does not measure the commit it is about to save). The result is judged against `capacity` in `config/default.json` (`0` turns a limit off):
+
+| Key                            | Default | Meaning                                                                 |
+| ------------------------------ | ------- | ----------------------------------------------------------------------- |
+| `capacity.maxTotalMiB`         | `1024`  | Size of everything reachable from the branch                            |
+| `capacity.maxMonthlyGrowthMiB` | `50`    | Growth projected to 30 days (the last `windowDays`, else the average)   |
+| `capacity.warnRatio`           | `0.8`   | From `limit * ratio` up to the limit it is a warning, above it exceeded |
+| `capacity.windowDays`          | `30`    | Window the growth is measured over                                      |
+
+In the collect workflow the **Measure data/audit size** step sends one alert per cooldown (`notifications.cooldownMinutes`) through the configured channels when a limit is reached. It is never fatal: a failed measurement or notification is logged as a warning and the collection still succeeds.
+
+### Restoring archived snapshots
+
+```bash
+pnpm restore 2024-05-01T06-00-00Z                    # one snapshot into the data directory
+pnpm restore 2024 --out ./restored                   # a whole year into ./restored/snapshots/<id>/
+DATA_DIR=./restored pnpm build:data --snapshot 2024-05-01T06-00-00Z    # dashboard.json for that snapshot
+DATA_DIR=./restored pnpm build:detail --snapshot 2024-05-01T06-00-00Z  # detail files for it
+```
+
+Restored files are byte-identical to the originals (the collector's own writer is used); an existing snapshot is never overwritten and the archive is never modified. Restore into a separate `--out` directory to inspect old data: inside the live data directory the next `pnpm archive` would archive the restored snapshot again (to the same bytes). Without a stored compliance report the rules are evaluated in memory as of the snapshot's collection time.
+
+### Yearly rotation of the orphan branch
+
+When the size approaches the limit (or once a year, after the first `pnpm archive` of a year of data), start a fresh branch and move the old history out. Nothing is deleted before the old history is stored elsewhere and verified.
+
+1. Pause the schedule (`ENABLE_SCHEDULED_JOBS` off) and wait for a running collection to finish (the `audit-data` concurrency group).
+2. Keep the old history: `git fetch origin data/audit && git tag data-audit-2026 FETCH_HEAD && git push origin data-audit-2026`. A tag keeps every blob reachable in the same repository, so it does **not** reduce the repository size; to actually shed the size, also (or instead) store it outside:
+   - a Release asset: `git bundle create data-audit-2026.bundle data/audit` (or `git archive`), attached to a private Release; or
+   - external storage (an internal bucket or file share) with the same bundle, plus a note of where it is.
+     Verify the copy: `git bundle verify` and `git clone data-audit-2026.bundle` followed by `pnpm size --repo <clone> --ref data/audit`.
+3. Create the new orphan branch from the **latest state only** (the working tree of the old branch, so `state.json` cursors, reports and the newest snapshots carry over): in a clone, `git checkout --orphan data/audit-next`, remove everything except `data/`, commit, and push it. Archived years that you still want browsable can stay in `data/archive/`; their size is then part of the new history.
+4. Replace the branch: rename the old branch (`data/audit` to `data/audit-2026-old`), push the new one as `data/audit`, and run the **Collect Audit Data** workflow once (a dry run first: `dry_run=true` runs everything without alerts or saving).
+5. Delete the old branch only after the tag or bundle is verified and the first collection on the new branch succeeded. Deleting a branch and tag frees the space only after the server's garbage collection.
+
+The Pages build and the dashboard read only the latest `dashboard.json` and detail files, so a rotation does not change what viewers see; the score trend restarts from the reports that were carried over.
+
+### Verifying archiving on a fork (maintainers)
+
+`collect-audit.yml` accepts two inputs on a manual run: `retention_days` (1-99999, archives snapshots older than that many days instead of `retention.snapshotDays`) and `dry_run` (no alerts, nothing saved). Both are passed through the environment and validated before use. A short `retention_days` (for example 1 to 7) on a verification fork exercises the archive, size and restore path in a few days; do not use a short value on the production branch, because the archive then fills the history with `.json.gz` blobs.
+
+---
+
 ## Environment Variables for Deployment
 
 Regardless of hosting option, set these in your CI/CD:
