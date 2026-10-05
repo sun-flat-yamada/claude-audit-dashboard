@@ -2,6 +2,7 @@ import type {
   Analyzer,
   ArtifactWriter,
   Clock,
+  CustomRules,
   DatasetCollector,
   DocumentRenderer,
   Logger,
@@ -46,6 +47,8 @@ import { consoleLogger, systemClock } from '../infrastructure/runtime.js';
 export interface Container {
   env: Environment;
   config: AppConfig;
+  /** `config/custom-rules.json` as loaded (data-driven rules added or replaced by the operator). */
+  customRules: CustomRules;
   source: 'live' | 'demo';
   clock: Clock;
   logger: Logger;
@@ -150,6 +153,7 @@ export async function createContainer(options: ContainerOptions = {}): Promise<C
   return {
     env,
     config,
+    customRules,
     source: options.source ?? 'live',
     clock: options.clock ?? systemClock,
     logger,

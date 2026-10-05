@@ -40,6 +40,7 @@ export * from './application/use-cases/reports.js';
 export * from './application/presenters/dashboard-view.js';
 export * from './application/presenters/detail-view.js';
 export * from './application/presenters/monthly-report-view.js';
+export * from './application/presenters/config-view.js';
 
 // ─── Contracts ───────────────────────────────────────────────────────────────
 export * from './contracts/index.js';

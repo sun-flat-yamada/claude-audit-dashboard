@@ -67,12 +67,16 @@ describe('detail command and pipeline', () => {
     expect(checkDetailBundle(bundle)).toEqual([]);
   });
 
-  it('without keys every entry is unavailable and no entity file is written', async () => {
+  it('without keys every collected entry is unavailable; only the effective configuration is written', async () => {
     expect(await run({})).toBe(0);
     const bundle = await readBundle();
-    expect(Object.keys(bundle)).toEqual(['detail/index.json']);
+    expect(Object.keys(bundle).sort()).toEqual(['detail/config.json', 'detail/index.json']);
     const manifest = detailManifestSchema.parse(JSON.parse(bundle['detail/index.json'] ?? ''));
-    expect(manifest.files.every((f) => f.status === 'unavailable')).toBe(true);
+    // The effective configuration does not depend on collected data, so it is always published.
+    expect(
+      manifest.files.filter((f) => f.kind !== 'config').every((f) => f.status === 'unavailable'),
+    ).toBe(true);
+    expect(manifest.files.find((f) => f.kind === 'config')?.status).toBe('ok');
   });
 
   it('`detail` alone rebuilds the files from stored data', async () => {

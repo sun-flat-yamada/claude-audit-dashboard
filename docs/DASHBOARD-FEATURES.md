@@ -32,7 +32,7 @@
 | F-011 | Light / dark theme              | P2       | ✅ Phase A (follows system); toggle UI in Phase B2 (B2-9) | —                                                |
 | F-012 | Organization / group drill-down | P2       | ✅ B2-10 (`#/orgs`, `#/orgs/<id>`, `#/groups/<id>`)       | detail `org-groups.json`, `members.json`         |
 | F-013 | Data coverage and retention     | P2       | ✅ coverage in Phase A; archive inventory in Phase B      | `coverage`                                       |
-| F-014 | Configuration view (read-only)  | P2       | ⏳ Phase B                                                | —                                                |
+| F-014 | Configuration view (read-only)  | P2       | ✅ B2-12 (`#/config`)                                     | detail `config.json`                             |
 | F-015 | Snapshot comparison             | P3       | ⏳ Later                                                  | —                                                |
 | F-016 | Adoption (DAU / WAU / MAU)      | P1       | ✅ Phase A                                                | `adoption`                                       |
 | F-017 | Insights                        | P1       | ✅ Phase A                                                | `insights`                                       |
@@ -115,6 +115,14 @@
 - States: loading, not published (index or month file absent), not collected (month `unavailable`, with the reason; shown by icon + label), error (alert), empty (no month in the index), no match (search), unknown month id. Monthly files carry no per-person data, so `maskPii` does not change the page.
 - Publication: the files live under `detail/` and follow the detail rule (cost per group is confidential): on Pages only with `PAGES_DATA_SOURCE=live` and `PAGES_DETAIL_DATA=true` (Private Pages), always in the synthetic sample. `pnpm report:monthly` writes them next to the Markdown / HTML / CSV / JSON report (which are unchanged); `pnpm demo` generates three synthetic months with overlapping groups. No export and no chart in this unit (tables are the primary view).
 
+### F-014 Effective configuration view (B2-12)
+
+- Route `#/config`, reading `detail/config.json` (`CONFIG_VIEW_SCHEMA_VERSION = 1`, listed in the manifest as `kind: config`; the manifest entry carries the file's own version). Read-only: nothing on the page changes the configuration.
+- Sections: **Compliance rules** (every rule with Enabled / Disabled, category, severity, datasets it needs, and Custom / "replaces built-in" origin; filter chips All / Enabled / Disabled / Custom with counts), **Rule parameters** (effective value next to the rule default, Overridden / Default, Invalid when the configured values are rejected by the rule), **Custom rules** (setting baselines and activity watches from `config/custom-rules.json`), **Notification policy** (statuses, minimum severity, cooldown, channels by kind), **Data sources** (every dataset Enabled / Disabled plus the collection settings) and **Other settings** (snapshot retention, `maskPii`). Enabled / disabled and overridden / default are icon + label + color. One search box filters all sections.
+- **Safety:** the file is built from an explicit allowlist (`buildConfigView()`, core, pure), never from a dump of the loaded config. It has no field that can hold an API key, webhook URL, SMTP host or credential, or recipient address: channels are `console` / `slack` / `discord` / `email` with an `enabled` flag only. Rule names, custom rule settings and parameter values additionally pass a redaction guard (`looksSensitive`: URLs, `@`, key and token shapes, absolute paths, opaque long tokens become `[hidden]`), parameters not declared by the rule are dropped, and configured ids that match no rule are shown only when they have the rule-id format. `checkDetailBundle()` (and so `pnpm fork:verify`) rejects any such string in the file.
+- States: loading, not published (file absent), not collected (manifest `unavailable` with its reason), error (alert), empty (no entries), no match (search).
+- Publication: under `detail/`, so the detail rule applies: on Pages only with `PAGES_DATA_SOURCE=live` and `PAGES_DETAIL_DATA=true`; always in the synthetic sample. Written by `pnpm build:detail` / `pnpm pipeline`; it does not depend on collected data, so it is present even when every dataset is unavailable. The sample's configuration (a disabled rule, an overridden parameter, two custom rules, a notification policy with Slack and e-mail on) is **illustrative**: `pnpm demo` fixes it independently of the local config and does not apply it to the sample compliance results, so the other sample files are unchanged.
+
 ### F-017 Insights
 
 - Title and detail of each analyzer result (model concentration, cache efficiency, group concentration, seat utilization) with its priority.
@@ -139,17 +147,18 @@
 
 ## Detail data files (B2-2)
 
-The screens of F-005 (search), F-006, F-007, F-009 and F-012 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 1`, zod schemas in `@claude-audit/core/contracts`).
+The screens of F-005 (search), F-006, F-007, F-009, F-012 and F-014 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 1`, zod schemas in `@claude-audit/core/contracts`).
 
-| File                             | Content                                                                                                                       |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `detail/index.json`              | Manifest: `maskPii`, `source`, and per file `kind`, `path`, `status` (`ok` / `unavailable` + reason), `count`                 |
-| `detail/members.json`            | Members (role, organization, `active`, `lastActiveOn`), invites, the AC-001 `inactiveDays` threshold                          |
-| `detail/api-keys.json`           | Keys (scopes, active, created / expires, creator, `lastSeenAt`), AK-001 / AK-003 thresholds, usage window start               |
-| `detail/activity-<yyyy-mm>.json` | One file per UTC month, newest first, capped at 2000 rows (`total` and `truncated` give the real count)                       |
-| `detail/org-groups.json`         | Organizations, RBAC groups (member count, month-to-date spend; groups overlap), CF-xxx deviations                             |
-| `detail/monthly/index.json`      | Monthly cost reports: month list (newest first), status, organization total (no per-person data; written by `report monthly`) |
-| `detail/monthly/<id>.json`       | One month: organization total, cost by RBAC group / model / product (amount, share), notes; group rows overlap                |
+| File                             | Content                                                                                                                             |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `detail/index.json`              | Manifest: `maskPii`, `source`, and per file `kind`, `path`, `status` (`ok` / `unavailable` + reason), `count`                       |
+| `detail/members.json`            | Members (role, organization, `active`, `lastActiveOn`), invites, the AC-001 `inactiveDays` threshold                                |
+| `detail/api-keys.json`           | Keys (scopes, active, created / expires, creator, `lastSeenAt`), AK-001 / AK-003 thresholds, usage window start                     |
+| `detail/activity-<yyyy-mm>.json` | One file per UTC month, newest first, capped at 2000 rows (`total` and `truncated` give the real count)                             |
+| `detail/org-groups.json`         | Organizations, RBAC groups (member count, month-to-date spend; groups overlap), CF-xxx deviations                                   |
+| `detail/config.json`             | Effective configuration (allowlisted): rules with state / origin / effective parameters, custom rules, notification policy, sources |
+| `detail/monthly/index.json`      | Monthly cost reports: month list (newest first), status, organization total (no per-person data; written by `report monthly`)       |
+| `detail/monthly/<id>.json`       | One month: organization total, cost by RBAC group / model / product (amount, share), notes; group rows overlap                      |
 
 Identifier handling follows `dashboard.maskPii` (default `true`): e-mail addresses become `j***@example.com`, names become initials (`A*** E***`), IP addresses are dropped, and user / key / invite IDs become `u_` / `k_` / `i_` plus 12 hex characters, stable across files so rows stay joinable. With `maskPii=false` raw values are written (and the manifest says so). A missing file with an `unavailable` manifest entry means the dataset was not collected; absence of the whole directory means "not published". `pnpm build:detail` (part of `pnpm pipeline`) writes `data/detail/`; `pnpm demo` writes the synthetic `data/sample/detail/`, validated by `pnpm fork:verify` (contract, `example.*` e-mails only, masked identifiers).
 
@@ -157,14 +166,13 @@ Identifier handling follows `dashboard.maskPii` (default `true`): e-mail address
 
 ## Planned (Phase B and later)
 
-| ID    | Scope                                                                                                         |
-| ----- | ------------------------------------------------------------------------------------------------------------- |
-| F-008 | History of alerts sent (from the notification state) and their acknowledgement status.                        |
-| F-010 | Model × group heatmap (sequential single-hue scale with a legend), trend of model mix.                        |
-| F-012 | Drill-down per linked organization or RBAC group: members, settings deviations (CF-xxx), spend.               |
-| F-013 | Archive inventory (years, snapshot counts, sizes).                                                            |
-| F-014 | Read-only view of the effective configuration: disabled rules, parameters, custom rules, notification policy. |
-| F-015 | Compare two snapshots or two reports: rules that changed status, datasets that changed coverage.              |
+| ID    | Scope                                                                                            |
+| ----- | ------------------------------------------------------------------------------------------------ |
+| F-008 | History of alerts sent (from the notification state) and their acknowledgement status.           |
+| F-010 | Model × group heatmap (sequential single-hue scale with a legend), trend of model mix.           |
+| F-012 | Drill-down per linked organization or RBAC group: members, settings deviations (CF-xxx), spend.  |
+| F-013 | Archive inventory (years, snapshot counts, sizes).                                               |
+| F-015 | Compare two snapshots or two reports: rules that changed status, datasets that changed coverage. |
 
 ---
 

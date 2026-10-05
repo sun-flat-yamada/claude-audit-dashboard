@@ -1,0 +1,741 @@
+{
+  "customRules": [
+    {
+      "enabled": true,
+      "id": "CF-010",
+      "kind": "setting-baseline",
+      "name": "Web Search Disabled",
+      "replacesBuiltin": false,
+      "severity": "low",
+      "summary": "web_search_enabled = false"
+    },
+    {
+      "enabled": true,
+      "id": "AM-008",
+      "kind": "activity-watch",
+      "name": "API Key Creation",
+      "replacesBuiltin": false,
+      "severity": "medium",
+      "summary": "Activity types api_key_created, admin_api_key_created; threshold 2"
+    }
+  ],
+  "dashboard": {
+    "maskPii": true
+  },
+  "generatedAt": "2026-09-29T12:00:00.000Z",
+  "notifications": {
+    "channels": [
+      {
+        "enabled": true,
+        "kind": "console"
+      },
+      {
+        "enabled": true,
+        "kind": "slack"
+      },
+      {
+        "enabled": false,
+        "kind": "discord"
+      },
+      {
+        "enabled": true,
+        "kind": "email"
+      }
+    ],
+    "cooldownMinutes": 240,
+    "minSeverity": "medium",
+    "statuses": [
+      "fail",
+      "warning"
+    ]
+  },
+  "retention": {
+    "snapshotDays": 365
+  },
+  "rules": [
+    {
+      "category": "access-control",
+      "enabled": true,
+      "id": "AC-001",
+      "name": "Inactive Members",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 90,
+          "key": "inactiveDays",
+          "overridden": false,
+          "value": 90
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "members",
+        "memberActivity"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "access-control",
+      "enabled": true,
+      "id": "AC-002",
+      "name": "Excessive Administrative Roles",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 20,
+          "key": "maxAdminPercentage",
+          "overridden": false,
+          "value": 20
+        },
+        {
+          "defaultValue": [
+            "primary_owner",
+            "owner",
+            "admin",
+            "membership_admin",
+            "parent_org_owner",
+            "parent_org_admin"
+          ],
+          "key": "adminRoles",
+          "overridden": false,
+          "value": [
+            "primary_owner",
+            "owner",
+            "admin",
+            "membership_admin",
+            "parent_org_owner",
+            "parent_org_admin"
+          ]
+        },
+        {
+          "defaultValue": 1,
+          "key": "minMembers",
+          "overridden": false,
+          "value": 1
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "members"
+      ],
+      "severity": "high"
+    },
+    {
+      "category": "access-control",
+      "enabled": true,
+      "id": "AC-003",
+      "name": "Single Primary Owner",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": [
+            "primary_owner"
+          ],
+          "key": "ownerRoles",
+          "overridden": false,
+          "value": [
+            "primary_owner"
+          ]
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "members"
+      ],
+      "severity": "critical"
+    },
+    {
+      "category": "access-control",
+      "enabled": true,
+      "id": "AC-004",
+      "name": "Stale Pending Invites",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 30,
+          "key": "maxPendingDays",
+          "overridden": false,
+          "value": 30
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "invites"
+      ],
+      "severity": "low"
+    },
+    {
+      "category": "api-key-management",
+      "enabled": true,
+      "id": "AK-001",
+      "name": "Unused API Keys",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 30,
+          "key": "unusedDays",
+          "overridden": false,
+          "value": 30
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "credentials",
+        "credentialUsage"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "api-key-management",
+      "enabled": true,
+      "id": "AK-002",
+      "name": "Over-privileged API Keys",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": [
+            "delete:compliance_user_data",
+            "write:members",
+            "write:rbac_groups",
+            "write:spend_limits"
+          ],
+          "key": "flaggedScopes",
+          "overridden": false,
+          "value": [
+            "delete:compliance_user_data",
+            "write:members",
+            "write:rbac_groups",
+            "write:spend_limits"
+          ]
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "credentials"
+      ],
+      "severity": "high"
+    },
+    {
+      "category": "api-key-management",
+      "enabled": true,
+      "id": "AK-003",
+      "name": "API Key Age",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 180,
+          "key": "maxAgeDays",
+          "overridden": false,
+          "value": 180
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "credentials"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "usage-anomaly",
+      "enabled": true,
+      "id": "UA-001",
+      "name": "Usage Spike Detection",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 3,
+          "key": "spikeMultiplier",
+          "overridden": false,
+          "value": 3
+        },
+        {
+          "defaultValue": 7,
+          "key": "baselineDays",
+          "overridden": false,
+          "value": 7
+        },
+        {
+          "defaultValue": 1000,
+          "key": "minBaselineTokens",
+          "overridden": false,
+          "value": 1000
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "usage"
+      ],
+      "severity": "high"
+    },
+    {
+      "category": "usage-anomaly",
+      "enabled": true,
+      "id": "UA-002",
+      "name": "Cost Budget Threshold",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 10000,
+          "key": "monthlyBudget",
+          "overridden": false,
+          "value": 10000
+        },
+        {
+          "defaultValue": "USD",
+          "key": "currency",
+          "overridden": false,
+          "value": "USD"
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "cost"
+      ],
+      "severity": "critical"
+    },
+    {
+      "category": "usage-anomaly",
+      "enabled": true,
+      "id": "UA-003",
+      "name": "Members Without Spend Limit",
+      "origin": "builtin",
+      "parameters": [],
+      "paramsValid": true,
+      "requires": [
+        "spendLimits"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "usage-anomaly",
+      "enabled": true,
+      "id": "UA-004",
+      "name": "Spend Limit Nearly Exhausted",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 90,
+          "key": "thresholdPercent",
+          "overridden": false,
+          "value": 90
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "spendLimits"
+      ],
+      "severity": "low"
+    },
+    {
+      "category": "data-governance",
+      "enabled": false,
+      "id": "DG-001",
+      "name": "Empty Groups",
+      "origin": "builtin",
+      "parameters": [],
+      "paramsValid": true,
+      "requires": [
+        "groups"
+      ],
+      "severity": "low"
+    },
+    {
+      "category": "operational",
+      "enabled": true,
+      "id": "OP-001",
+      "name": "Collection Freshness",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 24,
+          "key": "maxStaleHours",
+          "overridden": true,
+          "value": 48
+        }
+      ],
+      "paramsValid": true,
+      "requires": [],
+      "severity": "high"
+    },
+    {
+      "category": "operational",
+      "enabled": true,
+      "id": "OP-002",
+      "name": "Data Source Coverage",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": [],
+          "key": "ignore",
+          "overridden": false,
+          "value": []
+        }
+      ],
+      "paramsValid": true,
+      "requires": [],
+      "severity": "high"
+    },
+    {
+      "category": "configuration",
+      "enabled": true,
+      "id": "CF-001",
+      "name": "SSO Enforced for claude.ai",
+      "origin": "builtin",
+      "parameters": [],
+      "paramsValid": true,
+      "requires": [
+        "settings"
+      ],
+      "severity": "high"
+    },
+    {
+      "category": "configuration",
+      "enabled": true,
+      "id": "CF-002",
+      "name": "SCIM Provisioning",
+      "origin": "builtin",
+      "parameters": [],
+      "paramsValid": true,
+      "requires": [
+        "settings"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "configuration",
+      "enabled": true,
+      "id": "CF-003",
+      "name": "IP Allowlist Enabled",
+      "origin": "builtin",
+      "parameters": [],
+      "paramsValid": true,
+      "requires": [
+        "settings"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "configuration",
+      "enabled": true,
+      "id": "CF-004",
+      "name": "Session Duration Limited",
+      "origin": "builtin",
+      "parameters": [],
+      "paramsValid": true,
+      "requires": [
+        "settings"
+      ],
+      "severity": "low"
+    },
+    {
+      "category": "configuration",
+      "enabled": true,
+      "id": "CF-005",
+      "name": "Finite Data Retention",
+      "origin": "builtin",
+      "parameters": [],
+      "paramsValid": true,
+      "requires": [
+        "settings"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "configuration",
+      "enabled": true,
+      "id": "CF-006",
+      "name": "Public Projects Disabled",
+      "origin": "builtin",
+      "parameters": [],
+      "paramsValid": true,
+      "requires": [
+        "settings"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "configuration",
+      "enabled": true,
+      "id": "CF-007",
+      "name": "Code Execution Egress Restricted",
+      "origin": "builtin",
+      "parameters": [],
+      "paramsValid": true,
+      "requires": [
+        "settings"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "configuration",
+      "enabled": true,
+      "id": "CF-008",
+      "name": "Claude Code Permission Bypass Disabled",
+      "origin": "builtin",
+      "parameters": [],
+      "paramsValid": true,
+      "requires": [
+        "settings"
+      ],
+      "severity": "high"
+    },
+    {
+      "category": "configuration",
+      "enabled": true,
+      "id": "CF-009",
+      "name": "Invite Domains Restricted",
+      "origin": "builtin",
+      "parameters": [],
+      "paramsValid": true,
+      "requires": [
+        "settings"
+      ],
+      "severity": "low"
+    },
+    {
+      "category": "configuration",
+      "enabled": true,
+      "id": "CF-010",
+      "name": "Web Search Disabled",
+      "origin": "custom",
+      "parameters": [],
+      "paramsValid": true,
+      "requires": [
+        "settings"
+      ],
+      "severity": "low"
+    },
+    {
+      "category": "activity-monitoring",
+      "enabled": true,
+      "id": "AM-001",
+      "name": "Privileged Role Changes",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 1,
+          "key": "threshold",
+          "overridden": false,
+          "value": 1
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "activities"
+      ],
+      "severity": "high"
+    },
+    {
+      "category": "activity-monitoring",
+      "enabled": true,
+      "id": "AM-002",
+      "name": "Identity Provider Changes",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 1,
+          "key": "threshold",
+          "overridden": false,
+          "value": 1
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "activities"
+      ],
+      "severity": "high"
+    },
+    {
+      "category": "activity-monitoring",
+      "enabled": true,
+      "id": "AM-003",
+      "name": "Network Restriction Changes",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 1,
+          "key": "threshold",
+          "overridden": false,
+          "value": 1
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "activities"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "activity-monitoring",
+      "enabled": true,
+      "id": "AM-004",
+      "name": "API Key Lifecycle",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 1,
+          "key": "threshold",
+          "overridden": false,
+          "value": 1
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "activities"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "activity-monitoring",
+      "enabled": true,
+      "id": "AM-005",
+      "name": "Data Export Events",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 1,
+          "key": "threshold",
+          "overridden": false,
+          "value": 1
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "activities"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "activity-monitoring",
+      "enabled": true,
+      "id": "AM-006",
+      "name": "Authentication Failure Burst",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 20,
+          "key": "threshold",
+          "overridden": false,
+          "value": 20
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "activities"
+      ],
+      "severity": "medium"
+    },
+    {
+      "category": "activity-monitoring",
+      "enabled": true,
+      "id": "AM-007",
+      "name": "Data Protection Changes",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 1,
+          "key": "threshold",
+          "overridden": false,
+          "value": 1
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "activities"
+      ],
+      "severity": "high"
+    },
+    {
+      "category": "activity-monitoring",
+      "enabled": true,
+      "id": "AM-008",
+      "name": "API Key Creation",
+      "origin": "custom",
+      "parameters": [
+        {
+          "defaultValue": 2,
+          "key": "threshold",
+          "overridden": false,
+          "value": 2
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "activities"
+      ],
+      "severity": "medium"
+    }
+  ],
+  "schemaVersion": 1,
+  "sources": {
+    "activities": {
+      "excludedTypeCount": 8,
+      "includedTypeCount": 0,
+      "initialLookbackHours": 168,
+      "lagMinutes": 2,
+      "overlapMinutes": 10,
+      "pageSize": 5000
+    },
+    "datasets": [
+      {
+        "enabled": true,
+        "name": "organizations"
+      },
+      {
+        "enabled": true,
+        "name": "members"
+      },
+      {
+        "enabled": true,
+        "name": "memberActivity"
+      },
+      {
+        "enabled": true,
+        "name": "invites"
+      },
+      {
+        "enabled": true,
+        "name": "groups"
+      },
+      {
+        "enabled": true,
+        "name": "settings"
+      },
+      {
+        "enabled": true,
+        "name": "credentials"
+      },
+      {
+        "enabled": true,
+        "name": "credentialUsage"
+      },
+      {
+        "enabled": true,
+        "name": "activities"
+      },
+      {
+        "enabled": true,
+        "name": "usage"
+      },
+      {
+        "enabled": true,
+        "name": "cost"
+      },
+      {
+        "enabled": false,
+        "name": "adoption"
+      },
+      {
+        "enabled": true,
+        "name": "spendLimits"
+      }
+    ],
+    "groupMemberRequestLimit": 200,
+    "memberActivityLookbackDays": 90,
+    "membersProvider": "admin"
+  },
+  "unknownRuleIds": {
+    "disabled": [],
+    "parameters": []
+  }
+}

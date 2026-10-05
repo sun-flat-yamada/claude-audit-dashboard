@@ -1,3 +1,5 @@
+import type { DetailConfig } from '../../contracts/config-view.js';
+import { CONFIG_VIEW_SCHEMA_VERSION, DETAIL_CONFIG_PATH } from '../../contracts/config-view.js';
 import type {
   DetailActivity,
   DetailApiKeys,
@@ -18,6 +20,7 @@ import type { ComplianceReport } from '../../domain/compliance/types.js';
 import { withDefaults, type DatasetMap, type DatasetName } from '../../domain/model/dataset.js';
 import type { AuditSnapshot } from '../../domain/model/snapshot.js';
 import { identityMasker, type IdentityMasker } from '../../domain/util/mask.js';
+import { buildConfigView, type ConfigViewInput } from './config-view.js';
 import { buildDetailActivity } from './detail-activity.js';
 import { buildDetailApiKeys } from './detail-api-keys.js';
 import { buildDetailMembers } from './detail-members.js';
@@ -44,12 +47,14 @@ export interface DetailInput {
   snapshot: AuditSnapshot | null;
   report: ComplianceReport | null;
   thresholds: DetailThresholds;
+  /** Effective configuration (allowlist input); omitted when the caller has none to publish. */
+  config?: Omit<ConfigViewInput, 'now'> | undefined;
 }
 
 export interface DetailFile {
   path: string;
   /** Plain object, parsed by its schema at the single write site. */
-  content: DetailMembers | DetailApiKeys | DetailActivity | DetailOrgGroups;
+  content: DetailMembers | DetailApiKeys | DetailActivity | DetailOrgGroups | DetailConfig;
 }
 
 export interface DetailBundle {
@@ -83,10 +88,11 @@ const available = (
   path: string,
   count: number,
   month: string | null = null,
+  schemaVersion: number = DETAIL_SCHEMA_VERSION,
 ): DetailManifestFile => ({
   kind,
   path,
-  schemaVersion: DETAIL_SCHEMA_VERSION,
+  schemaVersion,
   status: 'ok',
   reason: null,
   count,
@@ -179,6 +185,23 @@ function orgGroupsPart(c: Ctx): Part {
   };
 }
 
+function configPart(c: Ctx): Part {
+  if (!c.config) return { files: [], entries: [] };
+  const content = buildConfigView({ ...c.config, now: c.now });
+  return {
+    files: [{ path: DETAIL_CONFIG_PATH, content }],
+    entries: [
+      available(
+        'config',
+        DETAIL_CONFIG_PATH,
+        content.rules.length,
+        null,
+        CONFIG_VIEW_SCHEMA_VERSION,
+      ),
+    ],
+  };
+}
+
 /** Builds the manifest and the entity files; pure and deterministic for the same input. */
 export function buildDetailView(input: DetailInput): DetailBundle {
   const ctx: Ctx = {
@@ -186,7 +209,13 @@ export function buildDetailView(input: DetailInput): DetailBundle {
     mask: identityMasker(input.maskPii),
     data: withDefaults(input.snapshot?.data ?? {}),
   };
-  const parts = [membersPart(ctx), apiKeysPart(ctx), activityPart(ctx), orgGroupsPart(ctx)];
+  const parts = [
+    membersPart(ctx),
+    apiKeysPart(ctx),
+    activityPart(ctx),
+    orgGroupsPart(ctx),
+    configPart(ctx),
+  ];
   return {
     manifest: {
       schemaVersion: DETAIL_SCHEMA_VERSION,

@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import { detailConfigSchema, looksSensitive } from './config-view.js';
 import {
   DETAIL_MANIFEST_PATH,
   detailActivitySchema,
@@ -34,6 +35,7 @@ const SCHEMAS = {
   'api-keys': detailApiKeysSchema,
   activity: detailActivitySchema,
   'org-groups': detailOrgGroupsSchema,
+  config: detailConfigSchema,
 } as const;
 
 type Json = Record<string, unknown>;
@@ -106,7 +108,23 @@ function maskErrors(entry: DetailManifestFile, path: string, data: Json): string
   return [];
 }
 
+const stringsIn = (value: unknown): string[] => {
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.flatMap(stringsIn);
+  if (typeof value === 'object' && value !== null) return Object.values(value).flatMap(stringsIn);
+  return [];
+};
+
+/** The effective configuration carries no secrets, URLs, addresses or paths in any string. */
+function configLeakErrors(path: string, data: Json): string[] {
+  const hits = stringsIn(data).filter(looksSensitive);
+  return hits.length === 0
+    ? []
+    : [`${path}: ${String(hits.length)} value(s) look like a secret, URL, e-mail address or path`];
+}
+
 function countOf(entry: DetailManifestFile, data: Json): number {
+  if (entry.kind === 'config') return rows(data, 'rules').length;
   if (entry.kind === 'members') return rows(data, 'members').length;
   if (entry.kind === 'api-keys') return rows(data, 'keys').length;
   if (entry.kind === 'activity') return rows(data, 'items').length;
@@ -124,6 +142,7 @@ function fileErrors(manifest: DetailManifest, entry: DetailManifestFile, text: s
     ...(entry.kind === 'activity' && data.month !== entry.month
       ? [`${entry.path}: month differs from the manifest`]
       : []),
+    ...(entry.kind === 'config' ? configLeakErrors(entry.path, data) : []),
     ...emailErrors(entry.path, text, manifest.maskPii),
     ...(manifest.maskPii ? maskErrors(entry, entry.path, data) : []),
   ];
