@@ -88,7 +88,9 @@ function coverageHint(report: ComplianceReport): string | null {
     : `${assessed} of ${report.summary.total} rules assessed`;
 }
 
-function kpis(input: DashboardInput, data: DatasetMap): DashboardKpi[] {
+type KpiInput = Pick<DashboardInput, 'now' | 'snapshot' | 'report'>;
+
+function kpis(input: KpiInput, data: DatasetMap): DashboardKpi[] {
   const { snapshot, report } = input;
   const adoptionDay = latestAdoption(data);
   const members = collected(snapshot, 'members')
@@ -120,6 +122,14 @@ function kpis(input: DashboardInput, data: DatasetMap): DashboardKpi[] {
     monthToDate(snapshot, data, input.now),
   ];
 }
+
+/**
+ * The KPI figures of the dashboard (score, open findings, members, MAU, seat utilization,
+ * month-to-date cost) for one snapshot and report, as of `now`. Also what a time-point summary
+ * records, so the dashboard and the summary cannot disagree.
+ */
+export const buildDashboardKpis = (input: KpiInput): DashboardKpi[] =>
+  kpis(input, withDefaults(input.snapshot?.data ?? {}));
 
 const resultView =
   (mask: Mask) =>

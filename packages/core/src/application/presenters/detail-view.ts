@@ -20,6 +20,12 @@ import {
   DETAIL_SCHEMA_VERSION,
   detailActivityPath,
 } from '../../contracts/detail-view.js';
+import type { CompareIndex, TimePointSummary } from '../../contracts/time-point-summary.js';
+import {
+  COMPARE_INDEX_PATH,
+  COMPARE_SCHEMA_VERSION,
+  comparePointPath,
+} from '../../contracts/time-point-summary.js';
 import type { ComplianceReport } from '../../domain/compliance/types.js';
 import { withDefaults, type DatasetMap, type DatasetName } from '../../domain/model/dataset.js';
 import type { AuditSnapshot } from '../../domain/model/snapshot.js';
@@ -31,6 +37,7 @@ import { buildDetailActivity } from './detail-activity.js';
 import { buildDetailApiKeys } from './detail-api-keys.js';
 import { buildDetailMembers } from './detail-members.js';
 import { buildDetailOrgGroups } from './detail-org-groups.js';
+import { buildCompareIndex } from './time-point-summary.js';
 
 /** Effective thresholds of the rules whose verdicts the detail screens explain. */
 export interface DetailThresholds {
@@ -65,6 +72,11 @@ export interface DetailInput {
    * not be read. Omitted when the caller has no alert history to report on.
    */
   alerts?: Omit<AlertsViewInput, 'now'> | null | undefined;
+  /**
+   * The stored time-point summaries (F-015; I/O stays with the caller). Omitted when the caller
+   * has none to publish; `null` means they could not be read.
+   */
+  summaries?: readonly TimePointSummary[] | null | undefined;
 }
 
 export interface DetailFile {
@@ -77,7 +89,9 @@ export interface DetailFile {
     | DetailOrgGroups
     | DetailConfig
     | DetailArchive
-    | DetailAlerts;
+    | DetailAlerts
+    | CompareIndex
+    | TimePointSummary;
 }
 
 export interface DetailBundle {
@@ -293,6 +307,39 @@ function alertsPart(c: Ctx): Part {
   };
 }
 
+function comparePart(c: Ctx): Part {
+  if (c.summaries === undefined) return { files: [], entries: [] };
+  const unavailable = (reason: string): Part => ({
+    files: [],
+    entries: [
+      {
+        kind: 'compare',
+        path: COMPARE_INDEX_PATH,
+        schemaVersion: COMPARE_SCHEMA_VERSION,
+        status: 'unavailable',
+        reason,
+        count: null,
+        month: null,
+      },
+    ],
+  });
+  if (c.summaries === null) return unavailable('the time-point summaries could not be read');
+  if (c.summaries.length === 0) return unavailable('no time point has been judged yet');
+  const index = buildCompareIndex(c.summaries, c.now);
+  const listed = new Set(index.points.map((p) => p.id));
+  return {
+    files: [
+      { path: COMPARE_INDEX_PATH, content: index },
+      ...c.summaries
+        .filter((s) => listed.has(s.id))
+        .map((s) => ({ path: comparePointPath(s.id), content: s })),
+    ],
+    entries: [
+      available('compare', COMPARE_INDEX_PATH, index.points.length, null, COMPARE_SCHEMA_VERSION),
+    ],
+  };
+}
+
 /** Builds the manifest and the entity files; pure and deterministic for the same input. */
 export function buildDetailView(input: DetailInput): DetailBundle {
   const ctx: Ctx = {
@@ -308,6 +355,7 @@ export function buildDetailView(input: DetailInput): DetailBundle {
     configPart(ctx),
     archivePart(ctx),
     alertsPart(ctx),
+    comparePart(ctx),
   ];
   return {
     manifest: {
