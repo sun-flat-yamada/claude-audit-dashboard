@@ -2,6 +2,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import {
   BUILTIN_PROJECTIONS,
+  ALL_DATASET_NAMES,
   DATASET_NAMES,
   SNAPSHOT_SCHEMA_VERSION,
   applyProjections,
@@ -13,6 +14,7 @@ import {
   type AuditSnapshot,
   type DatasetName,
 } from '@claude-audit/core';
+import { createDemoOptionalCollectors } from '../adapters/demo/demo-optional.js';
 import { DEMO_NOW, createDemoCollectors } from '../adapters/demo/demo-source.js';
 import { snapshotFiles } from '../adapters/storage/repositories.js';
 
@@ -35,6 +37,11 @@ export interface HistoryOptions {
   /** Hours between snapshots (default 6, the collect-audit schedule). */
   intervalHours?: number;
   start?: Date;
+  /**
+   * Also carry the datasets of the optional sources (B4: Console, Claude Code). Off by default,
+   * so existing tests keep the 13 built-in datasets.
+   */
+  optionalSources?: boolean;
 }
 
 /**
@@ -56,6 +63,11 @@ export const CHANGE_PERIOD: Readonly<Record<DatasetName, number>> = {
   usage: 4,
   cost: 4,
   activities: 1,
+  consoleWorkspaces: 240,
+  consoleApiKeys: 56,
+  consoleUsage: 4,
+  consoleCost: 4,
+  claudeCodeActivity: 4,
 };
 
 type Row = Record<string, unknown>;
@@ -70,12 +82,16 @@ interface Base {
 }
 
 /** The demo tenant collected once at its own fixed clock (datasets + projections). */
-async function baseSnapshot(): Promise<Base> {
+async function baseSnapshot(names: readonly DatasetName[]): Promise<Base> {
   const now = DEMO_NOW;
-  const gathered = await gatherDatasets(createDemoCollectors(), { now, range: defaultRange(now) });
+  const collectors = [
+    ...createDemoCollectors(),
+    ...(names.length > DATASET_NAMES.length ? createDemoOptionalCollectors() : []),
+  ];
+  const gathered = await gatherDatasets(collectors, { now, range: defaultRange(now) });
   applyProjections(BUILTIN_PROJECTIONS, gathered, {}, now);
   const data = Object.fromEntries(
-    DATASET_NAMES.map((name) => [name, (gathered.data[name] ?? []) as unknown as Items]),
+    names.map((name) => [name, (gathered.data[name] ?? []) as unknown as Items]),
   ) as Record<DatasetName, Items>;
   return { data, coverage: gathered.coverage };
 }
@@ -177,9 +193,24 @@ function variant(name: DatasetName, base: Items, epoch: number, step: number, no
       return base.map((row) => ({ ...row, spent: round(Number(row.spent ?? 0) + (epoch % 7)) }));
     case 'memberActivity':
       return base.map((row) => (row.active ? { ...row, lastActiveOn: toIsoDate(now) } : row));
+    case 'consoleWorkspaces':
+      return base;
+    case 'consoleApiKeys':
+      return first && epoch > 0
+        ? [
+            ...base,
+            {
+              ...withSuffix(first, 'id', `-s${String(epoch)}`),
+              name: `synthetic-key-${String(epoch)}`,
+            },
+          ]
+        : base;
     case 'adoption':
     case 'usage':
     case 'cost':
+    case 'consoleUsage':
+    case 'consoleCost':
+    case 'claudeCodeActivity':
       return rollingRows(base, now);
     case 'activities':
       return newActivities(base, step, now);
@@ -217,6 +248,7 @@ function itemsFor(
 }
 
 function snapshotAt(
+  names: readonly DatasetName[],
   base: Base,
   step: number,
   now: Date,
@@ -224,7 +256,7 @@ function snapshotAt(
 ): AuditSnapshot {
   const data: Record<string, unknown[]> = {};
   const coverage: AuditSnapshot['coverage'] = {};
-  for (const name of DATASET_NAMES) {
+  for (const name of names) {
     const items = itemsFor(base, name, step, now, context);
     data[name] = items;
     coverage[name] = { ...base.coverage[name], status: 'ok', count: items.length } as never;
@@ -251,12 +283,13 @@ export interface SyntheticHistory {
 export async function createHistory(options: HistoryOptions): Promise<SyntheticHistory> {
   const intervalMs = (options.intervalHours ?? 6) * HOUR_MS;
   const start = options.start ?? HISTORY_START;
-  const base = await baseSnapshot();
+  const names = options.optionalSources ? ALL_DATASET_NAMES : DATASET_NAMES;
+  const base = await baseSnapshot(names);
   const context = { intervalMs, memo: new Map<string, Items>() };
   const timeOf = (i: number) => new Date(start.getTime() + i * intervalMs);
   return {
     count: Math.floor((options.days * DAY_MS) / intervalMs),
-    at: (i) => snapshotAt(base, i, timeOf(i), context),
+    at: (i) => snapshotAt(names, base, i, timeOf(i), context),
     timeOf,
   };
 }
@@ -317,7 +350,7 @@ function importStream(history: SyntheticHistory): string[] {
     const unix = Math.floor(history.timeOf(i).getTime() / 1000);
     const message = `chore: audit data ${snapshot.id} [skip ci]`;
     const base = `data/snapshots/${snapshot.id}`;
-    const changes = DATASET_NAMES.map(
+    const changes = (Object.keys(snapshot.data) as DatasetName[]).map(
       (name) => `M 100644 :${String(datasetMark(snapshot, name))} ${base}/${name}.json`,
     );
     const [manifest] = snapshotFiles('d', { ...snapshot, data: {} }).slice(-1);

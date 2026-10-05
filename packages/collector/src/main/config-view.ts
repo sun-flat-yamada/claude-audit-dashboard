@@ -1,5 +1,16 @@
-import type { ConfigViewInput } from '@claude-audit/core';
+import {
+  OPTIONAL_SOURCES,
+  type ConfigViewInput,
+  type OptionalDatasetName,
+} from '@claude-audit/core';
 import type { Container } from './container.js';
+
+/** Optional datasets whose source flag is on (and that are not listed in `sources.disabled`). */
+export const enabledOptionalDatasets = (c: Container): OptionalDatasetName[] =>
+  (Object.keys(OPTIONAL_SOURCES) as OptionalDatasetName[]).filter(
+    (name) =>
+      c.config.sources[OPTIONAL_SOURCES[name]].enabled && !c.config.sources.disabled.includes(name),
+  );
 
 /**
  * Maps the loaded configuration to the allowlisted presenter input. Only named, non-secret
@@ -14,6 +25,7 @@ export function configViewInput(c: Container): Omit<ConfigViewInput, 'now'> {
     disabledRules: compliance.disabledRules,
     ruleParams: compliance.params,
     disabledDatasets: sources.disabled,
+    enabledOptionalDatasets: enabledOptionalDatasets(c),
     membersProvider: sources.members.provider,
     memberActivityLookbackDays: sources.memberActivity.lookbackDays,
     groupMemberRequestLimit: sources.groups.maxMemberRequests,

@@ -22,8 +22,11 @@ import {
 import { AdminApi } from '../adapters/anthropic/admin-api.js';
 import { AnalyticsApi } from '../adapters/anthropic/analytics-api.js';
 import { createAnthropicCollectors, type AnthropicApis } from '../adapters/anthropic/collectors.js';
+import { ClaudeCodeApi } from '../adapters/anthropic/claude-code-api.js';
 import { ComplianceApi } from '../adapters/anthropic/compliance-api.js';
+import { ConsoleAdminApi } from '../adapters/anthropic/console-admin-api.js';
 import { HttpClient } from '../adapters/anthropic/http-client.js';
+import { createOptionalCollectors } from '../adapters/anthropic/optional-collectors.js';
 import {
   FileRawCapture,
   resolveCaptureDir,
@@ -102,6 +105,23 @@ function anthropicApis(
   };
 }
 
+/** Opt-in sources (B4): registered only when enabled in config; one Console Admin key serves both. */
+function optionalCollectors(
+  env: Environment,
+  config: AppConfig,
+  fetchImpl: typeof fetch | undefined,
+  capture: RawCapture | undefined,
+): DatasetCollector[] {
+  const { console: consoleSource, claudeCode } = config.sources;
+  const http = env.keys.console
+    ? new HttpClient({ apiKey: env.keys.console, baseUrl: env.baseUrl, fetchImpl, capture })
+    : null;
+  return createOptionalCollectors(
+    { console: http && new ConsoleAdminApi(http), claudeCode: http && new ClaudeCodeApi(http) },
+    { disabled: disabledDatasets(config), console: consoleSource, claudeCode },
+  );
+}
+
 function liveSources(
   env: Environment,
   config: AppConfig,
@@ -111,13 +131,16 @@ function liveSources(
   const { activities, members, memberActivity, groups, usageMatrix } = config.sources;
   const apis = anthropicApis(env, fetchImpl, capture);
   return {
-    collectors: createAnthropicCollectors(apis, {
-      disabled: disabledDatasets(config),
-      membersProvider: members.provider,
-      memberActivityLookbackDays: memberActivity.lookbackDays,
-      maxGroupMemberRequests: groups.maxMemberRequests,
-      activities,
-    }),
+    collectors: [
+      ...createAnthropicCollectors(apis, {
+        disabled: disabledDatasets(config),
+        membersProvider: members.provider,
+        memberActivityLookbackDays: memberActivity.lookbackDays,
+        maxGroupMemberRequests: groups.maxMemberRequests,
+        activities,
+      }),
+      ...optionalCollectors(env, config, fetchImpl, capture),
+    ],
     matrix: usageMatrix.enabled ? apis.analytics : null,
   };
 }

@@ -44,6 +44,21 @@ export const appConfigSchema = z.object({
           lookbackDays: z.number().int().min(1).max(366).default(90),
         })
         .prefault({}),
+      console: z
+        .object({
+          /** Opt-in linked Console organization datasets (B4); absent from coverage when off. */
+          enabled: z.boolean().default(false),
+          lookbackDays: z.number().int().min(1).max(366).default(30),
+        })
+        .prefault({}),
+      claudeCode: z
+        .object({
+          /** Opt-in Claude Code Analytics dataset (B4); absent from coverage when off. */
+          enabled: z.boolean().default(false),
+          /** One request series per day, so keep it short (60 requests/minute). */
+          lookbackDays: z.number().int().min(1).max(31).default(7),
+        })
+        .prefault({}),
       groups: z.object({ maxMemberRequests: z.number().int().min(0).default(200) }).prefault({}),
       activities: z
         .object({
