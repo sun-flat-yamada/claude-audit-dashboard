@@ -84,7 +84,7 @@ packages/
 │       ├── application/
 │       │   ├── ports.ts          外側が実装するインターフェース
 │       │   ├── registry.ts       Registry<T>
-│       │   ├── state.ts          コレクタ状態 (カーソル、投影、通知記録) のスキーマ
+│       │   ├── state.ts          コレクタ状態 (カーソル、投影、通知記録と送信履歴) のスキーマ
 │       │   ├── documents.ts      汎用レポート文書 (ReportDocument)
 │       │   ├── use-cases/        collect-snapshot / check-compliance / reports / alerts
 │       │   └── presenters/       DashboardView への変換 (PII マスク)

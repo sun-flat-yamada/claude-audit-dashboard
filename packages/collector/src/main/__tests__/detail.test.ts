@@ -67,10 +67,11 @@ describe('detail command and pipeline', () => {
     expect(checkDetailBundle(bundle)).toEqual([]);
   });
 
-  it('without keys every collected entry is unavailable; only the configuration and the (empty) archive inventory are written', async () => {
+  it('without keys every collected entry is unavailable; only the configuration, the (empty) archive inventory and the (empty) alert history are written', async () => {
     expect(await run({})).toBe(0);
     const bundle = await readBundle();
     expect(Object.keys(bundle).sort()).toEqual([
+      'detail/alerts.json',
       'detail/archive.json',
       'detail/config.json',
       'detail/index.json',
@@ -79,7 +80,7 @@ describe('detail command and pipeline', () => {
     // The effective configuration does not depend on collected data, so it is always published.
     expect(
       manifest.files
-        .filter((f) => f.kind !== 'config' && f.kind !== 'archive')
+        .filter((f) => !['config', 'archive', 'alerts'].includes(f.kind))
         .every((f) => f.status === 'unavailable'),
     ).toBe(true);
     expect(manifest.files.find((f) => f.kind === 'config')?.status).toBe('ok');

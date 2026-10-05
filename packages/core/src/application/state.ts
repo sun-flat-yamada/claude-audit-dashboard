@@ -14,7 +14,14 @@ const stateSchema = z.object({
   }),
   cursors: z.record(z.string(), z.unknown()),
   projections: z.record(z.string(), z.unknown()),
-  notifications: z.object({ lastSent: z.record(z.string(), z.string()) }),
+  notifications: z.object({
+    lastSent: z.record(z.string(), z.string()),
+    /**
+     * Send records (F-008), added without a version bump: optional, so older files still parse.
+     * Entries are validated one by one by `parseSentRecords`, so a bad record never resets state.
+     */
+    history: z.array(z.unknown()).default([]),
+  }),
 });
 
 export type CollectorState = z.infer<typeof stateSchema>;
@@ -24,7 +31,7 @@ export const initialState = (): CollectorState => ({
   collections: { count: 0, lastAt: null },
   cursors: {},
   projections: {},
-  notifications: { lastSent: {} },
+  notifications: { lastSent: {}, history: [] },
 });
 
 /** Unknown or older (v1) state starts over instead of being misread. */

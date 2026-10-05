@@ -10,7 +10,7 @@ The published file contains aggregates only (KPIs, rule results, daily totals, t
 
 ### Per-person detail files (`PAGES_DETAIL_DATA`)
 
-Member, API key, activity and organization / group views read separate **detail files** (`detail/index.json` manifest, `members.json`, `api-keys.json`, `activity-<yyyy-mm>.json`, `org-groups.json`, `config.json` (the effective configuration: rule states, thresholds, custom rules, notification channels by kind only; no secrets, URLs, addresses or paths), `archive.json` (the archive inventory: per-year snapshot counts, compressed sizes, oldest / newest snapshot ids; no file names or paths), plus `monthly/index.json` and `monthly/<id>.json` for the monthly cost report), never `dashboard.json`. They contain per-person data: e-mail addresses and names are masked and user / key IDs are replaced by stable short hashes while `dashboard.maskPii` is `true`, but with `maskPii=false` they hold raw values. The monthly cost files hold no per-person data, but cost per RBAC group is confidential, so they are published under exactly the same condition (decision D2, conservative option).
+Member, API key, activity and organization / group views read separate **detail files** (`detail/index.json` manifest, `members.json`, `api-keys.json`, `activity-<yyyy-mm>.json`, `org-groups.json`, `config.json` (the effective configuration: rule states, thresholds, custom rules, notification channels by kind only; no secrets, URLs, addresses or paths), `archive.json` (the archive inventory: per-year snapshot counts, compressed sizes, oldest / newest snapshot ids; no file names or paths), `alerts.json` (the alert history: sent alerts with their acknowledgement; no webhook URLs, recipients or secrets), plus `monthly/index.json` and `monthly/<id>.json` for the monthly cost report), never `dashboard.json`. They contain per-person data: e-mail addresses and names are masked and user / key IDs are replaced by stable short hashes while `dashboard.maskPii` is `true`, but with `maskPii=false` they hold raw values. The monthly cost files hold no per-person data, but cost per RBAC group is confidential, so they are published under exactly the same condition (decision D2, conservative option).
 
 | `PAGES_DATA_SOURCE` | `PAGES_DETAIL_DATA` | Detail files on Pages                                     |
 | ------------------- | ------------------- | --------------------------------------------------------- |
@@ -19,6 +19,15 @@ Member, API key, activity and organization / group views read separate **detail 
 | `live`              | `true`              | live files from `data/audit` (`data/detail/`)             |
 
 `PAGES_DETAIL_DATA=true` is an explicit owner attestation: the workflow cannot detect Pages visibility, so set it **only for Private Pages (Option 1)**. Locally (`pnpm dev` after `pnpm build:data`) the files are always available.
+
+### Acknowledging alerts (Alerts page)
+
+The Alerts page (`#/alerts`) is read-only and shows the acknowledgement state of every alert sent by `pnpm notify`. A person with **write access to the repository** acknowledges an alert by its id (shown on the page):
+
+- GitHub Actions: run the **Acknowledge Alert** workflow (`.github/workflows/ack-alert.yml`, Run workflow) with `alert-id` and an optional `by-label` (letters, digits, space, `.`, `_`, `-`; max 40; defaults to your GitHub user name). It restores `data/audit`, records the acknowledgement in `alerts/ack.json`, rebuilds `detail/alerts.json` and commits to `data/audit` only (never `main`); it needs no secrets and runs only from `main`.
+- Locally, in a checkout that has the data (`.github/scripts/data-branch.sh restore`): `pnpm alerts ack <alert-id> [--by <label>]`, then `pnpm build:detail` and `.github/scripts/data-branch.sh save "<message>"`.
+
+The label is free text: an e-mail address or URL is replaced by `[hidden]`. A second acknowledgement of the same alert keeps the first. The status shows on Pages after the next deployment (the Pages workflow stages `data/detail` from `data/audit`); `alerts/ack.json` itself is never published.
 
 ---
 

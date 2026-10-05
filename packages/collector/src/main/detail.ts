@@ -8,6 +8,7 @@ import {
 import {
   DETAIL_MANIFEST_PATH,
   detailActivitySchema,
+  detailAlertsSchema,
   detailArchiveSchema,
   detailConfigSchema,
   detailApiKeysSchema,
@@ -18,6 +19,7 @@ import {
 import type { z } from 'zod';
 import { listArchiveEntries } from '../adapters/storage/archive-inventory.js';
 import { stableStringify } from '../adapters/storage/file-store.js';
+import { readAlertsInput } from './alerts.js';
 import { configViewInput } from './config-view.js';
 import type { Container } from './container.js';
 
@@ -42,12 +44,13 @@ const schemaFor = (path: string): z.ZodType => {
   if (path.endsWith('/org-groups.json')) return detailOrgGroupsSchema;
   if (path.endsWith('/config.json')) return detailConfigSchema;
   if (path.endsWith('/archive.json')) return detailArchiveSchema;
+  if (path.endsWith('/alerts.json')) return detailAlertsSchema;
   return detailActivitySchema;
 };
 
 /**
- * Writes `detail/*.json` (manifest + entity files, incl. the effective configuration and the
- * archive inventory) from the latest stored data. Every file is validated against its contract
+ * Writes `detail/*.json` (manifest + entity files, incl. the effective configuration, the
+ * archive inventory and the alert history) from the latest stored data. Every file is validated against its contract
  * at this single write site. `archive` replaces the listing of the data directory (the demo
  * supplies a synthetic one). Returns path -> content.
  */
@@ -57,6 +60,7 @@ export async function writeDetail(
   archive?: readonly ArchiveEntry[],
 ): Promise<Record<string, string>> {
   const entries = archive ?? (await listArchiveEntries(c.store).catch(() => null));
+  const alerts = await readAlertsInput(c).catch(() => null);
   const [snapshot, report] = await Promise.all([c.snapshots.latest(), c.reports.latest()]);
   const bundle = buildDetailView({
     now: c.clock.now(),
@@ -67,6 +71,7 @@ export async function writeDetail(
     thresholds: detailThresholds(c.config.compliance.params),
     config,
     archive: { snapshotDays: c.config.retention.snapshotDays, entries },
+    alerts,
   });
   const out: Record<string, string> = {
     [DETAIL_MANIFEST_PATH]: stableStringify(detailManifestSchema.parse(bundle.manifest)),

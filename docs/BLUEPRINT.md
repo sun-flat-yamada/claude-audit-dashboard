@@ -150,20 +150,22 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 
 ### 4.2 データの保存場所
 
-| データ                   | パス                                                                                               | ブランチ     | main にコミット |
-| ------------------------ | -------------------------------------------------------------------------------------------------- | ------------ | --------------- |
-| ソースコード             | `packages/`                                                                                        | `main`       | する            |
-| 合成サンプル             | `data/sample/` (`pnpm demo` が生成)                                                                | `main`       | する            |
-| スナップショット         | `data/snapshots/<id>/<dataset>.json` + `manifest.json`                                             | `data/audit` | しない          |
-| コンプライアンスレポート | `data/reports/compliance/<snapshot id>.json`                                                       | `data/audit` | しない          |
-| 週次・月次レポート       | `data/reports/{weekly,monthly}/`                                                                   | `data/audit` | しない          |
-| ダッシュボード JSON      | `data/dashboard.json`                                                                              | `data/audit` | しない          |
-| 詳細データ (個人単位)    | `data/detail/{index,members,api-keys,org-groups}.json`, `activity-<yyyy-mm>.json`                  | `data/audit` | しない          |
-| 実効設定 (許可リスト)    | `data/detail/config.json` (シークレット・URL・メール・パスを含まない。`pnpm build:detail` が生成)  | `data/audit` | しない          |
-| 月次コスト公開データ     | `data/detail/monthly/{index,<id>}.json` (個人単位データなし。`report monthly` が生成)              | `data/audit` | しない          |
-| コレクタ状態             | `data/state.json` (カーソル、投影状態、通知記録)                                                   | `data/audit` | しない          |
-| アーカイブ               | `data/archive/<year>/<id>.json.gz`                                                                 | `data/audit` | しない          |
-| アーカイブ在庫           | `data/detail/archive.json` (年別の件数・圧縮サイズ・最古/最新 ID のみ。`pnpm build:detail` が生成) | `data/audit` | しない          |
+| データ                   | パス                                                                                                                                              | ブランチ     | main にコミット |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | --------------- |
+| ソースコード             | `packages/`                                                                                                                                       | `main`       | する            |
+| 合成サンプル             | `data/sample/` (`pnpm demo` が生成)                                                                                                               | `main`       | する            |
+| スナップショット         | `data/snapshots/<id>/<dataset>.json` + `manifest.json`                                                                                            | `data/audit` | しない          |
+| コンプライアンスレポート | `data/reports/compliance/<snapshot id>.json`                                                                                                      | `data/audit` | しない          |
+| 週次・月次レポート       | `data/reports/{weekly,monthly}/`                                                                                                                  | `data/audit` | しない          |
+| ダッシュボード JSON      | `data/dashboard.json`                                                                                                                             | `data/audit` | しない          |
+| 詳細データ (個人単位)    | `data/detail/{index,members,api-keys,org-groups}.json`, `activity-<yyyy-mm>.json`                                                                 | `data/audit` | しない          |
+| 実効設定 (許可リスト)    | `data/detail/config.json` (シークレット・URL・メール・パスを含まない。`pnpm build:detail` が生成)                                                 | `data/audit` | しない          |
+| 月次コスト公開データ     | `data/detail/monthly/{index,<id>}.json` (個人単位データなし。`report monthly` が生成)                                                             | `data/audit` | しない          |
+| コレクタ状態             | `data/state.json` (カーソル、投影状態、通知記録と送信履歴)                                                                                        | `data/audit` | しない          |
+| アーカイブ               | `data/archive/<year>/<id>.json.gz`                                                                                                                | `data/audit` | しない          |
+| アラート履歴             | `data/detail/alerts.json` (ID・送信時刻・重大度・チャンネル種別・ルール ID・伏せ字処理済みタイトル・確認者ラベルのみ。`pnpm build:detail` が生成) | `data/audit` | しない          |
+| アラート確認応答         | `data/alerts/ack.json` (`pnpm alerts ack` / `Acknowledge Alert` ワークフローが書き込む。Pages には出さない)                                       | `data/audit` | しない          |
+| アーカイブ在庫           | `data/detail/archive.json` (年別の件数・圧縮サイズ・最古/最新 ID のみ。`pnpm build:detail` が生成)                                                | `data/audit` | しない          |
 
 `data/audit` への読み書きは `.github/scripts/data-branch.sh` (`restore` / `save`) に集約する。`save` は直前の `restore` を必須とし、アーカイブによる削除も反映する。サンプルと `.gitkeep` は保存しない。書き込むワークフローは同じ `concurrency` グループ (`audit-data`) で直列化する。
 
@@ -380,6 +382,8 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 
 アーカイブ在庫 (F-013) は `detail/archive.json` (`ARCHIVE_VIEW_SCHEMA_VERSION = 1`、`contracts/archive-view.ts`、マニフェストの `kind: archive`、件数 = アーカイブ済みスナップショット数) で、純粋な集計 `core/application/presenters/archive-view.ts` の `summarizeArchiveEntries()` (入力順に依存せず、同じ ID は 1 件として数える。B3 #38 の容量計測でも再利用する) が年別の件数・圧縮サイズ・最古/最新のスナップショット ID と合計を出し、`buildArchiveView()` が保持設定 `retention.snapshotDays` を添える。含められるのはスナップショット ID (形式を検証)・年・件数・バイト数だけで、ファイル名・パス・内容は格納できず、`<id>.json.gz` 形式でないエントリは無視して件数だけを数える。コレクタは `ArchiveListing` ポート (`list` / `size`、`FileStore` が実装) 越しに `archive/<year>/*` を列挙し (`adapters/storage/archive-inventory.ts`)、`detail.ts` が zod 検証して書き込む。列挙に失敗した場合はマニフェストを `unavailable` (固定の理由) にする。`checkDetailBundle()` は合計と年別行の整合も検査する。`pnpm demo` は決定的な合成アーカイブ (2023〜2025 年、84 件) を使う。実アーカイブでの検証は B3 (#38)。
 
+アラート履歴 (F-008) は `detail/alerts.json` (`ALERTS_VIEW_SCHEMA_VERSION = 1`、`contracts/alerts-view.ts`、マニフェストの `kind: alerts`、件数 = 一覧のアラート数) で、送信記録と確認応答を純粋なプレゼンタ `core/application/presenters/alerts-view.ts` の `buildAlertsView()` が結合する (新しい順、最大 200 件)。送信記録は `state.json` の `notifications.history` (`notify` と `report --notify` が追記する。キー・送信時刻・重大度・配信できたチャンネル ID・タイトル。`STATE_SCHEMA_VERSION` は 2 のまま、省略可能な追加フィールドなので旧 state は `parseState()` でリセットされず、記録単位で検証する) と、履歴が無い旧来の `lastSent` エントリ (重大度 `unknown`・チャンネル「記録なし」) から作る。アラート ID は `al_` + キーと送信時刻の安定ハッシュ 12 桁 hex (`alertId()`)。確認応答は `data/audit` ブランチの `alerts/ack.json` (`ACK_STORE_SCHEMA_VERSION = 1`、`state.json` には入れない。`parseState()` が未知の形を初期化するため) に `{alertId, at, by}` で保存し、読み込みは寛容 (欠落・破損・未知の版は空として扱う)、書き込みは `FileStore` のアトミックで決定的な書き込み。更新は `applyAck()` (純粋: 未知の ID は拒否、二重確認応答は最初の記録を保持) を使う `pnpm alerts ack <alert-id> [--by <label>]` と、`workflow_dispatch` の `Acknowledge Alert` ワークフロー (`.github/workflows/ack-alert.yml`: 入力は環境変数経由 + 厳格な正規表現で検証、`data-branch.sh restore` → `alerts ack` → `build:detail` → `save` で `data/audit` のみにコミット、`audit-data` 同時実行グループ、`contents: write` のみ。誰が確認応答できるかは「リポジトリへの書き込み権限」で決める、決定 D3)。静的 SPA は書き込めないので、ページは確認応答の状態を**表示するだけ**で、方法 (コマンドとワークフロー名) を案内する。公開ファイルに入るのは ID・時刻・重大度・チャンネル種別・ルール ID と状態・伏せ字処理済みタイトル・確認応答の時刻とラベルだけで、Webhook URL・宛先・SMTP・シークレット・パス・所見のメッセージは格納できない。タイトルと確認者ラベル (自由入力) は実効設定 (F-014) と同じ許可リスト方式の `looksSensitive` を通し、メールアドレス・URL・トークン・パスに見えるものは `[hidden]` にする (ラベルは最大 40 文字)。`checkDetailBundle()` (と `pnpm fork:verify`) は契約・件数・合計・確認応答フィールドの整合・ID の重複・文字列の漏えいを検査する。`pnpm demo` は合成の送信履歴 6 件 (4 チャンネル・重大度の混在) と 3 件の確認応答を作る (サンプルの他のファイルは変わらない)。
+
 実効設定 (F-014) は `detail/config.json` (`CONFIG_VIEW_SCHEMA_VERSION = 1`、`contracts/config-view.ts`、マニフェストの `kind: config`、エントリの `schemaVersion` はファイル自身の版) で、純粋なプレゼンタ `core/application/presenters/config-view.ts` の `buildConfigView()` が**許可リスト**から生成する (読み込んだ設定の丸ごとのダンプはしない)。ルール (有効/無効・由来・実効パラメータとその既定値・必要なデータセット)、カスタムルール、通知ポリシー (チャンネルは種別 `console`/`slack`/`discord`/`email` と `enabled` のみ)、データソースの有効/無効、保持期間、`maskPii` を含む。API キー・Webhook URL・SMTP ホスト/認証情報・宛先メール・パスを格納できるフィールドは契約に無く、ルール名・カスタムルールの設定・パラメータ値は `looksSensitive()` に該当すると `[hidden]` になり、ルールが宣言しないパラメータは捨てる。`checkDetailBundle()` (`fork:verify` 経由) は設定ファイル内の URL・`@`・キー/トークン形状・絶対パスを拒否する。コレクタは `collector/src/main/config-view.ts` が許可フィールドだけをプレゼンタへ渡し (`Container.customRules` を保持)、`detail.ts` が zod 検証して書き込む。収集データに依存しないため、全データセットが未収集でも出力される。`pnpm demo` のサンプル設定は例示用 (無効ルール・上書きパラメータ・カスタムルール・通知ポリシー) で、サンプルの他ファイルには適用しない。
 
 月次コストレポートの公開データ (F-009) は `detail/monthly/index.json` (月の一覧、新しい順) と `detail/monthly/<id>.json` (`MONTHLY_REPORT_SCHEMA_VERSION = 1`、`contracts/monthly-report.ts`) で、コレクタの月次レポート (`ReportDocument`) から純粋なプレゼンタ (`core/application/presenters/monthly-report-view.ts`) が小さな公開スキーマへ写像する (レポート文書そのものは契約に含めない)。組織の総額は未グルーピングの値で、グループ別の行は所属の重複により合計が総額を超え得るため合算しない。個人単位データは含まないがコストは機密のため、`detail/` 配下に置いて同じ公開条件に従う。`report monthly` が `collector/src/main/monthly-report.ts` で書き込み (zod 検証、インデックスは読み込み・マージ・書き込み)、`checkDetailBundle()` が `detail/monthly/` も検査する。
@@ -403,6 +407,7 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 | 月次コスト       | `#/reports/monthly` / `#/reports/monthly/<id>` (`<id>` = `monthly-yyyy-mm`): `detail/monthly/index.json` から月を選び、その月の `detail/monthly/<id>.json` だけを取得する。組織の総額 (未グルーピング)、RBAC グループ別チャージバック表 (金額と総額比)、モデル別・プロダクト別。グループの所属重複で合計が総額を超え得る旨の注記 (CHANGE-PLAN §10 V7) を常に表示し、超過時は強調する。グループ金額は合算しない。検索。未公開 / 未収集 (理由つき) / エラー / 空 / 該当なし / 不明な月の各状態を表示                                        |
 | 実効設定         | `#/config`: `detail/config.json`。ルール一覧 (有効 / 無効をアイコン + ラベル + 色、由来、必要データセット、状態フィルタ)、ルールパラメータ (実効値と既定値、上書き / 既定 / 無効)、カスタムルール、通知ポリシー (チャンネルは種別と有効 / 無効のみ)、データソースの有効 / 無効と収集設定、その他 (保持期間、`maskPii`)。全セクションを検索で絞り込み。読み取り専用。未公開 / 未収集 (理由つき) / エラー / 空 / 該当なしの各状態を表示                                                                                                     |
 | アーカイブ       | `#/archive`: `detail/archive.json`。合計 (件数・圧縮サイズ・年数・最古/最新・保持設定) と年別の表 (件数・圧縮サイズ・割合・最古/最新)。状態 (アーカイブ済み / まだなし / 認識できないファイルあり) はアイコン + ラベル + 色。年で検索。未公開 / 未収集 (理由つき) / エラー / 空 (アーカイブなし) / 該当なしの各状態を表示                                                                                                                                                                                                                 |
+| アラート         | `#/alerts`: `detail/alerts.json`。合計 (送信数・確認済み・未確認) と履歴表 (送信時刻・重大度・ルール ID・チャンネル種別・タイトルと ID・確認状態)。確認状態はアイコン + ラベル + 色 (確認済み / 未確認、確認済みは確認者ラベルと時刻つき)。検索と確認状態フィルタ (件数つき)。確認方法 (コマンド `pnpm alerts ack <alert-id> [--by <label>]` と `Acknowledge Alert` ワークフロー) を案内する (SPA は読み取り専用)。未公開 / 未収集 (理由つき) / エラー / 空 (「No alerts sent」) / 一致なしの各状態。                                     |
 | 組織・グループ   | `#/orgs` (一覧) / `#/orgs/<id>` / `#/groups/<id>`: `detail/org-groups.json` (組織ページは `detail/members.json` も参照)。組織ごとの設定乖離 (CF-xxx、重大度・状態はアイコン + ラベル + 色) とメンバー (`organizationId` で結合)、グループごとの種別・メンバー数・当月支出 (グループは重複するため合算しない)。証拠 ID が組織に一致しない乖離 (`organizationId: null`) は「Unattributed」に集約する。グループは `memberCount` のみ (メンバー一覧は契約に無く結合しない)。未公開 / 未収集 / エラー / 空 / 該当なし / 不明 ID の各状態を表示 |
 | Activity (概要)  | 件数上位の type、監視ルールに一致したイベント                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Data coverage    | データセットごとの取得状況・件数・取得元・理由                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -423,14 +428,15 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 
 ## 10. 通知
 
-| 項目     | 仕様                                                                                                       |
-| -------- | ---------------------------------------------------------------------------------------------------------- |
-| チャネル | console (常時)、Slack Incoming Webhook、Discord Webhook、SMTP (nodemailer)。設定されたものだけ登録         |
-| 対象     | 最新レポートの結果のうち `notifications.statuses` (既定 fail, warning) かつ `minSeverity` (既定 high) 以上 |
-| 重複抑止 | 同じ結果集合は `cooldownMinutes` (既定 360 分) 内に再送しない                                              |
-| 収集失敗 | ワークフローの収集ステップが失敗したら `notify --collect-status failure` で別途通知                        |
-| レポート | `report <id> --notify` で文書の要約を同じチャネルに送る                                                    |
-| 書式     | タイトルにスコア (評価済みルール数付き)、本文に重大度順の結果一覧、ダッシュボード URL (`DASHBOARD_URL`)    |
+| 項目     | 仕様                                                                                                                                             |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| チャネル | console (常時)、Slack Incoming Webhook、Discord Webhook、SMTP (nodemailer)。設定されたものだけ登録                                               |
+| 対象     | 最新レポートの結果のうち `notifications.statuses` (既定 fail, warning) かつ `minSeverity` (既定 high) 以上                                       |
+| 重複抑止 | 同じ結果集合は `cooldownMinutes` (既定 360 分) 内に再送しない                                                                                    |
+| 収集失敗 | ワークフローの収集ステップが失敗したら `notify --collect-status failure` で別途通知                                                              |
+| レポート | `report <id> --notify` で文書の要約を同じチャネルに送る                                                                                          |
+| 履歴     | 送信ごとに `state.json` の `notifications.history` へ記録 (最大 200 件)。ダッシュボードの `#/alerts` (§9) が表示し、確認応答は `alerts/ack.json` |
+| 書式     | タイトルにスコア (評価済みルール数付き)、本文に重大度順の結果一覧、ダッシュボード URL (`DASHBOARD_URL`)                                          |
 
 ---
 

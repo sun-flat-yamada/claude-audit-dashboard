@@ -1,3 +1,5 @@
+import type { DetailAlerts } from '../../contracts/alerts-view.js';
+import { ALERTS_VIEW_SCHEMA_VERSION, DETAIL_ALERTS_PATH } from '../../contracts/alerts-view.js';
 import type { DetailArchive } from '../../contracts/archive-view.js';
 import { ARCHIVE_VIEW_SCHEMA_VERSION, DETAIL_ARCHIVE_PATH } from '../../contracts/archive-view.js';
 import type { DetailConfig } from '../../contracts/config-view.js';
@@ -22,6 +24,7 @@ import type { ComplianceReport } from '../../domain/compliance/types.js';
 import { withDefaults, type DatasetMap, type DatasetName } from '../../domain/model/dataset.js';
 import type { AuditSnapshot } from '../../domain/model/snapshot.js';
 import { identityMasker, type IdentityMasker } from '../../domain/util/mask.js';
+import { buildAlertsView, type AlertsViewInput } from './alerts-view.js';
 import { buildArchiveView, type ArchiveEntry } from './archive-view.js';
 import { buildConfigView, type ConfigViewInput } from './config-view.js';
 import { buildDetailActivity } from './detail-activity.js';
@@ -57,13 +60,24 @@ export interface DetailInput {
    * listed. Omitted when the caller has no archive to report on.
    */
   archive?: { snapshotDays: number; entries: readonly ArchiveEntry[] | null } | undefined;
+  /**
+   * The send records and acknowledgements (I/O stays with the caller); `null` means they could
+   * not be read. Omitted when the caller has no alert history to report on.
+   */
+  alerts?: Omit<AlertsViewInput, 'now'> | null | undefined;
 }
 
 export interface DetailFile {
   path: string;
   /** Plain object, parsed by its schema at the single write site. */
   content:
-    DetailMembers | DetailApiKeys | DetailActivity | DetailOrgGroups | DetailConfig | DetailArchive;
+    | DetailMembers
+    | DetailApiKeys
+    | DetailActivity
+    | DetailOrgGroups
+    | DetailConfig
+    | DetailArchive
+    | DetailAlerts;
 }
 
 export interface DetailBundle {
@@ -247,6 +261,38 @@ function archivePart(c: Ctx): Part {
   };
 }
 
+function alertsPart(c: Ctx): Part {
+  if (c.alerts === undefined) return { files: [], entries: [] };
+  if (c.alerts === null)
+    return {
+      files: [],
+      entries: [
+        {
+          kind: 'alerts',
+          path: DETAIL_ALERTS_PATH,
+          schemaVersion: ALERTS_VIEW_SCHEMA_VERSION,
+          status: 'unavailable',
+          reason: 'the alert history could not be read',
+          count: null,
+          month: null,
+        },
+      ],
+    };
+  const content = buildAlertsView({ ...c.alerts, now: c.now });
+  return {
+    files: [{ path: DETAIL_ALERTS_PATH, content }],
+    entries: [
+      available(
+        'alerts',
+        DETAIL_ALERTS_PATH,
+        content.alerts.length,
+        null,
+        ALERTS_VIEW_SCHEMA_VERSION,
+      ),
+    ],
+  };
+}
+
 /** Builds the manifest and the entity files; pure and deterministic for the same input. */
 export function buildDetailView(input: DetailInput): DetailBundle {
   const ctx: Ctx = {
@@ -261,6 +307,7 @@ export function buildDetailView(input: DetailInput): DetailBundle {
     orgGroupsPart(ctx),
     configPart(ctx),
     archivePart(ctx),
+    alertsPart(ctx),
   ];
   return {
     manifest: {

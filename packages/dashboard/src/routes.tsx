@@ -3,6 +3,7 @@ import type { DashboardView } from '@claude-audit/core/contracts';
 import type { NavItem } from './components/NavBar';
 import { matchPath } from './lib/router';
 import { Activity } from './pages/Activity';
+import { Alerts } from './pages/Alerts';
 import { Archive } from './pages/Archive';
 import { Compliance } from './pages/Compliance';
 import { Config } from './pages/Config';
@@ -89,6 +90,13 @@ export const ROUTES: RouteDef[] = [
     label: 'Archive',
     nav: true,
     render: () => <Archive />,
+  },
+  {
+    path: '/alerts',
+    pattern: '/alerts',
+    label: 'Alerts',
+    nav: true,
+    render: () => <Alerts />,
   },
   {
     path: '/orgs',

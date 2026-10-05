@@ -98,6 +98,18 @@ describe('stage', () => {
       expect(readFileSync(staged('archive.json'), 'utf-8')).toBe('SAMPLE-ARCHIVE');
     });
 
+    it('stages the alert history with the detail directory (same publication rule)', () => {
+      stage({ env: { DASHBOARD_DATA_SOURCE: 'sample' }, pkgRoot, log: quiet });
+      expect(readFileSync(staged('alerts.json'), 'utf-8')).toBe('SAMPLE-ALERTS');
+    });
+
+    it('never stages the acknowledgement store (alerts/ack.json is not a detail file)', () => {
+      write('data/alerts/ack.json', 'LIVE-ACK');
+      stage({ env: { DASHBOARD_DATA_SOURCE: 'live' }, pkgRoot, log: quiet });
+      expect(existsSync(join(pkgRoot, 'public', 'data', 'alerts'))).toBe(false);
+      expect(existsSync(join(pkgRoot, 'public', 'data', 'detail', 'ack.json'))).toBe(false);
+    });
+
     it('stages the monthly cost files with the detail directory (same publication rule)', () => {
       stage({ env: { DASHBOARD_DATA_SOURCE: 'sample' }, pkgRoot, log: quiet });
       expect(readFileSync(staged('monthly/index.json'), 'utf-8')).toBe('SAMPLE-MONTHLY');
@@ -114,6 +126,7 @@ describe('stage', () => {
       write('data/sample/detail/monthly/index.json', 'SAMPLE-MONTHLY');
       write('data/sample/detail/config.json', 'SAMPLE-CONFIG');
       write('data/sample/detail/archive.json', 'SAMPLE-ARCHIVE');
+      write('data/sample/detail/alerts.json', 'SAMPLE-ALERTS');
     });
 
     it.each([
