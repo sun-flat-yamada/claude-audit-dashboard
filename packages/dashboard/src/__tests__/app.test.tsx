@@ -23,7 +23,7 @@ const FIXTURE = raw(
   }),
 );
 const DETAIL = import.meta.glob<string>(
-  '../../../../data/sample/detail/{index,members,api-keys,org-groups,config,archive,alerts,activity-*}.json',
+  '../../../../data/sample/detail/{index,members,api-keys,org-groups,config,archive,alerts,usage-matrix,activity-*}.json',
   {
     eager: true,
     query: '?raw',
@@ -246,6 +246,27 @@ describe('hash routing', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Archive' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Archive' })).toHaveAttribute('aria-current', 'page');
     expect(await screen.findByRole('table', { name: 'Archive by year' })).toBeInTheDocument();
+  });
+
+  it('opens the model and group spend heatmap by deep link', async () => {
+    const byName = (suffix: string) =>
+      Object.entries(DETAIL).find(([name]) => name.endsWith(suffix))?.[1] ?? '';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: RequestInfo | URL) => {
+        const path = String(url);
+        if (path.endsWith('/usage-matrix.json')) return new Response(byName('/usage-matrix.json'));
+        if (path.endsWith('/detail/index.json')) return new Response(byName('/index.json'));
+        return new Response(SAMPLE ?? '');
+      }),
+    );
+    window.location.hash = '#/models';
+    render(<App />);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Models' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Models' })).toHaveAttribute('aria-current', 'page');
+    expect(
+      await screen.findByRole('grid', { name: 'Model by group spend heatmap' }),
+    ).toBeInTheDocument();
   });
 
   it('opens the alert history by deep link', async () => {

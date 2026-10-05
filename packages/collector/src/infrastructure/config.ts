@@ -29,6 +29,13 @@ export const appConfigSchema = z.object({
       memberActivity: z
         .object({ lookbackDays: z.number().int().min(1).max(366).default(90) })
         .prefault({}),
+      usageMatrix: z
+        .object({
+          /** Opt-in model x RBAC group cost collection (F-010); not a snapshot dataset. */
+          enabled: z.boolean().default(false),
+          lookbackDays: z.number().int().min(1).max(366).default(90),
+        })
+        .prefault({}),
       groups: z.object({ maxMemberRequests: z.number().int().min(0).default(200) }).prefault({}),
       activities: z
         .object({

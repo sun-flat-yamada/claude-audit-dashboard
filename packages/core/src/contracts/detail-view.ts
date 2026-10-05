@@ -34,6 +34,7 @@ export const DETAIL_KINDS = [
   'config',
   'archive',
   'alerts',
+  'usage-matrix',
 ] as const;
 export type DetailKind = (typeof DETAIL_KINDS)[number];
 

@@ -3,6 +3,7 @@ import type {
   CollectResult,
   CostRow,
   DateRange,
+  MatrixCostRow,
   MemberActivity,
   UsageDimension,
   UsageRow,
@@ -87,6 +88,13 @@ const keyOf = (row: Record<string, unknown>, dimension: UsageDimension): string 
   return typeof value === 'string' ? value : null;
 };
 
+const fieldsOf = (dimension: UsageDimension): string[] => {
+  const field = GROUP_FIELD[dimension];
+  return field ? [field] : [];
+};
+
+const stringOrNull = (value: unknown): string | null => (typeof value === 'string' ? value : null);
+
 const clampStart = (date: Date): Date => laterOf(date, ANALYTICS_EPOCH);
 
 const PATHS = {
@@ -154,9 +162,8 @@ export class AnalyticsApi {
     result: T,
     range: DateRange,
     now: Date,
-    dimension: UsageDimension,
+    fields: readonly string[],
   ) {
-    const field = GROUP_FIELD[dimension];
     let asOf: string | undefined;
     const buckets = await collectTokenPages(async (page) => {
       const query: Query = {
@@ -164,7 +171,7 @@ export class AnalyticsApi {
         ending_at: earlierOf(range.end, now).toISOString(),
         bucket_width: '1d',
         limit: 31,
-        group_by: field ? [field] : undefined,
+        group_by: fields.length > 0 ? fields : undefined,
         page,
       };
       const body = parseResponse(bucketPage(result), await this.http.getJson(path, query), path);
@@ -174,7 +181,7 @@ export class AnalyticsApi {
     const rows = buckets.flatMap((b) =>
       b.results.map((r) => ({
         date: b.starting_at.slice(0, 10),
-        key: keyOf(r as Record<string, unknown>, dimension),
+        record: r as Record<string, unknown>,
         raw: r as z.output<T>,
       })),
     );
@@ -189,12 +196,12 @@ export class AnalyticsApi {
           usageResultSchema,
           range,
           now,
-          dimension,
+          fieldsOf(dimension),
         );
-        const items: UsageRow[] = rows.map(({ date, key, raw }) => ({
+        const items: UsageRow[] = rows.map(({ date, record, raw }) => ({
           date,
           dimension,
-          key,
+          key: keyOf(record, dimension),
           uncachedInputTokens: raw.uncached_input_tokens,
           cacheReadInputTokens: raw.cache_read_input_tokens,
           cacheCreationInputTokens:
@@ -218,12 +225,12 @@ export class AnalyticsApi {
           costResultSchema,
           range,
           now,
-          dimension,
+          fieldsOf(dimension),
         );
-        const items: CostRow[] = rows.map(({ date, key, raw }) => ({
+        const items: CostRow[] = rows.map(({ date, record, raw }) => ({
           date,
           dimension,
-          key,
+          key: keyOf(record, dimension),
           amount: minorToMajor(raw.amount),
           listAmount: raw.list_amount ? minorToMajor(raw.list_amount) : null,
           currency: raw.currency,
@@ -232,6 +239,35 @@ export class AnalyticsApi {
       }),
     );
     return collate(parts, range);
+  }
+
+  /**
+   * Opt-in model x RBAC group cost (F-010): the pairwise `group_by[]=model&group_by[]=rbac_group_id`
+   * request (not confirmed against a real tenant, see docs/API-MAPPING.md) plus the ungrouped
+   * per-model request that gives the additive model mix. A rejected request throws, and the caller
+   * records it as unavailable.
+   */
+  async costMatrix(
+    range: DateRange,
+    now: Date,
+  ): Promise<CollectResult<{ pairs: MatrixCostRow[]; byModel: MatrixCostRow[] }>> {
+    const load = async (fields: readonly string[]) => {
+      const { rows, asOf } = await this.buckets(PATHS.cost, costResultSchema, range, now, fields);
+      const items: MatrixCostRow[] = rows.map(({ date, record, raw }) => ({
+        date,
+        model: stringOrNull(record.model),
+        group: stringOrNull(record.rbac_group_id),
+        amount: minorToMajor(raw.amount),
+        currency: raw.currency,
+      }));
+      return { items, asOf };
+    };
+    const [pairs, byModel] = await Promise.all([load(['model', 'rbac_group_id']), load(['model'])]);
+    return {
+      items: { pairs: pairs.items, byModel: byModel.items },
+      asOf: [pairs.asOf, byModel.asOf].filter((m): m is string => m !== undefined).sort()[0],
+      window: { from: range.start.toISOString(), to: range.end.toISOString() },
+    };
   }
 }
 

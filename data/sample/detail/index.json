@@ -81,6 +81,15 @@
       "reason": null,
       "schemaVersion": 1,
       "status": "ok"
+    },
+    {
+      "count": 45,
+      "kind": "usage-matrix",
+      "month": null,
+      "path": "detail/usage-matrix.json",
+      "reason": null,
+      "schemaVersion": 1,
+      "status": "ok"
     }
   ],
   "generatedAt": "2026-09-29T12:00:00.000Z",

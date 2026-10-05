@@ -42,6 +42,7 @@ import {
 import { disabledDatasets, loadConfig, type AppConfig } from '../infrastructure/config.js';
 import { readEnvironment, type Environment } from '../infrastructure/env.js';
 import { consoleLogger, systemClock } from '../infrastructure/runtime.js';
+import type { MatrixSource } from './usage-matrix.js';
 
 /** Everything a command needs, wired once. The only place that knows concrete classes. */
 export interface Container {
@@ -58,6 +59,8 @@ export interface Container {
   state: FsStateRepository;
   artifacts: ArtifactWriter;
   collectors: DatasetCollector[];
+  /** Optional model x group collection (F-010); null when off or without an Analytics key. */
+  matrix: MatrixSource | null;
   projections: readonly Projection[];
   rules: Rule[];
   analyzers: readonly Analyzer[];
@@ -77,6 +80,8 @@ export interface ContainerOptions {
   captureRawDir?: string | undefined;
   /** Replaces the Anthropic collectors (demo source, tests). */
   collectors?: DatasetCollector[] | undefined;
+  /** Replaces the live matrix source (tests, demo). */
+  matrix?: MatrixSource | null | undefined;
   source?: 'live' | 'demo' | undefined;
 }
 
@@ -97,20 +102,24 @@ function anthropicApis(
   };
 }
 
-function liveCollectors(
+function liveSources(
   env: Environment,
   config: AppConfig,
   fetchImpl: typeof fetch | undefined,
   capture: RawCapture | undefined,
-): DatasetCollector[] {
-  const { activities, members, memberActivity, groups } = config.sources;
-  return createAnthropicCollectors(anthropicApis(env, fetchImpl, capture), {
-    disabled: disabledDatasets(config),
-    membersProvider: members.provider,
-    memberActivityLookbackDays: memberActivity.lookbackDays,
-    maxGroupMemberRequests: groups.maxMemberRequests,
-    activities,
-  });
+): { collectors: DatasetCollector[]; matrix: MatrixSource | null } {
+  const { activities, members, memberActivity, groups, usageMatrix } = config.sources;
+  const apis = anthropicApis(env, fetchImpl, capture);
+  return {
+    collectors: createAnthropicCollectors(apis, {
+      disabled: disabledDatasets(config),
+      membersProvider: members.provider,
+      memberActivityLookbackDays: memberActivity.lookbackDays,
+      maxGroupMemberRequests: groups.maxMemberRequests,
+      activities,
+    }),
+    matrix: usageMatrix.enabled ? apis.analytics : null,
+  };
 }
 
 /** Opt-in: `--capture-raw <dir>` or `CAPTURE_RAW_DIR`. Real tenant data, so it is validated and announced. */
@@ -141,6 +150,27 @@ function notifiers(
   ];
 }
 
+/** Injected collectors / matrix source (demo, tests) win; otherwise the live gateways. */
+function resolveSources(
+  options: ContainerOptions,
+  env: Environment,
+  config: AppConfig,
+  logger: Logger,
+): Pick<Container, 'collectors' | 'matrix'> {
+  const live = options.collectors
+    ? undefined
+    : liveSources(
+        env,
+        config,
+        options.fetchImpl,
+        rawCapture(env, options.captureRawDir ?? env.captureRawDir, logger),
+      );
+  return {
+    collectors: options.collectors ?? live?.collectors ?? [],
+    matrix: options.matrix === undefined ? (live?.matrix ?? null) : options.matrix,
+  };
+}
+
 export async function createContainer(options: ContainerOptions = {}): Promise<Container> {
   const env = readEnvironment(options.env, options.cwd);
   const { config, customRules } = await loadConfig(env.configDir);
@@ -150,6 +180,7 @@ export async function createContainer(options: ContainerOptions = {}): Promise<C
   if (unknown.length)
     logger.warn(`Activity watches reference unknown activity types: ${unknown.join(', ')}`);
   const store = new FileStore(options.dataDir ?? env.dataDir);
+  const sources = resolveSources(options, env, config, logger);
   return {
     env,
     config,
@@ -162,14 +193,7 @@ export async function createContainer(options: ContainerOptions = {}): Promise<C
     reports: new FsComplianceReportRepository(store),
     state: new FsStateRepository(store),
     artifacts: fileArtifacts(store),
-    collectors:
-      options.collectors ??
-      liveCollectors(
-        env,
-        config,
-        options.fetchImpl,
-        rawCapture(env, options.captureRawDir ?? env.captureRawDir, logger),
-      ),
+    ...sources,
     projections: BUILTIN_PROJECTIONS,
     rules: catalog.rules,
     analyzers: BUILTIN_ANALYZERS,

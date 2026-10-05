@@ -4,6 +4,7 @@ import {
   type ArchiveEntry,
   type ConfigViewInput,
   type DetailThresholds,
+  type UsageMatrixInput,
 } from '@claude-audit/core';
 import {
   DETAIL_MANIFEST_PATH,
@@ -15,6 +16,7 @@ import {
   detailManifestSchema,
   detailMembersSchema,
   detailOrgGroupsSchema,
+  detailUsageMatrixSchema,
 } from '@claude-audit/core/contracts';
 import type { z } from 'zod';
 import { listArchiveEntries } from '../adapters/storage/archive-inventory.js';
@@ -22,6 +24,7 @@ import { stableStringify } from '../adapters/storage/file-store.js';
 import { readAlertsInput } from './alerts.js';
 import { configViewInput } from './config-view.js';
 import type { Container } from './container.js';
+import { readUsageMatrixInput } from './usage-matrix.js';
 
 const positiveInt = (value: unknown, fallback: number): number =>
   typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : fallback;
@@ -45,6 +48,7 @@ const schemaFor = (path: string): z.ZodType => {
   if (path.endsWith('/config.json')) return detailConfigSchema;
   if (path.endsWith('/archive.json')) return detailArchiveSchema;
   if (path.endsWith('/alerts.json')) return detailAlertsSchema;
+  if (path.endsWith('/usage-matrix.json')) return detailUsageMatrixSchema;
   return detailActivitySchema;
 };
 
@@ -52,15 +56,17 @@ const schemaFor = (path: string): z.ZodType => {
  * Writes `detail/*.json` (manifest + entity files, incl. the effective configuration, the
  * archive inventory and the alert history) from the latest stored data. Every file is validated against its contract
  * at this single write site. `archive` replaces the listing of the data directory (the demo
- * supplies a synthetic one). Returns path -> content.
+ * supplies a synthetic one), and `matrix` likewise replaces the stored matrix input. Returns path -> content.
  */
 export async function writeDetail(
   c: Container,
   config: Omit<ConfigViewInput, 'now'> = configViewInput(c),
   archive?: readonly ArchiveEntry[],
+  matrix?: UsageMatrixInput,
 ): Promise<Record<string, string>> {
   const entries = archive ?? (await listArchiveEntries(c.store).catch(() => null));
   const alerts = await readAlertsInput(c).catch(() => null);
+  const usageMatrix = matrix ?? (await readUsageMatrixInput(c).catch(() => null));
   const [snapshot, report] = await Promise.all([c.snapshots.latest(), c.reports.latest()]);
   const bundle = buildDetailView({
     now: c.clock.now(),
@@ -72,6 +78,7 @@ export async function writeDetail(
     config,
     archive: { snapshotDays: c.config.retention.snapshotDays, entries },
     alerts,
+    usageMatrix,
   });
   const out: Record<string, string> = {
     [DETAIL_MANIFEST_PATH]: stableStringify(detailManifestSchema.parse(bundle.manifest)),

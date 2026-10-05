@@ -7,12 +7,14 @@ import {
   DETAIL_ALERTS_PATH,
   DETAIL_ARCHIVE_PATH,
   DETAIL_CONFIG_PATH,
+  DETAIL_USAGE_MATRIX_PATH,
   MONTHLY_INDEX_PATH,
   checkDetailBundle,
   dashboardViewSchema,
   detailAlertsSchema,
   detailArchiveSchema,
   detailConfigSchema,
+  detailUsageMatrixSchema,
   monthlyReportIndexSchema,
 } from '@claude-audit/core/contracts';
 import { describe, expect, it } from 'vitest';
@@ -52,6 +54,16 @@ describe('public sample data (data/sample)', () => {
       expect(alerts.totals.acknowledged).toBeGreaterThanOrEqual(1);
       expect(alerts.totals.unacknowledged).toBeGreaterThanOrEqual(1);
       expect(new Set(alerts.alerts.flatMap((a) => a.channels)).size).toBeGreaterThanOrEqual(4);
+      const matrix = detailUsageMatrixSchema.parse(
+        JSON.parse(generated[DETAIL_USAGE_MATRIX_PATH] ?? '{}'),
+      );
+      expect(matrix.months).toEqual(['2026-06', '2026-07', '2026-08']);
+      expect(matrix.cells.some((c) => c.cost === 0)).toBe(true);
+      expect(matrix.cells.some((c) => c.group === '(none)')).toBe(true);
+      const opus = matrix.models.find((m) => m.key === 'claude-opus-5');
+      const opusCells = matrix.cells.filter((c) => c.model === 'claude-opus-5');
+      // Overlapping groups: the group cells of a model add up to more than its ungrouped total.
+      expect(opusCells.reduce((n, c) => n + c.cost, 0)).toBeGreaterThan(opus?.total ?? 0);
       const index = monthlyReportIndexSchema.parse(
         JSON.parse(generated[MONTHLY_INDEX_PATH] ?? '{}'),
       );

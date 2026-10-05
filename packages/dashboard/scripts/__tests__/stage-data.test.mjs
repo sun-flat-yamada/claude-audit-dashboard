@@ -103,6 +103,11 @@ describe('stage', () => {
       expect(readFileSync(staged('alerts.json'), 'utf-8')).toBe('SAMPLE-ALERTS');
     });
 
+    it('stages the model x group matrix with the detail directory (same publication rule)', () => {
+      stage({ env: { DASHBOARD_DATA_SOURCE: 'sample' }, pkgRoot, log: quiet });
+      expect(readFileSync(staged('usage-matrix.json'), 'utf-8')).toBe('SAMPLE-MATRIX');
+    });
+
     it('never stages the acknowledgement store (alerts/ack.json is not a detail file)', () => {
       write('data/alerts/ack.json', 'LIVE-ACK');
       stage({ env: { DASHBOARD_DATA_SOURCE: 'live' }, pkgRoot, log: quiet });
@@ -127,6 +132,7 @@ describe('stage', () => {
       write('data/sample/detail/config.json', 'SAMPLE-CONFIG');
       write('data/sample/detail/archive.json', 'SAMPLE-ARCHIVE');
       write('data/sample/detail/alerts.json', 'SAMPLE-ALERTS');
+      write('data/sample/detail/usage-matrix.json', 'SAMPLE-MATRIX');
     });
 
     it.each([
