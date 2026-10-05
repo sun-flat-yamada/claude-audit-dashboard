@@ -9,7 +9,7 @@ Generated: 2026-09-29T12:00:00.000Z
 | --- | --- |
 | Compliance score | 70/100 |
 | Score change | +0 |
-| Activities collected | 79 |
+| Activities collected | 271 |
 | Cost (7 days) | $1,455.33 |
 
 ## Open findings
@@ -36,12 +36,12 @@ Generated: 2026-09-29T12:00:00.000Z
 
 | Activity type | Events |
 | --- | --- |
+| claude_chat_created | 53 |
+| claude_file_uploaded | 53 |
+| sso_login_succeeded | 53 |
+| claude_project_created | 52 |
+| compliance_api_accessed | 33 |
 | sso_login_failed | 24 |
-| compliance_api_accessed | 12 |
-| claude_chat_created | 10 |
-| claude_file_uploaded | 10 |
-| claude_project_created | 10 |
-| sso_login_succeeded | 10 |
 | claude_user_role_updated | 1 |
 | org_ip_restriction_updated | 1 |
 | org_members_exported | 1 |

@@ -17,6 +17,25 @@ const STATUS: Record<string, { icon: string; color: string; label: string }> = {
   'key-unknown': { icon: '?', color: 'var(--status-neutral)', label: 'Use unknown' },
   'key-ok': { icon: '✓', color: 'var(--status-good)', label: 'OK' },
   'key-inactive': { icon: '–', color: 'var(--status-neutral)', label: 'Deactivated' },
+  'actor-user_actor': { icon: 'U', color: 'var(--status-good)', label: 'User' },
+  'actor-api_actor': { icon: 'K', color: 'var(--status-neutral)', label: 'API key' },
+  'actor-unauthenticated_user_actor': {
+    icon: '!',
+    color: 'var(--status-warning)',
+    label: 'Unauthenticated',
+  },
+  'actor-anthropic_actor': { icon: 'A', color: 'var(--status-neutral)', label: 'Anthropic' },
+  'actor-scim_directory_sync_actor': {
+    icon: 'S',
+    color: 'var(--status-neutral)',
+    label: 'Directory sync',
+  },
+  'actor-admin_api_key_actor': {
+    icon: 'K',
+    color: 'var(--status-neutral)',
+    label: 'Admin API key',
+  },
+  'actor-other': { icon: '?', color: 'var(--status-neutral)', label: 'Other' },
 };
 
 const SEVERITY: Record<string, string> = {

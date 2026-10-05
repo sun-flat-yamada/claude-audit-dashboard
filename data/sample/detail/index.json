@@ -20,6 +20,24 @@
       "status": "ok"
     },
     {
+      "count": 62,
+      "kind": "activity",
+      "month": "2026-07",
+      "path": "detail/activity-2026-07.json",
+      "reason": null,
+      "schemaVersion": 1,
+      "status": "ok"
+    },
+    {
+      "count": 130,
+      "kind": "activity",
+      "month": "2026-08",
+      "path": "detail/activity-2026-08.json",
+      "reason": null,
+      "schemaVersion": 1,
+      "status": "ok"
+    },
+    {
       "count": 79,
       "kind": "activity",
       "month": "2026-09",

@@ -9,7 +9,7 @@ Closes #63. Refs #37 (tracking). Plan source: `.devs/changes/2026-10-04_Dashboar
 
 > [!WARNING]
 > (1) The plan sketch mentioned deep-linkable filter state in the hash query and a count-by-day chart; this unit keeps filter state in component state (the router has no query support yet) and shows no chart, to stay within one PR. Both are listed as follow-ups in the walkthrough. (2) The date-range filter works on UTC calendar days inside the selected month, the same basis as the month files.
-> (3) The demo synthetic tenant gains July and August 2026 activity so paging and month switching are exercisable; `data/sample/` and the golden test are regenerated. The dashboard-level aggregates (`dashboard.json`) must stay byte-identical (checked via `git diff data/sample/dashboard.json`).
+> (3) The demo synthetic tenant gains July and August 2026 routine activity (benign types only, so no compliance result changes) and the activities collection window widens to 91 days; therefore the `dashboard.json` activity aggregate (`total`, `topTypes`, `window`) and the weekly report counts change. `data/sample/` and the golden test are regenerated.
 
 ## Proposed Changes
 
