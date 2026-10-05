@@ -1,0 +1,45 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/usage_report/messages",
+    "query": {
+      "bucket_width": ["1d"],
+      "group_by[]": ["workspace_id", "model"],
+      "limit": ["31"],
+      "page": ["page_demo_usage_2"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "ending_at": "2026-09-31T00:00:00Z",
+          "results": [
+            {
+              "api_key_id": null,
+              "cache_creation": {
+                "ephemeral_1h_input_tokens": 0,
+                "ephemeral_5m_input_tokens": 20000
+              },
+              "cache_read_input_tokens": 650000,
+              "context_window": null,
+              "inference_geo": null,
+              "model": "claude-demo-large",
+              "output_tokens": 260000,
+              "server_tool_use": {
+                "web_search_requests": 2
+              },
+              "service_tier": null,
+              "uncached_input_tokens": 980000,
+              "workspace_id": "wrkspc_01DemoExampleProd00001"
+            }
+          ],
+          "starting_at": "2026-09-30T00:00:00Z"
+        }
+      ],
+      "has_more": false,
+      "next_page": null
+    },
+    "status": 200
+  }
+}

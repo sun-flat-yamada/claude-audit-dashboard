@@ -126,3 +126,27 @@ describe('resolveCaptureDir', () => {
     expect(() => resolveCaptureDir(base, '../captures', 'false')).not.toThrow();
   });
 });
+
+describe('raw capture of the Console Admin API (optional sources)', () => {
+  const ADMIN_KEY = 'sk-ant-admin01-mock000000000000000000000000';
+
+  it('never stores the Console Admin key, headers or the key hint, even when echoed', async () => {
+    const fetchImpl = vi.fn(async (_url: unknown, init?: RequestInit) => {
+      expect(JSON.stringify(init?.headers)).toContain(ADMIN_KEY);
+      return json({ data: [{ id: 'apikey_1', note: `echo ${ADMIN_KEY}` }], has_more: false });
+    }) as unknown as typeof fetch;
+    const http = new HttpClient({
+      apiKey: ADMIN_KEY,
+      fetchImpl,
+      sleep: async () => {},
+      capture: new FileRawCapture(join(dir, 'raw')),
+    });
+    await http.getJson('/v1/organizations/api_keys', { limit: 1000 });
+    expect(await files()).toEqual(['0001_organizations-api-keys.json']);
+    const [text] = await contents();
+    expect(text).not.toContain(ADMIN_KEY);
+    expect(text).toContain('[redacted]');
+    expect(text?.toLowerCase()).not.toContain('x-api-key');
+    expect(text?.toLowerCase()).not.toContain('authorization');
+  });
+});

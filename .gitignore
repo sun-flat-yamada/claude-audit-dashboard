@@ -38,6 +38,9 @@ data/usage-matrix/
 data/raw/
 # Fixture-tenant output of `pnpm fixture` (synthetic, regenerated; read by DASHBOARD_DATA_SOURCE=fixtures)
 data/fixture/
+# Generated profiles with the optional sources on (`pnpm fixture --optional-sources`, `pnpm demo --profile optional-sources`)
+data/fixture-optional-sources/
+data/sample-optional-sources/
 data/state.json
 data/dashboard.json
 !data/.gitkeep

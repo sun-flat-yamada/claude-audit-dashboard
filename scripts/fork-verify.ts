@@ -60,6 +60,9 @@ const forbiddenPaths = [
   'data/detail',
   'data/alerts',
   'data/usage-matrix',
+  // Generated profiles of `pnpm demo --profile optional-sources` / `pnpm fixture --optional-sources`
+  'data/sample-optional-sources',
+  'data/fixture-optional-sources',
 ];
 
 const trackedFiles = listTrackedFiles();
@@ -133,26 +136,33 @@ checkDashboardTestSources();
 console.log('\n📋 Check 2: Sample data presence and validity');
 
 const sampleDir = join(ROOT, 'data', 'sample');
-const sampleFile = join(sampleDir, 'dashboard.json');
+/** Gitignored output of `pnpm demo --profile optional-sources` (B4); checked when present. */
+const profileDir = join(ROOT, 'data', 'sample-optional-sources');
 const EMAIL = /[A-Za-z0-9._%+*-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}/g;
 const SAFE_EMAIL_DOMAIN = /@(([A-Za-z0-9-]+\.)*example\.(com|org|net)|anthropic\.com)$/i;
 
-function checkSampleDashboard(): void {
-  if (!existsSync(sampleFile)) return fail('data/sample/dashboard.json is missing');
+const relative = (dir: string): string =>
+  dir
+    .slice(ROOT.length + 1)
+    .split('\\')
+    .join('/');
+
+function checkSampleDashboard(dir: string = sampleDir): void {
+  const name = `${relative(dir)}/dashboard.json`;
+  const file = join(dir, 'dashboard.json');
+  if (!existsSync(file)) return fail(`${name} is missing`);
   let data: unknown;
   try {
-    data = JSON.parse(readFileSync(sampleFile, 'utf-8'));
+    data = JSON.parse(readFileSync(file, 'utf-8'));
   } catch {
-    return fail('data/sample/dashboard.json is not valid JSON');
+    return fail(`${name} is not valid JSON`);
   }
   const parsed = dashboardViewSchema.safeParse(data);
   if (!parsed.success)
-    return fail(
-      `data/sample/dashboard.json does not match the dashboard contract: ${parsed.error.message}`,
-    );
+    return fail(`${name} does not match the dashboard contract: ${parsed.error.message}`);
   if (parsed.data.source !== 'demo')
-    return fail('data/sample/dashboard.json must be generated from the demo tenant (`pnpm demo`)');
-  pass('Sample dashboard data matches the published contract (demo source)');
+    return fail(`${name} must be generated from the demo tenant (\`pnpm demo\`)`);
+  pass(`${relative(dir)} dashboard data matches the published contract (demo source)`);
 }
 
 /** Relative paths (forward slashes) of every file below `dir`. */
@@ -164,9 +174,10 @@ function listFilesRecursive(dir: string, prefix = ''): string[] {
   );
 }
 
-function checkSampleDetail(): void {
-  const detailDir = join(sampleDir, 'detail');
-  if (!existsSync(detailDir)) return fail('data/sample/detail/ is missing (run `pnpm demo`)');
+function checkSampleDetail(dir: string = sampleDir): void {
+  const detailDir = join(dir, 'detail');
+  if (!existsSync(detailDir))
+    return fail(`${relative(dir)}/detail/ is missing (run \`pnpm demo\`)`);
   const files = Object.fromEntries(
     listFilesRecursive(detailDir).map((name) => [
       `detail/${name}`,
@@ -174,29 +185,36 @@ function checkSampleDetail(): void {
     ]),
   );
   const problems = checkDetailBundle(files, { requireDemo: true });
-  for (const problem of problems) fail(`data/sample/${problem}`);
+  for (const problem of problems) fail(`${relative(dir)}/${problem}`);
   if (problems.length === 0)
-    pass(`${Object.keys(files).length} sample detail files match the detail contract (masked)`);
+    pass(
+      `${Object.keys(files).length} ${relative(dir)} detail files match the detail contract (masked)`,
+    );
 }
 
-function checkSampleEmails(): void {
+function checkSampleEmails(dir: string = sampleDir): void {
   const before = errors;
-  for (const name of listFilesRecursive(sampleDir)) {
-    const content = readFileSync(join(sampleDir, name), 'utf-8');
+  for (const name of listFilesRecursive(dir)) {
+    const content = readFileSync(join(dir, name), 'utf-8');
     const real = [...content.matchAll(EMAIL)]
       .map((m) => m[0])
       .filter((e) => !SAFE_EMAIL_DOMAIN.test(e));
     if (real.length > 0)
       fail(
-        `data/sample/${name} contains non-example e-mail addresses: ${[...new Set(real)].slice(0, 3).join(', ')}`,
+        `${relative(dir)}/${name} contains non-example e-mail addresses: ${[...new Set(real)].slice(0, 3).join(', ')}`,
       );
   }
-  if (errors === before) pass('Sample data uses example.* e-mail domains only');
+  if (errors === before) pass(`${relative(dir)} uses example.* e-mail domains only`);
 }
 
 checkSampleDashboard();
 checkSampleDetail();
 if (existsSync(sampleDir)) checkSampleEmails();
+if (existsSync(profileDir)) {
+  checkSampleDashboard(profileDir);
+  checkSampleDetail(profileDir);
+  checkSampleEmails(profileDir);
+}
 
 // --- Check 3: Secret scanning ---
 console.log('\n🔒 Check 3: Secret scanning');
@@ -258,20 +276,19 @@ if (errors === errorsBeforeScan) {
 // --- Check 3b: tenant-shape fixtures (sanitized API responses) ---
 console.log('\n🧪 Check 3b: Tenant fixtures');
 
-const FIXTURE_DIR = join(
-  ROOT,
-  'packages/collector/src/adapters/anthropic/__tests__/fixtures/tenant',
-);
+const FIXTURES_ROOT = join(ROOT, 'packages/collector/src/adapters/anthropic/__tests__/fixtures');
+const FIXTURE_DIR = join(FIXTURES_ROOT, 'tenant');
+/** Official-shape captures of the optional APIs (B4): same synthetic-only rules as the tenant. */
+const OPTIONAL_FIXTURE_DIRS = [join(FIXTURES_ROOT, 'console'), join(FIXTURES_ROOT, 'claude-code')];
 const IPV4 = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
 
-function checkTenantFixtures(): void {
+function checkTenantFixtures(dir: string = FIXTURE_DIR): void {
   const before = errors;
-  const names = existsSync(FIXTURE_DIR)
-    ? readdirSync(FIXTURE_DIR).filter((n) => n.endsWith('.json'))
-    : [];
-  if (names.length === 0) return fail('Tenant fixtures are missing: fixtures/tenant/*.json');
+  const label = dir.slice(FIXTURES_ROOT.length + 1);
+  const names = existsSync(dir) ? readdirSync(dir).filter((n) => n.endsWith('.json')) : [];
+  if (names.length === 0) return fail(`Fixtures are missing: fixtures/${label}/*.json`);
   for (const name of names) {
-    const content = readFileSync(join(FIXTURE_DIR, name), 'utf-8');
+    const content = readFileSync(join(dir, name), 'utf-8');
     const emails = [...content.matchAll(EMAIL)]
       .map((m) => m[0])
       .filter((e) => !SAFE_EMAIL_DOMAIN.test(e));
@@ -291,10 +308,11 @@ function checkTenantFixtures(): void {
     }
   }
   if (errors === before)
-    pass(`${names.length} tenant fixtures use example.com and 192.0.2.0/24 only`);
+    pass(`${names.length} ${label} fixtures use example.com and 192.0.2.0/24 only`);
 }
 
 checkTenantFixtures();
+for (const dir of OPTIONAL_FIXTURE_DIRS) checkTenantFixtures(dir);
 
 // --- Check 4: .gitignore configuration ---
 console.log('\n📝 Check 4: .gitignore configuration');

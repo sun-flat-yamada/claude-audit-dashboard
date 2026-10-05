@@ -83,6 +83,8 @@ export interface ContainerOptions {
   captureRawDir?: string | undefined;
   /** Replaces the Anthropic collectors (demo source, tests). */
   collectors?: DatasetCollector[] | undefined;
+  /** Adjusts the loaded configuration (profiles and tests that enable optional sources). */
+  configPatch?: ((config: AppConfig) => AppConfig) | undefined;
   /** Replaces the live matrix source (tests, demo). */
   matrix?: MatrixSource | null | undefined;
   source?: 'live' | 'demo' | undefined;
@@ -196,7 +198,9 @@ function resolveSources(
 
 export async function createContainer(options: ContainerOptions = {}): Promise<Container> {
   const env = readEnvironment(options.env, options.cwd);
-  const { config, customRules } = await loadConfig(env.configDir);
+  const loaded = await loadConfig(env.configDir);
+  const { customRules } = loaded;
+  const config = options.configPatch ? options.configPatch(loaded.config) : loaded.config;
   const logger = options.logger ?? consoleLogger;
   const catalog = buildRuleCatalog(customRules);
   const unknown = unknownActivityTypes(catalog.activityWatches);

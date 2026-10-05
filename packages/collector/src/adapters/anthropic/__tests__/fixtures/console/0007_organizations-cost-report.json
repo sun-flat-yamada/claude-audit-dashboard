@@ -1,0 +1,38 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/cost_report",
+    "query": {
+      "bucket_width": ["1d"],
+      "group_by[]": ["workspace_id", "description"],
+      "limit": ["31"],
+      "page": ["page_demo_cost_2"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "ending_at": "2026-09-31T00:00:00Z",
+          "results": [
+            {
+              "amount": "3890.75",
+              "context_window": "0-200k",
+              "cost_type": "tokens",
+              "currency": "USD",
+              "description": "Claude Demo Large Usage - Output Tokens",
+              "model": "claude-demo-large",
+              "service_tier": "standard",
+              "token_type": "uncached_input_tokens",
+              "workspace_id": "wrkspc_01DemoExampleProd00001"
+            }
+          ],
+          "starting_at": "2026-09-30T00:00:00Z"
+        }
+      ],
+      "has_more": false,
+      "next_page": null
+    },
+    "status": 200
+  }
+}

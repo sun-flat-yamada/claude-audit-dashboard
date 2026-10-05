@@ -2,12 +2,14 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+  OPTIONAL_DATASET_NAMES,
   buildRuleCatalog,
   type ArchiveEntry,
   type ConfigViewInput,
   type CustomRules,
   type Logger,
 } from '@claude-audit/core';
+import { createDemoOptionalCollectors } from '../adapters/demo/demo-optional.js';
 import {
   DEMO_NOW,
   createDemoCollectors,
@@ -26,7 +28,17 @@ import { writeMonthlyView } from './monthly-report.js';
 import { writeFiles } from './write-files.js';
 import { check, collect, generateReport, writeDashboard } from './workflows.js';
 
+/**
+ * `default`: the committed public sample (`data/sample/`, optional sources off).
+ * `optional-sources`: the same tenant with the optional Console and Claude Code datasets on
+ * (B4); written to a separate, gitignored directory and checked by `fork:verify` when present.
+ */
+export type DemoProfile = 'default' | 'optional-sources';
+
+export const DEMO_PROFILES: readonly DemoProfile[] = ['default', 'optional-sources'];
+
 export interface DemoOptions {
+  profile?: DemoProfile | undefined;
   env?: NodeJS.ProcessEnv | undefined;
   cwd?: string | undefined;
   logger?: Logger | undefined;
@@ -96,7 +108,7 @@ export function demoArchiveEntries(): ArchiveEntry[] {
  * and a notification policy with two channels on. It is fixed (never read from the local config
  * or environment) and only illustrates the view, so the other sample files do not change.
  */
-function demoConfigInput(): Omit<ConfigViewInput, 'now'> {
+function demoConfigInput(profile: DemoProfile): Omit<ConfigViewInput, 'now'> {
   const config = appConfigSchema.parse({
     compliance: {
       disabledRules: ['DG-001'],
@@ -112,6 +124,7 @@ function demoConfigInput(): Omit<ConfigViewInput, 'now'> {
     disabledRules: compliance.disabledRules,
     ruleParams: compliance.params,
     disabledDatasets: sources.disabled,
+    enabledOptionalDatasets: profile === 'optional-sources' ? OPTIONAL_DATASET_NAMES : [],
     membersProvider: sources.members.provider,
     memberActivityLookbackDays: sources.memberActivity.lookbackDays,
     groupMemberRequestLimit: sources.groups.maxMemberRequests,
@@ -136,11 +149,17 @@ export async function writeDemoSample(
 ): Promise<Record<string, string>> {
   const workDir = await mkdtemp(join(tmpdir(), 'claude-audit-demo-'));
   try {
+    const profile = options.profile ?? 'default';
     const c = await createContainer({
-      ...options,
+      env: options.env,
+      cwd: options.cwd,
+      logger: options.logger,
       dataDir: workDir,
       clock: fixedClock(DEMO_NOW),
-      collectors: createDemoCollectors(),
+      collectors: [
+        ...createDemoCollectors(),
+        ...(profile === 'optional-sources' ? createDemoOptionalCollectors() : []),
+      ],
       source: 'demo',
     });
     await c.state.save(demoState(DEMO_NOW));
@@ -153,7 +172,7 @@ export async function writeDemoSample(
     const monthlyView = await writeDemoMonths(c);
     const detail = await writeDetail(
       c,
-      demoConfigInput(),
+      demoConfigInput(profile),
       demoArchiveEntries(),
       demoUsageMatrixInput(DEMO_NOW),
     );

@@ -15,7 +15,7 @@ import { ackAlert } from './alerts.js';
 import { deliver } from './deliver.js';
 import { writeDetail } from './detail.js';
 import { writeMonthlyView } from './monthly-report.js';
-import { writeDemoSample } from './demo.js';
+import { DEMO_PROFILES, writeDemoSample, type DemoProfile } from './demo.js';
 import { writeFixtureTenant } from './fixture.js';
 import { runSize } from './size.js';
 import { collectUsageMatrix } from './usage-matrix.js';
@@ -254,13 +254,25 @@ const restoreCommand: Command = {
   },
 };
 
+const isDemoProfile = (value: string): value is DemoProfile =>
+  (DEMO_PROFILES as readonly string[]).includes(value);
+
 const demoCommand: Command = {
   name: 'demo',
-  usage: 'demo [--out data/sample]',
+  usage: 'demo [--out data/sample] [--profile default|optional-sources]',
   description: 'Run everything on the synthetic tenant and refresh the public sample data',
   async run(c, args) {
-    const out = resolve(c.env.baseDir, option(args, '--out') ?? 'data/sample');
-    const files = await writeDemoSample(out, { logger: c.logger, cwd: c.env.baseDir, env: {} });
+    const profile = option(args, '--profile') ?? 'default';
+    if (!isDemoProfile(profile))
+      throw new Error(`Unknown demo profile "${profile}" (${DEMO_PROFILES.join(', ')})`);
+    const fallback = profile === 'default' ? 'data/sample' : `data/sample-${profile}`;
+    const out = resolve(c.env.baseDir, option(args, '--out') ?? fallback);
+    const files = await writeDemoSample(out, {
+      profile,
+      logger: c.logger,
+      cwd: c.env.baseDir,
+      env: {},
+    });
     c.logger.info(`Sample data written to ${out}: ${Object.keys(files).join(', ')}`);
   },
 };
@@ -283,17 +295,20 @@ const sanitizeCommand: Command = {
 
 const fixtureCommand: Command = {
   name: 'fixture',
-  usage: 'fixture [--out <dir>] [--fixtures <dir>]',
+  usage: 'fixture [--out <dir>] [--fixtures <dir>] [--optional-sources]',
   description: 'Run collect, check and dashboard on the fixture tenant (no key needed)',
   async run(c, args) {
     // Default: the gitignored data/fixture/, read by DASHBOARD_DATA_SOURCE=fixtures.
-    const out = option(args, '--out') ?? 'data/fixture';
+    const optionalSources = args.includes('--optional-sources');
+    const out =
+      option(args, '--out') ?? (optionalSources ? 'data/fixture-optional-sources' : 'data/fixture');
     const fixtureDir = resolve(
       c.env.baseDir,
       option(args, '--fixtures') ?? defaultFixtureDir(c.env.baseDir),
     );
     const files = await writeFixtureTenant(resolve(c.env.baseDir, out), {
       fixtureDir,
+      optionalSources,
       cwd: c.env.baseDir,
       logger: c.logger,
     });
