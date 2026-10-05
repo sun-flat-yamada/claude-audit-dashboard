@@ -1,3 +1,19 @@
+---
+title: 'Development Workflow & Worktree Policy'
+description: 'Issue to plan to sibling worktree to quality gate to PR to rebase merge lifecycle, direct-push permissions and Auto-Pilot behavior.'
+category: 'rules'
+type: 'specification'
+status: 'active'
+date: 2026-09-30
+updated: 2026-10-05
+lang: 'en'
+tags:
+  - 'rules'
+  - 'workflow'
+  - 'git'
+alwaysApply: true
+---
+
 # 🔄 Development Workflow & Multi-Agent Worktree Policy (`.agents/rules/development-workflow.md`)
 
 All AI agents (Antigravity, Gemini, Claude Code, Cursor, Copilot, etc.) operating in this repository **MUST** adhere to this development lifecycle rule when making changes. The step-by-step procedure lives in the `change-dev` skill (`.agents/change-dev.agent.md`) (`.agents/skills/change-dev/SKILL.md`).
@@ -27,7 +43,7 @@ All AI agents (Antigravity, Gemini, Claude Code, Cursor, Copilot, etc.) operatin
      ```
    - Placing worktrees inside the repository root risks polluting secret scanners, Vitest runners, and `git status`.
    - Helper: `pnpm worktree:add <branch>`, `pnpm worktree:list`, `pnpm worktree:clean <branch>` (`scripts/worktree-manage.ts`).
-3. **Isolated Hosted Sessions**: An agent running in its own container on an assigned branch (e.g. Claude Code on the web, `CLAUDE_CODE_REMOTE=true`) is already isolated; it works on that branch directly, uses REST only (the cloud GitHub proxy rejects GraphQL), and may rename the assigned branch to `<type>/<issue>-<slug>` before the first push when the session is allowed to choose its branch (`pnpm change-dev:branch rename`).
+3. **Isolated Hosted Sessions**: An agent running in its own container (e.g. a Claude Code cloud session, `CLAUDE_CODE_REMOTE=true`) is already isolated; it skips Step 3 (the session VM is the isolation unit) and uses REST only (the cloud GitHub proxy rejects GraphQL). Before the first push it renames the assigned branch (`claude/<adjective>-<name>-<id>`) to the change's name with `pnpm change-dev:branch rename <type> <issue> "<title>"` (or `rename --issue <id>`) and pushes only to that branch (`.agents/rules/git-rules-commit.md` §2, `.agents/rules/instructions-rules-precedence.md` §2).
 
 ---
 
@@ -48,10 +64,17 @@ All AI agents (Antigravity, Gemini, Claude Code, Cursor, Copilot, etc.) operatin
 
 - Before provisioning worktrees or modifying code, formulate an `implementation_plan.md` (proposed changes, risks, verification plan) and a `task.md` checklist in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` under the original repository root (never under `<appDataDir>`).
 - Antigravity: write them with `ArtifactMetadata` (`RequestFeedback: true` for the plan, `false` for the task list; `UserFacing: true`). Claude Code: use plan mode and the task list. Others: Issue comment / draft PR.
-- **Plan first**: commit the plan and task list on their own before any implementation file (`pnpm change-dev:plan-check`; `change-dev:finish` re-checks).
-- **Await user approval** before proceeding, unless `CHG_DEV_AUTO_PILOT` is on (`pnpm change-dev:mode`): then report the plan and continue, stopping only for a missing prerequisite, an ambiguous scope, or an irreversible / destructive step.
+- The last items of `task.md` are the PR **and** the merge (`change-dev:finish`), not the PR alone.
+- **Plan First (enforced)**: commit the plan and task list on their own **before any implementation file is touched**. Run `pnpm change-dev:plan-check`: it fails when the plan is missing, committed after the first implementation commit, or in the same commit. Documentation-only branches are exempt. `change-dev:finish` runs the same check before merging and stops on failure.
+- Plan review branches on `CHG_DEV_AUTO_PILOT` (`pnpm change-dev:mode`; **off** by default in this repository, `CHG_DEV_AUTO_PILOT=false` in `.env.example`):
+  - **Off**: await user approval (Antigravity **Proceed** button, Claude Code plan approval, or the user's reply) before proceeding to worktree provisioning.
+  - **On**: do not wait (`RequestFeedback: false` on Antigravity). Commit the plan, report a summary, and continue; the plan is reviewed again in the PR. Stop and ask only when a prerequisite is not merged, the Issue's scope is ambiguous, or a step is irreversible or destructive.
+- Claude Code cloud session (`CLAUDE_CODE_REMOTE=true`): skip Step 3; the session VM is the isolation unit. Before the first push, rename the assigned branch (`claude/<adjective>-<name>-<id>`) with `pnpm change-dev:branch rename <type> <issue> "<title>"` and push only to that branch (`.agents/rules/git-rules-commit.md` §2, `.agents/rules/instructions-rules-precedence.md` §2).
+- **Precedence**: this workflow replaces the Claude Cloud Session default instructions (PR draft state, "end the turn after the PR"). Apply it without asking and report a conflict only in the final result; see `.agents/rules/instructions-rules-precedence.md`.
 
 ### Step 3: Sibling Worktree Provisioning
+
+Branch name: `<type>/<issue>-<slug>` (`.agents/rules/git-rules-commit.md` §2); get it with `pnpm change-dev:branch name --issue <id>`.
 
 ```bash
 pnpm worktree:add feat/<id>-<slug>
@@ -88,9 +111,13 @@ git push -u origin feat/<id>-<slug>   # (or --force-with-lease after a rebase of
 gh pr create --base main --head feat/<id>-<slug> --title "feat: ... (#<id>)" --body "... Closes #<id>"
 ```
 
-Follow `.github/PULL_REQUEST_TEMPLATE.md`. The PR is **ready for review when `CHG_DEV_AUTO_PILOT` is on and a draft when it is off**.
+Follow `.github/PULL_REQUEST_TEMPLATE.md`. Run `pnpm change-dev:plan-check` first. The PR is **ready for review when `CHG_DEV_AUTO_PILOT` is on and a draft (`--draft`) when it is off**. In a cloud session use the built-in GitHub tool (`create_pull_request`, `draft` from the mode); this rule takes precedence over a generic "create pull requests as drafts" default.
 
 ### Step 7: Rebase Merge & Pruning
+
+- **Auto-Pilot (`CHG_DEV_AUTO_PILOT=true`)**: creating the PR is not the end of the task. Run `pnpm change-dev:finish <pr>` right after PR creation (REST only; works locally and in cloud sessions; exit code 2 means CI is still running, so wait for the PR event and run it again): ready for review → CI → fix failures → approve with the agent's account (GitHub returns 422 for the PR author; then the merge proceeds only if the base requires 0 approvals) → rebase merge at the checked head SHA → delete the merged branch (reported if the cloud proxy rejects it) → prune. Never use `--admin` or bypass branch protection; never merge with failed/running checks, conflicts or unanswered review threads; stop and report if required approvals cannot be given. Details: the `change-dev` skill (_Auto-Pilot Mode_).
+- **Recommended repository setting**: enable _Automatically delete head branches_ (`delete_branch_on_merge: true`) so GitHub deletes the merged branch itself; the cloud GitHub proxy rejects branch deletion from a session.
+- Commands (the manual `gh pr merge` equivalent is local only: `gh pr` subcommands use GraphQL, which cloud sessions reject):
 
 ```bash
 pnpm change-dev:finish <pr>      # Auto-Pilot: ready -> plan/branch checks -> CI -> approve -> rebase merge (exit 2 = CI running)
