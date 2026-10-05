@@ -17,25 +17,25 @@
 
 ## Feature matrix
 
-| ID    | Feature                         | Priority | Status                                                        | Contract fields                                  |
-| ----- | ------------------------------- | -------- | ------------------------------------------------------------- | ------------------------------------------------ |
-| F-001 | Organization overview           | P0       | ✅ Phase A                                                    | `title`, `organizations`, `collectedAt`, `kpis`  |
-| F-002 | Compliance score and trend      | P0       | ✅ Phase A                                                    | `kpis[score]`, `compliance.history`              |
-| F-003 | Compliance results              | P0       | ✅ Phase A + CSV / JSON export (B2-1)                         | `compliance.results`, `compliance.byCategory`    |
-| F-004 | Usage and cost                  | P0       | ✅ Phase A                                                    | `usage.daily`, `usage.byProduct/byModel/byGroup` |
-| F-005 | Activity                        | P0       | ✅ Phase A aggregates; B2 (B2-3, `#/activity`) search         | `activity`                                       |
-| F-006 | Member view                     | P1       | ✅ Phase B2 (B2-4, `#/members`)                               | detail `members.json` (B2-2)                     |
-| F-007 | API key inventory               | P1       | ✅ Phase B2 (B2-5, `#/keys`)                                  | detail `api-keys.json` (B2-2)                    |
-| F-008 | Alert history                   | P1       | ✅ B2-6 (`#/alerts`)                                          | detail `alerts.json`                             |
-| F-009 | Monthly cost report view        | P1       | ✅ B2-7 (`#/reports/monthly`, `#/reports/monthly/<id>`)       | detail `monthly/index.json`, `monthly/<id>.json` |
-| F-010 | Model usage analytics           | P1       | ✅ Phase A + B2-8 (`#/models`, opt-in model × group data)     | `usage.byModel`, `insights`, `modelMatrix`       |
-| F-011 | Light / dark theme              | P2       | ✅ Phase A (follows system); toggle UI in Phase B2 (B2-9)     | —                                                |
-| F-012 | Organization / group drill-down | P2       | ✅ B2-10 (`#/orgs`, `#/orgs/<id>`, `#/groups/<id>`)           | detail `org-groups.json`, `members.json`         |
-| F-013 | Data coverage and retention     | P2       | ✅ coverage in Phase A; archive inventory B2-11 (`#/archive`) | `coverage`, detail `archive.json`                |
-| F-014 | Configuration view (read-only)  | P2       | ✅ B2-12 (`#/config`)                                         | detail `config.json`                             |
-| F-015 | Snapshot comparison             | P3       | ⏳ Planned (multi-time-point sample data available, #101)     | — (planned: detail `compare/*`)                  |
-| F-016 | Adoption (DAU / WAU / MAU)      | P1       | ✅ Phase A                                                    | `adoption`                                       |
-| F-017 | Insights                        | P1       | ✅ Phase A                                                    | `insights`                                       |
+| ID    | Feature                         | Priority | Status                                                        | Contract fields                                    |
+| ----- | ------------------------------- | -------- | ------------------------------------------------------------- | -------------------------------------------------- |
+| F-001 | Organization overview           | P0       | ✅ Phase A                                                    | `title`, `organizations`, `collectedAt`, `kpis`    |
+| F-002 | Compliance score and trend      | P0       | ✅ Phase A                                                    | `kpis[score]`, `compliance.history`                |
+| F-003 | Compliance results              | P0       | ✅ Phase A + CSV / JSON export (B2-1)                         | `compliance.results`, `compliance.byCategory`      |
+| F-004 | Usage and cost                  | P0       | ✅ Phase A                                                    | `usage.daily`, `usage.byProduct/byModel/byGroup`   |
+| F-005 | Activity                        | P0       | ✅ Phase A aggregates; B2 (B2-3, `#/activity`) search         | `activity`                                         |
+| F-006 | Member view                     | P1       | ✅ Phase B2 (B2-4, `#/members`)                               | detail `members.json` (B2-2)                       |
+| F-007 | API key inventory               | P1       | ✅ Phase B2 (B2-5, `#/keys`)                                  | detail `api-keys.json` (B2-2)                      |
+| F-008 | Alert history                   | P1       | ✅ B2-6 (`#/alerts`)                                          | detail `alerts.json`                               |
+| F-009 | Monthly cost report view        | P1       | ✅ B2-7 (`#/reports/monthly`, `#/reports/monthly/<id>`)       | detail `monthly/index.json`, `monthly/<id>.json`   |
+| F-010 | Model usage analytics           | P1       | ✅ Phase A + B2-8 (`#/models`, opt-in model × group data)     | `usage.byModel`, `insights`, `modelMatrix`         |
+| F-011 | Light / dark theme              | P2       | ✅ Phase A (follows system); toggle UI in Phase B2 (B2-9)     | —                                                  |
+| F-012 | Organization / group drill-down | P2       | ✅ B2-10 (`#/orgs`, `#/orgs/<id>`, `#/groups/<id>`)           | detail `org-groups.json`, `members.json`           |
+| F-013 | Data coverage and retention     | P2       | ✅ coverage in Phase A; archive inventory B2-11 (`#/archive`) | `coverage`, detail `archive.json`                  |
+| F-014 | Configuration view (read-only)  | P2       | ✅ B2-12 (`#/config`)                                         | detail `config.json`                               |
+| F-015 | Snapshot comparison             | P3       | 🔧 In progress (data and diff core available, #101 / #106)    | — (planned: `#/compare`; data: detail `compare/*`) |
+| F-016 | Adoption (DAU / WAU / MAU)      | P1       | ✅ Phase A                                                    | `adoption`                                         |
+| F-017 | Insights                        | P1       | ✅ Phase A                                                    | `insights`                                         |
 
 ---
 
@@ -50,7 +50,7 @@
 
 - Hero figure: score out of 100 with the failed / to-review / error / skipped counts.
 - When rules were skipped or errored, a warning line states `N of M rules assessed` and points to Data coverage.
-- Score trend (single series, 0–100 axis) appears once two or more reports exist.
+- Score trend (single series, 0–100 axis) appears once two or more reports exist; the committed sample carries three time points (F-015), so it is shown with its table view.
 
 ### F-003 Compliance results
 
@@ -205,7 +205,7 @@ Identifier handling follows `dashboard.maskPii` (default `true`): e-mail address
 | ----- | ------------------------------------------------------------------------------------------------ |
 | F-015 | Compare two snapshots or two reports: rules that changed status, datasets that changed coverage. |
 
-F-015 status: **Planned**. Multi-time-point data is available: `pnpm demo` collects and judges the synthetic tenant at three fixed-clock time points. The latest point is the unchanged `data/sample/`; the two earlier points are written to `data/sample/history/<snapshot id>/` (`dashboard.json`, `compliance-report.json`) with every status transition, rule add / remove, coverage change and member / MAU / cost change the comparison needs. The design is settled (per-time-point summary files `detail/compare/*` under the `PAGES_DETAIL_DATA` gate, a pure diff in `@claude-audit/core`, `#/compare?base=&target=`); the diff core, the compare UI and export, the archived-snapshot integration test and the E2E additions follow in later PRs (#42).
+F-015 status: **In progress**. Available: (1) multi-time-point data: `pnpm demo` collects and judges the synthetic tenant at three fixed-clock time points in one store; the committed `data/sample/dashboard.json` `compliance.history` carries all three, so the Overview trend chart (with its table view) is drawn from the sample, and the two earlier points are also written to `data/sample/history/<snapshot id>/`; (2) the per-time-point data: the collector writes a summary (score and assessed count, one status per rule and dataset, KPI figures; no evidence or per-person data) next to each judged snapshot into `data/summaries/<snapshot id>.json` and publishes the newest 90 as `detail/compare/index.json` + `detail/compare/<snapshot id>.json` under the `PAGES_DETAIL_DATA` gate (manifest kind `compare`); (3) the pure core in `@claude-audit/core/contracts`: `buildTimePointSummary`, `diffTimePoints(base, target)` (rule changes classified regressed / improved / unchanged / added / removed / assessed / unassessed over the full 5 x 5 status table, dataset coverage changes, KPI deltas, score delta with the assessed-count change) and Markdown / CSV / JSON export formatters. The compare UI (`#/compare?base=&target=`, point selectors, export buttons), the archived-point listing and integration test, and the E2E additions follow in later PRs (#42).
 
 ---
 
