@@ -1,14 +1,17 @@
 import type {
+  ActiveUserProduct,
   AdoptionDay,
   CollectResult,
   CostRow,
   DateRange,
   MatrixCostRow,
   MemberActivity,
+  ProductActiveUsers,
   UsageDimension,
   UsageRow,
 } from '@claude-audit/core';
 import {
+  ACTIVE_USER_PRODUCTS,
   MINOR_AMOUNT,
   earlierOf,
   laterOf,
@@ -30,6 +33,18 @@ const userActivitySchema = z.looseObject({
   last_activity_date: z.string().nullish(),
 });
 
+const PERIODS = ['daily', 'weekly', 'monthly'] as const;
+
+/** `<product>_<period>_active_user_count`; every one is read leniently (`cowork_*` included). */
+const productCountField = (product: ActiveUserProduct, period: (typeof PERIODS)[number]) =>
+  `${product}_${period}_active_user_count`;
+
+const productCountShape = Object.fromEntries(
+  ACTIVE_USER_PRODUCTS.flatMap(({ product }) =>
+    PERIODS.map((period) => [productCountField(product, period), nullableNumber]),
+  ),
+);
+
 const summarySchema = z.looseObject({
   starting_at: z.string(),
   daily_active_user_count: z.number(),
@@ -38,7 +53,23 @@ const summarySchema = z.looseObject({
   assigned_seat_count: nullableNumber,
   monthly_adoption_rate: nullableNumber,
   pending_invite_count: nullableNumber,
+  ...productCountShape,
 });
+
+const countOf = (row: Record<string, unknown>, field: string): number | null => {
+  const value = row[field];
+  return typeof value === 'number' ? value : null;
+};
+
+/** Products whose daily, weekly and monthly counts are all present; omitted or null ones are skipped. */
+export function productActiveUsers(row: Record<string, unknown>): ProductActiveUsers[] {
+  return ACTIVE_USER_PRODUCTS.flatMap(({ product }) => {
+    const [dau, wau, mau] = PERIODS.map((period) =>
+      countOf(row, productCountField(product, period)),
+    );
+    return dau != null && wau != null && mau != null ? [{ product, dau, wau, mau }] : [];
+  });
+}
 
 const usageResultSchema = z.looseObject({
   uncached_input_tokens: z.number(),
@@ -152,6 +183,7 @@ export class AnalyticsApi {
       assignedSeats: d.assigned_seat_count ?? null,
       monthlyAdoptionRate: d.monthly_adoption_rate ?? null,
       pendingInvites: d.pending_invite_count ?? null,
+      byProduct: productActiveUsers(d),
     }));
     return { items, window: { from: range.start.toISOString(), to: range.end.toISOString() } };
   }
