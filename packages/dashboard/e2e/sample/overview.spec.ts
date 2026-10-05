@@ -101,6 +101,38 @@ test.describe('first load (Phase A)', () => {
     }
   });
 
+  test('shows product engagement and the Claude Code accept rate per tool (AN-3)', async ({
+    page,
+    request,
+  }) => {
+    const view = await readData<DashboardView>(request, 'dashboard.json');
+    const engagement = view.engagement;
+    expect(engagement?.products.length).toBeGreaterThan(0);
+    await openRoute(page, '/');
+    const card = page.locator('section', {
+      has: page.getByRole('heading', { level: 2, name: /^Product engagement \(\d+ days\)$/ }),
+    });
+    await expect(card).toBeVisible();
+    for (const product of engagement?.products ?? []) {
+      const row = card.getByRole('row').filter({
+        has: page.getByRole('rowheader', { name: product.label, exact: true }),
+      });
+      await expect(row.getByRole('cell').first()).toHaveText(
+        `${product.activeMembers.toLocaleString('en-US')} / ${String(engagement?.members)}`,
+      );
+    }
+    const code = engagement?.claudeCode;
+    expect(code?.acceptRate).not.toBeNull();
+    await expect(card.getByRole('heading', { level: 3, name: 'Claude Code' })).toBeVisible();
+    await expect(
+      card.locator('dl > div', { hasText: 'Suggestion accept rate' }).locator('dd'),
+    ).toHaveText(`${code?.acceptRate?.toFixed(1) ?? ''}%`);
+    const twin = card.locator('details table');
+    await expect(twin).toBeHidden();
+    await card.getByText('View as table').click();
+    await expect(twin.locator('tbody tr')).toHaveCount(code?.tools.length ?? -1);
+  });
+
   test('lists every dataset in Data coverage; the default profile has no optional datasets', async ({
     page,
     request,

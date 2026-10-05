@@ -1,6 +1,7 @@
 import type { DashboardView } from '@claude-audit/core/contracts';
 import { KpiTiles } from '../components/KpiTiles';
 import { ModelMatrixCard } from '../components/ModelMatrixCard';
+import { ProductEngagementSection } from '../components/ProductEngagement';
 import {
   ActivitySection,
   AdoptionSection,
@@ -61,6 +62,7 @@ export function Overview({ view }: { view: DashboardView }) {
       </div>
       <ModelMatrixCard matrix={view.modelMatrix} />
       <AdoptionSection adoption={view.adoption} />
+      <ProductEngagementSection engagement={view.engagement} />
       <ActivitySection activity={view.activity} />
       <CoverageSection coverage={view.coverage} />
       <footer className="pb-4 text-sm text-[var(--text-muted)]">
