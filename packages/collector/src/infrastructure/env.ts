@@ -12,6 +12,7 @@ const envSchema = z.object({
   ANTHROPIC_COMPLIANCE_API_KEY: optional,
   ANTHROPIC_ANALYTICS_API_KEY: optional,
   ANTHROPIC_ADMIN_API_KEY: optional,
+  ANTHROPIC_CONSOLE_ADMIN_API_KEY: optional,
   ANTHROPIC_BASE_URL: optional,
   CAPTURE_RAW_DIR: optional,
   CI: optional,
@@ -48,6 +49,11 @@ export interface Environment {
     compliance?: string | undefined;
     analytics?: string | undefined;
     admin?: string | undefined;
+    /**
+     * Claude Console organization Admin API key (optional sources, B4). Never falls back to the
+     * Enterprise key and is not `ANTHROPIC_ADMIN_API_KEY` (the Enterprise admin override).
+     */
+    console?: string | undefined;
   };
   baseUrl: string | undefined;
   /** Opt-in raw response capture directory (`CAPTURE_RAW_DIR`; the CLI flag wins). */
@@ -98,6 +104,7 @@ export function readEnvironment(
       compliance: env.ANTHROPIC_COMPLIANCE_API_KEY ?? shared,
       analytics: env.ANTHROPIC_ANALYTICS_API_KEY ?? shared,
       admin: env.ANTHROPIC_ADMIN_API_KEY ?? shared,
+      console: env.ANTHROPIC_CONSOLE_ADMIN_API_KEY,
     },
     baseUrl: env.ANTHROPIC_BASE_URL,
     captureRawDir: env.CAPTURE_RAW_DIR,

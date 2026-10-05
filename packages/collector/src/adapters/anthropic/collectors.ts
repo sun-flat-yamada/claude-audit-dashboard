@@ -45,7 +45,7 @@ const KEY_VARIABLE: Readonly<Record<Family, string>> = {
 /** 401 / 403 / 404 mean "not collectable with this key or plan", not a transient failure. */
 const UNAVAILABLE_STATUS = new Set([401, 403, 404]);
 
-const classify = (error: unknown): unknown =>
+export const classify = (error: unknown): unknown =>
   error instanceof ApiError && UNAVAILABLE_STATUS.has(error.status)
     ? new DataUnavailableError(error.message)
     : error;

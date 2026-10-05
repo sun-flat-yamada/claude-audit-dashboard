@@ -8,6 +8,8 @@
     "disabled": [],
     "members": { "provider": "admin" },
     "memberActivity": { "lookbackDays": 90 },
+    "console": { "enabled": false, "lookbackDays": 30 },
+    "claudeCode": { "enabled": false, "lookbackDays": 7 },
     "groups": { "maxMemberRequests": 200 },
     "activities": {
       "initialLookbackHours": 168,
