@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import { detailAlertsSchema } from './alerts-view.js';
 import { detailArchiveSchema } from './archive-view.js';
 import { detailConfigSchema, looksSensitive } from './config-view.js';
 import {
@@ -38,6 +39,7 @@ const SCHEMAS = {
   'org-groups': detailOrgGroupsSchema,
   config: detailConfigSchema,
   archive: detailArchiveSchema,
+  alerts: detailAlertsSchema,
 } as const;
 
 type Json = Record<string, unknown>;
@@ -117,7 +119,7 @@ const stringsIn = (value: unknown): string[] => {
   return [];
 };
 
-/** The effective configuration carries no secrets, URLs, addresses or paths in any string. */
+/** The effective configuration and the alert history carry no secrets, URLs, addresses or paths in any string. */
 function configLeakErrors(path: string, data: Json): string[] {
   const hits = stringsIn(data).filter(looksSensitive);
   return hits.length === 0
@@ -145,7 +147,34 @@ function archiveErrors(path: string, data: Json): string[] {
   ];
 }
 
+/** Totals match the rows, acknowledgements come in pairs, ids are unique and all in rows. */
+function alertsErrors(path: string, data: Json): string[] {
+  const alerts = rows(data, 'alerts');
+  const totals = (data.totals ?? {}) as Json;
+  const acked = alerts.filter((a) => a.acknowledged === true).length;
+  const halfAcked = alerts.filter(
+    (a) => (a.acknowledged === true) !== (a.acknowledgedAt !== null && a.acknowledgedBy !== null),
+  );
+  const unmarked = alerts.filter(
+    (a) => a.acknowledged !== true && (a.acknowledgedAt !== null || a.acknowledgedBy !== null),
+  );
+  return [
+    ...(totals.alerts === alerts.length &&
+    totals.acknowledged === acked &&
+    totals.unacknowledged === alerts.length - acked
+      ? []
+      : [`${path}: totals differ from the alert rows`]),
+    ...(halfAcked.length + unmarked.length === 0
+      ? []
+      : [`${path}: acknowledgement fields are inconsistent`]),
+    ...(new Set(alerts.map((a) => a.id)).size === alerts.length
+      ? []
+      : [`${path}: duplicate alert ids`]),
+  ];
+}
+
 function countOf(entry: DetailManifestFile, data: Json): number {
+  if (entry.kind === 'alerts') return rows(data, 'alerts').length;
   if (entry.kind === 'archive') return Number((data.totals as Json | undefined)?.snapshots);
   if (entry.kind === 'config') return rows(data, 'rules').length;
   if (entry.kind === 'members') return rows(data, 'members').length;
@@ -165,7 +194,10 @@ function fileErrors(manifest: DetailManifest, entry: DetailManifestFile, text: s
     ...(entry.kind === 'activity' && data.month !== entry.month
       ? [`${entry.path}: month differs from the manifest`]
       : []),
-    ...(entry.kind === 'config' ? configLeakErrors(entry.path, data) : []),
+    ...(entry.kind === 'config' || entry.kind === 'alerts'
+      ? configLeakErrors(entry.path, data)
+      : []),
+    ...(entry.kind === 'alerts' ? alertsErrors(entry.path, data) : []),
     ...(entry.kind === 'archive' ? archiveErrors(entry.path, data) : []),
     ...emailErrors(entry.path, text, manifest.maskPii),
     ...(manifest.maskPii ? maskErrors(entry, entry.path, data) : []),

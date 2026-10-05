@@ -3,15 +3,18 @@ import type { AlertMessage } from '@claude-audit/core';
 import {
   Registry,
   addDays,
+  appendSent,
   dispatchAlert,
   documentAlert,
   formatScore,
   planComplianceAlert,
   pruneLastSent,
+  sanitizeAlertTitle,
 } from '@claude-audit/core';
 import { defaultFixtureDir } from '../adapters/fixture/fixture-source.js';
 import { archiveSnapshots } from '../adapters/storage/archive.js';
 import type { Container } from './container.js';
+import { ackAlert } from './alerts.js';
 import { writeDetail } from './detail.js';
 import { writeMonthlyView } from './monthly-report.js';
 import { writeDemoSample } from './demo.js';
@@ -94,9 +97,39 @@ const pipelineCommand: Command = {
   },
 };
 
-async function deliver(c: Container, alert: AlertMessage): Promise<void> {
+/** Appends the send to `state.json` history (the alert history view reads it). */
+async function recordSend(
+  c: Container,
+  alert: AlertMessage,
+  channels: readonly string[],
+  now: Date,
+): Promise<void> {
+  if (channels.length === 0) return;
+  const state = await c.state.load();
+  const record = {
+    key: alert.key,
+    sentAt: now.toISOString(),
+    severity: alert.severity,
+    channels: [...channels],
+    title: sanitizeAlertTitle(alert.title),
+  };
+  await c.state.save({
+    ...state,
+    notifications: {
+      ...state.notifications,
+      history: appendSent(state.notifications.history, record),
+    },
+  });
+}
+
+async function deliver(
+  c: Container,
+  alert: AlertMessage,
+  now: Date = c.clock.now(),
+): Promise<void> {
   const { delivered, failed } = await dispatchAlert(alert, c.notifiers, c.logger);
   c.logger.info(`Sent "${alert.title}" via ${delivered.join(', ') || 'no channel'}`);
+  await recordSend(c, alert, delivered, now);
   if (failed.length) throw new Error(`Notification failed for: ${failed.join(', ')}`);
 }
 
@@ -120,29 +153,63 @@ const notifyCommand: Command = {
   description: 'Send the alert digest for the latest compliance report',
   async run(c, args) {
     const status = option(args, '--collect-status');
+    const now = c.clock.now();
     if (status && status !== 'success') {
-      await deliver(c, {
-        key: `collection:${status}`,
-        title: `Claude audit collection ${status}`,
-        severity: 'high',
-        lines: ['Check the collect-audit workflow run.'],
-        link: c.env.dashboardUrl,
-      });
+      await deliver(
+        c,
+        {
+          key: `collection:${status}`,
+          title: `Claude audit collection ${status}`,
+          severity: 'high',
+          lines: ['Check the collect-audit workflow run.'],
+          link: c.env.dashboardUrl,
+        },
+        now,
+      );
     }
     const report = await c.reports.latest();
     if (!report) throw new Error('No compliance report found: run `check` first');
-    const now = c.clock.now();
     const { cooldownMinutes } = c.config.notifications;
-    const state = await c.state.load();
+    const { lastSent } = (await c.state.load()).notifications;
     const policy = { ...c.config.notifications, link: c.env.dashboardUrl };
-    const alert = planComplianceAlert(report, policy, state.notifications.lastSent, now);
-    const lastSent = pruneLastSent(state.notifications.lastSent, now, cooldownMinutes);
+    const alert = planComplianceAlert(report, policy, lastSent, now);
     if (!alert) return c.logger.info('Nothing new to notify');
-    await deliver(c, alert);
+    await deliver(c, alert, now);
+    // Reload: `deliver` has appended the send record to the history.
+    const state = await c.state.load();
     await c.state.save({
       ...state,
-      notifications: { lastSent: { ...lastSent, [alert.key]: now.toISOString() } },
+      notifications: {
+        ...state.notifications,
+        lastSent: {
+          ...pruneLastSent(lastSent, now, cooldownMinutes),
+          [alert.key]: now.toISOString(),
+        },
+      },
     });
+  },
+};
+
+const ALERT_USAGE = 'alerts ack <alert-id> [--by <label>]';
+
+const alertsCommand: Command = {
+  name: 'alerts',
+  usage: ALERT_USAGE,
+  description: 'Acknowledge a sent alert (recorded in alerts/ack.json on the data/audit branch)',
+  async run(c, args) {
+    const [action, id] = args;
+    const by = option(args, '--by');
+    if (action !== 'ack' || !id || id.startsWith('--')) throw new Error(`Usage: ${ALERT_USAGE}`);
+    if (args.includes('--by') && (!by || by.startsWith('--')))
+      throw new Error('--by requires a label');
+    const { outcome } = await ackAlert(c, id, by);
+    if (outcome === 'unknown-alert')
+      throw new Error(`Unknown alert ${id}: it is not in the alert history`);
+    c.logger.info(
+      outcome === 'acknowledged'
+        ? `Alert ${id} acknowledged`
+        : `Alert ${id} was already acknowledged`,
+    );
   },
 };
 
@@ -214,6 +281,7 @@ export const COMMANDS = new Registry<Command>((cmd) => cmd.name, 'command').addA
   reportCommand,
   notifyCommand,
   archiveCommand,
+  alertsCommand,
   demoCommand,
   sanitizeCommand,
   fixtureCommand,

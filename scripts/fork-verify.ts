@@ -58,6 +58,7 @@ const forbiddenPaths = [
   'data/raw',
   'data/fixture',
   'data/detail',
+  'data/alerts',
 ];
 
 const trackedFiles = listTrackedFiles();

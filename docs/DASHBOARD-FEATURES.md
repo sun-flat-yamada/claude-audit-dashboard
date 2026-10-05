@@ -26,7 +26,7 @@
 | F-005 | Activity                        | P0       | ✅ Phase A aggregates; B2 (B2-3, `#/activity`) search         | `activity`                                       |
 | F-006 | Member view                     | P1       | ✅ Phase B2 (B2-4, `#/members`)                               | detail `members.json` (B2-2)                     |
 | F-007 | API key inventory               | P1       | ✅ Phase B2 (B2-5, `#/keys`)                                  | detail `api-keys.json` (B2-2)                    |
-| F-008 | Alert history                   | P1       | ⏳ Phase B                                                    | notification state                               |
+| F-008 | Alert history                   | P1       | ✅ B2-6 (`#/alerts`)                                          | detail `alerts.json`                             |
 | F-009 | Monthly cost report view        | P1       | ✅ B2-7 (`#/reports/monthly`, `#/reports/monthly/<id>`)       | detail `monthly/index.json`, `monthly/<id>.json` |
 | F-010 | Model usage analytics           | P1       | 🔶 Phase A (spend by model, insights); heatmap in Phase B     | `usage.byModel`, `insights`                      |
 | F-011 | Light / dark theme              | P2       | ✅ Phase A (follows system); toggle UI in Phase B2 (B2-9)     | —                                                |
@@ -132,6 +132,17 @@
 - States: loading, not published (file absent), not collected (manifest `unavailable` with its reason, e.g. the archive could not be listed), error (alert), empty (no archives yet), no match (search).
 - Publication: under `detail/`, so the detail rule applies: on Pages only with `PAGES_DATA_SOURCE=live` and `PAGES_DETAIL_DATA=true`; always in the synthetic sample. Written by `pnpm build:detail` / `pnpm pipeline` (the inventory reflects the archive at that time; the scheduled workflow archives before it writes the detail files). `pnpm demo` supplies a synthetic archive (84 snapshots over 2023 to 2025 with deterministic sizes and one unrelated file) without touching the other sample files.
 
+### F-008 Alert history (B2-6)
+
+- Route `#/alerts` ("Alerts" in the nav), reading `detail/alerts.json` (`ALERTS_VIEW_SCHEMA_VERSION = 1`, listed in the manifest as `kind: alerts`; the manifest count is the number of listed alerts, newest first, at most 200). **Read-only**: a static SPA cannot write, so the page only displays the acknowledgement state and explains how to acknowledge.
+- Content: totals (alerts sent, acknowledged, unacknowledged) and one row per alert: sent time, severity, rule ids and the channel kinds that delivered it (console, Slack, Discord, e-mail), the alert title with its id, and the acknowledgement status as icon + label + color (Acknowledged with the acknowledger label and time, or Unacknowledged). Search (id, title, severity, kind, channel, rule id, acknowledger, time) and an acknowledgement filter (All / Acknowledged / Unacknowledged, with counts).
+- **How to acknowledge** (shown on the page): `pnpm alerts ack <alert-id> [--by <label>]`, or run the **Acknowledge Alert** workflow (`.github/workflows/ack-alert.yml`, `workflow_dispatch` with `alert-id` and an optional `by-label`). Decision D3: who may acknowledge is "anyone with write access to the repository" (they can run the workflow / push to `data/audit`). The acknowledgement is stored as `alerts/ack.json` on the `data/audit` branch (`ACK_STORE_SCHEMA_VERSION = 1`; separate from `state.json`, whose `parseState()` resets unknown shapes) and the status appears once `detail/alerts.json` is rebuilt (the workflow does it; the scheduled collection does it after each notify).
+- Data sources: the send records are `state.json` `notifications.history` (appended by `notify` and `report --notify`: key, time, severity, delivering channel ids, title; optional additive field, no `STATE_SCHEMA_VERSION` change, older states keep working) plus older `lastSent` entries that have no record (shown with severity "unknown" and channel "Not recorded"). The alert id is `al_` + a stable hash of the key and the send time. `buildAlertsView()` (core, pure) joins sends and acknowledgements: the first acknowledgement of an alert wins, acknowledgements of unknown alerts are dropped, output is deterministic.
+- **What the file can hold:** ids, times, severities, channel kinds, rule ids with their status, a title and an acknowledger label. No webhook URL, recipient, SMTP setting, secret, path or finding message can be represented. The title and the free-text label go through the same allowlist approach as the configuration view (`looksSensitive`): an e-mail address, URL, token or path becomes `[hidden]`; labels are at most 40 characters. `checkDetailBundle()` (and so `pnpm fork:verify`) checks the contract, the totals, the acknowledgement fields, duplicate ids and string leaks.
+- Collector: `alerts ack` refuses an unknown or malformed alert id, keeps the first of a duplicate acknowledgement (exit 0), and never overwrites an unreadable `alerts/ack.json`.
+- States: loading, not published (file absent), not collected (manifest `unavailable` with its reason), error (alert), empty ("No alerts sent yet"), no match (search / filter).
+- Publication: under `detail/`, so the detail rule applies: on Pages only with `PAGES_DATA_SOURCE=live` and `PAGES_DETAIL_DATA=true`; always in the synthetic sample. `alerts/ack.json` itself is never staged. `pnpm demo` supplies six synthetic alerts across the four channels and severities (three acknowledged by fictional team labels). The fixture tenant has no alert history, so it renders "No alerts sent yet".
+
 ### F-017 Insights
 
 - Title and detail of each analyzer result (model concentration, cache efficiency, group concentration, seat utilization) with its priority.
@@ -156,7 +167,7 @@
 
 ## Detail data files (B2-2)
 
-The screens of F-005 (search), F-006, F-007, F-009, F-012, F-013 (archive) and F-014 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 1`, zod schemas in `@claude-audit/core/contracts`).
+The screens of F-005 (search), F-006, F-007, F-008, F-009, F-012, F-013 (archive) and F-014 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 1`, zod schemas in `@claude-audit/core/contracts`).
 
 | File                             | Content                                                                                                                                               |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -167,6 +178,7 @@ The screens of F-005 (search), F-006, F-007, F-009, F-012, F-013 (archive) and F
 | `detail/org-groups.json`         | Organizations, RBAC groups (member count, month-to-date spend; groups overlap), CF-xxx deviations                                                     |
 | `detail/config.json`             | Effective configuration (allowlisted): rules with state / origin / effective parameters, custom rules, notification policy, sources                   |
 | `detail/archive.json`            | Archive inventory: per-year snapshot count, compressed bytes, oldest / newest snapshot id, totals, retention setting (ids, years, counts, bytes only) |
+| `detail/alerts.json`             | Alert history: sent alerts (time, severity, channel kinds, rule ids, redacted title) joined with their acknowledgement (time, masked label)           |
 | `detail/monthly/index.json`      | Monthly cost reports: month list (newest first), status, organization total (no per-person data; written by `report monthly`)                         |
 | `detail/monthly/<id>.json`       | One month: organization total, cost by RBAC group / model / product (amount, share), notes; group rows overlap                                        |
 
@@ -178,7 +190,6 @@ Identifier handling follows `dashboard.maskPii` (default `true`): e-mail address
 
 | ID    | Scope                                                                                            |
 | ----- | ------------------------------------------------------------------------------------------------ |
-| F-008 | History of alerts sent (from the notification state) and their acknowledgement status.           |
 | F-010 | Model × group heatmap (sequential single-hue scale with a legend), trend of model mix.           |
 | F-012 | Drill-down per linked organization or RBAC group: members, settings deviations (CF-xxx), spend.  |
 | F-015 | Compare two snapshots or two reports: rules that changed status, datasets that changed coverage. |

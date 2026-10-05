@@ -72,6 +72,15 @@
       "reason": null,
       "schemaVersion": 1,
       "status": "ok"
+    },
+    {
+      "count": 6,
+      "kind": "alerts",
+      "month": null,
+      "path": "detail/alerts.json",
+      "reason": null,
+      "schemaVersion": 1,
+      "status": "ok"
     }
   ],
   "generatedAt": "2026-09-29T12:00:00.000Z",

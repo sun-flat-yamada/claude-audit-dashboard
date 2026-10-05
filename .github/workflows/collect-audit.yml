@@ -60,6 +60,11 @@ jobs:
           ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
           ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
 
+      # The alert just sent is in the state now: rebuild the alert history file for the dashboard.
+      - name: Refresh the alert history file
+        if: always() && steps.pipeline.outcome == 'success'
+        run: pnpm build:detail
+
       # Saved after notify so the alert cooldown state is persisted too.
       - name: Save data to the data/audit branch
         if: always() && steps.pipeline.outcome == 'success'

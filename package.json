@@ -55,6 +55,7 @@
     "report:monthly": "pnpm --filter @claude-audit/collector cli report monthly",
     "notify": "pnpm --filter @claude-audit/collector cli notify",
     "archive": "pnpm --filter @claude-audit/collector cli archive",
+    "alerts": "pnpm --filter @claude-audit/collector cli alerts",
     "demo": "pnpm --filter @claude-audit/collector cli demo",
     "sanitize": "pnpm --filter @claude-audit/collector cli sanitize",
     "fixture": "pnpm --filter @claude-audit/collector cli fixture",

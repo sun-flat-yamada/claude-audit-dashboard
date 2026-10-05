@@ -33,6 +33,7 @@ export const DETAIL_KINDS = [
   'org-groups',
   'config',
   'archive',
+  'alerts',
 ] as const;
 export type DetailKind = (typeof DETAIL_KINDS)[number];
 

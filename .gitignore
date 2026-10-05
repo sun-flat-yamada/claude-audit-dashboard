@@ -32,6 +32,7 @@ data/snapshots/
 data/reports/
 data/archive/
 data/detail/
+data/alerts/
 # Raw API captures (pnpm collect --capture-raw data/raw/<run>): real tenant data, never committed
 data/raw/
 # Fixture-tenant output of `pnpm fixture` (synthetic, regenerated; read by DASHBOARD_DATA_SOURCE=fixtures)

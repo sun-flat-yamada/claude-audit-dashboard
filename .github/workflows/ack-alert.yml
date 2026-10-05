@@ -1,0 +1,74 @@
+name: Acknowledge Alert
+
+# Records that a sent alert was acknowledged (alerts/ack.json on the data/audit branch) and
+# refreshes detail/alerts.json, which the dashboard's Alerts page displays. The page itself is
+# read-only. Who may acknowledge: anyone with write access to this repository (they can run
+# this workflow). Nothing is ever committed to main.
+on:
+  workflow_dispatch:
+    inputs:
+      alert-id:
+        description: 'Alert id shown on the dashboard Alerts page (al_ followed by 12 hex digits).'
+        required: true
+        type: string
+      by-label:
+        description: 'Free-text label of the acknowledger (letters, digits, space . _ -; max 40). Defaults to the GitHub user who runs the workflow.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+# Every workflow that writes the data/audit branch shares this group.
+concurrency:
+  group: audit-data
+  cancel-in-progress: false
+
+jobs:
+  acknowledge:
+    name: Acknowledge alert
+    runs-on: ubuntu-latest
+    # The workflow file itself comes from the dispatched ref, so only main may run it.
+    if: github.ref == 'refs/heads/main'
+    steps:
+      # Inputs reach the shell only through environment variables and are validated strictly
+      # before anything else runs; they are never interpolated into a script.
+      - name: Validate inputs
+        run: |
+          if ! [[ "$ALERT_ID" =~ ^al_[0-9a-f]{12}$ ]]; then
+            echo "::error::alert-id must be al_ followed by 12 lowercase hex digits"
+            exit 1
+          fi
+          if ! [[ "$BY_LABEL" =~ ^[A-Za-z0-9][A-Za-z0-9._\ -]{0,39}$ ]]; then
+            echo "::error::by-label must start with a letter or digit and use only letters, digits, space, dot, underscore and hyphen (max 40)"
+            exit 1
+          fi
+        env:
+          ALERT_ID: ${{ inputs.alert-id }}
+          BY_LABEL: ${{ inputs.by-label || github.actor }}
+
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: ./.github/actions/setup
+        with:
+          build: build:collector
+
+      - name: Restore stored data
+        run: .github/scripts/data-branch.sh restore
+
+      - name: Record the acknowledgement
+        run: pnpm alerts ack "$ALERT_ID" --by "$BY_LABEL"
+        env:
+          ALERT_ID: ${{ inputs.alert-id }}
+          BY_LABEL: ${{ inputs.by-label || github.actor }}
+
+      # Rebuilds detail/alerts.json from the stored state and acknowledgements (no API keys).
+      - name: Refresh the alert history file
+        run: pnpm build:detail
+
+      - name: Save data to the data/audit branch
+        run: |
+          .github/scripts/data-branch.sh save "chore: acknowledge alert $ALERT_ID [skip ci]"
+        env:
+          ALERT_ID: ${{ inputs.alert-id }}

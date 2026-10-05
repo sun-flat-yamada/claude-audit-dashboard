@@ -1,4 +1,5 @@
 import type {
+  AckStore,
   Activity,
   AdoptionDay,
   CollectorState,
@@ -12,12 +13,14 @@ import type {
   Member,
   MemberActivity,
   OrgSettings,
+  SentRecord,
   SpendLimit,
   UsageDimension,
   UsageRow,
 } from '@claude-audit/core';
 import {
   addDays,
+  alertId,
   earlierOf,
   initialState,
   round,
@@ -489,9 +492,81 @@ export function createDemoCollectors(): DatasetCollector[] {
   ];
 }
 
-/** Starting state for the demo: key usage has been observed for 120 days. */
+/**
+ * Synthetic alert sends for the sample (F-008): several channels and severities, from a day to
+ * three weeks old, in `state.json` `notifications.history` shape.
+ */
+export const demoAlertHistory = (now: Date): SentRecord[] => [
+  {
+    key: 'compliance:DG-001=fail,CF-003=fail',
+    sentAt: ago(now, 20),
+    severity: 'critical',
+    channels: ['console', 'slack', 'email', 'discord'],
+    title: 'Claude Enterprise audit: 2 finding(s), score 71%',
+  },
+  {
+    key: 'compliance:UA-002=warning',
+    sentAt: ago(now, 14),
+    severity: 'medium',
+    channels: ['console', 'discord'],
+    title: 'Claude Enterprise audit: 1 finding(s), score 88%',
+  },
+  {
+    key: 'document:monthly-2026-08',
+    sentAt: ago(now, 9),
+    severity: 'info',
+    channels: ['console', 'email'],
+    title: 'Monthly cost report 2026-08',
+  },
+  {
+    key: 'collection:failure',
+    sentAt: ago(now, 5),
+    severity: 'high',
+    channels: ['console', 'slack', 'discord'],
+    title: 'Claude audit collection failure',
+  },
+  {
+    key: 'compliance:AK-003=fail',
+    sentAt: ago(now, 3),
+    severity: 'high',
+    channels: ['console', 'slack'],
+    title: 'Claude Enterprise audit: 1 finding(s), score 84%',
+  },
+  {
+    key: 'compliance:AC-001=fail,AK-001=warning',
+    sentAt: ago(now, 1),
+    severity: 'high',
+    channels: ['console', 'slack', 'email'],
+    title: 'Claude Enterprise audit: 2 finding(s), score 79%',
+  },
+];
+
+/** Synthetic acknowledgements of three of the demo alerts (labels are fictional teams). */
+export const demoAckStore = (now: Date): AckStore => {
+  const sent = demoAlertHistory(now);
+  const pick = (index: number, hoursLater: number, by: string) => {
+    const record = sent[index] as SentRecord;
+    return {
+      alertId: alertId(record.key, record.sentAt),
+      at: new Date(Date.parse(record.sentAt) + hoursLater * 3_600_000).toISOString(),
+      by,
+    };
+  };
+  return {
+    schemaVersion: 1,
+    acks: [pick(1, 5, 'finance-bot'), pick(3, 2, 'sec-oncall'), pick(4, 26, 'platform-ops')].sort(
+      (a, b) => (a.alertId < b.alertId ? -1 : 1),
+    ),
+  };
+};
+
+/**
+ * Starting state for the demo: key usage has been observed for 120 days and the alert history
+ * holds the synthetic sends.
+ */
 export const demoState = (now: Date): CollectorState => ({
   ...initialState(),
+  notifications: { lastSent: {}, history: demoAlertHistory(now) },
   projections: {
     credentialUsage: {
       observedSince: ago(now, 120),

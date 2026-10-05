@@ -8,8 +8,14 @@ import {
   type CustomRules,
   type Logger,
 } from '@claude-audit/core';
-import { DEMO_NOW, createDemoCollectors, demoState } from '../adapters/demo/demo-source.js';
+import {
+  DEMO_NOW,
+  createDemoCollectors,
+  demoAckStore,
+  demoState,
+} from '../adapters/demo/demo-source.js';
 import { toMarkdown } from '../adapters/renderers/markdown.js';
+import { FsAckRepository } from '../adapters/storage/ack-store.js';
 import { stableStringify } from '../adapters/storage/file-store.js';
 import { appConfigSchema } from '../infrastructure/config.js';
 import { fixedClock } from '../infrastructure/runtime.js';
@@ -137,6 +143,7 @@ export async function writeDemoSample(
       source: 'demo',
     });
     await c.state.save(demoState(DEMO_NOW));
+    await new FsAckRepository(c.store).save(demoAckStore(DEMO_NOW));
     await collect(c);
     const { report } = await check(c);
     const view = await writeDashboard(c);

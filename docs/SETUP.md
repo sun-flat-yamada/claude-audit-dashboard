@@ -149,6 +149,10 @@ Delete the raw capture after checking; never share or commit it. Only the saniti
 
 Alerts contain rule IDs, counts and masked identifiers; review your channel's audience before connecting it.
 
+### Acknowledging alerts
+
+Every alert sent is listed on the dashboard's **Alerts** page (`#/alerts`, a read-only view; detail files, see [DEPLOYMENT.md](DEPLOYMENT.md)) with its id and acknowledgement status. Someone with write access to the repository acknowledges an alert by running the **Acknowledge Alert** workflow (Actions tab, `alert-id` and an optional `by-label`) or, locally with the stored data restored, `pnpm alerts ack <alert-id> [--by <label>]`. The acknowledgement is stored as `alerts/ack.json` on the `data/audit` branch. No extra secret or variable is needed.
+
 ## Troubleshooting
 
 | Symptom                                         | Cause and fix                                                                                  |
