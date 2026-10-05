@@ -1,3 +1,19 @@
+---
+title: 'Data Storage & Routing Rules'
+description: 'Fork-safe storage on the data/audit orphan branch, Pages staging and data retention.'
+category: 'rules'
+type: 'specification'
+status: 'active'
+date: 2026-10-05
+updated: 2026-10-05
+lang: 'en'
+tags:
+  - 'rules'
+  - 'storage'
+  - 'routing'
+alwaysApply: true
+---
+
 # Storage & Data Routing Rules
 
 ## Fork-Safe Architecture
