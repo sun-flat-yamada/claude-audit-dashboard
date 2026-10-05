@@ -1,4 +1,4 @@
-# 💻 Dashboard UI/UX & Visualization Agent (`dashboard-ui-agent`)
+# 💻 Dashboard UI/UX & Visualization Agent (`dashboard-ui`)
 
 Specialized autonomous agent responsible for developing, maintaining, and testing the single-page React dashboard deployed on GitHub Pages.
 

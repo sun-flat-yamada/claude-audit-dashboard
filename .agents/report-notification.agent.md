@@ -1,4 +1,4 @@
-# 📣 Report & Multi-Channel Notification Agent (`report-notification-agent`)
+# 📣 Report & Multi-Channel Notification Agent (`report-notification`)
 
 Specialized autonomous agent responsible for generating audit reports and dispatching alerts across Slack, Discord, e-mail and the console.
 
