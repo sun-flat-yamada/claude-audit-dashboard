@@ -6,3 +6,6 @@
 *.gif binary
 *.ico binary
 *.gz binary
+
+# Export goldens keep their exact bytes (the CSV golden uses CRLF line ends)
+*.golden -text
