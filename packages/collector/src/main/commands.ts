@@ -1,24 +1,23 @@
 import { resolve } from 'node:path';
-import type { AlertMessage } from '@claude-audit/core';
 import {
   Registry,
   addDays,
-  appendSent,
-  dispatchAlert,
   documentAlert,
   formatScore,
   planComplianceAlert,
   pruneLastSent,
-  sanitizeAlertTitle,
 } from '@claude-audit/core';
 import { defaultFixtureDir } from '../adapters/fixture/fixture-source.js';
-import { archiveSnapshots } from '../adapters/storage/archive.js';
+import { archiveSnapshots, restoreArchive } from '../adapters/storage/archive.js';
+import { FileStore } from '../adapters/storage/file-store.js';
 import type { Container } from './container.js';
 import { ackAlert } from './alerts.js';
+import { deliver } from './deliver.js';
 import { writeDetail } from './detail.js';
 import { writeMonthlyView } from './monthly-report.js';
 import { writeDemoSample } from './demo.js';
 import { writeFixtureTenant } from './fixture.js';
+import { runSize } from './size.js';
 import { collectUsageMatrix } from './usage-matrix.js';
 import { sanitizeDirectory } from './sanitize.js';
 import { check, collect, generateReport, writeDashboard } from './workflows.js';
@@ -33,6 +32,14 @@ export interface Command {
 const option = (args: readonly string[], name: string): string | undefined => {
   const index = args.indexOf(name);
   return index >= 0 ? args[index + 1] : undefined;
+};
+
+/** Value of `--name <value>`; an error when the flag is given without one. */
+const valueOf = (args: readonly string[], name: string): string | undefined => {
+  const value = option(args, name);
+  if (args.includes(name) && (value === undefined || value.startsWith('--')))
+    throw new Error(`${name} requires a value`);
+  return value;
 };
 
 const collectCommand: Command = {
@@ -78,10 +85,10 @@ const checkCommand: Command = {
 
 const dashboardCommand: Command = {
   name: 'dashboard',
-  usage: 'dashboard',
-  description: 'Write data/dashboard.json for the dashboard UI',
-  async run(c) {
-    const view = await writeDashboard(c);
+  usage: 'dashboard [--snapshot <id>]',
+  description: 'Write data/dashboard.json for the dashboard UI (latest or the chosen snapshot)',
+  async run(c, args) {
+    const view = await writeDashboard(c, valueOf(args, '--snapshot'));
     c.logger.info(
       `Dashboard data written (${view.compliance.results.length} rule results, source ${view.source})`,
     );
@@ -90,10 +97,16 @@ const dashboardCommand: Command = {
 
 const detailCommand: Command = {
   name: 'detail',
-  usage: 'detail',
+  usage: 'detail [--snapshot <id>]',
   description: 'Write data/detail/*.json (members, API keys, activity, org / groups)',
-  async run(c) {
-    const files = await writeDetail(c);
+  async run(c, args) {
+    const files = await writeDetail(
+      c,
+      undefined,
+      undefined,
+      undefined,
+      valueOf(args, '--snapshot'),
+    );
     c.logger.info(
       `Detail data written (${Object.keys(files).length} files, maskPii ${String(c.config.dashboard.maskPii)})`,
     );
@@ -115,42 +128,6 @@ const pipelineCommand: Command = {
       await step.run(c, args);
   },
 };
-
-/** Appends the send to `state.json` history (the alert history view reads it). */
-async function recordSend(
-  c: Container,
-  alert: AlertMessage,
-  channels: readonly string[],
-  now: Date,
-): Promise<void> {
-  if (channels.length === 0) return;
-  const state = await c.state.load();
-  const record = {
-    key: alert.key,
-    sentAt: now.toISOString(),
-    severity: alert.severity,
-    channels: [...channels],
-    title: sanitizeAlertTitle(alert.title),
-  };
-  await c.state.save({
-    ...state,
-    notifications: {
-      ...state.notifications,
-      history: appendSent(state.notifications.history, record),
-    },
-  });
-}
-
-async function deliver(
-  c: Container,
-  alert: AlertMessage,
-  now: Date = c.clock.now(),
-): Promise<void> {
-  const { delivered, failed } = await dispatchAlert(alert, c.notifiers, c.logger);
-  c.logger.info(`Sent "${alert.title}" via ${delivered.join(', ') || 'no channel'}`);
-  await recordSend(c, alert, delivered, now);
-  if (failed.length) throw new Error(`Notification failed for: ${failed.join(', ')}`);
-}
 
 const reportCommand: Command = {
   name: 'report',
@@ -244,6 +221,39 @@ const archiveCommand: Command = {
   },
 };
 
+const sizeCommand: Command = {
+  name: 'size',
+  usage: 'size [--repo <dir>] [--ref <ref>] [--notify] [--warn-only] [--json]',
+  description: 'Measure a git repository (data/audit), judge capacity.* limits, optionally alert',
+  async run(c, args) {
+    await runSize(c, {
+      repo: valueOf(args, '--repo'),
+      ref: valueOf(args, '--ref'),
+      notify: args.includes('--notify'),
+      json: args.includes('--json'),
+      warnOnly: args.includes('--warn-only'),
+    });
+  },
+};
+
+const restoreCommand: Command = {
+  name: 'restore',
+  usage: 'restore <id|year> [--out <dir>]',
+  description:
+    'Restore archive/<year>/<id>.json.gz to snapshots/<id>/ (default: the data directory)',
+  async run(c, args) {
+    const [selector] = args;
+    if (!selector || selector.startsWith('--')) throw new Error(`Usage: ${this.usage}`);
+    const out = valueOf(args, '--out');
+    const target = out ? new FileStore(resolve(c.env.baseDir, out)) : c.store;
+    const { restored, skipped } = await restoreArchive(c.store, target, selector);
+    c.logger.info(
+      `Restored ${String(restored.length)} snapshot(s) to ${out ?? 'the data directory'}` +
+        (skipped.length ? `; ${String(skipped.length)} already present` : ''),
+    );
+  },
+};
+
 const demoCommand: Command = {
   name: 'demo',
   usage: 'demo [--out data/sample]',
@@ -301,6 +311,8 @@ export const COMMANDS = new Registry<Command>((cmd) => cmd.name, 'command').addA
   reportCommand,
   notifyCommand,
   archiveCommand,
+  sizeCommand,
+  restoreCommand,
   alertsCommand,
   demoCommand,
   sanitizeCommand,
