@@ -13,7 +13,7 @@ import type { Insight } from '../../domain/analysis/analyzers.js';
 import { assessedCount } from '../../domain/compliance/scoring.js';
 import type { ComplianceReport } from '../../domain/compliance/types.js';
 import { withDefaults, type DatasetMap, type DatasetName } from '../../domain/model/dataset.js';
-import type { CostRow, UsageDimension } from '../../domain/model/entities.js';
+import type { CostRow, UsageDimension, UsageRow } from '../../domain/model/entities.js';
 import { inputTokens } from '../../domain/model/metrics.js';
 import type { AuditSnapshot } from '../../domain/model/snapshot.js';
 import { countBy, sortedByValue, sumBy, totalsBy } from '../../domain/util/collections.js';
@@ -180,6 +180,22 @@ function shares(
   }));
 }
 
+const TOKEN_FIELDS = [
+  'uncachedInputTokens',
+  'cacheReadInputTokens',
+  'cacheCreationInputTokens',
+  'outputTokens',
+] as const;
+
+type TokenField = (typeof TOKEN_FIELDS)[number];
+
+const tokensByDate = (rows: readonly UsageRow[], field: TokenField) =>
+  totalsBy(
+    rows,
+    (r) => r.date,
+    (r) => r[field],
+  );
+
 function dailySeries(data: DatasetMap): DashboardUsage['daily'] {
   const cost = totalsBy(
     data.cost.filter((r) => r.dimension === 'total'),
@@ -188,17 +204,33 @@ function dailySeries(data: DatasetMap): DashboardUsage['daily'] {
   );
   const totals = data.usage.filter((r) => r.dimension === 'total');
   const input = totalsBy(totals, (r) => r.date, inputTokens);
-  const output = totalsBy(
-    totals,
-    (r) => r.date,
-    (r) => r.outputTokens,
-  );
+  const tokens = Object.fromEntries(
+    TOKEN_FIELDS.map((field) => [field, tokensByDate(totals, field)]),
+  ) as Record<TokenField, Map<string, number>>;
   return [...new Set([...cost.keys(), ...input.keys()])].sort().map((date) => ({
     date,
     cost: round(cost.get(date) ?? 0),
     inputTokens: input.get(date) ?? 0,
-    outputTokens: output.get(date) ?? 0,
+    outputTokens: tokens.outputTokens.get(date) ?? 0,
+    uncachedInputTokens: tokens.uncachedInputTokens.get(date) ?? 0,
+    cacheReadInputTokens: tokens.cacheReadInputTokens.get(date) ?? 0,
+    cacheCreationInputTokens: tokens.cacheCreationInputTokens.get(date) ?? 0,
   }));
+}
+
+/**
+ * Cache reads as a percent of all input tokens (the `cache-efficiency` analyzer's definition),
+ * null when no input was recorded.
+ */
+function cacheHitRate(data: DatasetMap): number | null {
+  const totals = data.usage.filter((r) => r.dimension === 'total');
+  const input = sumBy(totals, inputTokens);
+  return input === 0
+    ? null
+    : percent(
+        sumBy(totals, (r) => r.cacheReadInputTokens),
+        input,
+      );
 }
 
 function usage(snapshot: AuditSnapshot | null, data: DatasetMap): DashboardUsage | null {
@@ -208,6 +240,7 @@ function usage(snapshot: AuditSnapshot | null, data: DatasetMap): DashboardUsage
     currency: data.cost[0]?.currency ?? 'USD',
     asOf: snapshot.coverage.cost?.asOf ?? snapshot.coverage.usage?.asOf ?? null,
     daily: dailySeries(data),
+    cacheHitRate: cacheHitRate(data),
     byProduct: shares(data.cost, 'product', new Map()),
     byModel: shares(data.cost, 'model', new Map()),
     byGroup: shares(data.cost, 'group', groupNames),
