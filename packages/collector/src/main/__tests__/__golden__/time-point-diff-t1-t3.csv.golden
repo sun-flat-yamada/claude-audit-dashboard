@@ -1,0 +1,23 @@
+Section,Id,Name,Severity,Base,Target,Change,Delta
+score,score,Compliance score,,73,70,decreased,-3
+score,assessed,Assessed rules,,27,30,increased,3
+rule,AK-003,API Key Age,medium,pass,fail,regressed,
+rule,AM-006,Authentication Failure Burst,medium,pass,warning,regressed,
+rule,CF-003,IP Allowlist Enabled,medium,pass,fail,regressed,
+rule,UA-003,Members Without Spend Limit,medium,pass,fail,regressed,
+rule,AC-004,Stale Pending Invites,low,pass,fail,regressed,
+rule,UA-004,Spend Limit Nearly Exhausted,low,pass,warning,regressed,
+rule,AM-007,Data Protection Changes,high,,pass,added,
+rule,DG-001,Empty Groups,low,,fail,added,
+rule,UA-001,Usage Spike Detection,high,error,fail,assessed,
+rule,AC-002,Excessive Administrative Roles,high,fail,pass,improved,
+rule,AM-002,Identity Provider Changes,high,warning,pass,improved,
+rule,OP-002,Data Source Coverage,high,fail,pass,improved,
+rule,CF-006,Public Projects Disabled,medium,fail,pass,improved,
+dataset,groups,groups,,unavailable,ok,improved,
+kpi,score,Compliance score,,73,70,decreased,-3
+kpi,open-findings,Open findings,,11,15,increased,4
+kpi,members,Members,,34,40,increased,6
+kpi,mau,Monthly active users,,23,30,increased,7
+kpi,seat-utilization,Seat utilization (30d),,51.1,66.7,increased,15.6
+kpi,mtd-cost,Month-to-date cost,,131.95,4775.88,increased,4643.93

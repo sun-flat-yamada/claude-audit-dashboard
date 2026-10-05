@@ -60,7 +60,7 @@ test.describe('keyboard only', () => {
   }) => {
     await openRoute(page, '/');
     const seen: string[] = [];
-    for (let i = 0; i < 1 + NAV_LABELS.length + 3 + 1; i += 1) {
+    for (let i = 0; i < 1 + NAV_LABELS.length + 3 + 3; i += 1) {
       await page.keyboard.press('Tab');
       seen.push(await focusedName(page));
     }
@@ -71,7 +71,12 @@ test.describe('keyboard only', () => {
       'Dark',
       'System',
     ]);
-    expect(seen.at(-1)).toMatch(/^All \d+$/);
+    // The sample carries three time points (F-015), so the Compliance card opens with the score
+    // trend chart (named by its date axis) and its "View as table" twin before the status filter.
+    const [chart, table, filter] = seen.slice(-3);
+    expect(chart).toMatch(/^\d{2}-\d{2}/);
+    expect(table).toBe('View as table');
+    expect(filter).toMatch(/^All \d+$/);
   });
 
   test('every screen opens from the navigation with Tab and Enter', async ({ page }) => {

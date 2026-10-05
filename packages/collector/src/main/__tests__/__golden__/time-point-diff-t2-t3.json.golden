@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "base": {
+    "id": "2026-09-15T12-00-00Z",
+    "collectedAt": "2026-09-15T12:00:00.000Z"
+  },
+  "target": {
+    "id": "2026-09-29T12-00-00Z",
+    "collectedAt": "2026-09-29T12:00:00.000Z"
+  },
+  "hasChanges": true,
+  "score": {
+    "base": 78,
+    "target": 70,
+    "delta": -8,
+    "baseAssessed": 25,
+    "targetAssessed": 30,
+    "assessedDelta": 5,
+    "baseTotal": 29,
+    "targetTotal": 30
+  },
+  "rules": {
+    "counts": {
+      "regressed": 2,
+      "improved": 3,
+      "unchanged": 20,
+      "added": 1,
+      "removed": 0,
+      "assessed": 4,
+      "unassessed": 0
+    },
+    "changes": [
+      {
+        "id": "UA-001",
+        "name": "Usage Spike Detection",
+        "category": "usage-anomaly",
+        "severity": "high",
+        "from": "pass",
+        "to": "fail",
+        "change": "regressed"
+      },
+      {
+        "id": "CF-003",
+        "name": "IP Allowlist Enabled",
+        "category": "configuration",
+        "severity": "medium",
+        "from": "pass",
+        "to": "fail",
+        "change": "regressed"
+      },
+      {
+        "id": "AK-002",
+        "name": "Over-privileged API Keys",
+        "category": "api-key-management",
+        "severity": "high",
+        "from": null,
+        "to": "fail",
+        "change": "added"
+      },
+      {
+        "id": "UA-003",
+        "name": "Members Without Spend Limit",
+        "category": "usage-anomaly",
+        "severity": "medium",
+        "from": "skipped",
+        "to": "fail",
+        "change": "assessed"
+      },
+      {
+        "id": "AC-004",
+        "name": "Stale Pending Invites",
+        "category": "access-control",
+        "severity": "low",
+        "from": "skipped",
+        "to": "fail",
+        "change": "assessed"
+      },
+      {
+        "id": "DG-001",
+        "name": "Empty Groups",
+        "category": "data-governance",
+        "severity": "low",
+        "from": "skipped",
+        "to": "fail",
+        "change": "assessed"
+      },
+      {
+        "id": "UA-004",
+        "name": "Spend Limit Nearly Exhausted",
+        "category": "usage-anomaly",
+        "severity": "low",
+        "from": "skipped",
+        "to": "warning",
+        "change": "assessed"
+      },
+      {
+        "id": "UA-002",
+        "name": "Cost Budget Threshold",
+        "category": "usage-anomaly",
+        "severity": "critical",
+        "from": "warning",
+        "to": "pass",
+        "change": "improved"
+      },
+      {
+        "id": "AC-002",
+        "name": "Excessive Administrative Roles",
+        "category": "access-control",
+        "severity": "high",
+        "from": "fail",
+        "to": "pass",
+        "change": "improved"
+      },
+      {
+        "id": "OP-002",
+        "name": "Data Source Coverage",
+        "category": "operational",
+        "severity": "high",
+        "from": "fail",
+        "to": "pass",
+        "change": "improved"
+      }
+    ]
+  },
+  "coverage": {
+    "counts": {
+      "regressed": 0,
+      "improved": 3,
+      "unchanged": 10,
+      "added": 0,
+      "removed": 0,
+      "assessed": 0,
+      "unassessed": 0
+    },
+    "changes": [
+      {
+        "dataset": "groups",
+        "from": "error",
+        "to": "ok",
+        "fromCount": null,
+        "toCount": 4,
+        "countDelta": null,
+        "change": "improved"
+      },
+      {
+        "dataset": "invites",
+        "from": "error",
+        "to": "ok",
+        "fromCount": null,
+        "toCount": 3,
+        "countDelta": null,
+        "change": "improved"
+      },
+      {
+        "dataset": "spendLimits",
+        "from": "unavailable",
+        "to": "ok",
+        "fromCount": null,
+        "toCount": 40,
+        "countDelta": null,
+        "change": "improved"
+      }
+    ]
+  },
+  "kpis": [
+    {
+      "id": "score",
+      "label": "Compliance score",
+      "unit": "score",
+      "base": 78,
+      "target": 70,
+      "delta": -8
+    },
+    {
+      "id": "open-findings",
+      "label": "Open findings",
+      "unit": "count",
+      "base": 11,
+      "target": 15,
+      "delta": 4
+    },
+    {
+      "id": "members",
+      "label": "Members",
+      "unit": "count",
+      "base": 43,
+      "target": 40,
+      "delta": -3
+    },
+    {
+      "id": "mau",
+      "label": "Monthly active users",
+      "unit": "count",
+      "base": 35,
+      "target": 30,
+      "delta": -5
+    },
+    {
+      "id": "seat-utilization",
+      "label": "Seat utilization (30d)",
+      "unit": "percent",
+      "base": 77.8,
+      "target": 66.7,
+      "delta": -11.1
+    },
+    {
+      "id": "mtd-cost",
+      "label": "Month-to-date cost",
+      "unit": "currency",
+      "base": 4961.23,
+      "target": 4775.88,
+      "delta": -185.35
+    }
+  ]
+}

@@ -16,7 +16,10 @@ test.describe('first load (Phase A)', () => {
     const score = view.kpis.find((k) => k.id === 'score');
     expect(score?.value).not.toBeNull();
     await expect(page.getByText(score?.label ?? '', { exact: true })).toBeVisible();
-    await expect(page.getByText(String(score?.value), { exact: true })).toBeVisible();
+    // The score figure (a span): the trend chart's table view repeats the score of each point.
+    await expect(
+      page.locator('span').getByText(String(score?.value), { exact: true }),
+    ).toBeVisible();
     await expect(page.getByText('/ 100')).toBeVisible();
     const { failed, warnings, errors, skipped } = view.compliance;
     await expect(
@@ -47,9 +50,11 @@ test.describe('first load (Phase A)', () => {
     ]) {
       await expect(page.getByRole('heading', { level: 2, name })).toBeVisible();
     }
-    // Line charts: cost, tokens, active users (and the score history once it has two points).
+    // Line charts: the score trend (the sample carries three time points, F-015), cost, tokens
+    // and active users.
+    expect(view.compliance.history).toHaveLength(3);
     const figures = page.locator('figure');
-    await expect(figures).toHaveCount(3 + (view.compliance.history.length >= 2 ? 1 : 0));
+    await expect(figures).toHaveCount(4);
     for (const figure of await figures.all()) {
       await expect(figure.locator('svg.recharts-surface')).toBeVisible();
       await expect(figure.locator('path.recharts-curve').first()).toBeAttached();
@@ -63,7 +68,7 @@ test.describe('first load (Phase A)', () => {
     const view = await readData<DashboardView>(request, 'dashboard.json');
     await openRoute(page, '/');
     const expectedRows = [
-      ...(view.compliance.history.length >= 2 ? [view.compliance.history.length] : []),
+      view.compliance.history.length,
       view.usage?.daily.length,
       view.usage?.daily.length,
       view.adoption?.daily.length,

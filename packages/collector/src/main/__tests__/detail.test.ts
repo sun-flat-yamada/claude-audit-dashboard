@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { checkDetailBundle, detailManifestSchema } from '@claude-audit/core/contracts';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MOCK_KEY, fakeAnthropic } from '../../__tests__/fake-anthropic.js';
@@ -16,9 +16,12 @@ afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
+/** Every file below `data/detail`, keyed `detail/<relative path>` (the compare files are nested). */
 const readBundle = async (): Promise<Record<string, string>> => {
   const root = join(dir, 'data/detail');
-  const names = await readdir(root);
+  const names = (await readdir(root, { recursive: true, withFileTypes: true }))
+    .filter((e) => e.isFile())
+    .map((e) => relative(root, join(e.parentPath, e.name)).split(sep).join('/'));
   return Object.fromEntries(
     await Promise.all(
       names.map(async (n) => [`detail/${n}`, await readFile(join(root, n), 'utf8')] as const),
@@ -67,12 +70,14 @@ describe('detail command and pipeline', () => {
     expect(checkDetailBundle(bundle)).toEqual([]);
   });
 
-  it('without keys every collected entry is unavailable; only the configuration, the (empty) archive inventory and the (empty) alert history are written', async () => {
+  it('without keys every collected entry is unavailable; only the configuration, the (empty) archive inventory, the (empty) alert history and the time-point summary of the empty collection are written', async () => {
     expect(await run({})).toBe(0);
     const bundle = await readBundle();
     expect(Object.keys(bundle).sort()).toEqual([
       'detail/alerts.json',
       'detail/archive.json',
+      'detail/compare/2026-09-30T12-00-00Z.json',
+      'detail/compare/index.json',
       'detail/config.json',
       'detail/index.json',
     ]);
@@ -80,7 +85,7 @@ describe('detail command and pipeline', () => {
     // The effective configuration does not depend on collected data, so it is always published.
     expect(
       manifest.files
-        .filter((f) => !['config', 'archive', 'alerts'].includes(f.kind))
+        .filter((f) => !['config', 'archive', 'alerts', 'compare'].includes(f.kind))
         .every((f) => f.status === 'unavailable'),
     ).toBe(true);
     expect(manifest.files.find((f) => f.kind === 'config')?.status).toBe('ok');
