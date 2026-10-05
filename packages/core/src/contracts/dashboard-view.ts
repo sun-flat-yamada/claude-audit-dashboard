@@ -73,6 +73,25 @@ const adoption = z.object({
   assignedSeats: z.number().nullable(),
   monthlyAdoptionRate: z.number().nullable(),
   pendingInvites: z.number().nullable(),
+  /**
+   * Active users per product on the latest day, weekly active descending; absent when the API
+   * returned no per-product counts or in a `dashboard.json` written before it existed.
+   */
+  byProduct: z
+    .array(
+      z.object({
+        product: z.string(),
+        label: z.string(),
+        dau: z.number(),
+        wau: z.number(),
+        mau: z.number(),
+      }),
+    )
+    .optional(),
+  /** Weekly active users per product and day (keyed by `byProduct[].product`); same rules. */
+  productWeekly: z
+    .array(z.object({ date: z.string(), wau: z.record(z.string(), z.number()) }))
+    .optional(),
 });
 
 const activity = z.object({
