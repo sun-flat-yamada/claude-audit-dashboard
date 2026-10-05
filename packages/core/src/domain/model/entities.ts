@@ -123,6 +123,28 @@ export interface CostRow {
   currency: string;
 }
 
+/**
+ * Products with their own active-user counts in the Analytics summaries (`<product>_daily_active_user_count`
+ * and so on). Order is the display order when counts tie.
+ */
+export const ACTIVE_USER_PRODUCTS = [
+  { product: 'chat', label: 'Chat' },
+  { product: 'claude_code', label: 'Claude Code' },
+  { product: 'cowork', label: 'Cowork' },
+  { product: 'claude_design', label: 'Claude Design' },
+  { product: 'office_agent', label: 'Claude in Office' },
+  { product: 'science', label: 'Claude Science' },
+] as const;
+
+export type ActiveUserProduct = (typeof ACTIVE_USER_PRODUCTS)[number]['product'];
+
+export interface ProductActiveUsers {
+  product: ActiveUserProduct;
+  dau: number;
+  wau: number;
+  mau: number;
+}
+
 export interface AdoptionDay {
   date: string;
   dailyActiveUsers: number;
@@ -131,6 +153,11 @@ export interface AdoptionDay {
   assignedSeats: number | null;
   monthlyAdoptionRate: number | null;
   pendingInvites: number | null;
+  /**
+   * Per-product active users; a product the API omitted or reported as null is absent.
+   * Optional so snapshots stored before it existed still load.
+   */
+  byProduct?: ProductActiveUsers[];
 }
 
 export interface SpendLimit {

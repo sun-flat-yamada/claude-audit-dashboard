@@ -13,7 +13,13 @@ import type { Insight } from '../../domain/analysis/analyzers.js';
 import { assessedCount } from '../../domain/compliance/scoring.js';
 import type { ComplianceReport } from '../../domain/compliance/types.js';
 import { withDefaults, type DatasetMap, type DatasetName } from '../../domain/model/dataset.js';
-import type { CostRow, UsageDimension, UsageRow } from '../../domain/model/entities.js';
+import {
+  ACTIVE_USER_PRODUCTS,
+  type AdoptionDay,
+  type CostRow,
+  type UsageDimension,
+  type UsageRow,
+} from '../../domain/model/entities.js';
 import { inputTokens } from '../../domain/model/metrics.js';
 import type { AuditSnapshot } from '../../domain/model/snapshot.js';
 import { countBy, sortedByValue, sumBy, totalsBy } from '../../domain/util/collections.js';
@@ -247,6 +253,33 @@ function usage(snapshot: AuditSnapshot | null, data: DatasetMap): DashboardUsage
   };
 }
 
+const PRODUCT_ORDER = new Map<string, number>(ACTIVE_USER_PRODUCTS.map((p, i) => [p.product, i]));
+const PRODUCT_LABEL = new Map<string, string>(
+  ACTIVE_USER_PRODUCTS.map((p) => [p.product, p.label]),
+);
+
+/**
+ * Per-product active users: the latest day that has a breakdown (weekly active descending, then
+ * catalog order) and the weekly trend. Empty object when no day has one, so the fields are absent.
+ */
+function productAdoption(
+  days: readonly AdoptionDay[],
+): Pick<DashboardAdoption, 'byProduct' | 'productWeekly'> {
+  const withProducts = days.filter((d) => (d.byProduct?.length ?? 0) > 0);
+  const latest = withProducts.at(-1)?.byProduct;
+  if (!latest) return {};
+  const order = (product: string) => PRODUCT_ORDER.get(product) ?? PRODUCT_ORDER.size;
+  return {
+    byProduct: [...latest]
+      .sort((a, b) => b.wau - a.wau || order(a.product) - order(b.product))
+      .map((p) => ({ ...p, label: PRODUCT_LABEL.get(p.product) ?? p.product })),
+    productWeekly: withProducts.map((d) => ({
+      date: d.date,
+      wau: Object.fromEntries((d.byProduct ?? []).map((p) => [p.product, p.wau])),
+    })),
+  };
+}
+
 function adoption(snapshot: AuditSnapshot | null, data: DatasetMap): DashboardAdoption | null {
   if (!collected(snapshot, 'adoption')) return null;
   const days = [...data.adoption].sort((a, b) => a.date.localeCompare(b.date));
@@ -261,6 +294,7 @@ function adoption(snapshot: AuditSnapshot | null, data: DatasetMap): DashboardAd
     assignedSeats: latest?.assignedSeats ?? null,
     monthlyAdoptionRate: latest?.monthlyAdoptionRate ?? null,
     pendingInvites: latest?.pendingInvites ?? null,
+    ...productAdoption(days),
   };
 }
 
