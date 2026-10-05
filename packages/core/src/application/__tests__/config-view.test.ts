@@ -66,6 +66,16 @@ describe('buildConfigView', () => {
     expect(view.sources.datasets.every((d) => d.enabled)).toBe(true);
   });
 
+  it('lists optional datasets only while their source is enabled', () => {
+    expect(build().sources.datasets).toHaveLength(13);
+    const enabled = build({ enabledOptionalDatasets: ['consoleUsage', 'claudeCodeActivity'] });
+    expect(enabled.sources.datasets).toHaveLength(15);
+    expect(enabled.sources.datasets.slice(-2)).toEqual([
+      { name: 'consoleUsage', enabled: true },
+      { name: 'claudeCodeActivity', enabled: true },
+    ]);
+  });
+
   it('marks disabled rules, overridden parameters and unknown ids', () => {
     const over = {
       disabledRules: ['DG-001', 'XX-123', 'not a rule id'],

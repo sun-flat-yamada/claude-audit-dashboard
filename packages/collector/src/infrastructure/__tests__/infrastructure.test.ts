@@ -55,6 +55,47 @@ describe('readEnvironment', () => {
   });
 });
 
+describe('Console Admin key (optional sources)', () => {
+  it('is read from its own variable and never falls back to another key', () => {
+    expect(
+      readEnvironment({ ANTHROPIC_ENTERPRISE_API_KEY: 'shared', ANTHROPIC_ADMIN_API_KEY: 'admin' })
+        .keys.console,
+    ).toBeUndefined();
+    expect(
+      readEnvironment({
+        ANTHROPIC_ENTERPRISE_API_KEY: 'shared',
+        ANTHROPIC_CONSOLE_ADMIN_API_KEY: 'console',
+      }).keys,
+    ).toMatchObject({ admin: 'shared', console: 'console' });
+    expect(readEnvironment({ ANTHROPIC_CONSOLE_ADMIN_API_KEY: '  ' }).keys.console).toBeUndefined();
+  });
+
+  it('is off by default and validated when configured', async () => {
+    const { config } = await loadConfig(join(dir, 'missing'));
+    expect(config.sources.console).toEqual({ enabled: false, lookbackDays: 30 });
+    expect(config.sources.claudeCode).toEqual({ enabled: false, lookbackDays: 7 });
+    await writeFile(
+      join(dir, 'default.json'),
+      JSON.stringify({
+        sources: {
+          console: { enabled: true },
+          claudeCode: { enabled: true, lookbackDays: 31 },
+          disabled: ['consoleCost'],
+        },
+      }),
+    );
+    const loaded = (await loadConfig(dir)).config.sources;
+    expect(loaded.console).toEqual({ enabled: true, lookbackDays: 30 });
+    expect(loaded.claudeCode).toEqual({ enabled: true, lookbackDays: 31 });
+    expect(loaded.disabled).toEqual(['consoleCost']);
+    await writeFile(
+      join(dir, 'default.json'),
+      JSON.stringify({ sources: { claudeCode: { lookbackDays: 90 } } }),
+    );
+    await expect(loadConfig(dir)).rejects.toThrow(/default\.json/);
+  });
+});
+
 describe('loadConfig', () => {
   it('fills defaults when files are absent', async () => {
     const { config, customRules } = await loadConfig(dir);

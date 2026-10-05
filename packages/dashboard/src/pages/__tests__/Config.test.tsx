@@ -184,6 +184,26 @@ describe('Config page', () => {
     expect(screen.getByText('240 minutes')).toBeInTheDocument();
   });
 
+  it('lists the optional Console and Claude Code datasets next to the built-in ones', async () => {
+    const datasets = [
+      { name: 'members', enabled: true },
+      { name: 'consoleWorkspaces', enabled: true },
+      { name: 'consoleCost', enabled: true },
+      { name: 'claudeCodeActivity', enabled: true },
+    ];
+    const config = configFile();
+    open({
+      config: { ...config, sources: { ...config.sources, datasets } },
+      manifest: manifest(),
+    });
+    const sources = await screen.findByRole('table', { name: 'Data sources' });
+    for (const name of ['consoleWorkspaces', 'consoleCost', 'claudeCodeActivity'])
+      expect(
+        within(within(sources).getByRole('row', { name: new RegExp(name) })).getByText('Enabled'),
+      ).toBeInTheDocument();
+    expect(within(sources).getAllByRole('row')).toHaveLength(datasets.length + 1);
+  });
+
   it('filters rules by state', async () => {
     const user = userEvent.setup();
     open({ config: configFile(), manifest: manifest() });
