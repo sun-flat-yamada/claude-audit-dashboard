@@ -1,23 +1,9 @@
 import { useMemo, useState } from 'react';
-import {
-  DETAIL_MANIFEST_PATH,
-  DETAIL_USAGE_MATRIX_PATH,
-  detailManifestSchema,
-  detailUsageMatrixSchema,
-} from '@claude-audit/core/contracts';
+import type { DashboardView } from '@claude-audit/core/contracts';
 import { Heatmap } from '../components/Heatmap';
 import { MixTrend } from '../components/MixTrend';
 import { Card, Empty } from '../components/Card';
-import {
-  CELL,
-  detailNotice,
-  FIELD,
-  HEAD,
-  Notice,
-  SearchField,
-  SelectField,
-} from '../components/DetailControls';
-import { useDetailFile } from '../lib/detail-data';
+import { CELL, FIELD, HEAD, Notice, SearchField, SelectField } from '../components/DetailControls';
 import { formatMoney, formatPercent, formatTimestamp } from '../lib/format';
 import { monthLabel } from '../lib/monthly-view';
 import {
@@ -30,17 +16,6 @@ import {
   type UsageMatrix,
 } from '../lib/usage-matrix-view';
 import { ScrollRegion } from '../components/ScrollRegion';
-
-export interface ModelsProps {
-  baseUrl?: string;
-  fetchImpl?: typeof fetch;
-}
-
-const SUBJECT = {
-  kind: 'usage-matrix',
-  plural: 'model and group spend',
-  title: 'Model and group spend',
-} as const;
 
 function OverlapNotice() {
   return (
@@ -239,25 +214,27 @@ function MatrixContent({ matrix }: { matrix: UsageMatrix }) {
   );
 }
 
-export function Models(options: ModelsProps = {}) {
-  const matrix = useDetailFile(DETAIL_USAGE_MATRIX_PATH, detailUsageMatrixSchema, options);
-  const manifest = useDetailFile(DETAIL_MANIFEST_PATH, detailManifestSchema, options);
-  const notice = detailNotice(matrix, manifest, SUBJECT);
-  const unlisted =
-    matrix.status === 'missing' &&
-    manifest.status === 'ready' &&
-    !manifest.data.files.some((f) => f.kind === 'usage-matrix');
+function OptionalNote() {
+  return (
+    <p className="text-sm text-[var(--text-secondary)]">
+      The model and group collection is optional: set <code>sources.usageMatrix.enabled</code> to{' '}
+      <code>true</code> in the collector configuration to collect it.
+    </p>
+  );
+}
+
+export function Models({ view }: { view: DashboardView }) {
+  const matrix = view.modelMatrix;
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Models</h1>
-      {notice && <Notice role={notice.role}>{notice.text}</Notice>}
-      {unlisted && (
-        <p className="text-sm text-[var(--text-secondary)]">
-          The model and group collection is optional: set <code>sources.usageMatrix.enabled</code>{' '}
-          to <code>true</code> in the collector configuration to collect it.
-        </p>
+      {matrix === null && <OptionalNote />}
+      {matrix !== null && matrix.status !== 'ok' && (
+        <Notice role={matrix.status === 'error' ? 'alert' : 'status'}>
+          {`Model and group spend data was not collected (${matrix.reason}).`}
+        </Notice>
       )}
-      {matrix.status === 'ready' && <MatrixContent matrix={matrix.data} />}
+      {matrix?.status === 'ok' && <MatrixContent matrix={matrix} />}
     </div>
   );
 }

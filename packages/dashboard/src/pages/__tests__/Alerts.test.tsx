@@ -60,7 +60,7 @@ const alertsFile = (alerts: unknown[] = [entry(), ackedEntry]) => ({
   alerts,
 });
 const manifest = (over: Record<string, unknown> = {}) => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: NOW,
   collectedAt: NOW,
   source: 'demo',

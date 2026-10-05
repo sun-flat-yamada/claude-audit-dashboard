@@ -31,7 +31,7 @@ const item = (id: string, over: ItemOverrides = {}): ActivityItem => ({
 const entry = (over: Record<string, unknown>) => ({
   kind: 'activity',
   path: 'detail/activity-2026-09.json',
-  schemaVersion: 1,
+  schemaVersion: 2,
   status: 'ok',
   reason: null,
   count: 3,

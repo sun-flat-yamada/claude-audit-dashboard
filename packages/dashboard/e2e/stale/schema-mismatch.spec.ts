@@ -42,7 +42,10 @@ test.describe('stale detail files (schemaVersion mismatch)', () => {
     await expect(page.getByRole('alert')).toHaveCount(0);
   });
 
-  const detailScreens = STATIC_ROUTES.filter((r) => r.path !== '/' && r.path !== '/compliance');
+  // Screens that read dashboard.json only (overview, compliance, models) never fetch detail files.
+  const detailScreens = STATIC_ROUTES.filter(
+    (r) => !['/', '/compliance', '/models'].includes(r.path),
+  );
   for (const screen of detailScreens) {
     test(`${screen.path} reports the outdated file and how to regenerate it`, async ({ page }) => {
       await openRoute(page, screen.path);

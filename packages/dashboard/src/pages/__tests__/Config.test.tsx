@@ -92,7 +92,7 @@ const configFile = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 const manifest = (over: Record<string, unknown> = {}) => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: NOW,
   collectedAt: NOW,
   source: 'demo',

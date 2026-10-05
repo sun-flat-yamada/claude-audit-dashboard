@@ -26,6 +26,7 @@ import { countBy, sortedByValue, sumBy, totalsBy } from '../../domain/util/colle
 import { maskEmails } from '../../domain/util/mask.js';
 import { percent, round } from '../../domain/util/numbers.js';
 import { monthKey } from '../../domain/util/time.js';
+import { buildModelMatrix, type UsageMatrixInput } from './usage-matrix-view.js';
 
 export interface DashboardInput {
   now: Date;
@@ -37,6 +38,11 @@ export interface DashboardInput {
   /** Earlier compliance reports, oldest first. */
   history: readonly ComplianceReport[];
   insights: readonly Insight[];
+  /**
+   * The stored optional model x group collection (I/O stays with the caller). Omitted when the
+   * collection is off; `null` means it is on but could not be read.
+   */
+  usageMatrix?: UsageMatrixInput | null | undefined;
 }
 
 type Mask = (text: string) => string;
@@ -356,5 +362,9 @@ export function buildDashboardView(input: DashboardInput): DashboardView {
       title,
       detail,
     })),
+    modelMatrix: buildModelMatrix(
+      input.usageMatrix,
+      new Map(data.groups.map((g) => [g.id, g.name])),
+    ),
   };
 }

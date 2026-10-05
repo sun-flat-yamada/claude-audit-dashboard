@@ -58,7 +58,7 @@ const emptyFile = () =>
     totals: { snapshots: 0, bytes: 0, years: 0, oldest: null, newest: null },
   });
 const manifest = (over: Record<string, unknown> = {}) => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: NOW,
   collectedAt: NOW,
   source: 'demo',

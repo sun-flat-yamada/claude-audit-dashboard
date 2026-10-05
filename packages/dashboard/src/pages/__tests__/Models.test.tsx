@@ -1,29 +1,21 @@
+import type { DashboardView } from '@claude-audit/core/contracts';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { Models } from '../Models';
 
 const raw = (files: Record<string, string>): string | undefined => Object.values(files)[0];
 // Synthetic sample only (never live data).
-const SAMPLE_MATRIX = raw(
-  import.meta.glob<string>('../../../../../data/sample/detail/usage-matrix.json', {
-    eager: true,
-    query: '?raw',
-    import: 'default',
-  }),
-);
-const SAMPLE_MANIFEST = raw(
-  import.meta.glob<string>('../../../../../data/sample/detail/index.json', {
+const SAMPLE = raw(
+  import.meta.glob<string>('../../../../../data/sample/dashboard.json', {
     eager: true,
     query: '?raw',
     import: 'default',
   }),
 );
 
-const NOW = '2026-09-29T12:00:00.000Z';
 const matrixFile = (over: Record<string, unknown> = {}) => ({
-  schemaVersion: 1,
-  generatedAt: NOW,
+  status: 'ok',
   asOf: '2026-09-29T08:00:00.000Z',
   window: { from: '2026-07-01T00:00:00.000Z', to: '2026-09-29T00:00:00.000Z' },
   currency: 'USD',
@@ -55,37 +47,9 @@ const matrixFile = (over: Record<string, unknown> = {}) => ({
   ],
   ...over,
 });
-const manifest = (files: unknown[] = []) => ({
-  schemaVersion: 1,
-  generatedAt: NOW,
-  collectedAt: NOW,
-  source: 'demo',
-  maskPii: true,
-  files,
-});
-const entry = (over: Record<string, unknown> = {}) => ({
-  kind: 'usage-matrix',
-  path: 'detail/usage-matrix.json',
-  schemaVersion: 1,
-  status: 'ok',
-  reason: null,
-  count: 4,
-  month: null,
-  ...over,
-});
-
-type Reply = unknown | 404 | 500;
-function serve(routes: { matrix: Reply; manifest: Reply }): typeof fetch {
-  return vi.fn(async (url: RequestInfo | URL) => {
-    const reply = String(url).endsWith('/usage-matrix.json') ? routes.matrix : routes.manifest;
-    if (typeof reply === 'number') return new Response('{}', { status: reply });
-    return new Response(JSON.stringify(reply), { status: 200 });
-  }) as unknown as typeof fetch;
-}
-const open = (routes: { matrix: Reply; manifest: Reply }) =>
-  render(<Models baseUrl="/" fetchImpl={serve(routes)} />);
-const ready = (over: Record<string, unknown> = {}) =>
-  open({ matrix: matrixFile(over), manifest: manifest([entry()]) });
+const view = (modelMatrix: unknown) => ({ modelMatrix }) as unknown as DashboardView;
+const open = (modelMatrix: unknown) => render(<Models view={view(modelMatrix)} />);
+const ready = (over: Record<string, unknown> = {}) => open(matrixFile(over));
 const grid = () => screen.findByRole('grid', { name: 'Model by group spend heatmap' });
 
 describe('Models page', () => {
@@ -200,51 +164,32 @@ describe('Models page', () => {
     expect(screen.queryByRole('grid')).not.toBeInTheDocument();
   });
 
-  it('shows loading, then not published with the opt-in hint', async () => {
-    open({ matrix: 404, manifest: manifest() });
-    expect(screen.getByRole('status')).toHaveTextContent('Loading model and group spend');
-    expect(
-      await screen.findByText(/Model and group spend data is not published/),
-    ).toBeInTheDocument();
+  it('shows the opt-in hint when the collection is off', () => {
+    open(null);
+    expect(screen.getByRole('heading', { level: 1, name: 'Models' })).toBeInTheDocument();
     expect(screen.getByText(/sources\.usageMatrix\.enabled/)).toBeInTheDocument();
+    expect(screen.queryByRole('grid')).not.toBeInTheDocument();
   });
 
-  it('shows not collected with the reason from the manifest', async () => {
-    open({
-      matrix: 404,
-      manifest: manifest([
-        entry({
-          status: 'unavailable',
-          reason: 'the cost report rejected the request (HTTP 400)',
-          count: null,
-        }),
-      ]),
-    });
+  it('shows not collected with the reason', () => {
+    open({ status: 'unavailable', reason: 'the cost report rejected the request (HTTP 400)' });
     expect(
-      await screen.findByText(
+      screen.getByText(
         'Model and group spend data was not collected (the cost report rejected the request (HTTP 400)).',
       ),
     ).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeInTheDocument();
     expect(screen.queryByText(/sources\.usageMatrix\.enabled/)).not.toBeInTheDocument();
   });
 
-  it('shows an error for a failing or malformed file', async () => {
-    open({ matrix: 500, manifest: manifest() });
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Failed to load model and group spend',
-    );
+  it('shows an alert for a failed collection', () => {
+    open({ status: 'error', reason: 'the model x group collection failed (HTTP 500)' });
+    expect(screen.getByRole('alert')).toHaveTextContent('HTTP 500');
   });
 
-  it('shows an error when the file does not match the contract', async () => {
-    open({ matrix: { schemaVersion: 2 }, manifest: manifest() });
-    expect(await screen.findByRole('alert')).toBeInTheDocument();
-  });
-
-  it('renders the generated sample', async () => {
-    open({
-      matrix: JSON.parse(SAMPLE_MATRIX ?? '{}'),
-      manifest: JSON.parse(SAMPLE_MANIFEST ?? '{}'),
-    });
+  it.skipIf(SAMPLE === undefined)('renders the generated sample', async () => {
+    const sample = JSON.parse(SAMPLE ?? '{}') as DashboardView;
+    render(<Models view={sample} />);
     const heat = await grid();
     expect(within(heat).getByRole('columnheader', { name: 'Engineering' })).toBeInTheDocument();
     expect(within(heat).getByRole('columnheader', { name: 'No group' })).toBeInTheDocument();

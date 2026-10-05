@@ -5,7 +5,74 @@ import { z } from 'zod';
  * Aggregates only; e-mail addresses are masked unless masking is disabled in config.
  * Bump `schemaVersion` on breaking changes.
  */
-export const DASHBOARD_VIEW_SCHEMA_VERSION = 2;
+export const DASHBOARD_VIEW_SCHEMA_VERSION = 3;
+
+/** Key used when the API reports a row without a model / without an RBAC group. */
+export const MATRIX_UNKNOWN_MODEL = '(unknown)';
+export const MATRIX_NO_GROUP = '(none)';
+
+/** Most models / groups kept in the matrix (highest cost first); the rest are only counted. */
+export const MATRIX_MODEL_LIMIT = 12;
+export const MATRIX_GROUP_LIMIT = 30;
+
+const matrixMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
+const matrixCost = z.number().nonnegative();
+
+/**
+ * Model x RBAC group spend (F-010, optional: `sources.usageMatrix.enabled`). Aggregates only:
+ * group names (already published in `usage.byGroup`) and cost, no per-person data. Group cells
+ * overlap (a member counts in every group they belong to), so they must never be added up: model
+ * totals and the monthly mix are the ungrouped values.
+ */
+const matrixData = z.object({
+  status: z.literal('ok'),
+  /** Freshness watermark of the cost report (`data_refreshed_at`), when reported. */
+  asOf: z.string().nullable(),
+  window: z.object({ from: z.string(), to: z.string() }),
+  currency: z.string(),
+  /** Ascending. */
+  months: z.array(matrixMonth),
+  /** Highest total first; `total` is the ungrouped cost over the whole window. */
+  models: z.array(z.object({ key: z.string(), name: z.string(), total: matrixCost })),
+  /** Highest group spend first. */
+  groups: z.array(z.object({ key: z.string(), name: z.string() })),
+  omittedModels: z.number().int().nonnegative(),
+  omittedGroups: z.number().int().nonnegative(),
+  /** Overlapping: one row per month x model x group that had spend. */
+  cells: z.array(
+    z.object({ month: matrixMonth, model: z.string(), group: z.string(), cost: matrixCost }),
+  ),
+  /** Ungrouped cost per month x model (additive). */
+  mix: z.array(z.object({ month: matrixMonth, model: z.string(), cost: matrixCost })),
+  /** Ungrouped cost per month over all models, including the omitted ones. */
+  monthTotals: z.array(z.object({ month: matrixMonth, cost: matrixCost })),
+});
+
+/** Every cell / mix row refers to a listed model, group and month; the lists have no repeats. */
+function matrixIssues(m: z.infer<typeof matrixData>): string[] {
+  const models = new Set(m.models.map((x) => x.key));
+  const groups = new Set(m.groups.map((x) => x.key));
+  const months = new Set(m.months);
+  const stray =
+    m.cells.filter((c) => !models.has(c.model) || !groups.has(c.group) || !months.has(c.month))
+      .length + m.mix.filter((r) => !models.has(r.model) || !months.has(r.month)).length;
+  return [
+    ...(stray === 0 ? [] : ['cells or mix rows refer to an unlisted model, group or month']),
+    ...(models.size === m.models.length && groups.size === m.groups.length
+      ? []
+      : ['duplicate model or group keys']),
+  ];
+}
+
+const modelMatrix = z
+  .discriminatedUnion('status', [
+    matrixData,
+    z.object({ status: z.enum(['unavailable', 'error']), reason: z.string() }),
+  ])
+  .superRefine((value, ctx) => {
+    if (value.status !== 'ok') return;
+    for (const message of matrixIssues(value)) ctx.addIssue({ code: 'custom', message });
+  });
 
 const share = z.object({
   key: z.string(),
@@ -141,6 +208,8 @@ export const dashboardViewSchema = z.object({
   adoption: adoption.nullable(),
   activity: activity.nullable(),
   insights: z.array(insight),
+  /** null when the optional collection is off (`sources.usageMatrix.enabled`). */
+  modelMatrix: modelMatrix.nullable(),
 });
 
 export type DashboardView = z.infer<typeof dashboardViewSchema>;
@@ -152,3 +221,5 @@ export type DashboardUsage = z.infer<typeof usage>;
 export type DashboardAdoption = z.infer<typeof adoption>;
 export type DashboardActivity = z.infer<typeof activity>;
 export type DashboardInsight = z.infer<typeof insight>;
+export type DashboardModelMatrix = z.infer<typeof modelMatrix>;
+export type DashboardModelMatrixData = z.infer<typeof matrixData>;

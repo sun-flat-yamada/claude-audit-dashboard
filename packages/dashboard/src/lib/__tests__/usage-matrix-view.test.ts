@@ -11,8 +11,7 @@ import {
 } from '../usage-matrix-view';
 
 const matrix = (over: Partial<UsageMatrix> = {}): UsageMatrix => ({
-  schemaVersion: 1,
-  generatedAt: '2026-09-29T12:00:00.000Z',
+  status: 'ok',
   asOf: null,
   window: { from: '2026-07-01T00:00:00.000Z', to: '2026-09-29T00:00:00.000Z' },
   currency: 'USD',

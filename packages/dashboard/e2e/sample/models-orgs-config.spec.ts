@@ -1,9 +1,10 @@
 import type {
+  DashboardModelMatrixData,
+  DashboardView,
   DetailConfig,
   DetailOrgGroups,
-  DetailUsageMatrix,
 } from '@claude-audit/core/contracts';
-import type { Page } from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
 import { openRoute, readData } from '../support/app';
 import { expect, test } from '../support/test';
 
@@ -16,6 +17,12 @@ const money = (value: number, digits = 2) =>
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   }).format(value);
+/** The model x group matrix published in `dashboard.json` (DashboardView v3). */
+async function readMatrix(request: APIRequestContext): Promise<DashboardModelMatrixData> {
+  const view = await readData<DashboardView>(request, 'dashboard.json');
+  if (view.modelMatrix?.status !== 'ok') throw new Error('the sample must carry the matrix');
+  return view.modelMatrix;
+}
 const grid = (page: Page) => page.getByRole('grid', { name: 'Model by group spend heatmap' });
 
 test.describe('F-010 models x groups heatmap', () => {
@@ -23,7 +30,7 @@ test.describe('F-010 models x groups heatmap', () => {
     page,
     request,
   }) => {
-    const matrix = await readData<DetailUsageMatrix>(request, 'detail/usage-matrix.json');
+    const matrix = await readMatrix(request);
     await openRoute(page, '/models');
     await expect(grid(page).getByRole('button')).toHaveCount(
       matrix.models.length * matrix.groups.length,
@@ -55,7 +62,7 @@ test.describe('F-010 models x groups heatmap', () => {
     page,
     request,
   }) => {
-    const matrix = await readData<DetailUsageMatrix>(request, 'detail/usage-matrix.json');
+    const matrix = await readMatrix(request);
     await openRoute(page, '/models');
     await page.getByRole('button', { name: 'View as table' }).click();
     await expect(grid(page)).toHaveCount(0);
@@ -72,7 +79,7 @@ test.describe('F-010 models x groups heatmap', () => {
   });
 
   test('period and search narrow the matrix', async ({ page, request }) => {
-    const matrix = await readData<DetailUsageMatrix>(request, 'detail/usage-matrix.json');
+    const matrix = await readMatrix(request);
     await openRoute(page, '/models');
     const all = await grid(page).getByRole('button').first().getAttribute('aria-label');
     await page.getByRole('combobox', { name: 'Period' }).selectOption(matrix.months[0] ?? '');
@@ -89,7 +96,7 @@ test.describe('F-010 models x groups heatmap', () => {
   });
 
   test('the monthly mix names every month with its total and shares', async ({ page, request }) => {
-    const matrix = await readData<DetailUsageMatrix>(request, 'detail/usage-matrix.json');
+    const matrix = await readMatrix(request);
     await openRoute(page, '/models');
     for (const total of matrix.monthTotals) {
       await expect(
@@ -102,6 +109,21 @@ test.describe('F-010 models x groups heatmap', () => {
       page.getByRole('list', { name: 'Model mix legend' }).getByRole('listitem'),
     ).toHaveCount(matrix.models.length);
     await expect(page.getByText('Groups overlap')).toBeVisible();
+  });
+});
+
+test.describe('F-010 model spend card on the Overview', () => {
+  test('summarizes the latest month and links to the heatmap', async ({ page, request }) => {
+    const matrix = await readMatrix(request);
+    const latest = matrix.months.at(-1) ?? '';
+    await openRoute(page, '/');
+    await expect(page.getByRole('heading', { level: 2, name: 'Model spend' })).toBeVisible();
+    await expect(
+      page.getByText(new RegExp(`Ungrouped spend per model, .*${latest.slice(0, 4)}`)),
+    ).toBeVisible();
+    await page.getByRole('link', { name: 'Open the model and group heatmap' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Models' })).toBeVisible();
+    await expect(grid(page)).toBeVisible();
   });
 });
 

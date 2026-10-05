@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { checkDetailBundle, detailUsageMatrixSchema } from '../../contracts/index.js';
+import { dashboardViewSchema } from '../../contracts/index.js';
+import { buildDashboardView } from '../presenters/dashboard-view.js';
 import { buildDetailView, DEFAULT_DETAIL_THRESHOLDS } from '../presenters/detail-view.js';
 import {
   aggregateMatrixRows,
+  buildModelMatrix,
   buildUsageMatrixView,
   type MatrixCostRow,
   type UsageMatrixInput,
@@ -65,10 +67,10 @@ describe('buildUsageMatrixView', () => {
     ['g1', 'Engineering'],
     ['g2', 'Finance'],
   ]);
-  const view = buildUsageMatrixView(okInput(), groupNames, NOW);
+  const view = buildUsageMatrixView(okInput(), groupNames);
 
   it('is valid, ascending by month and names groups from the directory', () => {
-    expect(detailUsageMatrixSchema.parse(view)).toEqual(view);
+    expect(view.status).toBe('ok');
     expect(view.months).toEqual(['2026-08', '2026-09']);
     expect(view.groups.map((g) => g.name)).toEqual(['Engineering', 'Finance', 'No group']);
     expect(view.models.map((m) => m.key)).toEqual(['opus', 'haiku', '(unknown)']);
@@ -86,7 +88,7 @@ describe('buildUsageMatrixView', () => {
   });
 
   it('keeps unknown ids as names and maps null keys to fixed keys', () => {
-    const v = buildUsageMatrixView(okInput(), new Map(), NOW);
+    const v = buildUsageMatrixView(okInput(), new Map());
     expect(v.groups.map((g) => g.name)).toEqual(['g1', 'g2', 'No group']);
     expect(v.cells).toContainEqual({ month: '2026-09', model: '(unknown)', group: 'g1', cost: 2 });
   });
@@ -101,7 +103,6 @@ describe('buildUsageMatrixView', () => {
         many.map((r) => ({ ...r, group: null })),
       ),
       new Map(),
-      NOW,
     );
     expect(v.models).toHaveLength(12);
     expect(v.groups).toHaveLength(30);
@@ -112,69 +113,95 @@ describe('buildUsageMatrixView', () => {
   });
 
   it('handles an empty matrix', () => {
-    const v = buildUsageMatrixView(okInput([], []), new Map(), NOW);
+    const v = buildUsageMatrixView(okInput([], []), new Map());
     expect(v).toMatchObject({ months: [], models: [], groups: [], cells: [], mix: [] });
   });
 });
 
-describe('detail manifest and bundle check', () => {
+describe('buildModelMatrix', () => {
+  const names = new Map([['g1', 'Engineering']]);
+
+  it('is null while the collection is off and an error entry when the input is unreadable', () => {
+    expect(buildModelMatrix(undefined, names)).toBeNull();
+    expect(buildModelMatrix(null, names)).toEqual({
+      status: 'error',
+      reason: 'the matrix input could not be read',
+    });
+  });
+
+  it('carries the reason of an unavailable or failed collection', () => {
+    expect(
+      buildModelMatrix({ status: 'unavailable', reason: 'API rejected group_by (400)' }, names),
+    ).toEqual({ status: 'unavailable', reason: 'API rejected group_by (400)' });
+    expect(buildModelMatrix({ status: 'error', reason: 'boom' }, names)).toEqual({
+      status: 'error',
+      reason: 'boom',
+    });
+  });
+});
+
+describe('modelMatrix in the dashboard view (v3)', () => {
   const build = (usageMatrix: UsageMatrixInput | null | undefined) =>
-    buildDetailView({
+    buildDashboardView({
+      now: NOW,
+      title: 'T',
+      source: 'demo',
+      maskPii: true,
+      snapshot: null,
+      report: null,
+      history: [],
+      insights: [],
+      usageMatrix,
+    });
+
+  it('is null when the collection is off and the view stays valid', () => {
+    const view = build(undefined);
+    expect(view.schemaVersion).toBe(3);
+    expect(view.modelMatrix).toBeNull();
+    expect(dashboardViewSchema.parse(view)).toEqual(view);
+  });
+
+  it('carries unavailable and collected matrices and validates them', () => {
+    const off = build({ status: 'unavailable', reason: 'no key' });
+    expect(dashboardViewSchema.parse(off).modelMatrix).toEqual({
+      status: 'unavailable',
+      reason: 'no key',
+    });
+    const on = build(okInput());
+    expect(dashboardViewSchema.parse(on).modelMatrix).toMatchObject({ status: 'ok' });
+  });
+
+  it('rejects cells that refer to an unlisted model, group or month', () => {
+    const view = build(okInput());
+    if (view.modelMatrix?.status !== 'ok') throw new Error('fixture');
+    const broken = {
+      ...view,
+      modelMatrix: {
+        ...view.modelMatrix,
+        cells: view.modelMatrix.cells.map((c) => ({ ...c, group: 'ghost' })),
+      },
+    };
+    expect(dashboardViewSchema.safeParse(broken).success).toBe(false);
+    const dup = {
+      ...view,
+      modelMatrix: {
+        ...view.modelMatrix,
+        groups: [...view.modelMatrix.groups, ...view.modelMatrix.groups],
+      },
+    };
+    expect(dashboardViewSchema.safeParse(dup).success).toBe(false);
+  });
+
+  it('is no longer published as a detail file', () => {
+    const bundle = buildDetailView({
       now: NOW,
       source: 'demo',
       maskPii: true,
       snapshot: null,
       report: null,
       thresholds: DEFAULT_DETAIL_THRESHOLDS,
-      usageMatrix,
     });
-
-  it('has no entry when the collection is off', () => {
-    expect(build(undefined).manifest.files.some((f) => f.kind === 'usage-matrix')).toBe(false);
-  });
-
-  it('lists an unavailable matrix with its reason and no file', () => {
-    const bundle = build({ status: 'unavailable', reason: 'API rejected group_by (400)' });
-    expect(bundle.files).toEqual([]);
-    expect(bundle.manifest.files.find((f) => f.kind === 'usage-matrix')).toMatchObject({
-      status: 'unavailable',
-      reason: 'API rejected group_by (400)',
-      count: null,
-    });
-    expect(build(null).manifest.files.find((f) => f.kind === 'usage-matrix')?.reason).toMatch(
-      /could not be read/,
-    );
-  });
-
-  it('lists a collected matrix, passes the check and rejects inconsistent files', () => {
-    const bundle = build(okInput());
-    const file = bundle.files[0];
-    expect(bundle.manifest.files.find((f) => f.kind === 'usage-matrix')).toMatchObject({
-      kind: 'usage-matrix',
-      status: 'ok',
-      count: file ? (file.content as { cells: unknown[] }).cells.length : -1,
-    });
-    const files = {
-      'detail/index.json': JSON.stringify(bundle.manifest),
-      'detail/usage-matrix.json': JSON.stringify(file?.content),
-    };
-    expect(checkDetailBundle(files, { requireDemo: true })).toEqual([]);
-    const doc = file?.content as { cells: { group: string }[] };
-    const stray = JSON.stringify({
-      ...doc,
-      cells: doc.cells.map((c) => ({ ...c, group: 'ghost' })),
-    });
-    expect(
-      checkDetailBundle({ ...files, 'detail/usage-matrix.json': stray }, { requireDemo: true }),
-    ).toEqual([
-      'detail/usage-matrix.json: cells or mix rows refer to an unlisted model, group or month',
-    ]);
-    const mail = JSON.stringify({ ...doc, currency: 'bob@corp.test' });
-    expect(
-      checkDetailBundle(
-        { ...files, 'detail/usage-matrix.json': mail },
-        { requireDemo: true },
-      ).join(),
-    ).toMatch(/non-example.com e-mail/);
+    expect(bundle.manifest.files.map((f) => f.kind)).not.toContain('usage-matrix');
+    expect(bundle.manifest.schemaVersion).toBe(2);
   });
 });

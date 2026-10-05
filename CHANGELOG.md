@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Breaking: `DashboardView` is v3. The optional model x group spend (F-010, `sources.usageMatrix.enabled`) now lives in `dashboard.json` as `modelMatrix` (`null` while off, `unavailable` / `error` with a reason, or the matrix) and the Overview shows a model spend card; the staged `detail/usage-matrix.json` and the manifest kind `usage-matrix` are retired and `DETAIL_SCHEMA_VERSION` is 2. Regenerate published data with `pnpm build:data` / `pnpm build:detail` (or `pnpm demo`); an outdated file shows the regeneration hint (#102)
 - Dashboard accessibility (found by the axe scans): muted text meets 4.5:1 in both themes, wide tables that scroll inside their own box are keyboard-focusable named regions, the organization / group pages keep a level-1 heading while loading or failing, and an outdated detail file now says how to regenerate it instead of printing the validator output
 - `change-workflow` agent, skill and rule replaced by `change-dev`: implementation plan with user approval gate, plan / task / walkthrough artifacts in `.devs/changes/yyyy-mm-dd_<ChangeTitle>/` committed with each change, `.devs/` otherwise gitignored
 

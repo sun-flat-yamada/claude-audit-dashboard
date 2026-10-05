@@ -1563,7 +1563,7 @@
     }
   ],
   "month": "2026-08",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "total": 130,
   "truncated": false
 }

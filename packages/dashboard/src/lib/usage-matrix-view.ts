@@ -1,6 +1,6 @@
-import type { DetailUsageMatrix } from '@claude-audit/core/contracts';
+import type { DashboardModelMatrixData } from '@claude-audit/core/contracts';
 
-export type UsageMatrix = DetailUsageMatrix;
+export type UsageMatrix = DashboardModelMatrixData;
 
 /** Period selector value: every month of the file added up, or one `yyyy-mm`. */
 export type Period = 'all' | string;

@@ -11,7 +11,6 @@ const SCREENS = [
     heading: 'Monthly cost report',
     notice: 'Monthly cost reports are not published.',
   },
-  { path: '/models', heading: 'Models', notice: 'Model and group spend data is not published.' },
   { path: '/config', heading: 'Configuration', notice: 'Configuration data is not published.' },
   { path: '/archive', heading: 'Archive', notice: 'Archive data is not published.' },
   { path: '/alerts', heading: 'Alerts', notice: 'Alert history data is not published.' },

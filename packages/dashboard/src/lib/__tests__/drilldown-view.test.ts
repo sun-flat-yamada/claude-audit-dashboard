@@ -44,7 +44,7 @@ const member = (id: string, organizationId: string | null, name = id): Member =>
   lastActiveOn: null,
 });
 const data: DetailOrgGroups = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: '2026-09-29T12:00:00.000Z',
   currency: 'USD',
   organizations: [

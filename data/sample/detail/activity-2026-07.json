@@ -747,7 +747,7 @@
     }
   ],
   "month": "2026-07",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "total": 62,
   "truncated": false
 }

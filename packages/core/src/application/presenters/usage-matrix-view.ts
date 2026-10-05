@@ -3,9 +3,9 @@ import {
   MATRIX_MODEL_LIMIT,
   MATRIX_NO_GROUP,
   MATRIX_UNKNOWN_MODEL,
-  USAGE_MATRIX_SCHEMA_VERSION,
-  type DetailUsageMatrix,
-} from '../../contracts/usage-matrix.js';
+  type DashboardModelMatrix,
+  type DashboardModelMatrixData,
+} from '../../contracts/dashboard-view.js';
 import { round } from '../../domain/util/numbers.js';
 
 /** One daily cost row of the collected pairwise (or per-model) report; keys null when absent. */
@@ -87,15 +87,14 @@ const byValueDesc = (a: [string, number], b: [string, number]): number =>
   b[1] - a[1] || a[0].localeCompare(b[0]);
 
 /**
- * Builds `detail/usage-matrix.json`. Model totals and the mix are the ungrouped values; group
+ * Builds the `modelMatrix` data. Model totals and the mix are the ungrouped values; group
  * cells are kept as reported (they overlap) and are only ranked, never summed into a figure.
  * At most {@link MATRIX_MODEL_LIMIT} models and {@link MATRIX_GROUP_LIMIT} groups are kept.
  */
 export function buildUsageMatrixView(
   input: Extract<UsageMatrixInput, { status: 'ok' }>,
   groupNames: ReadonlyMap<string, string>,
-  now: Date,
-): DetailUsageMatrix {
+): DashboardModelMatrixData {
   const { data } = input;
   const mix = data.mix.map((m) => ({ month: m.month, model: modelKey(m.model), cost: m.cost }));
   const cells = data.cells.map((c) => ({
@@ -124,8 +123,7 @@ export function buildUsageMatrixView(
   const groupKeys = new Set(groups.map(([k]) => k));
   const months = [...new Set([...mix, ...cells].map((r) => r.month))].sort();
   return {
-    schemaVersion: USAGE_MATRIX_SCHEMA_VERSION,
-    generatedAt: now.toISOString(),
+    status: 'ok',
     asOf: input.asOf,
     window: input.window,
     currency: data.currency,
@@ -149,4 +147,18 @@ export function buildUsageMatrixView(
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([month, cost]) => ({ month, cost: round(cost, 2) })),
   };
+}
+
+/**
+ * The `modelMatrix` field of the dashboard view. `undefined` means the optional collection is off
+ * (null in the view); `null` means it is on but the stored input could not be read.
+ */
+export function buildModelMatrix(
+  input: UsageMatrixInput | null | undefined,
+  groupNames: ReadonlyMap<string, string>,
+): DashboardModelMatrix | null {
+  if (input === undefined) return null;
+  if (input === null) return { status: 'error', reason: 'the matrix input could not be read' };
+  if (input.status !== 'ok') return { status: input.status, reason: input.reason };
+  return buildUsageMatrixView(input, groupNames);
 }

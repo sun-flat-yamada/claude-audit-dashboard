@@ -7,14 +7,12 @@ import {
   DETAIL_ALERTS_PATH,
   DETAIL_ARCHIVE_PATH,
   DETAIL_CONFIG_PATH,
-  DETAIL_USAGE_MATRIX_PATH,
   MONTHLY_INDEX_PATH,
   checkDetailBundle,
   dashboardViewSchema,
   detailAlertsSchema,
   detailArchiveSchema,
   detailConfigSchema,
-  detailUsageMatrixSchema,
   monthlyReportIndexSchema,
 } from '@claude-audit/core/contracts';
 import { describe, expect, it } from 'vitest';
@@ -54,9 +52,11 @@ describe('public sample data (data/sample)', () => {
       expect(alerts.totals.acknowledged).toBeGreaterThanOrEqual(1);
       expect(alerts.totals.unacknowledged).toBeGreaterThanOrEqual(1);
       expect(new Set(alerts.alerts.flatMap((a) => a.channels)).size).toBeGreaterThanOrEqual(4);
-      const matrix = detailUsageMatrixSchema.parse(
-        JSON.parse(generated[DETAIL_USAGE_MATRIX_PATH] ?? '{}'),
-      );
+      expect(Object.keys(generated)).not.toContain('detail/usage-matrix.json');
+      const view = dashboardViewSchema.parse(JSON.parse(generated['dashboard.json'] ?? '{}'));
+      const matrix = view.modelMatrix;
+      if (matrix?.status !== 'ok')
+        throw new Error('the sample must carry the model x group matrix');
       expect(matrix.months).toEqual(['2026-06', '2026-07', '2026-08']);
       expect(matrix.cells.some((c) => c.cost === 0)).toBe(true);
       expect(matrix.cells.some((c) => c.group === '(none)')).toBe(true);

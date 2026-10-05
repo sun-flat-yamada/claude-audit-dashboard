@@ -34,7 +34,7 @@ const apiKey = (id: string, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 const keysFile = (over: Record<string, unknown> = {}) => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: NOW,
   unusedDays: 30,
   maxAgeDays: 180,
@@ -53,7 +53,7 @@ const keysFile = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 const manifest = (over: Record<string, unknown> = {}) => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: NOW,
   collectedAt: NOW,
   source: 'demo',
@@ -62,7 +62,7 @@ const manifest = (over: Record<string, unknown> = {}) => ({
     {
       kind: 'api-keys',
       path: 'detail/api-keys.json',
-      schemaVersion: 1,
+      schemaVersion: 2,
       status: 'ok',
       reason: null,
       count: 5,
@@ -178,7 +178,7 @@ describe('ApiKeys page', () => {
         {
           kind: 'api-keys',
           path: 'detail/api-keys.json',
-          schemaVersion: 1,
+          schemaVersion: 2,
           status: 'unavailable',
           reason: 'credentials endpoint not permitted',
           count: null,
