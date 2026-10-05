@@ -134,7 +134,7 @@ pnpm sanitize ../claude-audit-captures/run1 packages/collector/src/adapters/anth
 
 # 3. Review the result by eye, then check it and try it:
 pnpm fork:verify && pnpm secret-scan
-pnpm build:detail                              # write data/detail/*.json (members, API keys, activity, groups, effective configuration; part of pnpm pipeline)
+pnpm build:detail                              # write data/detail/*.json (members, API keys, activity, groups, effective configuration, archive inventory; part of pnpm pipeline)
 pnpm fixture                                  # collect -> check -> dashboard.json from the fixtures, no key (writes data/fixture/, gitignored)
 pnpm fixture:tenant --out ../fixture-out      # same, to another directory
 ```

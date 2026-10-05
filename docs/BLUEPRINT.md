@@ -150,19 +150,20 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 
 ### 4.2 データの保存場所
 
-| データ                   | パス                                                                                              | ブランチ     | main にコミット |
-| ------------------------ | ------------------------------------------------------------------------------------------------- | ------------ | --------------- |
-| ソースコード             | `packages/`                                                                                       | `main`       | する            |
-| 合成サンプル             | `data/sample/` (`pnpm demo` が生成)                                                               | `main`       | する            |
-| スナップショット         | `data/snapshots/<id>/<dataset>.json` + `manifest.json`                                            | `data/audit` | しない          |
-| コンプライアンスレポート | `data/reports/compliance/<snapshot id>.json`                                                      | `data/audit` | しない          |
-| 週次・月次レポート       | `data/reports/{weekly,monthly}/`                                                                  | `data/audit` | しない          |
-| ダッシュボード JSON      | `data/dashboard.json`                                                                             | `data/audit` | しない          |
-| 詳細データ (個人単位)    | `data/detail/{index,members,api-keys,org-groups}.json`, `activity-<yyyy-mm>.json`                 | `data/audit` | しない          |
-| 実効設定 (許可リスト)    | `data/detail/config.json` (シークレット・URL・メール・パスを含まない。`pnpm build:detail` が生成) | `data/audit` | しない          |
-| 月次コスト公開データ     | `data/detail/monthly/{index,<id>}.json` (個人単位データなし。`report monthly` が生成)             | `data/audit` | しない          |
-| コレクタ状態             | `data/state.json` (カーソル、投影状態、通知記録)                                                  | `data/audit` | しない          |
-| アーカイブ               | `data/archive/<year>/<id>.json.gz`                                                                | `data/audit` | しない          |
+| データ                   | パス                                                                                               | ブランチ     | main にコミット |
+| ------------------------ | -------------------------------------------------------------------------------------------------- | ------------ | --------------- |
+| ソースコード             | `packages/`                                                                                        | `main`       | する            |
+| 合成サンプル             | `data/sample/` (`pnpm demo` が生成)                                                                | `main`       | する            |
+| スナップショット         | `data/snapshots/<id>/<dataset>.json` + `manifest.json`                                             | `data/audit` | しない          |
+| コンプライアンスレポート | `data/reports/compliance/<snapshot id>.json`                                                       | `data/audit` | しない          |
+| 週次・月次レポート       | `data/reports/{weekly,monthly}/`                                                                   | `data/audit` | しない          |
+| ダッシュボード JSON      | `data/dashboard.json`                                                                              | `data/audit` | しない          |
+| 詳細データ (個人単位)    | `data/detail/{index,members,api-keys,org-groups}.json`, `activity-<yyyy-mm>.json`                  | `data/audit` | しない          |
+| 実効設定 (許可リスト)    | `data/detail/config.json` (シークレット・URL・メール・パスを含まない。`pnpm build:detail` が生成)  | `data/audit` | しない          |
+| 月次コスト公開データ     | `data/detail/monthly/{index,<id>}.json` (個人単位データなし。`report monthly` が生成)              | `data/audit` | しない          |
+| コレクタ状態             | `data/state.json` (カーソル、投影状態、通知記録)                                                   | `data/audit` | しない          |
+| アーカイブ               | `data/archive/<year>/<id>.json.gz`                                                                 | `data/audit` | しない          |
+| アーカイブ在庫           | `data/detail/archive.json` (年別の件数・圧縮サイズ・最古/最新 ID のみ。`pnpm build:detail` が生成) | `data/audit` | しない          |
 
 `data/audit` への読み書きは `.github/scripts/data-branch.sh` (`restore` / `save`) に集約する。`save` は直前の `restore` を必須とし、アーカイブによる削除も反映する。サンプルと `.gitkeep` は保存しない。書き込むワークフローは同じ `concurrency` グループ (`audit-data`) で直列化する。
 
@@ -258,11 +259,11 @@ interface DatasetMeta {
 
 ### 6.3 保持
 
-| 対象                     | 既定                                          | 設定                     |
-| ------------------------ | --------------------------------------------- | ------------------------ |
-| スナップショット         | 365 日を過ぎたら `archive/<year>/` へ gzip    | `retention.snapshotDays` |
-| コンプライアンスレポート | 保持 (履歴はダッシュボードのスコア推移に使用) | —                        |
-| Activity                 | スナップショットに差分として保持              | —                        |
+| 対象                     | 既定                                                                          | 設定                     |
+| ------------------------ | ----------------------------------------------------------------------------- | ------------------------ |
+| スナップショット         | 365 日を過ぎたら `archive/<year>/` へ gzip (在庫は `detail/archive.json`、§9) | `retention.snapshotDays` |
+| コンプライアンスレポート | 保持 (履歴はダッシュボードのスコア推移に使用)                                 | —                        |
+| Activity                 | スナップショットに差分として保持                                              | —                        |
 
 ---
 
@@ -377,6 +378,8 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 
 個人単位のデータ (メンバー、API キー、アクティビティ検索、組織/グループ) は `dashboard.json` に入れず、別の**詳細データファイル**で配る (`DETAIL_SCHEMA_VERSION = 1`、`contracts/detail-view.ts`)。`detail/index.json` (マニフェスト: `maskPii`・`source`・各ファイルの `kind`/`path`/`status`/`count`) と、`members.json`・`api-keys.json`・`activity-<yyyy-mm>.json` (月ごと、新しい順、最大 2000 行。`total`/`truncated` で実数を示す)・`org-groups.json` から成り、各ファイルが自前の `schemaVersion` を持つ (`DashboardView` は v2 のまま)。`maskPii=true` では、メールは `j***@example.com`、氏名はイニシャル、IP は除去、ユーザー/キー/招待 ID は `u_`/`k_`/`i_` + 12 桁 hex の安定ハッシュ (ファイル間で結合可能) にする。`maskPii=false` では生値になりマニフェストに記録される。生成は純粋なプレゼンタ (`core/application/presenters/detail-*.ts`) と `collector/src/main/detail.ts` (`pnpm build:detail`、`pnpm pipeline` に含む。書き込み時に zod 検証)。`checkDetailBundle()` (`contracts/detail-bundle.ts`) がマニフェストとファイルの整合・`example.*`・マスクを検査し、`fork:verify` がサンプルに適用する。
 
+アーカイブ在庫 (F-013) は `detail/archive.json` (`ARCHIVE_VIEW_SCHEMA_VERSION = 1`、`contracts/archive-view.ts`、マニフェストの `kind: archive`、件数 = アーカイブ済みスナップショット数) で、純粋な集計 `core/application/presenters/archive-view.ts` の `summarizeArchiveEntries()` (入力順に依存せず、同じ ID は 1 件として数える。B3 #38 の容量計測でも再利用する) が年別の件数・圧縮サイズ・最古/最新のスナップショット ID と合計を出し、`buildArchiveView()` が保持設定 `retention.snapshotDays` を添える。含められるのはスナップショット ID (形式を検証)・年・件数・バイト数だけで、ファイル名・パス・内容は格納できず、`<id>.json.gz` 形式でないエントリは無視して件数だけを数える。コレクタは `ArchiveListing` ポート (`list` / `size`、`FileStore` が実装) 越しに `archive/<year>/*` を列挙し (`adapters/storage/archive-inventory.ts`)、`detail.ts` が zod 検証して書き込む。列挙に失敗した場合はマニフェストを `unavailable` (固定の理由) にする。`checkDetailBundle()` は合計と年別行の整合も検査する。`pnpm demo` は決定的な合成アーカイブ (2023〜2025 年、84 件) を使う。実アーカイブでの検証は B3 (#38)。
+
 実効設定 (F-014) は `detail/config.json` (`CONFIG_VIEW_SCHEMA_VERSION = 1`、`contracts/config-view.ts`、マニフェストの `kind: config`、エントリの `schemaVersion` はファイル自身の版) で、純粋なプレゼンタ `core/application/presenters/config-view.ts` の `buildConfigView()` が**許可リスト**から生成する (読み込んだ設定の丸ごとのダンプはしない)。ルール (有効/無効・由来・実効パラメータとその既定値・必要なデータセット)、カスタムルール、通知ポリシー (チャンネルは種別 `console`/`slack`/`discord`/`email` と `enabled` のみ)、データソースの有効/無効、保持期間、`maskPii` を含む。API キー・Webhook URL・SMTP ホスト/認証情報・宛先メール・パスを格納できるフィールドは契約に無く、ルール名・カスタムルールの設定・パラメータ値は `looksSensitive()` に該当すると `[hidden]` になり、ルールが宣言しないパラメータは捨てる。`checkDetailBundle()` (`fork:verify` 経由) は設定ファイル内の URL・`@`・キー/トークン形状・絶対パスを拒否する。コレクタは `collector/src/main/config-view.ts` が許可フィールドだけをプレゼンタへ渡し (`Container.customRules` を保持)、`detail.ts` が zod 検証して書き込む。収集データに依存しないため、全データセットが未収集でも出力される。`pnpm demo` のサンプル設定は例示用 (無効ルール・上書きパラメータ・カスタムルール・通知ポリシー) で、サンプルの他ファイルには適用しない。
 
 月次コストレポートの公開データ (F-009) は `detail/monthly/index.json` (月の一覧、新しい順) と `detail/monthly/<id>.json` (`MONTHLY_REPORT_SCHEMA_VERSION = 1`、`contracts/monthly-report.ts`) で、コレクタの月次レポート (`ReportDocument`) から純粋なプレゼンタ (`core/application/presenters/monthly-report-view.ts`) が小さな公開スキーマへ写像する (レポート文書そのものは契約に含めない)。組織の総額は未グルーピングの値で、グループ別の行は所属の重複により合計が総額を超え得るため合算しない。個人単位データは含まないがコストは機密のため、`detail/` 配下に置いて同じ公開条件に従う。`report monthly` が `collector/src/main/monthly-report.ts` で書き込み (zod 検証、インデックスは読み込み・マージ・書き込み)、`checkDetailBundle()` が `detail/monthly/` も検査する。
@@ -399,6 +402,7 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 | アクティビティ   | `#/activity`: マニフェストから月を選び (新しい順)、選んだ月の `detail/activity-<yyyy-mm>.json` だけを取得する。検索 (type・アクター ID / メール / IP・組織)・type / アクター種別・日付範囲 (月内、UTC 日) の絞り込み、新しい順のタイムライン (50 件ごとのページ送り)。アクター種別はアイコン + ラベル + 色。識別子・メール・IP は公開値のまま表示し (`maskPii` に従いマスク済み)、月ファイルが上限で切り詰められている (`truncated`) 場合は総件数と保持件数を注記する。未公開 / 未収集 / 空 / 該当なしの各状態を表示                      |
 | 月次コスト       | `#/reports/monthly` / `#/reports/monthly/<id>` (`<id>` = `monthly-yyyy-mm`): `detail/monthly/index.json` から月を選び、その月の `detail/monthly/<id>.json` だけを取得する。組織の総額 (未グルーピング)、RBAC グループ別チャージバック表 (金額と総額比)、モデル別・プロダクト別。グループの所属重複で合計が総額を超え得る旨の注記 (CHANGE-PLAN §10 V7) を常に表示し、超過時は強調する。グループ金額は合算しない。検索。未公開 / 未収集 (理由つき) / エラー / 空 / 該当なし / 不明な月の各状態を表示                                        |
 | 実効設定         | `#/config`: `detail/config.json`。ルール一覧 (有効 / 無効をアイコン + ラベル + 色、由来、必要データセット、状態フィルタ)、ルールパラメータ (実効値と既定値、上書き / 既定 / 無効)、カスタムルール、通知ポリシー (チャンネルは種別と有効 / 無効のみ)、データソースの有効 / 無効と収集設定、その他 (保持期間、`maskPii`)。全セクションを検索で絞り込み。読み取り専用。未公開 / 未収集 (理由つき) / エラー / 空 / 該当なしの各状態を表示                                                                                                     |
+| アーカイブ       | `#/archive`: `detail/archive.json`。合計 (件数・圧縮サイズ・年数・最古/最新・保持設定) と年別の表 (件数・圧縮サイズ・割合・最古/最新)。状態 (アーカイブ済み / まだなし / 認識できないファイルあり) はアイコン + ラベル + 色。年で検索。未公開 / 未収集 (理由つき) / エラー / 空 (アーカイブなし) / 該当なしの各状態を表示                                                                                                                                                                                                                 |
 | 組織・グループ   | `#/orgs` (一覧) / `#/orgs/<id>` / `#/groups/<id>`: `detail/org-groups.json` (組織ページは `detail/members.json` も参照)。組織ごとの設定乖離 (CF-xxx、重大度・状態はアイコン + ラベル + 色) とメンバー (`organizationId` で結合)、グループごとの種別・メンバー数・当月支出 (グループは重複するため合算しない)。証拠 ID が組織に一致しない乖離 (`organizationId: null`) は「Unattributed」に集約する。グループは `memberCount` のみ (メンバー一覧は契約に無く結合しない)。未公開 / 未収集 / エラー / 空 / 該当なし / 不明 ID の各状態を表示 |
 | Activity (概要)  | 件数上位の type、監視ルールに一致したイベント                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Data coverage    | データセットごとの取得状況・件数・取得元・理由                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |

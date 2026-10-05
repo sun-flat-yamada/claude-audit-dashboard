@@ -4,10 +4,12 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildRuleCatalog } from '@claude-audit/core';
 import {
+  DETAIL_ARCHIVE_PATH,
   DETAIL_CONFIG_PATH,
   MONTHLY_INDEX_PATH,
   checkDetailBundle,
   dashboardViewSchema,
+  detailArchiveSchema,
   detailConfigSchema,
   monthlyReportIndexSchema,
 } from '@claude-audit/core/contracts';
@@ -40,6 +42,10 @@ describe('public sample data (data/sample)', () => {
       expect(config.notifications.channels.some((ch) => ch.kind !== 'console' && ch.enabled)).toBe(
         true,
       );
+      const archive = detailArchiveSchema.parse(JSON.parse(generated[DETAIL_ARCHIVE_PATH] ?? '{}'));
+      expect(archive.years.length).toBeGreaterThanOrEqual(3);
+      expect(archive.totals.snapshots).toBeGreaterThan(0);
+      expect(archive.ignoredEntries).toBeGreaterThanOrEqual(1);
       const index = monthlyReportIndexSchema.parse(
         JSON.parse(generated[MONTHLY_INDEX_PATH] ?? '{}'),
       );

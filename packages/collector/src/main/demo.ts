@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   buildRuleCatalog,
+  type ArchiveEntry,
   type ConfigViewInput,
   type CustomRules,
   type Logger,
@@ -57,6 +58,31 @@ const DEMO_CUSTOM_RULES: CustomRules = {
     },
   ],
 };
+
+const pad = (n: number): string => String(n).padStart(2, '0');
+
+/**
+ * A synthetic archive for the public sample: snapshots on days 1, 8, 15 and 22 (06:00 UTC) of
+ * the covered months of 2023 (Nov-Dec), 2024 (Mar-Dec) and 2025 (Jan-Sep), with deterministic
+ * compressed sizes of roughly 1.5 to 2.5 MB, plus one unrelated file that the inventory ignores.
+ */
+export function demoArchiveEntries(): ArchiveEntry[] {
+  const spans: [number, number, number][] = [
+    [2023, 11, 12],
+    [2024, 3, 12],
+    [2025, 1, 9],
+  ];
+  const entries: ArchiveEntry[] = [];
+  for (const [year, from, to] of spans)
+    for (let month = from; month <= to; month += 1)
+      for (const day of [1, 8, 15, 22]) {
+        const id = `${String(year)}-${pad(month)}-${pad(day)}T06-00-00Z`;
+        const bytes = 1_500_000 + (((year * 31 + month * 17 + day * 13) * 7919) % 1_000_000);
+        entries.push({ dir: String(year), name: `${id}.json.gz`, bytes });
+      }
+  entries.push({ dir: '2025', name: 'README.txt', bytes: 120 });
+  return entries;
+}
 
 /**
  * The sample's effective configuration: a disabled rule, an overridden parameter, custom rules
@@ -117,7 +143,7 @@ export async function writeDemoSample(
     const weekly = await generateReport(c, 'weekly');
     const monthly = await generateReport(c, 'monthly');
     const monthlyView = await writeDemoMonths(c);
-    const detail = await writeDetail(c, demoConfigInput());
+    const detail = await writeDetail(c, demoConfigInput(), demoArchiveEntries());
     const files: Record<string, string> = {
       'dashboard.json': stableStringify(view),
       'compliance-report.json': stableStringify(report),

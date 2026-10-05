@@ -1,12 +1,14 @@
 import {
   DEFAULT_DETAIL_THRESHOLDS,
   buildDetailView,
+  type ArchiveEntry,
   type ConfigViewInput,
   type DetailThresholds,
 } from '@claude-audit/core';
 import {
   DETAIL_MANIFEST_PATH,
   detailActivitySchema,
+  detailArchiveSchema,
   detailConfigSchema,
   detailApiKeysSchema,
   detailManifestSchema,
@@ -14,6 +16,7 @@ import {
   detailOrgGroupsSchema,
 } from '@claude-audit/core/contracts';
 import type { z } from 'zod';
+import { listArchiveEntries } from '../adapters/storage/archive-inventory.js';
 import { stableStringify } from '../adapters/storage/file-store.js';
 import { configViewInput } from './config-view.js';
 import type { Container } from './container.js';
@@ -38,17 +41,22 @@ const schemaFor = (path: string): z.ZodType => {
   if (path.endsWith('/api-keys.json')) return detailApiKeysSchema;
   if (path.endsWith('/org-groups.json')) return detailOrgGroupsSchema;
   if (path.endsWith('/config.json')) return detailConfigSchema;
+  if (path.endsWith('/archive.json')) return detailArchiveSchema;
   return detailActivitySchema;
 };
 
 /**
- * Writes `detail/*.json` (manifest + entity files, incl. the effective configuration) from the latest stored data. Every file is
- * validated against its contract at this single write site. Returns path -> content.
+ * Writes `detail/*.json` (manifest + entity files, incl. the effective configuration and the
+ * archive inventory) from the latest stored data. Every file is validated against its contract
+ * at this single write site. `archive` replaces the listing of the data directory (the demo
+ * supplies a synthetic one). Returns path -> content.
  */
 export async function writeDetail(
   c: Container,
   config: Omit<ConfigViewInput, 'now'> = configViewInput(c),
+  archive?: readonly ArchiveEntry[],
 ): Promise<Record<string, string>> {
+  const entries = archive ?? (await listArchiveEntries(c.store).catch(() => null));
   const [snapshot, report] = await Promise.all([c.snapshots.latest(), c.reports.latest()]);
   const bundle = buildDetailView({
     now: c.clock.now(),
@@ -58,6 +66,7 @@ export async function writeDetail(
     report,
     thresholds: detailThresholds(c.config.compliance.params),
     config,
+    archive: { snapshotDays: c.config.retention.snapshotDays, entries },
   });
   const out: Record<string, string> = {
     [DETAIL_MANIFEST_PATH]: stableStringify(detailManifestSchema.parse(bundle.manifest)),

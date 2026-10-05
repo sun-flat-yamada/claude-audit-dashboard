@@ -24,6 +24,7 @@ data/audit        ← Orphan branch. Audit snapshots, reports and state (per for
 | Dashboard JSON            | `data/dashboard.json` (DashboardView v2)                                             | `data/audit` (orphan) | ❌ Never           |
 | Detail data (per-person)  | `data/detail/*.json` (manifest + members, api-keys, activity-<yyyy-mm>, org-groups)  | `data/audit` (orphan) | ❌ Never           |
 | Effective config (public) | `data/detail/config.json` (allowlisted; no secrets, URLs, e-mail addresses or paths) | `data/audit` (orphan) | ❌ Never           |
+| Archive inventory         | `data/detail/archive.json` (years, counts, bytes, snapshot ids only; no file names)  | `data/audit` (orphan) | ❌ Never           |
 | Monthly cost (public)     | `data/detail/monthly/{index,<id>}.json` (mapped subset; no per-person data)          | `data/audit` (orphan) | ❌ Never           |
 | Collector state           | `data/state.json` (cursors, projections, notifications)                              | `data/audit` (orphan) | ❌ Never           |
 | Archived data             | `data/archive/<year>/<id>.json.gz`                                                   | `data/audit` (orphan) | ❌ Never           |
@@ -53,7 +54,7 @@ The first successful `save` creates the orphan branch. `save` refuses to run wit
 
 1. Checks out `main`
 2. Stages `packages/dashboard/public/data/dashboard.json`: from `data/audit` when the repository variable `PAGES_DATA_SOURCE=live`, otherwise from `data/sample/`
-3. Stages the per-person detail files `packages/dashboard/public/data/detail/` (including the effective configuration `detail/config.json` and the monthly cost files in `detail/monthly/`): the sample's `data/sample/detail/` by default; with `PAGES_DATA_SOURCE=live` the `data/detail/` of `data/audit` **only if** the repository variable `PAGES_DETAIL_DATA=true` (explicit Private-Pages attestation, default off)
+3. Stages the per-person detail files `packages/dashboard/public/data/detail/` (including the effective configuration `detail/config.json`, the archive inventory `detail/archive.json` and the monthly cost files in `detail/monthly/`): the sample's `data/sample/detail/` by default; with `PAGES_DATA_SOURCE=live` the `data/detail/` of `data/audit` **only if** the repository variable `PAGES_DETAIL_DATA=true` (explicit Private-Pages attestation, default off)
 4. Builds with `STAGED_DATA=1` so `scripts/stage-data.mjs` keeps the staged file
 5. Deploys to GitHub Pages
 

@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import { detailArchiveSchema } from './archive-view.js';
 import { detailConfigSchema, looksSensitive } from './config-view.js';
 import {
   DETAIL_MANIFEST_PATH,
@@ -36,6 +37,7 @@ const SCHEMAS = {
   activity: detailActivitySchema,
   'org-groups': detailOrgGroupsSchema,
   config: detailConfigSchema,
+  archive: detailArchiveSchema,
 } as const;
 
 type Json = Record<string, unknown>;
@@ -123,7 +125,28 @@ function configLeakErrors(path: string, data: Json): string[] {
     : [`${path}: ${String(hits.length)} value(s) look like a secret, URL, e-mail address or path`];
 }
 
+/** Totals must equal the per-year rows, and each row's ids must belong to its year. */
+function archiveErrors(path: string, data: Json): string[] {
+  const years = rows(data, 'years');
+  const totals = (data.totals ?? {}) as Json;
+  const sum = (key: string): number => years.reduce((n, y) => n + Number(y[key]), 0);
+  const stray = years.filter(
+    (y) =>
+      String(y.oldest).slice(0, 4) !== y.year ||
+      String(y.newest).slice(0, 4) !== y.year ||
+      String(y.oldest) > String(y.newest),
+  );
+  return [
+    ...(totals.snapshots === sum('snapshots') && totals.bytes === sum('bytes')
+      ? []
+      : [`${path}: totals differ from the per-year rows`]),
+    ...(totals.years === years.length ? [] : [`${path}: year total differs from the rows`]),
+    ...(stray.length === 0 ? [] : [`${path}: snapshot ids outside their year`]),
+  ];
+}
+
 function countOf(entry: DetailManifestFile, data: Json): number {
+  if (entry.kind === 'archive') return Number((data.totals as Json | undefined)?.snapshots);
   if (entry.kind === 'config') return rows(data, 'rules').length;
   if (entry.kind === 'members') return rows(data, 'members').length;
   if (entry.kind === 'api-keys') return rows(data, 'keys').length;
@@ -143,6 +166,7 @@ function fileErrors(manifest: DetailManifest, entry: DetailManifestFile, text: s
       ? [`${entry.path}: month differs from the manifest`]
       : []),
     ...(entry.kind === 'config' ? configLeakErrors(entry.path, data) : []),
+    ...(entry.kind === 'archive' ? archiveErrors(entry.path, data) : []),
     ...emailErrors(entry.path, text, manifest.maskPii),
     ...(manifest.maskPii ? maskErrors(entry, entry.path, data) : []),
   ];

@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, resolve, sep } from 'node:path';
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
@@ -75,6 +75,11 @@ export class FileStore {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
       throw error;
     }
+  }
+
+  /** Size in bytes of a file. */
+  async size(relPath: string): Promise<number> {
+    return (await stat(this.path(relPath))).size;
   }
 
   remove(relPath: string): Promise<void> {
