@@ -30,7 +30,7 @@
 | F-009 | Monthly cost report view        | P1       | 🔶 Files in Phase A; viewer in Phase B                    | `data/reports/monthly/*`                         |
 | F-010 | Model usage analytics           | P1       | 🔶 Phase A (spend by model, insights); heatmap in Phase B | `usage.byModel`, `insights`                      |
 | F-011 | Light / dark theme              | P2       | ✅ Phase A (follows system); toggle UI in Phase B2 (B2-9) | —                                                |
-| F-012 | Organization / group drill-down | P2       | ⏳ Phase B                                                | detail `org-groups.json` (data ready, B2-2)      |
+| F-012 | Organization / group drill-down | P2       | ✅ B2-10 (`#/orgs`, `#/orgs/<id>`, `#/groups/<id>`)       | detail `org-groups.json`, `members.json`         |
 | F-013 | Data coverage and retention     | P2       | ✅ coverage in Phase A; archive inventory in Phase B      | `coverage`                                       |
 | F-014 | Configuration view (read-only)  | P2       | ⏳ Phase B                                                | —                                                |
 | F-015 | Snapshot comparison             | P3       | ⏳ Later                                                  | —                                                |
@@ -97,6 +97,15 @@
 
 - Daily, weekly and monthly active users as three lines with a legend (the weekly and monthly series converge, so values are read from the tooltip and table rather than end labels).
 - Subtitle: assigned seats, pending invites and monthly adoption rate from the latest summary.
+
+### F-012 Organization / group drill-down (B2-10)
+
+- Routes `#/orgs` (index, "Organizations" in the nav), `#/orgs/<id>` and `#/groups/<id>` (deep links; sub-pages keep "Organizations" current). Source: `detail/org-groups.json`; the organization page also reads `detail/members.json` and the manifest (`maskPii` note, reason a dataset is unavailable).
+- Index: linked organizations (members, deviation count), RBAC groups (source, members, month-to-date spend; groups overlap so spend is not additive), search across both, and an "Unattributed deviations" card.
+- Organization page: configuration deviations (CF-xxx) with severity and status as icon / dot + label + color, and the organization's members (joined by `organizationId`, printed as published). Group page: source, member count, month-to-date spend and its share of the highest-spending group (never summed).
+- Deviations belong to an organization only when the check evidence IDs match a linked organization; otherwise `organizationId` is null and the row appears under "Unattributed".
+- Contract limits: a group carries only `memberCount` (no member list, so none is shown and no join is invented), deviations are not attributed to groups, and spend exists per group only (none per organization). When no member carries an organization (as in the synthetic sample), the organization member list says so instead of showing an empty join.
+- States: loading, not published, not collected (manifest reason), error (alert), empty, no match, unknown id (not found).
 
 ### F-017 Insights
 

@@ -23,7 +23,7 @@ const FIXTURE = raw(
   }),
 );
 const DETAIL = import.meta.glob<string>(
-  '../../../../data/sample/detail/{index,members,api-keys,activity-*}.json',
+  '../../../../data/sample/detail/{index,members,api-keys,org-groups,activity-*}.json',
   {
     eager: true,
     query: '?raw',
@@ -96,6 +96,37 @@ describe('hash routing', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Members' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Members' })).toHaveAttribute('aria-current', 'page');
     expect(await screen.findByRole('table', { name: 'Members' })).toBeInTheDocument();
+  });
+
+  it('opens the organization and group drill-downs by deep link', async () => {
+    const byName = (suffix: string) =>
+      Object.entries(DETAIL).find(([name]) => name.endsWith(suffix))?.[1] ?? '';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: RequestInfo | URL) => {
+        const path = String(url);
+        if (path.endsWith('/org-groups.json')) return new Response(byName('/org-groups.json'));
+        if (path.endsWith('/members.json')) return new Response(byName('/members.json'));
+        if (path.endsWith('/detail/index.json')) return new Response(byName('/index.json'));
+        return new Response(SAMPLE ?? '');
+      }),
+    );
+    window.location.hash = '#/orgs/5f0c7a1e-3333-4a1a-9a11-000000000003';
+    const { unmount } = render(<App />);
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Example Corp Sales' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Organizations' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(
+      await screen.findByRole('table', { name: 'Configuration deviations' }),
+    ).toBeInTheDocument();
+    unmount();
+    window.location.hash = '#/groups/rbac_group_demo_sales';
+    render(<App />);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sales' })).toBeInTheDocument();
   });
 
   it('opens the activity timeline by deep link', async () => {
