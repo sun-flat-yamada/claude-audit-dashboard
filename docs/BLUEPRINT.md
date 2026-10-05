@@ -213,20 +213,20 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 
 ### 5.2 データセット
 
-| データセット      | API                                                                      | 備考                                               |
-| ----------------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
-| `organizations`   | Compliance `GET /v1/compliance/organizations`                            | リンク組織                                         |
-| `members`         | Admin `GET /v1/organizations/users` (代替: Compliance 組織ユーザー)      | ロールを含む                                       |
-| `memberActivity`  | Analytics `GET /v1/organizations/analytics/users`                        | 最終活動日。活動記録を無効にした組織では欠落し得る |
-| `invites`         | Admin `GET /v1/organizations/invites`                                    | 保留中の招待                                       |
-| `groups`          | Admin `GET /v1/organizations/rbac_groups` (+ members) (代替: Compliance) | 直接作成 / SCIM 由来を区別                         |
-| `settings`        | Compliance `GET /v1/compliance/organizations/{uuid}/settings`            | 実効設定。行が無い = その組織では変更できない      |
-| `credentials`     | 同上の `api_keys`                                                        | キー台帳 (値は含まない)                            |
-| `credentialUsage` | 投影: Activity Feed の `api_actor` から導出                              | キーの最終利用                                     |
-| `activities`      | Compliance `GET /v1/compliance/activities`                               | 前回以降の差分 (時間窓)                            |
-| `usage` / `cost`  | Analytics `usage_report` / `cost_report`                                 | 日次 × (総計 / product / model / rbac_group)       |
-| `adoption`        | Analytics `summaries`                                                    | DAU / WAU / MAU、シート、保留招待                  |
-| `spendLimits`     | Spend Limits `GET /v1/organizations/spend_limits/effective`              | 実効上限 (null = 無制限) と当期支出                |
+| データセット      | API                                                                      | 備考                                                |
+| ----------------- | ------------------------------------------------------------------------ | --------------------------------------------------- |
+| `organizations`   | Compliance `GET /v1/compliance/organizations`                            | リンク組織                                          |
+| `members`         | Admin `GET /v1/organizations/users` (代替: Compliance 組織ユーザー)      | ロールを含む                                        |
+| `memberActivity`  | Analytics `GET /v1/organizations/analytics/users`                        | 最終活動日。活動記録を無効にした組織では欠落し得る  |
+| `invites`         | Admin `GET /v1/organizations/invites`                                    | 保留中の招待                                        |
+| `groups`          | Admin `GET /v1/organizations/rbac_groups` (+ members) (代替: Compliance) | 直接作成 / SCIM 由来を区別                          |
+| `settings`        | Compliance `GET /v1/compliance/organizations/{uuid}/settings`            | 実効設定。行が無い = その組織では変更できない       |
+| `credentials`     | 同上の `api_keys`                                                        | キー台帳 (値は含まない)                             |
+| `credentialUsage` | 投影: Activity Feed の `api_actor` から導出                              | キーの最終利用                                      |
+| `activities`      | Compliance `GET /v1/compliance/activities`                               | 前回以降の差分 (時間窓)                             |
+| `usage` / `cost`  | Analytics `usage_report` / `cost_report`                                 | 日次 × (総計 / product / model / rbac_group)        |
+| `adoption`        | Analytics `summaries`                                                    | DAU / WAU / MAU、シート、保留招待、製品別アクティブ |
+| `spendLimits`     | Spend Limits `GET /v1/organizations/spend_limits/effective`              | 実効上限 (null = 無制限) と当期支出                 |
 
 任意アダプタのデータセットは §5.4 を参照 (有効にしたときだけ登録され、既定では上表の 13 件のまま)。
 
@@ -408,6 +408,8 @@ API の項目名・ページング方式の変更は該当ゲートウェイの�
 UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod スキーマ付き) だけを読む。collector が書き込み時に検証し、UI は schemaVersion を確認して不一致なら再生成を促す。内容は集計値のみで、メールアドレスは既定でマスクする (`dashboard.maskPii`)。
 
 `usage.daily` の各日は `inputTokens` (全入力 = 未キャッシュ + キャッシュ読み取り + キャッシュ書き込み) と `outputTokens` に加え、入力の内訳 `uncachedInputTokens` / `cacheReadInputTokens` / `cacheCreationInputTokens` (内訳の合計 = `inputTokens`) を持ち、`usage.cacheHitRate` は収集期間のキャッシュヒット率 (キャッシュ読み取り ÷ 全入力、% 小数 1 桁。`cache-efficiency` アナライザと同じ定義、入力 0 なら `null`) を持つ (AN-1)。これらは追加の任意フィールドなので schemaVersion は 2 のままで、追加前の `dashboard.json` も検証を通り、UI は内訳が無ければ入力 / 出力の 2 系列で表示する。
+
+`adoption` は製品別アクティブユーザー (AN-2) として、最新日の `byProduct` (`{ product, label, dau, wau, mau }[]`、WAU 降順、同数はカタログ順: Chat / Claude Code / Cowork / Claude Design / Claude in Office / Claude Science) と製品別 WAU の推移 `productWeekly` (`{ date, wau: { <product>: number } }[]`) を持つ。どの日にも製品別の値が無ければ両方とも省略する。任意フィールドなので schemaVersion は 2 のままで、追加前の `dashboard.json` も検証を通る。UI は Overview の Active users カードに製品別の表 (DAU / WAU / MAU と共通スケールの WAU スパークライン、「View as table」付き) を表示する。製品数がカテゴリ色の検証済みスロット数を超えるため、多系列の折れ線にはしない。
 
 個人単位のデータ (メンバー、API キー、アクティビティ検索、組織/グループ) は `dashboard.json` に入れず、別の**詳細データファイル**で配る (`DETAIL_SCHEMA_VERSION = 1`、`contracts/detail-view.ts`)。`detail/index.json` (マニフェスト: `maskPii`・`source`・各ファイルの `kind`/`path`/`status`/`count`) と、`members.json`・`api-keys.json`・`activity-<yyyy-mm>.json` (月ごと、新しい順、最大 2000 行。`total`/`truncated` で実数を示す)・`org-groups.json` から成り、各ファイルが自前の `schemaVersion` を持つ (`DashboardView` は v2 のまま)。`maskPii=true` では、メールは `j***@example.com`、氏名はイニシャル、IP は除去、ユーザー/キー/招待 ID は `u_`/`k_`/`i_` + 12 桁 hex の安定ハッシュ (ファイル間で結合可能) にする。`maskPii=false` では生値になりマニフェストに記録される。生成は純粋なプレゼンタ (`core/application/presenters/detail-*.ts`) と `collector/src/main/detail.ts` (`pnpm build:detail`、`pnpm pipeline` に含む。書き込み時に zod 検証)。`checkDetailBundle()` (`contracts/detail-bundle.ts`) がマニフェストとファイルの整合・`example.*`・マスクを検査し、`fork:verify` がサンプルに適用する。
 
