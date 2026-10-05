@@ -115,18 +115,24 @@ describe('multi-time-point demo history (F-015)', () => {
     expect(ids).toEqual([...ids].sort());
     expect(new Set(ids).size).toBe(3);
     expect(pts[2]?.view.collectedAt).toBe(DEMO_NOW.toISOString());
-    // The root files are the single-point sample of before the history existed.
-    expect(pts[2]?.view.compliance.history).toHaveLength(1);
+    // The root dashboard is judged after the earlier points, so its trend carries all three.
+    expect(pts[2]?.view.compliance.history).toHaveLength(3);
     expect(pts[2]?.report.summary.errors + (pts[2]?.report.summary.skipped ?? 0)).toBe(0);
     for (const point of pts) expect(point.view.source).toBe('demo');
   });
 
   it('each earlier point carries the score history up to itself', () => {
-    expect(pts.map((p) => p.view.compliance.history.length)).toEqual([1, 2, 1]);
+    expect(pts.map((p) => p.view.compliance.history.length)).toEqual([1, 2, 3]);
     expect(pts[1]?.view.compliance.history.map((h) => h.date)).toEqual([
       pts[0]?.report.generatedAt,
       pts[1]?.report.generatedAt,
     ]);
+    expect(pts[2]?.view.compliance.history.map((h) => h.date)).toEqual(
+      pts.map((p) => p.report.generatedAt),
+    );
+    expect(pts[2]?.view.compliance.history.map((h) => h.score)).toEqual(
+      pts.map((p) => p.report.summary.score),
+    );
   });
 
   it.each(RULE_CHANGES)(

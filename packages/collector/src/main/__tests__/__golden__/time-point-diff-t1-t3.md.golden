@@ -1,0 +1,47 @@
+# Time-point comparison
+
+- Base: 2026-09-01T12-00-00Z (collected 2026-09-01T12:00:00.000Z)
+- Target: 2026-09-29T12-00-00Z (collected 2026-09-29T12:00:00.000Z)
+- Changes: yes
+
+## Score
+
+| Figure | Base | Target | Delta |
+| --- | --- | --- | --- |
+| Compliance score | 73 | 70 | -3 |
+| Assessed rules | 27 of 28 | 30 of 30 | +3 |
+
+## Rule changes (13)
+
+| Rule | Name | Severity | Base | Target | Change |
+| --- | --- | --- | --- | --- | --- |
+| AK-003 | API Key Age | medium | pass | fail | regressed |
+| AM-006 | Authentication Failure Burst | medium | pass | warning | regressed |
+| CF-003 | IP Allowlist Enabled | medium | pass | fail | regressed |
+| UA-003 | Members Without Spend Limit | medium | pass | fail | regressed |
+| AC-004 | Stale Pending Invites | low | pass | fail | regressed |
+| UA-004 | Spend Limit Nearly Exhausted | low | pass | warning | regressed |
+| AM-007 | Data Protection Changes | high | (none) | pass | added |
+| DG-001 | Empty Groups | low | (none) | fail | added |
+| UA-001 | Usage Spike Detection | high | error | fail | assessed |
+| AC-002 | Excessive Administrative Roles | high | fail | pass | improved |
+| AM-002 | Identity Provider Changes | high | warning | pass | improved |
+| OP-002 | Data Source Coverage | high | fail | pass | improved |
+| CF-006 | Public Projects Disabled | medium | fail | pass | improved |
+
+## Dataset coverage changes (1)
+
+| Dataset | Base | Target | Change |
+| --- | --- | --- | --- |
+| groups | unavailable | ok | improved |
+
+## KPIs
+
+| KPI | Base | Target | Delta |
+| --- | --- | --- | --- |
+| Compliance score | 73 | 70 | -3 |
+| Open findings | 11 | 15 | +4 |
+| Members | 34 | 40 | +6 |
+| Monthly active users | 23 | 30 | +7 |
+| Seat utilization (30d) | 51.1 | 66.7 | +15.6 |
+| Month-to-date cost | 131.95 | 4775.88 | +4643.93 |

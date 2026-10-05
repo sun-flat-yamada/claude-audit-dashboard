@@ -1,0 +1,48 @@
+# Time-point comparison
+
+- Base: 2026-09-01T12-00-00Z (collected 2026-09-01T12:00:00.000Z)
+- Target: 2026-09-15T12-00-00Z (collected 2026-09-15T12:00:00.000Z)
+- Changes: yes
+
+## Score
+
+| Figure | Base | Target | Delta |
+| --- | --- | --- | --- |
+| Compliance score | 73 | 78 | +5 |
+| Assessed rules | 27 of 28 | 25 of 29 | -2 |
+
+## Rule changes (12)
+
+| Rule | Name | Severity | Base | Target | Change |
+| --- | --- | --- | --- | --- | --- |
+| UA-002 | Cost Budget Threshold | critical | pass | warning | regressed |
+| AK-003 | API Key Age | medium | pass | fail | regressed |
+| AM-006 | Authentication Failure Burst | medium | pass | warning | regressed |
+| UA-003 | Members Without Spend Limit | medium | pass | skipped | unassessed |
+| AC-004 | Stale Pending Invites | low | pass | skipped | unassessed |
+| UA-004 | Spend Limit Nearly Exhausted | low | pass | skipped | unassessed |
+| AM-007 | Data Protection Changes | high | (none) | pass | added |
+| DG-001 | Empty Groups | low | (none) | skipped | added |
+| AK-002 | Over-privileged API Keys | high | fail | (none) | removed |
+| UA-001 | Usage Spike Detection | high | error | pass | assessed |
+| AM-002 | Identity Provider Changes | high | warning | pass | improved |
+| CF-006 | Public Projects Disabled | medium | fail | pass | improved |
+
+## Dataset coverage changes (3)
+
+| Dataset | Base | Target | Change |
+| --- | --- | --- | --- |
+| groups | unavailable | error | regressed |
+| invites | ok | error | regressed |
+| spendLimits | ok | unavailable | regressed |
+
+## KPIs
+
+| KPI | Base | Target | Delta |
+| --- | --- | --- | --- |
+| Compliance score | 73 | 78 | +5 |
+| Open findings | 11 | 11 | 0 |
+| Members | 34 | 43 | +9 |
+| Monthly active users | 23 | 35 | +12 |
+| Seat utilization (30d) | 51.1 | 77.8 | +26.7 |
+| Month-to-date cost | 131.95 | 4961.23 | +4829.28 |

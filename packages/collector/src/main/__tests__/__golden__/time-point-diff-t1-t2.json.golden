@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "base": {
+    "id": "2026-09-01T12-00-00Z",
+    "collectedAt": "2026-09-01T12:00:00.000Z"
+  },
+  "target": {
+    "id": "2026-09-15T12-00-00Z",
+    "collectedAt": "2026-09-15T12:00:00.000Z"
+  },
+  "hasChanges": true,
+  "score": {
+    "base": 73,
+    "target": 78,
+    "delta": 5,
+    "baseAssessed": 27,
+    "targetAssessed": 25,
+    "assessedDelta": -2,
+    "baseTotal": 28,
+    "targetTotal": 29
+  },
+  "rules": {
+    "counts": {
+      "regressed": 3,
+      "improved": 2,
+      "unchanged": 18,
+      "added": 2,
+      "removed": 1,
+      "assessed": 1,
+      "unassessed": 3
+    },
+    "changes": [
+      {
+        "id": "UA-002",
+        "name": "Cost Budget Threshold",
+        "category": "usage-anomaly",
+        "severity": "critical",
+        "from": "pass",
+        "to": "warning",
+        "change": "regressed"
+      },
+      {
+        "id": "AK-003",
+        "name": "API Key Age",
+        "category": "api-key-management",
+        "severity": "medium",
+        "from": "pass",
+        "to": "fail",
+        "change": "regressed"
+      },
+      {
+        "id": "AM-006",
+        "name": "Authentication Failure Burst",
+        "category": "activity-monitoring",
+        "severity": "medium",
+        "from": "pass",
+        "to": "warning",
+        "change": "regressed"
+      },
+      {
+        "id": "UA-003",
+        "name": "Members Without Spend Limit",
+        "category": "usage-anomaly",
+        "severity": "medium",
+        "from": "pass",
+        "to": "skipped",
+        "change": "unassessed"
+      },
+      {
+        "id": "AC-004",
+        "name": "Stale Pending Invites",
+        "category": "access-control",
+        "severity": "low",
+        "from": "pass",
+        "to": "skipped",
+        "change": "unassessed"
+      },
+      {
+        "id": "UA-004",
+        "name": "Spend Limit Nearly Exhausted",
+        "category": "usage-anomaly",
+        "severity": "low",
+        "from": "pass",
+        "to": "skipped",
+        "change": "unassessed"
+      },
+      {
+        "id": "AM-007",
+        "name": "Data Protection Changes",
+        "category": "activity-monitoring",
+        "severity": "high",
+        "from": null,
+        "to": "pass",
+        "change": "added"
+      },
+      {
+        "id": "DG-001",
+        "name": "Empty Groups",
+        "category": "data-governance",
+        "severity": "low",
+        "from": null,
+        "to": "skipped",
+        "change": "added"
+      },
+      {
+        "id": "AK-002",
+        "name": "Over-privileged API Keys",
+        "category": "api-key-management",
+        "severity": "high",
+        "from": "fail",
+        "to": null,
+        "change": "removed"
+      },
+      {
+        "id": "UA-001",
+        "name": "Usage Spike Detection",
+        "category": "usage-anomaly",
+        "severity": "high",
+        "from": "error",
+        "to": "pass",
+        "change": "assessed"
+      },
+      {
+        "id": "AM-002",
+        "name": "Identity Provider Changes",
+        "category": "activity-monitoring",
+        "severity": "high",
+        "from": "warning",
+        "to": "pass",
+        "change": "improved"
+      },
+      {
+        "id": "CF-006",
+        "name": "Public Projects Disabled",
+        "category": "configuration",
+        "severity": "medium",
+        "from": "fail",
+        "to": "pass",
+        "change": "improved"
+      }
+    ]
+  },
+  "coverage": {
+    "counts": {
+      "regressed": 3,
+      "improved": 0,
+      "unchanged": 10,
+      "added": 0,
+      "removed": 0,
+      "assessed": 0,
+      "unassessed": 0
+    },
+    "changes": [
+      {
+        "dataset": "groups",
+        "from": "unavailable",
+        "to": "error",
+        "fromCount": null,
+        "toCount": null,
+        "countDelta": null,
+        "change": "regressed"
+      },
+      {
+        "dataset": "invites",
+        "from": "ok",
+        "to": "error",
+        "fromCount": 2,
+        "toCount": null,
+        "countDelta": null,
+        "change": "regressed"
+      },
+      {
+        "dataset": "spendLimits",
+        "from": "ok",
+        "to": "unavailable",
+        "fromCount": 40,
+        "toCount": null,
+        "countDelta": null,
+        "change": "regressed"
+      }
+    ]
+  },
+  "kpis": [
+    {
+      "id": "score",
+      "label": "Compliance score",
+      "unit": "score",
+      "base": 73,
+      "target": 78,
+      "delta": 5
+    },
+    {
+      "id": "open-findings",
+      "label": "Open findings",
+      "unit": "count",
+      "base": 11,
+      "target": 11,
+      "delta": 0
+    },
+    {
+      "id": "members",
+      "label": "Members",
+      "unit": "count",
+      "base": 34,
+      "target": 43,
+      "delta": 9
+    },
+    {
+      "id": "mau",
+      "label": "Monthly active users",
+      "unit": "count",
+      "base": 23,
+      "target": 35,
+      "delta": 12
+    },
+    {
+      "id": "seat-utilization",
+      "label": "Seat utilization (30d)",
+      "unit": "percent",
+      "base": 51.1,
+      "target": 77.8,
+      "delta": 26.7
+    },
+    {
+      "id": "mtd-cost",
+      "label": "Month-to-date cost",
+      "unit": "currency",
+      "base": 131.95,
+      "target": 4961.23,
+      "delta": 4829.28
+    }
+  ]
+}

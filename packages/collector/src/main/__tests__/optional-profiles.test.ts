@@ -91,9 +91,14 @@ describe('demo profiles', () => {
       'toolAccepted',
     ])
       expect(text, secretish).not.toContain(secretish);
-    // The datasets appear as coverage rows (status and record counts) and nowhere else.
+    // The datasets appear as coverage rows (status and record counts) and nowhere else: in the
+    // dashboard, the time-point summary (dataset status and count) and the configuration view.
     const mentions = published.filter(([, content]) => content.includes('claudeCodeActivity'));
-    expect(mentions.map(([name]) => name).sort()).toEqual(['dashboard.json', 'detail/config.json']);
+    expect(mentions.map(([name]) => name).sort()).toEqual([
+      'dashboard.json',
+      'detail/compare/2026-09-29T12-00-00Z.json',
+      'detail/config.json',
+    ]);
   });
 });
 

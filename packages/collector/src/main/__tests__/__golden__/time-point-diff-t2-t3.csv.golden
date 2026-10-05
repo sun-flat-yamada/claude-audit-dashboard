@@ -1,0 +1,22 @@
+Section,Id,Name,Severity,Base,Target,Change,Delta
+score,score,Compliance score,,78,70,decreased,-8
+score,assessed,Assessed rules,,25,30,increased,5
+rule,UA-001,Usage Spike Detection,high,pass,fail,regressed,
+rule,CF-003,IP Allowlist Enabled,medium,pass,fail,regressed,
+rule,AK-002,Over-privileged API Keys,high,,fail,added,
+rule,UA-003,Members Without Spend Limit,medium,skipped,fail,assessed,
+rule,AC-004,Stale Pending Invites,low,skipped,fail,assessed,
+rule,DG-001,Empty Groups,low,skipped,fail,assessed,
+rule,UA-004,Spend Limit Nearly Exhausted,low,skipped,warning,assessed,
+rule,UA-002,Cost Budget Threshold,critical,warning,pass,improved,
+rule,AC-002,Excessive Administrative Roles,high,fail,pass,improved,
+rule,OP-002,Data Source Coverage,high,fail,pass,improved,
+dataset,groups,groups,,error,ok,improved,
+dataset,invites,invites,,error,ok,improved,
+dataset,spendLimits,spendLimits,,unavailable,ok,improved,
+kpi,score,Compliance score,,78,70,decreased,-8
+kpi,open-findings,Open findings,,11,15,increased,4
+kpi,members,Members,,43,40,decreased,-3
+kpi,mau,Monthly active users,,35,30,decreased,-5
+kpi,seat-utilization,Seat utilization (30d),,77.8,66.7,decreased,-11.1
+kpi,mtd-cost,Month-to-date cost,,4961.23,4775.88,decreased,-185.35
