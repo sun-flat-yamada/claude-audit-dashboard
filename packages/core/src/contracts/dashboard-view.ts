@@ -49,10 +49,20 @@ const usage = z.object({
     z.object({
       date: z.string(),
       cost: z.number(),
+      /** All input tokens: uncached + cache reads + cache writes. */
       inputTokens: z.number(),
       outputTokens: z.number(),
+      /** Input breakdown; optional so a `dashboard.json` written before it still parses. */
+      uncachedInputTokens: z.number().optional(),
+      cacheReadInputTokens: z.number().optional(),
+      cacheCreationInputTokens: z.number().optional(),
     }),
   ),
+  /**
+   * Cache reads as a percent of all input tokens over the collected period (one decimal),
+   * null when there was no input; absent in a `dashboard.json` written before it existed.
+   */
+  cacheHitRate: z.number().nullable().optional(),
   byProduct: z.array(share),
   byModel: z.array(share),
   byGroup: z.array(share),
