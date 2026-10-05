@@ -10,8 +10,10 @@ and `web_search_count`, from the same call, into the optional `MemberActivity.en
 dashboard publishes an aggregate with no per-person values (`DashboardView.engagement`) and the
 Overview shows a "Product engagement (90 days)" card with a product table and a Claude Code panel
 (lines added / removed, commits, pull requests, sessions, suggestion accept rate per tool). Every
-new field is optional, so stored snapshots and older `dashboard.json` files still load;
-`schemaVersion` stays 2. A missing block or `null` counter never fails the collection, and
+new field is optional, so stored snapshots and older `dashboard.json` files still load. The plan
+was written against `schemaVersion` 2; `main` moved to `DashboardView` v3 (#102, model x group
+aggregate) during this change, so after the rebase `engagement` is an optional v3 field and a v3
+`dashboard.json` written before it still parses. A missing block or `null` counter never fails the collection, and
 `active` / `lastActiveOn` (input of AC-001) are computed exactly as before.
 
 ## Changes Made
@@ -41,7 +43,8 @@ new field is optional, so stored snapshots and older `dashboard.json` files stil
   unchanged) because the default fixture rows now also carry `engagement`.
 - `packages/collector/src/adapters/demo/demo-engagement.ts` (new), `demo-source.ts`:
   persona-based synthetic engagement; the demo member-activity window starts at the start of the
-  day 90 days ago like the real roll-up; `data/sample/` regenerated with `pnpm demo`.
+  day 90 days ago like the real roll-up; `data/sample/` (including the F-015 `history/` views
+  after the rebase) regenerated with `pnpm demo`.
 
 ### Dashboard
 
@@ -63,14 +66,14 @@ new field is optional, so stored snapshots and older `dashboard.json` files stil
 | :------------------- | :------------------ | :---------------------------------------- |
 | Code-Data Decoupling | `pnpm fork:verify`  | ✅ Clean (exit 0)                         |
 | TypeScript Check     | `pnpm typecheck`    | ✅ Pass (exit 0)                          |
-| Unit Tests           | `pnpm test`         | ✅ core 193, collector 228, dashboard 354 |
+| Unit Tests           | `pnpm test`         | ✅ core 196, collector 261, dashboard 355 |
 | Secret Scan          | `pnpm secret-scan`  | ✅ Clean (exit 0)                         |
 | Build                | `pnpm build`        | ✅ Pass (exit 0)                          |
 | Lint                 | `pnpm lint`         | ✅ Pass (exit 0)                          |
 | Format               | `pnpm format:check` | ✅ Pass (exit 0)                          |
-| E2E and a11y         | `pnpm test:e2e`     | ✅ 363 passed, 15 skipped (by profile)    |
+| E2E and a11y         | `pnpm test:e2e`     | ✅ 362 passed, 14 skipped (by profile)    |
 
-AC-001 tests (`packages/core/src/domain/compliance/__tests__/access-control.test.ts`) are
+Results after rebasing onto `origin/main` (DashboardView v3). AC-001 tests (`packages/core/src/domain/compliance/__tests__/access-control.test.ts`) are
 unchanged and pass.
 
 ### Manual Verification
