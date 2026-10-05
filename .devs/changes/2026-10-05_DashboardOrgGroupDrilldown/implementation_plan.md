@@ -8,7 +8,7 @@ Closes #65. Refs #37 (tracking). Plan source: `.devs/changes/2026-10-04_Dashboar
 > No contract change. The plan names the routes `#/orgs/<id>` and `#/groups/<id>`; this unit adds the index `#/orgs` ("Organizations" in the nav) so the detail pages are reachable. `detail/org-groups.json` is the source; `detail/members.json` is joined for the organization member list (by `organizationId`).
 
 > [!WARNING]
-> Contract limits, reported rather than worked around: (1) the Group entity carries only `memberCount`, so the group page shows the count and states that no member list exists (no invented join); (2) configuration deviations (CF-xxx) are attributed to organizations only (evidence IDs matching an organization); rows with `organizationId: null` are shown in an "Unattributed" bucket; the group page therefore has no deviations of its own; (3) spend exists per RBAC group only, so the organization page has no spend figure. (4) The demo synthetic members gain organization IDs (round robin over the three demo organizations) so member lists and counts are exercised; `data/sample/` is regenerated.
+> Contract limits, reported rather than worked around: (1) the Group entity carries only `memberCount`, so the group page shows the count and states that no member list exists (no invented join); (2) configuration deviations (CF-xxx) are attributed to organizations only (evidence IDs matching an organization); rows with `organizationId: null` are shown in an "Unattributed" bucket; the group page therefore has no deviations of its own; (3) spend exists per RBAC group only, so the organization page has no spend figure. (4) The demo is left unchanged: giving synthetic members organization IDs would change AC-002/AC-003 (the demo has a single primary owner) and the compliance score, so in the sample `organizationId` stays null; the organization member list then shows a "members carry no organization" state, and the joined list is covered by component tests with synthetic data.
 
 ## Proposed Changes
 
@@ -26,11 +26,9 @@ Closes #65. Refs #37 (tracking). Plan source: `.devs/changes/2026-10-04_Dashboar
 
 - Routes `/orgs`, `/orgs/:id`, `/groups/:id`; sub-routes keep "Organizations" current in the nav (`navPath`).
 
-### packages/collector
+### Data
 
-#### [MODIFY] `src/adapters/demo/demo-source.ts`
-
-- Synthetic members get `organizationId`; `data/sample/` regenerated.
+- No demo change; `data/sample/` is unchanged (the existing `org-groups.json` already has 3 organizations, 4 groups and 3 deviations).
 
 ### Tests
 
@@ -46,7 +44,7 @@ Closes #65. Refs #37 (tracking). Plan source: `.devs/changes/2026-10-04_Dashboar
 
 - `pnpm fork:verify && pnpm typecheck && pnpm test && pnpm secret-scan && pnpm build`
 - `pnpm lint && pnpm format:check && pnpm audit:deps`
-- `pnpm demo` leaves `git diff --exit-code data/sample` clean after the committed regeneration.
+- `pnpm demo` leaves `git diff --exit-code data/sample` clean.
 
 ### Manual Verification
 
