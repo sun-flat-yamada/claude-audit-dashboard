@@ -7,6 +7,7 @@ import { Compliance } from './pages/Compliance';
 import { ApiKeys } from './pages/ApiKeys';
 import { GroupDetail } from './pages/GroupDetail';
 import { Members } from './pages/Members';
+import { MonthlyReport } from './pages/MonthlyReport';
 import { OrganizationDetail } from './pages/OrganizationDetail';
 import { Organizations } from './pages/Organizations';
 import { Overview } from './pages/Overview';
@@ -57,6 +58,21 @@ export const ROUTES: RouteDef[] = [
     label: 'Activity',
     nav: true,
     render: () => <Activity />,
+  },
+  {
+    path: '/reports/monthly',
+    pattern: '/reports/monthly',
+    label: 'Monthly report',
+    nav: true,
+    render: () => <MonthlyReport />,
+  },
+  {
+    path: '/reports/monthly/:id',
+    pattern: '/reports/monthly/:id',
+    label: 'Monthly report',
+    nav: false,
+    navPath: '/reports/monthly',
+    render: (_view, params) => <MonthlyReport id={params.id ?? ''} />,
   },
   {
     path: '/orgs',

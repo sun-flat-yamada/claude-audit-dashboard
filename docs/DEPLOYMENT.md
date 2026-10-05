@@ -10,7 +10,7 @@ The published file contains aggregates only (KPIs, rule results, daily totals, t
 
 ### Per-person detail files (`PAGES_DETAIL_DATA`)
 
-Member, API key, activity and organization / group views read separate **detail files** (`detail/index.json` manifest, `members.json`, `api-keys.json`, `activity-<yyyy-mm>.json`, `org-groups.json`), never `dashboard.json`. They contain per-person data: e-mail addresses and names are masked and user / key IDs are replaced by stable short hashes while `dashboard.maskPii` is `true`, but with `maskPii=false` they hold raw values.
+Member, API key, activity and organization / group views read separate **detail files** (`detail/index.json` manifest, `members.json`, `api-keys.json`, `activity-<yyyy-mm>.json`, `org-groups.json`, plus `monthly/index.json` and `monthly/<id>.json` for the monthly cost report), never `dashboard.json`. They contain per-person data: e-mail addresses and names are masked and user / key IDs are replaced by stable short hashes while `dashboard.maskPii` is `true`, but with `maskPii=false` they hold raw values. The monthly cost files hold no per-person data, but cost per RBAC group is confidential, so they are published under exactly the same condition (decision D2, conservative option).
 
 | `PAGES_DATA_SOURCE` | `PAGES_DETAIL_DATA` | Detail files on Pages                                     |
 | ------------------- | ------------------- | --------------------------------------------------------- |

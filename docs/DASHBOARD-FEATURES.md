@@ -27,7 +27,7 @@
 | F-006 | Member view                     | P1       | ✅ Phase B2 (B2-4, `#/members`)                           | detail `members.json` (B2-2)                     |
 | F-007 | API key inventory               | P1       | ✅ Phase B2 (B2-5, `#/keys`)                              | detail `api-keys.json` (B2-2)                    |
 | F-008 | Alert history                   | P1       | ⏳ Phase B                                                | notification state                               |
-| F-009 | Monthly cost report view        | P1       | 🔶 Files in Phase A; viewer in Phase B                    | `data/reports/monthly/*`                         |
+| F-009 | Monthly cost report view        | P1       | ✅ B2-7 (`#/reports/monthly`, `#/reports/monthly/<id>`)   | detail `monthly/index.json`, `monthly/<id>.json` |
 | F-010 | Model usage analytics           | P1       | 🔶 Phase A (spend by model, insights); heatmap in Phase B | `usage.byModel`, `insights`                      |
 | F-011 | Light / dark theme              | P2       | ✅ Phase A (follows system); toggle UI in Phase B2 (B2-9) | —                                                |
 | F-012 | Organization / group drill-down | P2       | ✅ B2-10 (`#/orgs`, `#/orgs/<id>`, `#/groups/<id>`)       | detail `org-groups.json`, `members.json`         |
@@ -107,6 +107,14 @@
 - Contract limits: a group carries only `memberCount` (no member list, so none is shown and no join is invented), deviations are not attributed to groups, and spend exists per group only (none per organization). When no member carries an organization (as in the synthetic sample), the organization member list says so instead of showing an empty join.
 - States: loading, not published, not collected (manifest reason), error (alert), empty, no match, unknown id (not found).
 
+### F-009 Monthly cost report viewer (B2-7)
+
+- Routes `#/reports/monthly` (newest month) and `#/reports/monthly/<id>` (`<id>` = `monthly-yyyy-mm`; deep link). Source: `detail/monthly/index.json` (month list, newest first) and one `detail/monthly/<id>.json` per month, a small mapped subset of the collector's monthly report (`MONTHLY_REPORT_SCHEMA_VERSION = 1`), not the report document itself. The month selector is built from the index.
+- Per month: the organization total (the ungrouped value), the chargeback table per RBAC group (cost and share of the total), cost by model and by product, period, generation time and the report notes. Search filters all three tables.
+- **Overlap notice (CHANGE-PLAN section 10 V7):** a member counts toward every group they belong to, so group amounts can add up to more than the organization total. The notice is always shown next to the tables ("Groups overlap", icon + label) and is emphasised with an extra sentence when the group amounts exceed the total. Group amounts are never summed: there is no total row for groups.
+- States: loading, not published (index or month file absent), not collected (month `unavailable`, with the reason; shown by icon + label), error (alert), empty (no month in the index), no match (search), unknown month id. Monthly files carry no per-person data, so `maskPii` does not change the page.
+- Publication: the files live under `detail/` and follow the detail rule (cost per group is confidential): on Pages only with `PAGES_DATA_SOURCE=live` and `PAGES_DETAIL_DATA=true` (Private Pages), always in the synthetic sample. `pnpm report:monthly` writes them next to the Markdown / HTML / CSV / JSON report (which are unchanged); `pnpm demo` generates three synthetic months with overlapping groups. No export and no chart in this unit (tables are the primary view).
+
 ### F-017 Insights
 
 - Title and detail of each analyzer result (model concentration, cache efficiency, group concentration, seat utilization) with its priority.
@@ -131,15 +139,17 @@
 
 ## Detail data files (B2-2)
 
-The screens of F-005 (search), F-006, F-007 and F-012 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 1`, zod schemas in `@claude-audit/core/contracts`).
+The screens of F-005 (search), F-006, F-007, F-009 and F-012 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 1`, zod schemas in `@claude-audit/core/contracts`).
 
-| File                             | Content                                                                                                         |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `detail/index.json`              | Manifest: `maskPii`, `source`, and per file `kind`, `path`, `status` (`ok` / `unavailable` + reason), `count`   |
-| `detail/members.json`            | Members (role, organization, `active`, `lastActiveOn`), invites, the AC-001 `inactiveDays` threshold            |
-| `detail/api-keys.json`           | Keys (scopes, active, created / expires, creator, `lastSeenAt`), AK-001 / AK-003 thresholds, usage window start |
-| `detail/activity-<yyyy-mm>.json` | One file per UTC month, newest first, capped at 2000 rows (`total` and `truncated` give the real count)         |
-| `detail/org-groups.json`         | Organizations, RBAC groups (member count, month-to-date spend; groups overlap), CF-xxx deviations               |
+| File                             | Content                                                                                                                       |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `detail/index.json`              | Manifest: `maskPii`, `source`, and per file `kind`, `path`, `status` (`ok` / `unavailable` + reason), `count`                 |
+| `detail/members.json`            | Members (role, organization, `active`, `lastActiveOn`), invites, the AC-001 `inactiveDays` threshold                          |
+| `detail/api-keys.json`           | Keys (scopes, active, created / expires, creator, `lastSeenAt`), AK-001 / AK-003 thresholds, usage window start               |
+| `detail/activity-<yyyy-mm>.json` | One file per UTC month, newest first, capped at 2000 rows (`total` and `truncated` give the real count)                       |
+| `detail/org-groups.json`         | Organizations, RBAC groups (member count, month-to-date spend; groups overlap), CF-xxx deviations                             |
+| `detail/monthly/index.json`      | Monthly cost reports: month list (newest first), status, organization total (no per-person data; written by `report monthly`) |
+| `detail/monthly/<id>.json`       | One month: organization total, cost by RBAC group / model / product (amount, share), notes; group rows overlap                |
 
 Identifier handling follows `dashboard.maskPii` (default `true`): e-mail addresses become `j***@example.com`, names become initials (`A*** E***`), IP addresses are dropped, and user / key / invite IDs become `u_` / `k_` / `i_` plus 12 hex characters, stable across files so rows stay joinable. With `maskPii=false` raw values are written (and the manifest says so). A missing file with an `unavailable` manifest entry means the dataset was not collected; absence of the whole directory means "not published". `pnpm build:detail` (part of `pnpm pipeline`) writes `data/detail/`; `pnpm demo` writes the synthetic `data/sample/detail/`, validated by `pnpm fork:verify` (contract, `example.*` e-mails only, masked identifiers).
 
@@ -150,7 +160,6 @@ Identifier handling follows `dashboard.maskPii` (default `true`): e-mail address
 | ID    | Scope                                                                                                         |
 | ----- | ------------------------------------------------------------------------------------------------------------- |
 | F-008 | History of alerts sent (from the notification state) and their acknowledgement status.                        |
-| F-009 | In-app viewer for `data/reports/monthly/*` with charge-back tables per RBAC group.                            |
 | F-010 | Model × group heatmap (sequential single-hue scale with a legend), trend of model mix.                        |
 | F-012 | Drill-down per linked organization or RBAC group: members, settings deviations (CF-xxx), spend.               |
 | F-013 | Archive inventory (years, snapshot counts, sizes).                                                            |

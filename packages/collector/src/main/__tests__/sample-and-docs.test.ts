@@ -3,7 +3,12 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildRuleCatalog } from '@claude-audit/core';
-import { checkDetailBundle, dashboardViewSchema } from '@claude-audit/core/contracts';
+import {
+  MONTHLY_INDEX_PATH,
+  checkDetailBundle,
+  dashboardViewSchema,
+  monthlyReportIndexSchema,
+} from '@claude-audit/core/contracts';
 import { describe, expect, it } from 'vitest';
 import { silentLogger } from '../../infrastructure/runtime.js';
 import { writeDemoSample } from '../demo.js';
@@ -26,6 +31,12 @@ describe('public sample data (data/sample)', () => {
       );
       expect(Object.keys(detail).length).toBeGreaterThanOrEqual(5);
       expect(checkDetailBundle(detail, { requireDemo: true })).toEqual([]);
+      const index = monthlyReportIndexSchema.parse(
+        JSON.parse(generated[MONTHLY_INDEX_PATH] ?? '{}'),
+      );
+      expect(index.reports.length).toBeGreaterThanOrEqual(3);
+      // Months are generated with the same data as the existing Markdown report (no change there).
+      expect(generated['monthly-report.md']).toContain('2026-08');
     } finally {
       await rm(out, { recursive: true, force: true });
     }

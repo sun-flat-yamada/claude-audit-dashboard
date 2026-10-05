@@ -88,6 +88,11 @@ describe('stage', () => {
   });
 
   describe('detail files', () => {
+    it('stages the monthly cost files with the detail directory (same publication rule)', () => {
+      stage({ env: { DASHBOARD_DATA_SOURCE: 'sample' }, pkgRoot, log: quiet });
+      expect(readFileSync(staged('monthly/index.json'), 'utf-8')).toBe('SAMPLE-MONTHLY');
+    });
+
     const staged = (rel) => join(pkgRoot, 'public', 'data', 'detail', rel);
 
     beforeEach(() => {
@@ -96,6 +101,7 @@ describe('stage', () => {
       write('data/fixture/detail/index.json', 'FIXTURE-INDEX');
       write('data/detail/index.json', 'LIVE-INDEX');
       write('data/detail/activity-2026-09.json', 'LIVE-ACTIVITY');
+      write('data/sample/detail/monthly/index.json', 'SAMPLE-MONTHLY');
     });
 
     it.each([

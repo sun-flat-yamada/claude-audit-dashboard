@@ -13,6 +13,7 @@ import { defaultFixtureDir } from '../adapters/fixture/fixture-source.js';
 import { archiveSnapshots } from '../adapters/storage/archive.js';
 import type { Container } from './container.js';
 import { writeDetail } from './detail.js';
+import { writeMonthlyView } from './monthly-report.js';
 import { writeDemoSample } from './demo.js';
 import { writeFixtureTenant } from './fixture.js';
 import { sanitizeDirectory } from './sanitize.js';
@@ -107,7 +108,8 @@ const reportCommand: Command = {
     const [id] = args;
     if (!id || id.startsWith('--')) throw new Error(`Usage: ${this.usage}`);
     const { document, paths } = await generateReport(c, id, option(args, '--month'));
-    c.logger.info(`${document.title}\n  ${paths.join('\n  ')}`);
+    const published = Object.keys(await writeMonthlyView(c, document));
+    c.logger.info(`${document.title}\n  ${[...paths, ...published].join('\n  ')}`);
     if (args.includes('--notify')) await deliver(c, documentAlert(document, c.env.dashboardUrl));
   },
 };
