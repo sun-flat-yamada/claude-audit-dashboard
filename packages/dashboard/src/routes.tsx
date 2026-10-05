@@ -4,6 +4,7 @@ import type { NavItem } from './components/NavBar';
 import { matchPath } from './lib/router';
 import { Activity } from './pages/Activity';
 import { Compliance } from './pages/Compliance';
+import { Config } from './pages/Config';
 import { ApiKeys } from './pages/ApiKeys';
 import { GroupDetail } from './pages/GroupDetail';
 import { Members } from './pages/Members';
@@ -73,6 +74,13 @@ export const ROUTES: RouteDef[] = [
     nav: false,
     navPath: '/reports/monthly',
     render: (_view, params) => <MonthlyReport id={params.id ?? ''} />,
+  },
+  {
+    path: '/config',
+    pattern: '/config',
+    label: 'Configuration',
+    nav: true,
+    render: () => <Config />,
   },
   {
     path: '/orgs',

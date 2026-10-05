@@ -88,6 +88,11 @@ describe('stage', () => {
   });
 
   describe('detail files', () => {
+    it('stages the effective configuration with the detail directory (same publication rule)', () => {
+      stage({ env: { DASHBOARD_DATA_SOURCE: 'sample' }, pkgRoot, log: quiet });
+      expect(readFileSync(staged('config.json'), 'utf-8')).toBe('SAMPLE-CONFIG');
+    });
+
     it('stages the monthly cost files with the detail directory (same publication rule)', () => {
       stage({ env: { DASHBOARD_DATA_SOURCE: 'sample' }, pkgRoot, log: quiet });
       expect(readFileSync(staged('monthly/index.json'), 'utf-8')).toBe('SAMPLE-MONTHLY');
@@ -102,6 +107,7 @@ describe('stage', () => {
       write('data/detail/index.json', 'LIVE-INDEX');
       write('data/detail/activity-2026-09.json', 'LIVE-ACTIVITY');
       write('data/sample/detail/monthly/index.json', 'SAMPLE-MONTHLY');
+      write('data/sample/detail/config.json', 'SAMPLE-CONFIG');
     });
 
     it.each([

@@ -1,11 +1,13 @@
 import {
   DEFAULT_DETAIL_THRESHOLDS,
   buildDetailView,
+  type ConfigViewInput,
   type DetailThresholds,
 } from '@claude-audit/core';
 import {
   DETAIL_MANIFEST_PATH,
   detailActivitySchema,
+  detailConfigSchema,
   detailApiKeysSchema,
   detailManifestSchema,
   detailMembersSchema,
@@ -13,6 +15,7 @@ import {
 } from '@claude-audit/core/contracts';
 import type { z } from 'zod';
 import { stableStringify } from '../adapters/storage/file-store.js';
+import { configViewInput } from './config-view.js';
 import type { Container } from './container.js';
 
 const positiveInt = (value: unknown, fallback: number): number =>
@@ -34,14 +37,18 @@ const schemaFor = (path: string): z.ZodType => {
   if (path.endsWith('/members.json')) return detailMembersSchema;
   if (path.endsWith('/api-keys.json')) return detailApiKeysSchema;
   if (path.endsWith('/org-groups.json')) return detailOrgGroupsSchema;
+  if (path.endsWith('/config.json')) return detailConfigSchema;
   return detailActivitySchema;
 };
 
 /**
- * Writes `detail/*.json` (manifest + entity files) from the latest stored data. Every file is
+ * Writes `detail/*.json` (manifest + entity files, incl. the effective configuration) from the latest stored data. Every file is
  * validated against its contract at this single write site. Returns path -> content.
  */
-export async function writeDetail(c: Container): Promise<Record<string, string>> {
+export async function writeDetail(
+  c: Container,
+  config: Omit<ConfigViewInput, 'now'> = configViewInput(c),
+): Promise<Record<string, string>> {
   const [snapshot, report] = await Promise.all([c.snapshots.latest(), c.reports.latest()]);
   const bundle = buildDetailView({
     now: c.clock.now(),
@@ -50,6 +57,7 @@ export async function writeDetail(c: Container): Promise<Record<string, string>>
     snapshot,
     report,
     thresholds: detailThresholds(c.config.compliance.params),
+    config,
   });
   const out: Record<string, string> = {
     [DETAIL_MANIFEST_PATH]: stableStringify(detailManifestSchema.parse(bundle.manifest)),

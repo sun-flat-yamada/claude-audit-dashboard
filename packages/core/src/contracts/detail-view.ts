@@ -26,14 +26,15 @@ const header = {
   generatedAt: z.string(),
 };
 
-export const DETAIL_KINDS = ['members', 'api-keys', 'activity', 'org-groups'] as const;
+export const DETAIL_KINDS = ['members', 'api-keys', 'activity', 'org-groups', 'config'] as const;
 export type DetailKind = (typeof DETAIL_KINDS)[number];
 
 const manifestFile = z.object({
   kind: z.enum(DETAIL_KINDS),
   /** Relative to the data directory, e.g. `detail/members.json`. */
   path: z.string(),
-  schemaVersion: version,
+  /** Version of that file's own contract (each detail file versions independently). */
+  schemaVersion: z.number().int().positive(),
   /** `unavailable` entries have no file: the dataset was not collected. */
   status: z.enum(['ok', 'unavailable']),
   reason: z.string().nullable(),

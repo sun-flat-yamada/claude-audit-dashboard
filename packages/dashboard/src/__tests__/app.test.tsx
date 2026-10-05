@@ -23,7 +23,7 @@ const FIXTURE = raw(
   }),
 );
 const DETAIL = import.meta.glob<string>(
-  '../../../../data/sample/detail/{index,members,api-keys,org-groups,activity-*}.json',
+  '../../../../data/sample/detail/{index,members,api-keys,org-groups,config,activity-*}.json',
   {
     eager: true,
     query: '?raw',
@@ -203,6 +203,30 @@ describe('hash routing', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'API keys' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'API keys' })).toHaveAttribute('aria-current', 'page');
     expect(await screen.findByRole('table', { name: 'API keys' })).toBeInTheDocument();
+  });
+
+  it('opens the effective configuration by deep link', async () => {
+    const byName = (suffix: string) =>
+      Object.entries(DETAIL).find(([name]) => name.endsWith(suffix))?.[1] ?? '';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: RequestInfo | URL) => {
+        const path = String(url);
+        if (path.endsWith('/config.json')) return new Response(byName('/config.json'));
+        if (path.endsWith('/detail/index.json')) return new Response(byName('/index.json'));
+        return new Response(SAMPLE ?? '');
+      }),
+    );
+    window.location.hash = '#/config';
+    render(<App />);
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Configuration' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Configuration' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(await screen.findByRole('table', { name: 'Compliance rules' })).toBeInTheDocument();
   });
 
   it('shows the not-found page for an unknown deep link and recovers with back/forward', async () => {

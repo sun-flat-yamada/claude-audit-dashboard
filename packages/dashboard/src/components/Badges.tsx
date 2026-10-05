@@ -17,6 +17,11 @@ const STATUS: Record<string, { icon: string; color: string; label: string }> = {
   'key-unknown': { icon: '?', color: 'var(--status-neutral)', label: 'Use unknown' },
   'key-ok': { icon: '✓', color: 'var(--status-good)', label: 'OK' },
   'key-inactive': { icon: '–', color: 'var(--status-neutral)', label: 'Deactivated' },
+  'config-enabled': { icon: '✓', color: 'var(--status-good)', label: 'Enabled' },
+  'config-disabled': { icon: '–', color: 'var(--status-warning)', label: 'Disabled' },
+  'config-overridden': { icon: '!', color: 'var(--status-warning)', label: 'Overridden' },
+  'config-default': { icon: '=', color: 'var(--status-neutral)', label: 'Default' },
+  'config-invalid': { icon: '✕', color: 'var(--status-critical)', label: 'Invalid' },
   'actor-user_actor': { icon: 'U', color: 'var(--status-good)', label: 'User' },
   'actor-api_actor': { icon: 'K', color: 'var(--status-neutral)', label: 'API key' },
   'actor-unauthenticated_user_actor': {

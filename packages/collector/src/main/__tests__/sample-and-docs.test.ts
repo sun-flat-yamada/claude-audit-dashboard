@@ -4,9 +4,11 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildRuleCatalog } from '@claude-audit/core';
 import {
+  DETAIL_CONFIG_PATH,
   MONTHLY_INDEX_PATH,
   checkDetailBundle,
   dashboardViewSchema,
+  detailConfigSchema,
   monthlyReportIndexSchema,
 } from '@claude-audit/core/contracts';
 import { describe, expect, it } from 'vitest';
@@ -31,6 +33,13 @@ describe('public sample data (data/sample)', () => {
       );
       expect(Object.keys(detail).length).toBeGreaterThanOrEqual(5);
       expect(checkDetailBundle(detail, { requireDemo: true })).toEqual([]);
+      const config = detailConfigSchema.parse(JSON.parse(generated[DETAIL_CONFIG_PATH] ?? '{}'));
+      expect(config.rules.some((r) => !r.enabled)).toBe(true);
+      expect(config.customRules.length).toBeGreaterThanOrEqual(1);
+      expect(config.rules.some((r) => r.parameters.some((p) => p.overridden))).toBe(true);
+      expect(config.notifications.channels.some((ch) => ch.kind !== 'console' && ch.enabled)).toBe(
+        true,
+      );
       const index = monthlyReportIndexSchema.parse(
         JSON.parse(generated[MONTHLY_INDEX_PATH] ?? '{}'),
       );
