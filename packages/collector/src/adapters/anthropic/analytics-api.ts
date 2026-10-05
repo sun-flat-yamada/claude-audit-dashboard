@@ -22,6 +22,7 @@ import {
 import { z } from 'zod';
 import type { HttpClient, Query } from './http-client.js';
 import { collectTokenPages, parseResponse, tokenPage } from './paginate.js';
+import { engagementShape, memberEngagement } from './user-engagement.js';
 
 /** The Enterprise Analytics API has no data before this date. */
 export const ANALYTICS_EPOCH = new Date('2026-01-01T00:00:00.000Z');
@@ -31,6 +32,7 @@ const nullableNumber = z.number().nullish();
 const userActivitySchema = z.looseObject({
   user: z.looseObject({ id: z.string(), email_address: z.string().nullish() }).nullish(),
   last_activity_date: z.string().nullish(),
+  ...engagementShape,
 });
 
 const PERIODS = ['daily', 'weekly', 'monthly'] as const;
@@ -139,7 +141,10 @@ const PATHS = {
 export class AnalyticsApi {
   constructor(private readonly http: HttpClient) {}
 
-  /** Range roll-up: one row per member with activity counters and `last_activity_date`. */
+  /**
+   * Range roll-up: one row per member with `last_activity_date` and the per-product metric blocks
+   * (mapped to `engagement` when any is present; activity and last-active day do not depend on it).
+   */
   async listUserActivity(from: Date, now: Date): Promise<CollectResult<MemberActivity[]>> {
     const start = toIsoDate(clampStart(from));
     const rows = await collectTokenPages(async (page) =>
@@ -149,18 +154,19 @@ export class AnalyticsApi {
         PATHS.users,
       ),
     );
-    const items = rows.flatMap((row) =>
-      row.user
-        ? [
-            {
-              userId: row.user.id,
-              email: row.user.email_address ?? null,
-              active: row.last_activity_date != null || hasActivity(row),
-              lastActiveOn: row.last_activity_date ?? null,
-            },
-          ]
-        : [],
-    );
+    const items = rows.flatMap((row): MemberActivity[] => {
+      if (!row.user) return [];
+      const engagement = memberEngagement(row);
+      return [
+        {
+          userId: row.user.id,
+          email: row.user.email_address ?? null,
+          active: row.last_activity_date != null || hasActivity(row),
+          lastActiveOn: row.last_activity_date ?? null,
+          ...(engagement ? { engagement } : {}),
+        },
+      ];
+    });
     return { items, window: { from: `${start}T00:00:00.000Z`, to: now.toISOString() } };
   }
 
