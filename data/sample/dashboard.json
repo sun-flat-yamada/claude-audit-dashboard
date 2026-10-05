@@ -237,6 +237,50 @@
   },
   "adoption": {
     "assignedSeats": 45,
+    "byProduct": [
+      {
+        "dau": 16,
+        "label": "Chat",
+        "mau": 27,
+        "product": "chat",
+        "wau": 25
+      },
+      {
+        "dau": 11,
+        "label": "Claude Code",
+        "mau": 18,
+        "product": "claude_code",
+        "wau": 16
+      },
+      {
+        "dau": 5,
+        "label": "Cowork",
+        "mau": 9,
+        "product": "cowork",
+        "wau": 8
+      },
+      {
+        "dau": 2,
+        "label": "Claude Design",
+        "mau": 4,
+        "product": "claude_design",
+        "wau": 3
+      },
+      {
+        "dau": 2,
+        "label": "Claude in Office",
+        "mau": 3,
+        "product": "office_agent",
+        "wau": 3
+      },
+      {
+        "dau": 1,
+        "label": "Claude Science",
+        "mau": 2,
+        "product": "science",
+        "wau": 1
+      }
+    ],
     "daily": [
       {
         "date": "2026-08-30",
@@ -426,7 +470,350 @@
       }
     ],
     "monthlyAdoptionRate": 66.7,
-    "pendingInvites": 3
+    "pendingInvites": 3,
+    "productWeekly": [
+      {
+        "date": "2026-08-30",
+        "wau": {
+          "chat": 27,
+          "claude_code": 15,
+          "claude_design": 4,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-08-31",
+        "wau": {
+          "chat": 26,
+          "claude_code": 16,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-01",
+        "wau": {
+          "chat": 24,
+          "claude_code": 14,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-02",
+        "wau": {
+          "chat": 23,
+          "claude_code": 14,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-03",
+        "wau": {
+          "chat": 25,
+          "claude_code": 14,
+          "claude_design": 4,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-04",
+        "wau": {
+          "chat": 27,
+          "claude_code": 15,
+          "claude_design": 4,
+          "cowork": 10,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-05",
+        "wau": {
+          "chat": 25,
+          "claude_code": 14,
+          "claude_design": 4,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-06",
+        "wau": {
+          "chat": 29,
+          "claude_code": 17,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-07",
+        "wau": {
+          "chat": 25,
+          "claude_code": 15,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-08",
+        "wau": {
+          "chat": 28,
+          "claude_code": 17,
+          "claude_design": 3,
+          "cowork": 10,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-09",
+        "wau": {
+          "chat": 26,
+          "claude_code": 15,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-10",
+        "wau": {
+          "chat": 23,
+          "claude_code": 13,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-11",
+        "wau": {
+          "chat": 22,
+          "claude_code": 14,
+          "claude_design": 3,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-12",
+        "wau": {
+          "chat": 26,
+          "claude_code": 15,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-13",
+        "wau": {
+          "chat": 24,
+          "claude_code": 17,
+          "claude_design": 4,
+          "cowork": 10,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-14",
+        "wau": {
+          "chat": 26,
+          "claude_code": 16,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-15",
+        "wau": {
+          "chat": 25,
+          "claude_code": 17,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-16",
+        "wau": {
+          "chat": 23,
+          "claude_code": 17,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-17",
+        "wau": {
+          "chat": 27,
+          "claude_code": 17,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-18",
+        "wau": {
+          "chat": 26,
+          "claude_code": 16,
+          "claude_design": 4,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-19",
+        "wau": {
+          "chat": 25,
+          "claude_code": 17,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-20",
+        "wau": {
+          "chat": 21,
+          "claude_code": 15,
+          "claude_design": 3,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-21",
+        "wau": {
+          "chat": 27,
+          "claude_code": 18,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-22",
+        "wau": {
+          "chat": 25,
+          "claude_code": 18,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-23",
+        "wau": {
+          "chat": 26,
+          "claude_code": 15,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-24",
+        "wau": {
+          "chat": 26,
+          "claude_code": 17,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-25",
+        "wau": {
+          "chat": 23,
+          "claude_code": 16,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-26",
+        "wau": {
+          "chat": 23,
+          "claude_code": 17,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 1
+        }
+      },
+      {
+        "date": "2026-09-27",
+        "wau": {
+          "chat": 24,
+          "claude_code": 18,
+          "claude_design": 3,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-28",
+        "wau": {
+          "chat": 28,
+          "claude_code": 20,
+          "claude_design": 4,
+          "cowork": 9,
+          "office_agent": 3,
+          "science": 2
+        }
+      },
+      {
+        "date": "2026-09-29",
+        "wau": {
+          "chat": 25,
+          "claude_code": 16,
+          "claude_design": 3,
+          "cowork": 8,
+          "office_agent": 3,
+          "science": 1
+        }
+      }
+    ]
   },
   "collectedAt": "2026-09-29T12:00:00.000Z",
   "compliance": {
