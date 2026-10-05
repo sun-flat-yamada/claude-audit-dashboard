@@ -1,0 +1,488 @@
+{
+  "generatedAt": "2026-09-01T12:00:00.000Z",
+  "id": "compliance-2026-09-01T12-00-00Z",
+  "results": [
+    {
+      "category": "access-control",
+      "details": {},
+      "evidence": [
+        {
+          "data": {
+            "role": "user"
+          },
+          "id": "user_demo_021",
+          "kind": "member",
+          "label": "alice.counsel@example.com"
+        },
+        {
+          "data": {
+            "role": "user"
+          },
+          "id": "user_demo_028",
+          "kind": "member",
+          "label": "heidi.counsel@example.com"
+        },
+        {
+          "data": {
+            "role": "user"
+          },
+          "id": "user_demo_034",
+          "kind": "member",
+          "label": "dave.designer@example.com"
+        }
+      ],
+      "message": "3 member(s) without activity in the last 90 days",
+      "remediation": "Review these members and remove the ones who no longer need a seat.",
+      "ruleId": "AC-001",
+      "ruleName": "Inactive Members",
+      "severity": "medium",
+      "status": "fail"
+    },
+    {
+      "category": "access-control",
+      "details": {},
+      "evidence": [
+        {
+          "id": "organization",
+          "kind": "organization",
+          "label": "5/34 administrative members (14.7%)"
+        }
+      ],
+      "message": "1 organization(s) exceed 10% administrative members",
+      "remediation": "Apply least privilege: keep day-to-day members on the user or managed role.",
+      "ruleId": "AC-002",
+      "ruleName": "Excessive Administrative Roles",
+      "severity": "high",
+      "status": "fail"
+    },
+    {
+      "category": "access-control",
+      "details": {},
+      "evidence": [],
+      "message": "Exactly one primary owner in 1 organization(s)",
+      "remediation": null,
+      "ruleId": "AC-003",
+      "ruleName": "Single Primary Owner",
+      "severity": "critical",
+      "status": "pass"
+    },
+    {
+      "category": "access-control",
+      "details": {},
+      "evidence": [],
+      "message": "No stale pending invites",
+      "remediation": null,
+      "ruleId": "AC-004",
+      "ruleName": "Stale Pending Invites",
+      "severity": "low",
+      "status": "pass"
+    },
+    {
+      "category": "api-key-management",
+      "details": {},
+      "evidence": [
+        {
+          "id": "apikey_demo_ediscovery",
+          "kind": "credential",
+          "label": "eDiscovery (legal hold): last seen never"
+        }
+      ],
+      "message": "1 key(s) unused for more than 30 days",
+      "remediation": "Deactivate keys that are no longer used.",
+      "ruleId": "AK-001",
+      "ruleName": "Unused API Keys",
+      "severity": "medium",
+      "status": "fail"
+    },
+    {
+      "category": "api-key-management",
+      "details": {},
+      "evidence": [
+        {
+          "id": "apikey_demo_ediscovery",
+          "kind": "credential",
+          "label": "eDiscovery (legal hold): delete:compliance_user_data"
+        }
+      ],
+      "message": "1 active key(s) hold write or delete scopes",
+      "remediation": "Keep standing keys read-only; create a separate, short-lived key for write or delete work.",
+      "ruleId": "AK-002",
+      "ruleName": "Over-privileged API Keys",
+      "severity": "high",
+      "status": "fail"
+    },
+    {
+      "category": "api-key-management",
+      "details": {},
+      "evidence": [],
+      "message": "No active key older than 180 days",
+      "remediation": null,
+      "ruleId": "AK-003",
+      "ruleName": "API Key Age",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "category": "usage-anomaly",
+      "details": {},
+      "evidence": [],
+      "message": "Invalid params: ✖ Too small: expected number to be >0\n  → at spikeMultiplier",
+      "remediation": null,
+      "ruleId": "UA-001",
+      "ruleName": "Usage Spike Detection",
+      "severity": "high",
+      "status": "error"
+    },
+    {
+      "category": "usage-anomaly",
+      "details": {
+        "budget": 10000,
+        "currency": "USD",
+        "forecast": 3958.5,
+        "month": "2026-09",
+        "spent": 131.95
+      },
+      "evidence": [],
+      "message": "Month-to-date cost USD 131.95 within the budget",
+      "remediation": null,
+      "ruleId": "UA-002",
+      "ruleName": "Cost Budget Threshold",
+      "severity": "critical",
+      "status": "pass"
+    },
+    {
+      "category": "usage-anomaly",
+      "details": {},
+      "evidence": [],
+      "message": "Every member has a spend limit",
+      "remediation": null,
+      "ruleId": "UA-003",
+      "ruleName": "Members Without Spend Limit",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "category": "usage-anomaly",
+      "details": {},
+      "evidence": [],
+      "message": "No member at 90% of their limit",
+      "remediation": null,
+      "ruleId": "UA-004",
+      "ruleName": "Spend Limit Nearly Exhausted",
+      "severity": "low",
+      "status": "pass"
+    },
+    {
+      "category": "operational",
+      "details": {},
+      "evidence": [],
+      "message": "Last collection 0h ago",
+      "remediation": null,
+      "ruleId": "OP-001",
+      "ruleName": "Collection Freshness",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "category": "operational",
+      "details": {},
+      "evidence": [
+        {
+          "id": "groups",
+          "kind": "dataset",
+          "label": "unavailable: Directory groups are not enabled yet"
+        }
+      ],
+      "message": "1 of 13 dataset(s) not collected",
+      "remediation": "Grant the scopes listed in docs/SETUP.md, enable the API in claude.ai, or disable the data source in config.",
+      "ruleId": "OP-002",
+      "ruleName": "Data Source Coverage",
+      "severity": "high",
+      "status": "fail"
+    },
+    {
+      "category": "configuration",
+      "details": {},
+      "evidence": [],
+      "message": "3 organization(s) meet sso_claude_ai_enforced = true",
+      "remediation": null,
+      "ruleId": "CF-001",
+      "ruleName": "SSO Enforced for claude.ai",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "details": {},
+      "evidence": [],
+      "message": "3 organization(s) meet sso_provisioning_mode in [scim_advanced, scim_permissive]",
+      "remediation": null,
+      "ruleId": "CF-002",
+      "ruleName": "SCIM Provisioning",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "details": {},
+      "evidence": [],
+      "message": "3 organization(s) meet ip_allowlist_enabled = true",
+      "remediation": null,
+      "ruleId": "CF-003",
+      "ruleName": "IP Allowlist Enabled",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "details": {},
+      "evidence": [],
+      "message": "3 organization(s) meet account_session_duration_seconds <= 604800",
+      "remediation": null,
+      "ruleId": "CF-004",
+      "ruleName": "Session Duration Limited",
+      "severity": "low",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "details": {},
+      "evidence": [
+        {
+          "id": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+          "kind": "setting",
+          "label": "Example Corp Legal: data_retention_periods = {\"all\":{\"duration\":84,\"timescale\":\"month\",\"type\":\"fixed\"}}"
+        },
+        {
+          "id": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+          "kind": "setting",
+          "label": "Example Corp Sales: data_retention_periods = {\"chat\":{\"type\":\"indefinite\"}}"
+        }
+      ],
+      "message": "2 of 3 organization(s) deviate on data_retention_periods",
+      "remediation": "Configure a fixed data retention period that matches your records policy.",
+      "ruleId": "CF-005",
+      "ruleName": "Finite Data Retention",
+      "severity": "medium",
+      "status": "fail"
+    },
+    {
+      "category": "configuration",
+      "details": {},
+      "evidence": [
+        {
+          "id": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+          "kind": "setting",
+          "label": "Example Corp Engineering: public_projects_enabled = true"
+        },
+        {
+          "id": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+          "kind": "setting",
+          "label": "Example Corp Legal: public_projects_enabled = true"
+        },
+        {
+          "id": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+          "kind": "setting",
+          "label": "Example Corp Sales: public_projects_enabled = true"
+        }
+      ],
+      "message": "3 of 3 organization(s) deviate on public_projects_enabled",
+      "remediation": "Disable public projects to keep project content inside the organization.",
+      "ruleId": "CF-006",
+      "ruleName": "Public Projects Disabled",
+      "severity": "medium",
+      "status": "fail"
+    },
+    {
+      "category": "configuration",
+      "details": {},
+      "evidence": [],
+      "message": "3 organization(s) meet code_execution_network_egress_enabled = false",
+      "remediation": null,
+      "ruleId": "CF-007",
+      "ruleName": "Code Execution Egress Restricted",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "details": {},
+      "evidence": [],
+      "message": "3 organization(s) meet claude_code_desktop_bypass_permissions_enabled = false",
+      "remediation": null,
+      "ruleId": "CF-008",
+      "ruleName": "Claude Code Permission Bypass Disabled",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "category": "configuration",
+      "details": {},
+      "evidence": [],
+      "message": "3 organization(s) meet allowed_invite_domains is not empty",
+      "remediation": null,
+      "ruleId": "CF-009",
+      "ruleName": "Invite Domains Restricted",
+      "severity": "low",
+      "status": "pass"
+    },
+    {
+      "category": "activity-monitoring",
+      "details": {
+        "byType": {
+          "claude_user_role_updated": 1
+        },
+        "count": 1
+      },
+      "evidence": [
+        {
+          "id": "activity_demo_0200",
+          "kind": "activity",
+          "label": "2026-09-01T07:00:00.000Z claude_user_role_updated by alice.engineer@example.com"
+        }
+      ],
+      "message": "1 matching event(s) since the previous collection",
+      "remediation": "Confirm each event with its actor and your change records.",
+      "ruleId": "AM-001",
+      "ruleName": "Privileged Role Changes",
+      "severity": "high",
+      "status": "warning"
+    },
+    {
+      "category": "activity-monitoring",
+      "details": {
+        "byType": {
+          "org_sso_toggled": 1
+        },
+        "count": 1
+      },
+      "evidence": [
+        {
+          "id": "activity_demo_0900",
+          "kind": "activity",
+          "label": "2026-09-01T07:12:00.000Z org_sso_toggled by bob.engineer@example.com"
+        }
+      ],
+      "message": "1 matching event(s) since the previous collection",
+      "remediation": "Confirm each event with its actor and your change records.",
+      "ruleId": "AM-002",
+      "ruleName": "Identity Provider Changes",
+      "severity": "high",
+      "status": "warning"
+    },
+    {
+      "category": "activity-monitoring",
+      "details": {
+        "byType": {
+          "org_ip_restriction_updated": 1
+        },
+        "count": 1
+      },
+      "evidence": [
+        {
+          "id": "activity_demo_0201",
+          "kind": "activity",
+          "label": "2026-09-01T05:00:00.000Z org_ip_restriction_updated by bob.engineer@example.com"
+        }
+      ],
+      "message": "1 matching event(s) since the previous collection",
+      "remediation": "Confirm each event with its actor and your change records.",
+      "ruleId": "AM-003",
+      "ruleName": "Network Restriction Changes",
+      "severity": "medium",
+      "status": "warning"
+    },
+    {
+      "category": "activity-monitoring",
+      "details": {},
+      "evidence": [],
+      "message": "0 matching event(s) since the previous collection",
+      "remediation": null,
+      "ruleId": "AM-004",
+      "ruleName": "API Key Lifecycle",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "category": "activity-monitoring",
+      "details": {
+        "byType": {
+          "org_members_exported": 1
+        },
+        "count": 1
+      },
+      "evidence": [
+        {
+          "id": "activity_demo_0202",
+          "kind": "activity",
+          "label": "2026-09-01T03:00:00.000Z org_members_exported by dave.engineer@example.com"
+        }
+      ],
+      "message": "1 matching event(s) since the previous collection",
+      "remediation": "Confirm each event with its actor and your change records.",
+      "ruleId": "AM-005",
+      "ruleName": "Data Export Events",
+      "severity": "medium",
+      "status": "warning"
+    },
+    {
+      "category": "activity-monitoring",
+      "details": {},
+      "evidence": [],
+      "message": "0 matching event(s) since the previous collection",
+      "remediation": null,
+      "ruleId": "AM-006",
+      "ruleName": "Authentication Failure Burst",
+      "severity": "medium",
+      "status": "pass"
+    }
+  ],
+  "schemaVersion": 2,
+  "snapshotId": "2026-09-01T12-00-00Z",
+  "summary": {
+    "byCategory": {
+      "access-control": {
+        "failed": 2,
+        "total": 4
+      },
+      "activity-monitoring": {
+        "failed": 0,
+        "total": 6
+      },
+      "api-key-management": {
+        "failed": 2,
+        "total": 3
+      },
+      "configuration": {
+        "failed": 2,
+        "total": 9
+      },
+      "data-governance": {
+        "failed": 0,
+        "total": 0
+      },
+      "operational": {
+        "failed": 1,
+        "total": 2
+      },
+      "usage-anomaly": {
+        "failed": 0,
+        "total": 4
+      }
+    },
+    "errors": 1,
+    "failed": 7,
+    "failedBySeverity": {
+      "critical": 0,
+      "high": 3,
+      "info": 0,
+      "low": 0,
+      "medium": 4
+    },
+    "passed": 16,
+    "score": 73,
+    "skipped": 0,
+    "total": 28,
+    "warnings": 4
+  }
+}

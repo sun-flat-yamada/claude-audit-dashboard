@@ -185,7 +185,7 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 `pnpm fork:verify` は次を検証する。
 
 1. ライブデータのパス (`data/snapshots`、`data/reports`、`data/archive`、`data/dashboard.json`、`data/detail`、`data/state.json`) が git で追跡されていない
-2. `data/sample/dashboard.json` (と、存在すれば gitignored の `data/sample-optional-sources/`。`pnpm demo --profile optional-sources` の出力) が公開契約 (`dashboardViewSchema`) に一致し、`source` が `demo` である。`data/sample/detail/` は詳細データ契約 (§9.1) に一致し、`example.*` 以外のメールと未マスクの識別子を含まない
+2. `data/sample/dashboard.json` (と、存在すれば gitignored の `data/sample-optional-sources/`。`pnpm demo --profile optional-sources` の出力) が公開契約 (`dashboardViewSchema`) に一致し、`source` が `demo` である。先行時点の `history/<snapshot id>/dashboard.json` も同じ契約で検査する。`data/sample/detail/` は詳細データ契約 (§9.1) に一致し、`example.*` 以外のメールと未マスクの識別子を含まない
 3. `data/sample/` のメールアドレスが `example.*` ドメインだけである
 4. 追跡ファイルにシークレットのパターンが無い
 5. `.gitignore` に必須パターンがある / `.env` が無い / `.env.example` に実値が無い
@@ -446,6 +446,8 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 2、zod
 
 詳細と今後の画面 (Phase B) は [DASHBOARD-FEATURES.md](DASHBOARD-FEATURES.md)。
 
+**F-015 (スナップショット比較、計画中)**: 比較用に `pnpm demo` が合成テナントを固定クロックの 3 時点 (最新の 28 日前、14 日前、最新) で収集・判定する。最新時点は従来の `data/sample/` と同一で、先行 2 時点は `data/sample/history/<snapshot id>/` (`dashboard.json` と `compliance-report.json`、既存契約) に追加で書く。時点間にステータス遷移 (`pass→fail`、`fail→pass`、`warning→pass`、`pass→skipped`、`error→pass`)、ルールの追加 / 削除 (`disabledRules`)、データセットの `ok` / `unavailable` / `error` の変化、メンバー・MAU・コストの増減を含める。`DashboardView` (v2) は変えず、`data/sample/dashboard.json` の `compliance.history` は 1 点のまま (実運用では蓄積した点数が出る)。設計は決定済み: 過去時点は時点ごとの要約ファイル `detail/compare/index.json` と `detail/compare/<snapshot id>.json` (独自 `schemaVersion`、件数と状態のみで個人データなし、`PAGES_DETAIL_DATA` の公開条件に従う) として配り、差分は `@claude-audit/core` の純粋関数で計算して SPA が `@claude-audit/core/contracts` 経由で使う。アーカイブ済みスナップショットは要約が残っていれば比較でき、無ければ `restore` と `build:detail --snapshot <id>` で戻す。差分コア・比較画面とエクスポート・アーカイブ統合テスト・E2E は後続 PR (#42)。
+
 ### 9.3 表示要件
 
 - 色だけで状態を伝えない (状態はアイコン + ラベル + 色)。系列色はカテゴリ順で固定し、2 系列以上は凡例を出す
@@ -598,7 +600,9 @@ claude-audit-dashboard/
 | -------- | ------------------------------------------------------------------------------------------------------------------------ | -------- |
 | Phase A  | Enterprise API への全面移行、Clean Architecture 再構成、ルール 30 種、レポート・通知・ダッシュボード v2、Dependabot 全件 | 実装済み |
 | Phase B  | 実テナントでの検証 (CHANGE-PLAN §10 の仮定 V1〜V7)、詳細画面、長期運用の検証、任意アダプタ、E2E                          | 次       |
-| Phase C  | v1.0.0 リリース                                                                                                          | —        |
+
+> F-015 (スナップショット比較、#42) は Phase B の後・Phase C の前。第 1 弾 (#101) で多時点の合成データと設計を確定した。差分コア・画面・エクスポート・アーカイブ統合テスト・E2E は後続 PR。
+> | Phase C | v1.0.0 リリース | — |
 
 WBS と受け入れ基準は [CHANGE-PLAN.md §7](CHANGE-PLAN.md)。
 

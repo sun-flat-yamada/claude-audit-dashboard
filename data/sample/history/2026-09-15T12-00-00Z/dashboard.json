@@ -1,0 +1,1365 @@
+{
+  "activity": {
+    "notable": [
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T09:00:00.000Z",
+        "id": "activity_demo_0300",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T08:54:00.000Z",
+        "id": "activity_demo_0301",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T08:48:00.000Z",
+        "id": "activity_demo_0302",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T08:42:00.000Z",
+        "id": "activity_demo_0303",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T08:36:00.000Z",
+        "id": "activity_demo_0304",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T08:30:00.000Z",
+        "id": "activity_demo_0305",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T08:24:00.000Z",
+        "id": "activity_demo_0306",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T08:18:00.000Z",
+        "id": "activity_demo_0307",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T08:12:00.000Z",
+        "id": "activity_demo_0308",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T08:06:00.000Z",
+        "id": "activity_demo_0309",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T08:00:00.000Z",
+        "id": "activity_demo_0310",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T07:54:00.000Z",
+        "id": "activity_demo_0311",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T07:48:00.000Z",
+        "id": "activity_demo_0312",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T07:42:00.000Z",
+        "id": "activity_demo_0313",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T07:36:00.000Z",
+        "id": "activity_demo_0314",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T07:30:00.000Z",
+        "id": "activity_demo_0315",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T07:24:00.000Z",
+        "id": "activity_demo_0316",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T07:18:00.000Z",
+        "id": "activity_demo_0317",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T07:12:00.000Z",
+        "id": "activity_demo_0318",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T07:06:00.000Z",
+        "id": "activity_demo_0319",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "a***@example.com",
+        "createdAt": "2026-09-15T07:00:00.000Z",
+        "id": "activity_demo_0200",
+        "ruleId": "AM-001",
+        "type": "claude_user_role_updated"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T07:00:00.000Z",
+        "id": "activity_demo_0320",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T06:54:00.000Z",
+        "id": "activity_demo_0321",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T06:48:00.000Z",
+        "id": "activity_demo_0322",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "u***@example.com",
+        "createdAt": "2026-09-15T06:42:00.000Z",
+        "id": "activity_demo_0323",
+        "ruleId": "AM-006",
+        "type": "sso_login_failed"
+      },
+      {
+        "actor": "b***@example.com",
+        "createdAt": "2026-09-15T05:00:00.000Z",
+        "id": "activity_demo_0201",
+        "ruleId": "AM-003",
+        "type": "org_ip_restriction_updated"
+      },
+      {
+        "actor": "d***@example.com",
+        "createdAt": "2026-09-15T03:00:00.000Z",
+        "id": "activity_demo_0202",
+        "ruleId": "AM-005",
+        "type": "org_members_exported"
+      }
+    ],
+    "topTypes": [
+      {
+        "count": 53,
+        "type": "claude_chat_created"
+      },
+      {
+        "count": 53,
+        "type": "claude_file_uploaded"
+      },
+      {
+        "count": 53,
+        "type": "sso_login_succeeded"
+      },
+      {
+        "count": 52,
+        "type": "claude_project_created"
+      },
+      {
+        "count": 33,
+        "type": "compliance_api_accessed"
+      },
+      {
+        "count": 24,
+        "type": "sso_login_failed"
+      },
+      {
+        "count": 1,
+        "type": "claude_user_role_updated"
+      },
+      {
+        "count": 1,
+        "type": "org_ip_restriction_updated"
+      },
+      {
+        "count": 1,
+        "type": "org_members_exported"
+      }
+    ],
+    "total": 271,
+    "window": {
+      "from": "2026-06-16T12:00:00.000Z",
+      "to": "2026-09-15T12:00:00.000Z"
+    }
+  },
+  "adoption": {
+    "assignedSeats": 45,
+    "daily": [
+      {
+        "date": "2026-08-16",
+        "dau": 19,
+        "mau": 34,
+        "wau": 29
+      },
+      {
+        "date": "2026-08-17",
+        "dau": 22,
+        "mau": 33,
+        "wau": 30
+      },
+      {
+        "date": "2026-08-18",
+        "dau": 21,
+        "mau": 34,
+        "wau": 30
+      },
+      {
+        "date": "2026-08-19",
+        "dau": 19,
+        "mau": 35,
+        "wau": 28
+      },
+      {
+        "date": "2026-08-20",
+        "dau": 26,
+        "mau": 34,
+        "wau": 28
+      },
+      {
+        "date": "2026-08-21",
+        "dau": 20,
+        "mau": 34,
+        "wau": 30
+      },
+      {
+        "date": "2026-08-22",
+        "dau": 23,
+        "mau": 35,
+        "wau": 30
+      },
+      {
+        "date": "2026-08-23",
+        "dau": 26,
+        "mau": 32,
+        "wau": 29
+      },
+      {
+        "date": "2026-08-24",
+        "dau": 25,
+        "mau": 32,
+        "wau": 28
+      },
+      {
+        "date": "2026-08-25",
+        "dau": 26,
+        "mau": 35,
+        "wau": 31
+      },
+      {
+        "date": "2026-08-26",
+        "dau": 21,
+        "mau": 33,
+        "wau": 30
+      },
+      {
+        "date": "2026-08-27",
+        "dau": 22,
+        "mau": 34,
+        "wau": 32
+      },
+      {
+        "date": "2026-08-28",
+        "dau": 19,
+        "mau": 32,
+        "wau": 31
+      },
+      {
+        "date": "2026-08-29",
+        "dau": 23,
+        "mau": 32,
+        "wau": 30
+      },
+      {
+        "date": "2026-08-30",
+        "dau": 21,
+        "mau": 33,
+        "wau": 31
+      },
+      {
+        "date": "2026-08-31",
+        "dau": 26,
+        "mau": 33,
+        "wau": 32
+      },
+      {
+        "date": "2026-09-01",
+        "dau": 25,
+        "mau": 32,
+        "wau": 31
+      },
+      {
+        "date": "2026-09-02",
+        "dau": 21,
+        "mau": 33,
+        "wau": 29
+      },
+      {
+        "date": "2026-09-03",
+        "dau": 22,
+        "mau": 33,
+        "wau": 30
+      },
+      {
+        "date": "2026-09-04",
+        "dau": 20,
+        "mau": 34,
+        "wau": 32
+      },
+      {
+        "date": "2026-09-05",
+        "dau": 27,
+        "mau": 34,
+        "wau": 29
+      },
+      {
+        "date": "2026-09-06",
+        "dau": 23,
+        "mau": 33,
+        "wau": 32
+      },
+      {
+        "date": "2026-09-07",
+        "dau": 25,
+        "mau": 34,
+        "wau": 29
+      },
+      {
+        "date": "2026-09-08",
+        "dau": 24,
+        "mau": 33,
+        "wau": 31
+      },
+      {
+        "date": "2026-09-09",
+        "dau": 21,
+        "mau": 35,
+        "wau": 31
+      },
+      {
+        "date": "2026-09-10",
+        "dau": 24,
+        "mau": 34,
+        "wau": 28
+      },
+      {
+        "date": "2026-09-11",
+        "dau": 19,
+        "mau": 33,
+        "wau": 28
+      },
+      {
+        "date": "2026-09-12",
+        "dau": 20,
+        "mau": 33,
+        "wau": 31
+      },
+      {
+        "date": "2026-09-13",
+        "dau": 23,
+        "mau": 33,
+        "wau": 31
+      },
+      {
+        "date": "2026-09-14",
+        "dau": 27,
+        "mau": 32,
+        "wau": 30
+      },
+      {
+        "date": "2026-09-15",
+        "dau": 24,
+        "mau": 35,
+        "wau": 30
+      }
+    ],
+    "monthlyAdoptionRate": 77.8,
+    "pendingInvites": 3
+  },
+  "collectedAt": "2026-09-15T12:00:00.000Z",
+  "compliance": {
+    "byCategory": [
+      {
+        "category": "access-control",
+        "failed": 2,
+        "total": 4
+      },
+      {
+        "category": "activity-monitoring",
+        "failed": 0,
+        "total": 7
+      },
+      {
+        "category": "api-key-management",
+        "failed": 2,
+        "total": 2
+      },
+      {
+        "category": "configuration",
+        "failed": 1,
+        "total": 9
+      },
+      {
+        "category": "data-governance",
+        "failed": 0,
+        "total": 1
+      },
+      {
+        "category": "operational",
+        "failed": 1,
+        "total": 2
+      },
+      {
+        "category": "usage-anomaly",
+        "failed": 0,
+        "total": 4
+      }
+    ],
+    "errors": 0,
+    "failed": 6,
+    "history": [
+      {
+        "date": "2026-09-01T12:00:00.000Z",
+        "score": 73
+      },
+      {
+        "date": "2026-09-15T12:00:00.000Z",
+        "score": 78
+      }
+    ],
+    "passed": 14,
+    "results": [
+      {
+        "category": "access-control",
+        "evidence": [
+          {
+            "kind": "member",
+            "label": "a***@example.com"
+          },
+          {
+            "kind": "member",
+            "label": "h***@example.com"
+          },
+          {
+            "kind": "member",
+            "label": "d***@example.com"
+          },
+          {
+            "kind": "member",
+            "label": "f***@example.com"
+          }
+        ],
+        "message": "4 member(s) without activity in the last 90 days",
+        "remediation": "Review these members and remove the ones who no longer need a seat.",
+        "ruleId": "AC-001",
+        "ruleName": "Inactive Members",
+        "severity": "medium",
+        "status": "fail"
+      },
+      {
+        "category": "access-control",
+        "evidence": [
+          {
+            "kind": "organization",
+            "label": "5/43 administrative members (11.6%)"
+          }
+        ],
+        "message": "1 organization(s) exceed 10% administrative members",
+        "remediation": "Apply least privilege: keep day-to-day members on the user or managed role.",
+        "ruleId": "AC-002",
+        "ruleName": "Excessive Administrative Roles",
+        "severity": "high",
+        "status": "fail"
+      },
+      {
+        "category": "access-control",
+        "evidence": [],
+        "message": "Exactly one primary owner in 1 organization(s)",
+        "remediation": null,
+        "ruleId": "AC-003",
+        "ruleName": "Single Primary Owner",
+        "severity": "critical",
+        "status": "pass"
+      },
+      {
+        "category": "access-control",
+        "evidence": [],
+        "message": "Required data missing: invites error (Upstream 503 while listing invites)",
+        "remediation": null,
+        "ruleId": "AC-004",
+        "ruleName": "Stale Pending Invites",
+        "severity": "low",
+        "status": "skipped"
+      },
+      {
+        "category": "api-key-management",
+        "evidence": [
+          {
+            "kind": "credential",
+            "label": "eDiscovery (legal hold): last seen never"
+          }
+        ],
+        "message": "1 key(s) unused for more than 30 days",
+        "remediation": "Deactivate keys that are no longer used.",
+        "ruleId": "AK-001",
+        "ruleName": "Unused API Keys",
+        "severity": "medium",
+        "status": "fail"
+      },
+      {
+        "category": "api-key-management",
+        "evidence": [
+          {
+            "kind": "credential",
+            "label": "SIEM export: created 2025-08-11"
+          }
+        ],
+        "message": "1 active key(s) older than 180 days",
+        "remediation": "Rotate: create a replacement key, switch integrations, then delete the old key.",
+        "ruleId": "AK-003",
+        "ruleName": "API Key Age",
+        "severity": "medium",
+        "status": "fail"
+      },
+      {
+        "category": "usage-anomaly",
+        "evidence": [],
+        "message": "2026-09-14: usage within 50x the trailing average",
+        "remediation": null,
+        "ruleId": "UA-001",
+        "ruleName": "Usage Spike Detection",
+        "severity": "high",
+        "status": "pass"
+      },
+      {
+        "category": "usage-anomaly",
+        "evidence": [],
+        "message": "Forecast USD 10264.61 exceeds the budget USD 10000.00",
+        "remediation": "Review spend by product, model and group, set spend limits or adjust the budget.",
+        "ruleId": "UA-002",
+        "ruleName": "Cost Budget Threshold",
+        "severity": "critical",
+        "status": "warning"
+      },
+      {
+        "category": "usage-anomaly",
+        "evidence": [],
+        "message": "Required data missing: spendLimits unavailable (Usage credits are disabled for this period)",
+        "remediation": null,
+        "ruleId": "UA-003",
+        "ruleName": "Members Without Spend Limit",
+        "severity": "medium",
+        "status": "skipped"
+      },
+      {
+        "category": "usage-anomaly",
+        "evidence": [],
+        "message": "Required data missing: spendLimits unavailable (Usage credits are disabled for this period)",
+        "remediation": null,
+        "ruleId": "UA-004",
+        "ruleName": "Spend Limit Nearly Exhausted",
+        "severity": "low",
+        "status": "skipped"
+      },
+      {
+        "category": "data-governance",
+        "evidence": [],
+        "message": "Required data missing: groups error (Upstream 500 while listing groups)",
+        "remediation": null,
+        "ruleId": "DG-001",
+        "ruleName": "Empty Groups",
+        "severity": "low",
+        "status": "skipped"
+      },
+      {
+        "category": "operational",
+        "evidence": [],
+        "message": "Last collection 0h ago",
+        "remediation": null,
+        "ruleId": "OP-001",
+        "ruleName": "Collection Freshness",
+        "severity": "high",
+        "status": "pass"
+      },
+      {
+        "category": "operational",
+        "evidence": [
+          {
+            "kind": "dataset",
+            "label": "error: Upstream 500 while listing groups"
+          },
+          {
+            "kind": "dataset",
+            "label": "error: Upstream 503 while listing invites"
+          },
+          {
+            "kind": "dataset",
+            "label": "unavailable: Usage credits are disabled for this period"
+          }
+        ],
+        "message": "3 of 13 dataset(s) not collected",
+        "remediation": "Grant the scopes listed in docs/SETUP.md, enable the API in claude.ai, or disable the data source in config.",
+        "ruleId": "OP-002",
+        "ruleName": "Data Source Coverage",
+        "severity": "high",
+        "status": "fail"
+      },
+      {
+        "category": "configuration",
+        "evidence": [],
+        "message": "3 organization(s) meet sso_claude_ai_enforced = true",
+        "remediation": null,
+        "ruleId": "CF-001",
+        "ruleName": "SSO Enforced for claude.ai",
+        "severity": "high",
+        "status": "pass"
+      },
+      {
+        "category": "configuration",
+        "evidence": [],
+        "message": "3 organization(s) meet sso_provisioning_mode in [scim_advanced, scim_permissive]",
+        "remediation": null,
+        "ruleId": "CF-002",
+        "ruleName": "SCIM Provisioning",
+        "severity": "medium",
+        "status": "pass"
+      },
+      {
+        "category": "configuration",
+        "evidence": [],
+        "message": "3 organization(s) meet ip_allowlist_enabled = true",
+        "remediation": null,
+        "ruleId": "CF-003",
+        "ruleName": "IP Allowlist Enabled",
+        "severity": "medium",
+        "status": "pass"
+      },
+      {
+        "category": "configuration",
+        "evidence": [],
+        "message": "3 organization(s) meet account_session_duration_seconds <= 604800",
+        "remediation": null,
+        "ruleId": "CF-004",
+        "ruleName": "Session Duration Limited",
+        "severity": "low",
+        "status": "pass"
+      },
+      {
+        "category": "configuration",
+        "evidence": [
+          {
+            "kind": "setting",
+            "label": "Example Corp Legal: data_retention_periods = {\"all\":{\"duration\":84,\"timescale\":\"month\",\"type\":\"fixed\"}}"
+          },
+          {
+            "kind": "setting",
+            "label": "Example Corp Sales: data_retention_periods = {\"chat\":{\"type\":\"indefinite\"}}"
+          }
+        ],
+        "message": "2 of 3 organization(s) deviate on data_retention_periods",
+        "remediation": "Configure a fixed data retention period that matches your records policy.",
+        "ruleId": "CF-005",
+        "ruleName": "Finite Data Retention",
+        "severity": "medium",
+        "status": "fail"
+      },
+      {
+        "category": "configuration",
+        "evidence": [],
+        "message": "3 organization(s) meet public_projects_enabled = false",
+        "remediation": null,
+        "ruleId": "CF-006",
+        "ruleName": "Public Projects Disabled",
+        "severity": "medium",
+        "status": "pass"
+      },
+      {
+        "category": "configuration",
+        "evidence": [],
+        "message": "3 organization(s) meet code_execution_network_egress_enabled = false",
+        "remediation": null,
+        "ruleId": "CF-007",
+        "ruleName": "Code Execution Egress Restricted",
+        "severity": "medium",
+        "status": "pass"
+      },
+      {
+        "category": "configuration",
+        "evidence": [],
+        "message": "3 organization(s) meet claude_code_desktop_bypass_permissions_enabled = false",
+        "remediation": null,
+        "ruleId": "CF-008",
+        "ruleName": "Claude Code Permission Bypass Disabled",
+        "severity": "high",
+        "status": "pass"
+      },
+      {
+        "category": "configuration",
+        "evidence": [],
+        "message": "3 organization(s) meet allowed_invite_domains is not empty",
+        "remediation": null,
+        "ruleId": "CF-009",
+        "ruleName": "Invite Domains Restricted",
+        "severity": "low",
+        "status": "pass"
+      },
+      {
+        "category": "activity-monitoring",
+        "evidence": [
+          {
+            "kind": "activity",
+            "label": "2026-09-15T07:00:00.000Z claude_user_role_updated by a***@example.com"
+          }
+        ],
+        "message": "1 matching event(s) since the previous collection",
+        "remediation": "Confirm each event with its actor and your change records.",
+        "ruleId": "AM-001",
+        "ruleName": "Privileged Role Changes",
+        "severity": "high",
+        "status": "warning"
+      },
+      {
+        "category": "activity-monitoring",
+        "evidence": [],
+        "message": "0 matching event(s) since the previous collection",
+        "remediation": null,
+        "ruleId": "AM-002",
+        "ruleName": "Identity Provider Changes",
+        "severity": "high",
+        "status": "pass"
+      },
+      {
+        "category": "activity-monitoring",
+        "evidence": [
+          {
+            "kind": "activity",
+            "label": "2026-09-15T05:00:00.000Z org_ip_restriction_updated by b***@example.com"
+          }
+        ],
+        "message": "1 matching event(s) since the previous collection",
+        "remediation": "Confirm each event with its actor and your change records.",
+        "ruleId": "AM-003",
+        "ruleName": "Network Restriction Changes",
+        "severity": "medium",
+        "status": "warning"
+      },
+      {
+        "category": "activity-monitoring",
+        "evidence": [],
+        "message": "0 matching event(s) since the previous collection",
+        "remediation": null,
+        "ruleId": "AM-004",
+        "ruleName": "API Key Lifecycle",
+        "severity": "medium",
+        "status": "pass"
+      },
+      {
+        "category": "activity-monitoring",
+        "evidence": [
+          {
+            "kind": "activity",
+            "label": "2026-09-15T03:00:00.000Z org_members_exported by d***@example.com"
+          }
+        ],
+        "message": "1 matching event(s) since the previous collection",
+        "remediation": "Confirm each event with its actor and your change records.",
+        "ruleId": "AM-005",
+        "ruleName": "Data Export Events",
+        "severity": "medium",
+        "status": "warning"
+      },
+      {
+        "category": "activity-monitoring",
+        "evidence": [
+          {
+            "kind": "activity",
+            "label": "2026-09-15T06:42:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T06:48:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T06:54:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T07:00:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T07:06:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T07:12:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T07:18:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T07:24:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T07:30:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T07:36:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T07:42:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T07:48:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T07:54:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T08:00:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T08:06:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T08:12:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T08:18:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T08:24:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T08:30:00.000Z sso_login_failed by u***@example.com"
+          },
+          {
+            "kind": "activity",
+            "label": "2026-09-15T08:36:00.000Z sso_login_failed by u***@example.com"
+          }
+        ],
+        "message": "24 matching event(s) since the previous collection",
+        "remediation": "Confirm each event with its actor and your change records.",
+        "ruleId": "AM-006",
+        "ruleName": "Authentication Failure Burst",
+        "severity": "medium",
+        "status": "warning"
+      },
+      {
+        "category": "activity-monitoring",
+        "evidence": [],
+        "message": "0 matching event(s) since the previous collection",
+        "remediation": null,
+        "ruleId": "AM-007",
+        "ruleName": "Data Protection Changes",
+        "severity": "high",
+        "status": "pass"
+      }
+    ],
+    "score": 78,
+    "skipped": 4,
+    "warnings": 5
+  },
+  "coverage": [
+    {
+      "asOf": null,
+      "count": 271,
+      "dataset": "activities",
+      "reason": null,
+      "source": "demo:activities",
+      "status": "ok"
+    },
+    {
+      "asOf": null,
+      "count": 31,
+      "dataset": "adoption",
+      "reason": null,
+      "source": "demo:adoption",
+      "status": "ok"
+    },
+    {
+      "asOf": "2026-09-15T06:00:00.000Z",
+      "count": 310,
+      "dataset": "cost",
+      "reason": null,
+      "source": "demo:cost",
+      "status": "ok"
+    },
+    {
+      "asOf": null,
+      "count": 2,
+      "dataset": "credentialUsage",
+      "reason": null,
+      "source": "projection:credentialUsage",
+      "status": "ok"
+    },
+    {
+      "asOf": null,
+      "count": 4,
+      "dataset": "credentials",
+      "reason": null,
+      "source": "demo:credentials",
+      "status": "ok"
+    },
+    {
+      "asOf": null,
+      "count": null,
+      "dataset": "groups",
+      "reason": "Upstream 500 while listing groups",
+      "source": "demo:groups",
+      "status": "error"
+    },
+    {
+      "asOf": null,
+      "count": null,
+      "dataset": "invites",
+      "reason": "Upstream 503 while listing invites",
+      "source": "demo:invites",
+      "status": "error"
+    },
+    {
+      "asOf": null,
+      "count": 36,
+      "dataset": "memberActivity",
+      "reason": null,
+      "source": "demo:memberActivity",
+      "status": "ok"
+    },
+    {
+      "asOf": null,
+      "count": 43,
+      "dataset": "members",
+      "reason": null,
+      "source": "demo:members",
+      "status": "ok"
+    },
+    {
+      "asOf": null,
+      "count": 3,
+      "dataset": "organizations",
+      "reason": null,
+      "source": "demo:organizations",
+      "status": "ok"
+    },
+    {
+      "asOf": null,
+      "count": 3,
+      "dataset": "settings",
+      "reason": null,
+      "source": "demo:settings",
+      "status": "ok"
+    },
+    {
+      "asOf": null,
+      "count": null,
+      "dataset": "spendLimits",
+      "reason": "Usage credits are disabled for this period",
+      "source": "demo:spendLimits",
+      "status": "unavailable"
+    },
+    {
+      "asOf": "2026-09-15T06:00:00.000Z",
+      "count": 310,
+      "dataset": "usage",
+      "reason": null,
+      "source": "demo:usage",
+      "status": "ok"
+    }
+  ],
+  "generatedAt": "2026-09-15T12:00:00.000Z",
+  "insights": [
+    {
+      "detail": "Review whether routine tasks can be routed to a smaller, cheaper model.",
+      "id": "model-concentration",
+      "kind": "recommendation",
+      "priority": "medium",
+      "title": "claude-opus-5 accounts for 62% of spend"
+    },
+    {
+      "detail": "Long, repeated context (projects, system prompts, tools) benefits from prompt caching.",
+      "id": "cache-efficiency",
+      "kind": "recommendation",
+      "priority": "low",
+      "title": "Only 25% of input tokens were cache reads"
+    }
+  ],
+  "kpis": [
+    {
+      "hint": "25 of 29 rules assessed",
+      "id": "score",
+      "label": "Compliance score",
+      "unit": "score",
+      "value": 78
+    },
+    {
+      "hint": null,
+      "id": "open-findings",
+      "label": "Open findings",
+      "unit": "count",
+      "value": 11
+    },
+    {
+      "hint": null,
+      "id": "members",
+      "label": "Members",
+      "unit": "count",
+      "value": 43
+    },
+    {
+      "hint": null,
+      "id": "mau",
+      "label": "Monthly active users",
+      "unit": "count",
+      "value": 35
+    },
+    {
+      "hint": null,
+      "id": "seat-utilization",
+      "label": "Seat utilization (30d)",
+      "unit": "percent",
+      "value": 77.8
+    },
+    {
+      "hint": "USD",
+      "id": "mtd-cost",
+      "label": "Month-to-date cost",
+      "unit": "currency",
+      "value": 4961.23
+    }
+  ],
+  "organizations": [
+    {
+      "id": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "name": "Example Corp Engineering"
+    },
+    {
+      "id": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "name": "Example Corp Legal"
+    },
+    {
+      "id": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "name": "Example Corp Sales"
+    }
+  ],
+  "schemaVersion": 2,
+  "source": "demo",
+  "title": "Claude Enterprise Audit Dashboard",
+  "usage": {
+    "asOf": "2026-09-15T06:00:00.000Z",
+    "byGroup": [
+      {
+        "key": "rbac_group_demo_engineering",
+        "label": "rbac_group_demo_engineering",
+        "percent": 70,
+        "value": 6436.5
+      },
+      {
+        "key": "rbac_group_demo_sales",
+        "label": "rbac_group_demo_sales",
+        "percent": 22,
+        "value": 2022.89
+      },
+      {
+        "key": "rbac_group_demo_legal",
+        "label": "rbac_group_demo_legal",
+        "percent": 12,
+        "value": 1103.38
+      }
+    ],
+    "byModel": [
+      {
+        "key": "claude-opus-5",
+        "label": "claude-opus-5",
+        "percent": 62,
+        "value": 5700.95
+      },
+      {
+        "key": "claude-sonnet-5",
+        "label": "claude-sonnet-5",
+        "percent": 33,
+        "value": 3034.37
+      },
+      {
+        "key": "claude-haiku-4-5",
+        "label": "claude-haiku-4-5",
+        "percent": 5,
+        "value": 459.74
+      }
+    ],
+    "byProduct": [
+      {
+        "key": "chat",
+        "label": "chat",
+        "percent": 45,
+        "value": 4137.8
+      },
+      {
+        "key": "claude_code",
+        "label": "claude_code",
+        "percent": 40,
+        "value": 3678.02
+      },
+      {
+        "key": "cowork",
+        "label": "cowork",
+        "percent": 15,
+        "value": 1379.26
+      }
+    ],
+    "currency": "USD",
+    "daily": [
+      {
+        "cost": 146.3,
+        "date": "2026-08-16",
+        "inputTokens": 3901256,
+        "outputTokens": 975314
+      },
+      {
+        "cost": 337.16,
+        "date": "2026-08-17",
+        "inputTokens": 8990704,
+        "outputTokens": 2247676
+      },
+      {
+        "cost": 299.81,
+        "date": "2026-08-18",
+        "inputTokens": 7994963,
+        "outputTokens": 1998740
+      },
+      {
+        "cost": 292.27,
+        "date": "2026-08-19",
+        "inputTokens": 7793698,
+        "outputTokens": 1948424
+      },
+      {
+        "cost": 311.08,
+        "date": "2026-08-20",
+        "inputTokens": 8295394,
+        "outputTokens": 2073848
+      },
+      {
+        "cost": 301.72,
+        "date": "2026-08-21",
+        "inputTokens": 8045866,
+        "outputTokens": 2011466
+      },
+      {
+        "cost": 150.21,
+        "date": "2026-08-22",
+        "inputTokens": 4005697,
+        "outputTokens": 1001424
+      },
+      {
+        "cost": 134.37,
+        "date": "2026-08-23",
+        "inputTokens": 3583078,
+        "outputTokens": 895769
+      },
+      {
+        "cost": 307.19,
+        "date": "2026-08-24",
+        "inputTokens": 8191816,
+        "outputTokens": 2047954
+      },
+      {
+        "cost": 329.27,
+        "date": "2026-08-25",
+        "inputTokens": 8780584,
+        "outputTokens": 2195146
+      },
+      {
+        "cost": 335.29,
+        "date": "2026-08-26",
+        "inputTokens": 8940734,
+        "outputTokens": 2235184
+      },
+      {
+        "cost": 324.85,
+        "date": "2026-08-27",
+        "inputTokens": 8662759,
+        "outputTokens": 2165690
+      },
+      {
+        "cost": 330.23,
+        "date": "2026-08-28",
+        "inputTokens": 8805974,
+        "outputTokens": 2201494
+      },
+      {
+        "cost": 151.65,
+        "date": "2026-08-29",
+        "inputTokens": 4043884,
+        "outputTokens": 1010971
+      },
+      {
+        "cost": 156.71,
+        "date": "2026-08-30",
+        "inputTokens": 4178890,
+        "outputTokens": 1044722
+      },
+      {
+        "cost": 325.71,
+        "date": "2026-08-31",
+        "inputTokens": 8685523,
+        "outputTokens": 2171381
+      },
+      {
+        "cost": 296.89,
+        "date": "2026-09-01",
+        "inputTokens": 7917317,
+        "outputTokens": 1979329
+      },
+      {
+        "cost": 317.39,
+        "date": "2026-09-02",
+        "inputTokens": 8463951,
+        "outputTokens": 2115988
+      },
+      {
+        "cost": 320.29,
+        "date": "2026-09-03",
+        "inputTokens": 8541232,
+        "outputTokens": 2135308
+      },
+      {
+        "cost": 303.03,
+        "date": "2026-09-04",
+        "inputTokens": 8080623,
+        "outputTokens": 2020156
+      },
+      {
+        "cost": 146.84,
+        "date": "2026-09-05",
+        "inputTokens": 3915960,
+        "outputTokens": 978990
+      },
+      {
+        "cost": 138.38,
+        "date": "2026-09-06",
+        "inputTokens": 3690177,
+        "outputTokens": 922544
+      },
+      {
+        "cost": 294.12,
+        "date": "2026-09-07",
+        "inputTokens": 7843028,
+        "outputTokens": 1960757
+      },
+      {
+        "cost": 323.73,
+        "date": "2026-09-08",
+        "inputTokens": 8632984,
+        "outputTokens": 2158246
+      },
+      {
+        "cost": 327.29,
+        "date": "2026-09-09",
+        "inputTokens": 8727998,
+        "outputTokens": 2182000
+      },
+      {
+        "cost": 330.89,
+        "date": "2026-09-10",
+        "inputTokens": 8824055,
+        "outputTokens": 2206014
+      },
+      {
+        "cost": 345.89,
+        "date": "2026-09-11",
+        "inputTokens": 9223800,
+        "outputTokens": 2305950
+      },
+      {
+        "cost": 135.02,
+        "date": "2026-09-12",
+        "inputTokens": 3600605,
+        "outputTokens": 900151
+      },
+      {
+        "cost": 134.12,
+        "date": "2026-09-13",
+        "inputTokens": 3576675,
+        "outputTokens": 894169
+      },
+      {
+        "cost": 1252.78,
+        "date": "2026-09-14",
+        "inputTokens": 33407631,
+        "outputTokens": 8351908
+      },
+      {
+        "cost": 294.57,
+        "date": "2026-09-15",
+        "inputTokens": 7855168,
+        "outputTokens": 1963792
+      }
+    ]
+  }
+}
