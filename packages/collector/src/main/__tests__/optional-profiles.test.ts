@@ -87,6 +87,27 @@ describe('demo profiles', () => {
       expect(text, actor).not.toContain(actor);
   });
 
+  it('publishes the Console usage and cost aggregate only in the optional-sources profile (AN-5)', () => {
+    expect(parseView(standard)).not.toHaveProperty('console');
+    const c = parseView(optional).console;
+    expect(c?.currency).toBe('USD');
+    expect(c?.totalCost).toBeGreaterThan(0);
+    expect(c?.daily.length).toBeGreaterThan(20);
+    expect(c?.byModel.length).toBeGreaterThan(2);
+    expect(c?.byWorkspace.map((s) => s.label)).toContain('Default workspace');
+    expect(c?.byCostType.map((s) => s.key).sort()).toEqual([
+      'code_execution',
+      'tokens',
+      'web_search',
+    ]);
+    expect(c?.cacheReadShare).toBeGreaterThan(0);
+    expect(c?.workspaces?.active).toBeGreaterThan(1);
+    expect(c?.apiKeys?.find((k) => k.status === 'active')?.count).toBeGreaterThan(1);
+    const text = JSON.stringify(c);
+    for (const secret of ['apikey_', 'production-backend', 'retired-experiment', 'user_demo'])
+      expect(text, secret).not.toContain(secret);
+  });
+
   it('lists the enabled optional datasets in the effective configuration', () => {
     const config = detailConfigSchema.parse(JSON.parse(optional[DETAIL_CONFIG_PATH] ?? '{}'));
     const names = config.sources.datasets.map((d) => d.name);
