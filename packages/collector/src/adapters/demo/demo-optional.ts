@@ -118,62 +118,88 @@ function cost(start: Date, now: Date): ConsoleCostRow[] {
   );
 }
 
-const PEOPLE = ['alice.engineer', 'bob.analyst', 'carol.designer', 'dave.engineer'] as const;
+/** Synthetic Claude Code users: address, terminal, activity scale and share of the small model. */
+const PEOPLE = [
+  { name: 'alice.engineer', terminal: 'vscode', scale: 1.3, small: 0.1 },
+  { name: 'bob.analyst', terminal: 'iTerm.app', scale: 0.6, small: 0.5 },
+  { name: 'carol.designer', terminal: 'vscode', scale: 0.4, small: 0.3 },
+  { name: 'dave.engineer', terminal: 'jetbrains', scale: 1.1, small: 0.2 },
+  { name: 'erin.platform', terminal: 'tmux', scale: 0.9, small: 0.15 },
+  { name: 'frank.data', terminal: 'cursor', scale: 0.7, small: 0.4 },
+] as const;
+
+type Person = (typeof PEOPLE)[number];
+
+/** Token and cost usage of one actor-day split between the two demo models. */
+function codeModels(f: number, small: number): ClaudeCodeActivity['models'] {
+  const usageOf = (model: string, share: number, price: number) => ({
+    model,
+    inputTokens: Math.round(90_000 * f * share),
+    outputTokens: Math.round(22_000 * f * share),
+    cacheReadTokens: Math.round(310_000 * f * share * (0.7 + (f % 0.3))),
+    cacheCreationTokens: Math.round(24_000 * f * share),
+    estimatedCost: round(price * f * share),
+  });
+  return [usageOf(MODELS[0], 1 - small, 3.4), usageOf(MODELS[1], small, 0.6)];
+}
+
+/** One person's day, or null on a day off (a different weekday-like gap per person). */
+function personDay(
+  date: string,
+  day: number,
+  p: number,
+  person: Person,
+): ClaudeCodeActivity | null {
+  if ((day + p * 2) % 7 === 6) return null;
+  const f = wave(day, p) * person.scale;
+  return {
+    date,
+    actorKind: 'user',
+    actor: `${person.name}@example.com`,
+    customerType: 'subscription',
+    terminalType: person.terminal,
+    sessions: Math.max(1, Math.round(5 * f)),
+    linesAdded: Math.round(240 * f),
+    linesRemoved: Math.round(70 * f),
+    commits: Math.round(3 * f),
+    pullRequests: Math.round(f * 0.8),
+    toolAccepted: Math.round(40 * f),
+    toolRejected: Math.round(4 * f * (2 - wave(day, p + 3))),
+    models: codeModels(f, person.small),
+  };
+}
+
+/** An automation key's day (non-interactive, small model only); some keys skip days. */
+function apiKeyDay(date: string, day: number, key: string, every: number): ClaudeCodeActivity[] {
+  if (day % every !== 0) return [];
+  const f = wave(day, 9);
+  return [
+    {
+      date,
+      actorKind: 'api',
+      actor: key,
+      customerType: 'api',
+      terminalType: 'non-interactive',
+      sessions: Math.round(3 * f),
+      linesAdded: Math.round(35 * f),
+      linesRemoved: Math.round(12 * f),
+      commits: 0,
+      pullRequests: 0,
+      toolAccepted: Math.round(8 * f),
+      toolRejected: 1,
+      models: codeModels(f * 0.2, 1).slice(1),
+    },
+  ];
+}
 
 function claudeCode(now: Date, lookbackDays: number): ClaudeCodeActivity[] {
   const dates = daysOf(addDays(now, -lookbackDays), now);
   return dates.flatMap((date, day) => [
-    ...PEOPLE.map((person, p): ClaudeCodeActivity => {
-      const f = wave(day, p);
-      return {
-        date,
-        actorKind: 'user',
-        actor: `${person}@example.com`,
-        customerType: 'api',
-        terminalType: p % 2 === 0 ? 'vscode' : 'iTerm.app',
-        sessions: Math.round(5 * f),
-        linesAdded: Math.round(240 * f),
-        linesRemoved: Math.round(70 * f),
-        commits: Math.round(3 * f),
-        pullRequests: Math.round(f),
-        toolAccepted: Math.round(40 * f),
-        toolRejected: Math.round(6 * (2 - f)),
-        models: [
-          {
-            model: MODELS[0],
-            inputTokens: Math.round(90_000 * f),
-            outputTokens: Math.round(22_000 * f),
-            cacheReadTokens: Math.round(310_000 * f),
-            cacheCreationTokens: Math.round(24_000 * f),
-            estimatedCost: round(3.4 * f),
-          },
-        ],
-      };
-    }),
-    {
-      date,
-      actorKind: 'api',
-      actor: 'ci-code-review-bot',
-      customerType: 'api',
-      terminalType: 'non-interactive',
-      sessions: 2,
-      linesAdded: 35,
-      linesRemoved: 12,
-      commits: 0,
-      pullRequests: 0,
-      toolAccepted: 8,
-      toolRejected: 1,
-      models: [
-        {
-          model: MODELS[1],
-          inputTokens: 18_000,
-          outputTokens: 4_000,
-          cacheReadTokens: 0,
-          cacheCreationTokens: 0,
-          estimatedCost: 0.21,
-        },
-      ],
-    },
+    ...PEOPLE.map((person, p) => personDay(date, day, p, person)).filter(
+      (row): row is ClaudeCodeActivity => row !== null,
+    ),
+    ...apiKeyDay(date, day, 'ci-code-review-bot', 1),
+    ...apiKeyDay(date, day, 'nightly-refactor-job', 2),
   ]);
 }
 
