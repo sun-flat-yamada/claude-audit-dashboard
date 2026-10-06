@@ -74,20 +74,23 @@ describe('Console Admin key (optional sources)', () => {
     const { config } = await loadConfig(join(dir, 'missing'));
     expect(config.sources.console).toEqual({ enabled: false, lookbackDays: 30 });
     expect(config.sources.claudeCode).toEqual({ enabled: false, lookbackDays: 7 });
+    expect(config.sources.featureUsage).toEqual({ enabled: false, lookbackDays: 30 });
     await writeFile(
       join(dir, 'default.json'),
       JSON.stringify({
         sources: {
           console: { enabled: true },
           claudeCode: { enabled: true, lookbackDays: 31 },
-          disabled: ['consoleCost'],
+          featureUsage: { enabled: true, lookbackDays: 90 },
+          disabled: ['consoleCost', 'chatProjectUsage'],
         },
       }),
     );
     const loaded = (await loadConfig(dir)).config.sources;
     expect(loaded.console).toEqual({ enabled: true, lookbackDays: 30 });
     expect(loaded.claudeCode).toEqual({ enabled: true, lookbackDays: 31 });
-    expect(loaded.disabled).toEqual(['consoleCost']);
+    expect(loaded.featureUsage).toEqual({ enabled: true, lookbackDays: 90 });
+    expect(loaded.disabled).toEqual(['consoleCost', 'chatProjectUsage']);
     await writeFile(
       join(dir, 'default.json'),
       JSON.stringify({ sources: { claudeCode: { lookbackDays: 90 } } }),

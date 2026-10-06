@@ -29,6 +29,10 @@ const SORT_KEYS: Partial<Record<DatasetName, (item: Item) => string>> = {
     `${String(r.date)}|${String(r.workspaceId ?? '')}|${String(r.model ?? '')}|${String(r.costType ?? '')}`,
   claudeCodeActivity: (r) =>
     `${String(r.date)}|${String(r.actorKind)}|${String(r.actor ?? '')}|${String(r.terminalType ?? '')}|${String(r.customerType ?? '')}`,
+  skillUsage: (r) => String(r.name),
+  connectorUsage: (r) => String(r.name),
+  pluginUsage: (r) => `${String(r.name)}|${String(r.pluginId ?? '')}`,
+  chatProjectUsage: (r) => String(r.id),
 };
 
 const sortForStorage = (dataset: DatasetName, items: readonly unknown[]): unknown[] => {

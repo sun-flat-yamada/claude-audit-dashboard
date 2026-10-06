@@ -10,6 +10,7 @@
     "memberActivity": { "lookbackDays": 90 },
     "console": { "enabled": false, "lookbackDays": 30 },
     "claudeCode": { "enabled": false, "lookbackDays": 7 },
+    "featureUsage": { "enabled": false, "lookbackDays": 30 },
     "groups": { "maxMemberRequests": 200 },
     "activities": {
       "initialLookbackHours": 168,

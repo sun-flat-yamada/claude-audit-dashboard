@@ -59,6 +59,16 @@ export const appConfigSchema = z.object({
           lookbackDays: z.number().int().min(1).max(31).default(7),
         })
         .prefault({}),
+      featureUsage: z
+        .object({
+          /**
+           * Opt-in skill, connector, plugin and chat project adoption (AN-6, Analytics key);
+           * absent from coverage when off. One range roll-up request series per endpoint.
+           */
+          enabled: z.boolean().default(false),
+          lookbackDays: z.number().int().min(1).max(366).default(30),
+        })
+        .prefault({}),
       groups: z.object({ maxMemberRequests: z.number().int().min(0).default(200) }).prefault({}),
       activities: z
         .object({

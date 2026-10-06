@@ -9,6 +9,12 @@ import type {
   OptionalDatasetName,
 } from '@claude-audit/core';
 import { addDays, round, startOfUtcDay, toIsoDate } from '@claude-audit/core';
+import {
+  demoChatProjectUsage,
+  demoConnectorUsage,
+  demoPluginUsage,
+  demoSkillUsage,
+} from './demo-feature-usage.js';
 
 /**
  * Deterministic synthetic data of the OPTIONAL sources (B4), used only by the
@@ -283,7 +289,7 @@ const fixed = <K extends OptionalDatasetName>(
   },
 });
 
-/** Demo equivalents of the optional collectors (all five datasets). */
+/** Demo equivalents of the optional collectors (all nine datasets). */
 export function createDemoOptionalCollectors(): DatasetCollector[] {
   return [
     fixed('consoleWorkspaces', 'demo:consoleWorkspaces', (now) => workspaces(now), 30),
@@ -291,5 +297,9 @@ export function createDemoOptionalCollectors(): DatasetCollector[] {
     fixed('consoleUsage', 'demo:consoleUsage', (now, start) => usage(start, now), 30),
     fixed('consoleCost', 'demo:consoleCost', (now, start) => cost(start, now), 30),
     fixed('claudeCodeActivity', 'demo:claudeCodeActivity', (now) => claudeCode(now, 7), 7),
+    fixed('skillUsage', 'demo:skillUsage', demoSkillUsage, 30),
+    fixed('connectorUsage', 'demo:connectorUsage', demoConnectorUsage, 30),
+    fixed('pluginUsage', 'demo:pluginUsage', demoPluginUsage, 30),
+    fixed('chatProjectUsage', 'demo:chatProjectUsage', (now) => demoChatProjectUsage(now), 30),
   ];
 }

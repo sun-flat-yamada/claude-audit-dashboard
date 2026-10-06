@@ -20,6 +20,9 @@ import { runFixtureTenant } from '../fixture.js';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..');
 const fixtureDir = fileURLToPath(TENANT_FIXTURE_URL);
 
+/** An e-mail address needs a dotted domain; plugin ids such as `name@marketplace` are not. */
+const EMAIL = /[\w.+*-]+@[\w-]+(\.[\w-]+)+/g;
+
 const parseView = (files: Record<string, string>) =>
   dashboardViewSchema.parse(JSON.parse(files['dashboard.json'] ?? '{}'));
 const detailOf = (files: Record<string, string>) =>
@@ -52,20 +55,18 @@ describe('demo profiles', () => {
       expect(await readFile(join(ROOT, 'data/sample', name), 'utf8'), name).toBe(content);
   });
 
-  it('the optional-sources profile collects all five datasets and OP-002 passes', () => {
+  it('the optional-sources profile collects all nine datasets and OP-002 passes', () => {
     const coverage = coverageOf(optional);
     for (const name of OPTIONAL_DATASET_NAMES) expect(coverage[name]?.status).toBe('ok');
     const op = parseView(optional).compliance.results.find((r) => r.ruleId === 'OP-002');
-    expect(op).toMatchObject({ status: 'pass', message: 'All 18 datasets collected' });
+    expect(op).toMatchObject({ status: 'pass', message: 'All 22 datasets collected' });
   });
 
   it('is deterministic, valid, masked and synthetic (example.com only)', async () => {
     expect(await demo('optional-sources')).toEqual(optional);
     expect(parseView(optional).source).toBe('demo');
     expect(checkDetailBundle(detailOf(optional), { requireDemo: true })).toEqual([]);
-    for (const email of Object.values(optional)
-      .join('\n')
-      .match(/[\w.+*-]+@[\w.-]+/g) ?? [])
+    for (const email of Object.values(optional).join('\n').match(EMAIL) ?? [])
       expect(email).toMatch(/@example\.com$/);
   });
 
@@ -108,12 +109,26 @@ describe('demo profiles', () => {
       expect(text, secret).not.toContain(secret);
   });
 
+  it('publishes the feature adoption aggregate only in the optional-sources profile (AN-6)', () => {
+    expect(parseView(standard)).not.toHaveProperty('features');
+    const f = parseView(optional).features;
+    expect(f?.window).not.toBeNull();
+    expect(f?.skills?.total).toBeGreaterThan(5);
+    expect(f?.connectors?.items.map((c) => c.label)).toContain('Example Wiki');
+    expect(f?.connectors?.calls?.write).toBeGreaterThan(0);
+    expect(f?.plugins?.items.some((p) => p.installs === null)).toBe(true);
+    expect(f?.projects?.items[0]?.label).toMatch(/^Example /);
+    const text = JSON.stringify(f);
+    for (const personal of ['@example.com', 'user_', 'createdBy', 'createdAt'])
+      expect(text, personal).not.toContain(personal);
+  });
+
   it('lists the enabled optional datasets in the effective configuration', () => {
     const config = detailConfigSchema.parse(JSON.parse(optional[DETAIL_CONFIG_PATH] ?? '{}'));
     const names = config.sources.datasets.map((d) => d.name);
     for (const name of OPTIONAL_DATASET_NAMES)
       expect(config.sources.datasets.find((d) => d.name === name)?.enabled).toBe(true);
-    expect(names).toHaveLength(18);
+    expect(names).toHaveLength(22);
     const standardConfig = detailConfigSchema.parse(
       JSON.parse(standard[DETAIL_CONFIG_PATH] ?? '{}'),
     );
@@ -147,10 +162,10 @@ describe('fixture tenant with the optional sources enabled', () => {
     const coverage = coverageOf(files);
     expect(Object.values(coverage).every((c) => c.status === 'ok')).toBe(true);
     for (const name of OPTIONAL_DATASET_NAMES) expect(coverage[name]).toBeDefined();
-    expect(Object.keys(coverage)).toHaveLength(18);
+    expect(Object.keys(coverage)).toHaveLength(22);
     expect(coverage.claudeCodeActivity?.count).toBe(4);
     const op = parseView(files).compliance.results.find((r) => r.ruleId === 'OP-002');
-    expect(op?.message).toBe('All 18 datasets collected');
+    expect(op?.message).toBe('All 22 datasets collected');
     expect(checkDetailBundle(detailOf(files), { requireDemo: true })).toEqual([]);
     expect(await runFixtureTenant({ fixtureDir, optionalSources: true })).toEqual(files);
   });
@@ -163,8 +178,7 @@ describe('fixture tenant with the optional sources enabled', () => {
   it('contains no real address and no key material', async () => {
     const files = await runFixtureTenant({ fixtureDir, optionalSources: true });
     const text = Object.values(files).join('\n');
-    for (const email of text.match(/[\w.+*-]+@[\w.-]+/g) ?? [])
-      expect(email).toMatch(/@example\.com$/);
+    for (const email of text.match(EMAIL) ?? []) expect(email).toMatch(/@example\.com$/);
     expect(text).not.toMatch(/sk-ant-|fixture-console-key/);
   });
 });
@@ -189,7 +203,7 @@ describe('CLI flags', () => {
       const view = dashboardViewSchema.parse(
         JSON.parse(await readFile(join(target, 'dashboard.json'), 'utf8')),
       );
-      expect(view.coverage).toHaveLength(18);
+      expect(view.coverage).toHaveLength(22);
     } finally {
       await rm(out, { recursive: true, force: true });
     }
@@ -210,7 +224,7 @@ describe('CLI flags', () => {
           await readFile(join(out, 'data/fixture-optional-sources/dashboard.json'), 'utf8'),
         ),
       );
-      expect(view.coverage).toHaveLength(18);
+      expect(view.coverage).toHaveLength(22);
     } finally {
       await rm(out, { recursive: true, force: true });
     }

@@ -1,8 +1,13 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DATASET_NAMES, OPTIONAL_DATASET_NAMES, type DatasetName } from '@claude-audit/core';
+import {
+  DATASET_NAMES,
+  OPTIONAL_DATASET_NAMES,
+  datasetsOfSource,
+  type DatasetName,
+} from '@claude-audit/core';
 import { dashboardViewSchema, type DashboardView } from '@claude-audit/core/contracts';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TENANT_FIXTURE_URL } from '../../__tests__/fixture-sets.js';
@@ -100,7 +105,18 @@ const CONSOLE_PATHS = [
   '/v1/organizations/usage_report/claude_code',
 ];
 
-const optionalOf = (o: Outcome) => OPTIONAL_DATASET_NAMES.map((n) => o.coverage[n]?.status);
+/** The B4 datasets (Console, Claude Code); feature usage (AN-6) is checked on its own below. */
+const B4_DATASETS = [...datasetsOfSource('console'), ...datasetsOfSource('claudeCode')];
+const FEATURE_DATASETS = datasetsOfSource('featureUsage');
+const FEATURE_PATHS = [
+  '/v1/organizations/analytics/skills',
+  '/v1/organizations/analytics/connectors',
+  '/v1/organizations/analytics/plugins',
+  '/v1/organizations/analytics/apps/chat/projects',
+];
+
+const optionalOf = (o: Outcome) => B4_DATASETS.map((n) => o.coverage[n]?.status);
+const featuresOf = (o: Outcome) => FEATURE_DATASETS.map((n) => o.coverage[n]?.status);
 
 describe('(a) default configuration: nothing changes for existing users', () => {
   it('registers no optional dataset, even when a Console key is present', async () => {
@@ -112,6 +128,8 @@ describe('(a) default configuration: nothing changes for existing users', () => 
     );
     for (const name of OPTIONAL_DATASET_NAMES) expect(withKey.coverage).not.toHaveProperty(name);
     expect(withKey.keys.some(([path]) => CONSOLE_PATHS.includes(path))).toBe(false);
+    expect(withKey.keys.some(([path]) => FEATURE_PATHS.includes(path))).toBe(false);
+    expect(withKey.view).not.toHaveProperty('features');
     // Identical coverage, OP-002 and score with and without the Console key.
     expect(withKey.coverage).toEqual(without.coverage);
     expect(withKey.op002).toEqual(without.op002);
@@ -133,6 +151,7 @@ describe('(a) default configuration: nothing changes for existing users', () => 
     const explicit = await run(KEYS, {
       console: { enabled: false },
       claudeCode: { enabled: false },
+      featureUsage: { enabled: false },
     });
     expect(Object.keys(explicit.coverage)).toHaveLength(13);
   });
@@ -180,7 +199,7 @@ describe('(c) enabled without usable access: unavailable, the rest continues', (
     const out = await run({ ANTHROPIC_ENTERPRISE_API_KEY: ENTERPRISE }, ON);
     expect(out.code).toBe(0);
     expect(optionalOf(out)).toEqual(Array(5).fill('unavailable'));
-    for (const name of OPTIONAL_DATASET_NAMES)
+    for (const name of B4_DATASETS)
       expect(out.coverage[name]?.reason).toContain('ANTHROPIC_CONSOLE_ADMIN_API_KEY');
     expect(rest(out).every((s) => s === 'ok')).toBe(true);
     // The Enterprise key is never sent to the Console endpoints.
@@ -252,5 +271,98 @@ describe('(d) enabled with a schema mismatch: error, the rest continues', () => 
     });
     expect(out.coverage.consoleCost?.status).toBe('error');
     expect(out.coverage.consoleUsage?.status).toBe('ok');
+  });
+});
+
+const FEATURES_ON = { featureUsage: { enabled: true, lookbackDays: 30 } };
+const ENTERPRISE_ONLY = { ANTHROPIC_ENTERPRISE_API_KEY: ENTERPRISE };
+
+describe('AN-6 feature usage (sources.featureUsage.enabled)', () => {
+  const rest = (o: Outcome) =>
+    (DATASET_NAMES as DatasetName[]).filter((n) => o.coverage[n]).map((n) => o.coverage[n]?.status);
+
+  it('(a) is off by default: no request, no coverage row, no aggregate', async () => {
+    const out = await run(ENTERPRISE_ONLY, undefined);
+    for (const name of FEATURE_DATASETS) expect(out.coverage).not.toHaveProperty(name);
+    expect(out.keys.some(([path]) => FEATURE_PATHS.includes(path))).toBe(false);
+    expect(out.view).not.toHaveProperty('features');
+    expect(out.op002.message).toBe('All 13 datasets collected');
+  });
+
+  it('(b) collects the four roll-ups with the Analytics key and publishes the aggregate', async () => {
+    const out = await run(ENTERPRISE_ONLY, FEATURES_ON);
+    expect(out.code).toBe(0);
+    expect(featuresOf(out)).toEqual(['ok', 'ok', 'ok', 'ok']);
+    expect(out.coverage.skillUsage?.count).toBe(4);
+    expect(out.coverage.connectorUsage?.count).toBe(3);
+    expect(out.coverage.pluginUsage?.count).toBe(2);
+    expect(out.coverage.chatProjectUsage?.count).toBe(2);
+    expect(out.op002).toMatchObject({ status: 'pass', message: 'All 17 datasets collected' });
+    for (const [path, key] of out.keys)
+      if (FEATURE_PATHS.includes(path)) expect(key).toBe(ENTERPRISE);
+    const f = out.view.features;
+    expect(f?.skills?.items[0]?.label).toBe('Example Brand Voice');
+    expect(f?.connectors?.calls).toEqual({ read: 1030, write: 97, unclassified: 78 });
+    expect(f?.projects?.items.map((p) => p.label)).toEqual([
+      'Example Onboarding Handbook',
+      'Example RFP Responses',
+    ]);
+    // The project creator never reaches the snapshot or the published view.
+    const snapshotDir = join(dir, 'data', 'snapshots');
+    const [id] = await readdir(snapshotDir);
+    const stored = await readFile(join(snapshotDir, id ?? '', 'chatProjectUsage.json'), 'utf8');
+    for (const text of [stored, JSON.stringify(out.view)])
+      expect(text).not.toMatch(/user_alice|user_01DemoAlice|created_?[bB]y/);
+  });
+
+  it('(c) without an Analytics key all four are unavailable and the rest continues', async () => {
+    const out = await run({ ANTHROPIC_COMPLIANCE_API_KEY: ENTERPRISE }, FEATURES_ON);
+    expect(out.code).toBe(0);
+    expect(featuresOf(out)).toEqual(Array(4).fill('unavailable'));
+    expect(out.coverage.skillUsage?.reason).toContain('ANTHROPIC_ANALYTICS_API_KEY');
+    expect(out.view).not.toHaveProperty('features');
+  });
+
+  it.each([401, 403, 404])(
+    '(c) marks the datasets unavailable on HTTP %i and keeps going',
+    async (status) => {
+      const denied: Override = () =>
+        json({ type: 'error', error: { type: 'permission_error', message: 'denied' } }, status);
+      const out = await run(
+        ENTERPRISE_ONLY,
+        FEATURES_ON,
+        Object.fromEntries(FEATURE_PATHS.map((path) => [path, denied])),
+      );
+      expect(out.code).toBe(0);
+      expect(featuresOf(out)).toEqual(Array(4).fill('unavailable'));
+      expect(out.coverage.pluginUsage?.reason).toContain(String(status));
+      expect(rest(out).every((s) => s === 'ok')).toBe(true);
+      expect(out.op002.status).toBe('fail');
+      expect(out.op002.message).toBe('4 of 17 dataset(s) not collected');
+      expect(out.view).not.toHaveProperty('features');
+    },
+  );
+
+  it('(c) a single denied endpoint leaves the other sections published', async () => {
+    const out = await run(ENTERPRISE_ONLY, FEATURES_ON, {
+      '/v1/organizations/analytics/apps/chat/projects': () =>
+        json({ error: { type: 'permission_error', message: 'denied' } }, 403),
+    });
+    expect(featuresOf(out)).toEqual(['ok', 'ok', 'ok', 'unavailable']);
+    expect(out.view.features?.projects).toBeNull();
+    expect(out.view.features?.skills?.total).toBe(4);
+  });
+
+  it('(d) reports schema drift as an error naming the endpoint', async () => {
+    const out = await run(ENTERPRISE_ONLY, FEATURES_ON, {
+      '/v1/organizations/analytics/skills': () =>
+        json({ data: [{ skill_name: 'xlsx' }], next_page: null }),
+    });
+    expect(out.code).toBe(0);
+    expect(out.coverage.skillUsage?.status).toBe('error');
+    expect(out.coverage.skillUsage?.reason).toContain('schema drift');
+    expect(out.coverage.connectorUsage?.status).toBe('ok');
+    expect(out.coverage.members?.status).toBe('ok');
+    expect(out.op002.message).toBe('1 of 17 dataset(s) not collected');
   });
 });
