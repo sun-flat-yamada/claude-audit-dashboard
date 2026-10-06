@@ -69,6 +69,24 @@ describe('demo profiles', () => {
       expect(email).toMatch(/@example\.com$/);
   });
 
+  it('publishes the Claude Code aggregate only in the optional-sources profile (AN-4)', () => {
+    expect(parseView(standard)).not.toHaveProperty('claudeCode');
+    const cc = parseView(optional).claudeCode;
+    expect(cc?.users).toBeGreaterThan(1);
+    expect(cc?.apiKeys).toBeGreaterThan(0);
+    expect(cc?.byTerminal.length).toBeGreaterThan(2);
+    expect(cc?.byModel.length).toBeGreaterThan(1);
+    expect(cc?.daily.length).toBeGreaterThan(2);
+    const text = JSON.stringify(cc);
+    for (const actor of [
+      'alice.engineer',
+      '@example.com',
+      'ci-code-review-bot',
+      'nightly-refactor',
+    ])
+      expect(text, actor).not.toContain(actor);
+  });
+
   it('lists the enabled optional datasets in the effective configuration', () => {
     const config = detailConfigSchema.parse(JSON.parse(optional[DETAIL_CONFIG_PATH] ?? '{}'));
     const names = config.sources.datasets.map((d) => d.name);
