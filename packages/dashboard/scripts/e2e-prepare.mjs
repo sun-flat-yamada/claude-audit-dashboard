@@ -106,7 +106,9 @@ function withoutConsoleKey(dashboard) {
       : entry,
   );
   const view = { ...dashboard, coverage };
-  delete view.claudeCode; // the aggregate exists only when the dataset was collected (AN-4)
+  // The aggregates exist only when their datasets were collected (AN-4, AN-5).
+  delete view.claudeCode;
+  delete view.console;
   return view;
 }
 
