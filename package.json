@@ -73,6 +73,8 @@
     "change-dev:mode": "tsx scripts/change-dev-autopilot.ts mode",
     "change-dev:finish": "tsx scripts/change-dev-autopilot.ts finish",
     "test:scripts": "tsx --test \"scripts/__tests__/*.test.ts\"",
+    "verify:all": "tsx scripts/verify-all.ts",
+    "release:check": "tsx scripts/release-integrity.ts",
     "clean": "pnpm -r clean && rimraf node_modules",
     "test:e2e": "pnpm build:collector && pnpm fixture && pnpm demo --profile optional-sources && pnpm --filter @claude-audit/dashboard test:e2e"
   },

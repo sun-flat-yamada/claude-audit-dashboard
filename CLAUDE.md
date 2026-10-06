@@ -5,7 +5,7 @@ category: 'meta'
 type: 'configuration'
 status: 'active'
 date: 2026-10-05
-updated: 2026-10-05
+updated: 2026-10-07
 lang: 'en'
 tags:
   - 'ai'
@@ -32,7 +32,7 @@ tags:
 
 - `/status`: Show `git status`, the current branch, `pnpm worktree:list` and `pnpm change-dev:mode`.
 - `/test`: Run `pnpm typecheck && pnpm test`.
-- `/gate`: Run the full quality gate: `pnpm fork:verify && pnpm typecheck && pnpm test && pnpm secret-scan && pnpm build`, then the CI-only checks `pnpm lint && pnpm format:check`.
+- `/gate`: Run the full quality gate: `pnpm fork:verify && pnpm typecheck && pnpm test && pnpm secret-scan && pnpm build`, then the CI-only checks `pnpm lint && pnpm format:check`. `pnpm verify:all` runs all of it plus `pnpm audit:deps` and the E2E / a11y suite in one command (stops at the first failure; 10+ minutes).
 - `/secret-scan`: Run `pnpm secret-scan`.
 - `/verify-fork`: Run `pnpm fork:verify` and follow `.agents/skills/fork-sync-ops/SKILL.md` (never push `main` on upstream).
 - `/change-dev`: Follow `.agents/skills/change-dev/SKILL.md` (Issue → plan gate → sibling worktree → quality gate → walkthrough → PR → Rebase Merge; the plan wait, PR draft state and post-PR automation follow `CHG_DEV_AUTO_PILOT`, off by default in `.env.example`).

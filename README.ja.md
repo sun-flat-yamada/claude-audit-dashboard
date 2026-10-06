@@ -98,7 +98,7 @@ claude-audit-dashboard/
 ├── .github/
 │   ├── actions/setup/         # 共通セットアップ (pnpm、Node 22、install、任意のビルド)
 │   ├── scripts/data-branch.sh # data/audit ブランチの restore / save
-│   └── workflows/             # ci, collect-audit, weekly-report, monthly-report, deploy-pages, secret-scan
+│   └── workflows/             # ci, collect-audit, weekly-report, monthly-report, deploy-pages, secret-scan, release
 ├── config/
 │   ├── default.json           # データソース、ルール引数、通知、保持期間
 │   └── custom-rules.json      # 設定ベースラインとアクティビティ監視 (コード不要)

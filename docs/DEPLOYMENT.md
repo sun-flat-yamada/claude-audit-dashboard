@@ -265,6 +265,21 @@ The Pages build and the dashboard read only the latest `dashboard.json` and deta
 
 ---
 
+## Releasing (maintainers)
+
+A release is a `vX.Y.Z` tag pushed by the repository owner; `.github/workflows/release.yml` does the rest. AI agents never push `main` or tags, so the owner prepares and tags.
+
+1. **Prepare the release PR** (merged to `main` like any change): bump the `version` of the four `package.json` files (root, `packages/core`, `packages/collector`, `packages/dashboard`) to the same `X.Y.Z`; move the `[Unreleased]` entries of `CHANGELOG.md` under a dated `## [X.Y.Z] - yyyy-mm-dd` heading (this section becomes the release notes) and leave `[Unreleased]` empty; for 1.0.0 and later set the `docs/BLUEPRINT.md` Status to `Stable`. Run `pnpm verify:all` on the PR head; `pnpm release:check` (and the unit test in `pnpm test:scripts`) fails for 1.0.0 and later when a version differs, the dated heading is missing, `[Unreleased]` still holds entries or the Status is not `Stable`.
+2. **Tag the merge commit on `main` and push the tag**: `git tag vX.Y.Z <commit> && git push origin vX.Y.Z`. Only the strict form `vX.Y.Z` is accepted (no pre-release or build suffix); the tagged commit must be on `main`.
+3. **The workflow** checks out the tag, installs Chromium and runs `pnpm verify:all` (the same single command as locally: fork:verify, typecheck, test, secret-scan, build, lint, format:check, audit:deps, E2E and axe), checks that the tag equals the version of all four `package.json` files (`pnpm release:check --tag vX.Y.Z`), extracts the matching CHANGELOG section and **only then** creates the GitHub Release with it (`gh release create`, marked pre-release for `v0.*`). The `release` job is the only one with `contents: write`. If any step fails, no Release is created: fix the cause on `main`, delete the tag (`git push --delete origin vX.Y.Z`, `git tag -d vX.Y.Z`) and tag the new commit.
+4. The tag is read from the environment, never interpolated into a script, and validated with a strict regular expression before use; runs of the same tag are serialized and not cancelled.
+
+**v1.0.0 prerequisites (owner's checklist, not automated by this workflow):** Phase B (#46) and F-015 (#42) are closed, and the real-tenant records of #29 (B1: `pnpm pipeline` coverage, OP-002, `usage-matrix`) and #38 (B3: archive -> restore) are made on the release candidate commit. The release-candidate procedure and its record format (counts and statuses only) are tracked in #41 item 3.
+
+<!-- TODO(#41 item 3): add the real-tenant release-candidate procedure and record format here. -->
+
+---
+
 ## Environment Variables for Deployment
 
 Regardless of hosting option, set these in your CI/CD:

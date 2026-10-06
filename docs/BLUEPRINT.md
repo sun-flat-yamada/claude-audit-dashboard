@@ -520,14 +520,15 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 3、zod
 
 ### 12.1 ワークフロー
 
-| ワークフロー         | トリガー                                                                     | 内容                                                                                     |
-| -------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `ci.yml`             | push / PR (main)                                                             | fork:verify、lint、typecheck、format:check、test、build、`pnpm audit --audit-level=high` |
-| `collect-audit.yml`  | 6 時間ごと (要 `ENABLE_SCHEDULED_JOBS`) / 手動 (`retention_days`, `dry_run`) | restore → pipeline → archive → notify → size (非致命) → save                             |
-| `weekly-report.yml`  | 毎週月曜 09:00 UTC (同上) / 手動                                             | restore → `report:weekly --notify` → save                                                |
-| `monthly-report.yml` | 毎月 1 日 03:00 UTC (同上) / 手動 (対象月指定可)                             | restore → `report:monthly --notify` → save                                               |
-| `deploy-pages.yml`   | main への push、収集完了 (live 時のみ)、手動                                 | サンプルまたはライブデータでダッシュボードをビルドしデプロイ                             |
-| `secret-scan.yml`    | push / PR                                                                    | 独自スキャナと gitleaks                                                                  |
+| ワークフロー         | トリガー                                                                     | 内容                                                                                       |
+| -------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `ci.yml`             | push / PR (main)                                                             | fork:verify、lint、typecheck、format:check、test、build、`pnpm audit --audit-level=high`   |
+| `collect-audit.yml`  | 6 時間ごと (要 `ENABLE_SCHEDULED_JOBS`) / 手動 (`retention_days`, `dry_run`) | restore → pipeline → archive → notify → size (非致命) → save                               |
+| `weekly-report.yml`  | 毎週月曜 09:00 UTC (同上) / 手動                                             | restore → `report:weekly --notify` → save                                                  |
+| `monthly-report.yml` | 毎月 1 日 03:00 UTC (同上) / 手動 (対象月指定可)                             | restore → `report:monthly --notify` → save                                                 |
+| `deploy-pages.yml`   | main への push、収集完了 (live 時のみ)、手動                                 | サンプルまたはライブデータでダッシュボードをビルドしデプロイ                               |
+| `secret-scan.yml`    | push / PR                                                                    | 独自スキャナと gitleaks                                                                    |
+| `release.yml`        | `v*` タグの push                                                             | `pnpm verify:all` → タグと 4 つの version の一致検査 → CHANGELOG の該当節で GitHub Release |
 
 共通のセットアップは複合アクション `.github/actions/setup` に集約し、Dependabot の更新対象に含める。
 
@@ -639,6 +640,8 @@ WBS と受け入れ基準は [CHANGE-PLAN.md §7](CHANGE-PLAN.md)。
 pnpm fork:verify && pnpm typecheck && pnpm test && pnpm secret-scan && pnpm build
 pnpm lint && pnpm format:check && pnpm audit:deps
 ```
+
+一括検証コマンド `pnpm verify:all` (`scripts/verify-all.ts`) は、上記に加えて E2E / アクセシビリティ検証まで、`fork:verify` → `typecheck` → `test` → `secret-scan` → `build` → `lint` → `format:check` → `audit:deps` → `test:e2e` の順に実行し、最初の失敗で非 0 終了する (ステップ一覧はデータで、順序と即時停止はユニットテストで検証)。リリース候補・リリース PR・リリースワークフロー (`release.yml`、§12.1) で使う。CI は並列ジョブのまま (高速化とジョブ名の維持のため)。`pnpm release:check` はリリースのメタデータ (4 つの `package.json` の version の一致。1.0.0 以降は CHANGELOG の日付付き見出し、`[Unreleased]` が空、本書の Status が `Stable`) を検査する (同じ検査をテスト `scripts/__tests__/release-integrity.test.ts` が作業ツリーとフィクスチャに対して実行し、`pnpm test:scripts` に含まれる)。
 
 ブラウザを使う E2E / アクセシビリティ検証は `pnpm test` に含めず、別コマンドで実行する (CI では `E2E and accessibility` ジョブ。必須チェックへの登録手順は `CONTRIBUTING.md`)。
 
