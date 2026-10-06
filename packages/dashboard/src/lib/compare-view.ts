@@ -28,15 +28,16 @@ export function checkPoint(points: readonly ComparePoint[], id: string): PointCh
 
 /**
  * The selection shown: an explicit id from the query wins (even when invalid, so the page can
- * say so); otherwise the target is the newest selectable point and the base the point just
- * before it (the next older one, or the next newer one when the target is the oldest).
+ * say so); otherwise the target is the newest selectable point other than an explicit base, and
+ * the base the point just before the target (the next older one, or the next newer one when the
+ * target is the oldest).
  */
 export function defaultSelection(
   points: readonly ComparePoint[],
   query: { base?: string | undefined; target?: string | undefined },
 ): { base: string; target: string } {
   const list = selectablePoints(points);
-  const target = query.target || list[0]?.id || '';
+  const target = query.target || list.find((p) => p.id !== query.base)?.id || '';
   const at = list.findIndex((p) => p.id === target);
   const previous = list[at + 1] ?? list.filter((p) => p.id !== target)[0];
   return { base: query.base || previous?.id || '', target };

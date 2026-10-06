@@ -44,6 +44,8 @@ describe('selection helpers', () => {
     [{ target: B }, { base: C, target: B }],
     [{ target: C }, { base: A, target: C }],
     [{ base: C }, { base: C, target: A }],
+    [{ base: A }, { base: A, target: B }],
+    [{ base: B }, { base: B, target: A }],
     [
       { base: 'x', target: 'y' },
       { base: 'x', target: 'y' },
