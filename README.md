@@ -41,7 +41,7 @@ An audit, compliance and analytics toolkit for **Claude Enterprise** tenants. Gi
 
 ### Dashboard, reports and alerts
 
-- **Dashboard** (React 19, Recharts 3, Tailwind CSS 4) — score and KPIs, filterable rule results with remediation and evidence, cost / token / adoption trends with table views, spend by product, model and group, notable events, data coverage. Light and dark, mobile friendly.
+- **Dashboard** (React 19, Recharts 3, Tailwind CSS 4) — score and KPIs, filterable rule results with remediation and evidence, cost / token / adoption trends with table views, spend by product, model and group, notable events, data coverage, and a **time-point comparison** (`#/compare`: which rules regressed or improved, which datasets changed their collection state, key-figure deltas, Markdown / CSV / JSON export). Light and dark, mobile friendly.
 - **Reports** — compliance, weekly digest and monthly cost report, rendered as Markdown, HTML, CSV and JSON.
 - **Alerts** — Slack, Discord, e-mail (SMTP) and console, filtered by status and severity with a cooldown.
 
