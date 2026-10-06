@@ -1,5 +1,6 @@
 import {
   DEFAULT_DETAIL_THRESHOLDS,
+  archivedSnapshotIds,
   buildDetailView,
   type ArchiveEntry,
   type ConfigViewInput,
@@ -18,6 +19,7 @@ import {
   detailMembersSchema,
   detailOrgGroupsSchema,
   COMPARE_DIR,
+  DETAIL_DIR,
   COMPARE_INDEX_PATH,
   compareIndexSchema,
   timePointSummarySchema,
@@ -88,13 +90,26 @@ async function loadSummaries(
   }
 }
 
-/** Removes the per-point files of `detail/compare/` that the new index no longer lists. */
-async function removeStaleComparePoints(c: Container, keep: ReadonlySet<string>): Promise<void> {
-  for (const entry of await c.store.list(COMPARE_DIR)) {
-    const path = `${COMPARE_DIR}/${entry.name}`;
-    if (!entry.directory && entry.name.endsWith('.json') && !keep.has(path))
-      await c.store.remove(path);
-  }
+const STALE_ACTIVITY = /^activity-\d{4}-\d{2}\.json$/;
+
+/**
+ * Removes the files of `detail/` that the new bundle no longer lists: per-point files of
+ * `detail/compare/` and the monthly activity files of another snapshot (a build of a restored
+ * snapshot, then of the latest, must not leave unlisted files behind).
+ */
+async function removeStaleDetailFiles(c: Container, keep: ReadonlySet<string>): Promise<void> {
+  const stale = (dir: string, wanted: (name: string) => boolean) =>
+    c.store
+      .list(dir)
+      .then((entries) =>
+        entries.filter((e) => !e.directory && wanted(e.name) && !keep.has(`${dir}/${e.name}`)),
+      )
+      .then((entries) => entries.map((e) => `${dir}/${e.name}`));
+  const paths = [
+    ...(await stale(COMPARE_DIR, (name) => name.endsWith('.json'))),
+    ...(await stale(DETAIL_DIR, (name) => STALE_ACTIVITY.test(name))),
+  ];
+  for (const path of paths) await c.store.remove(path);
 }
 
 /**
@@ -116,6 +131,9 @@ export async function writeDetail(
   const target = await resolveTarget(c, snapshotId);
   const { snapshot, report } = target;
   const summaries = await loadSummaries(c, target, snapshotId);
+  // A supplied listing (the demo's synthetic archive) only feeds the inventory: its ids have no
+  // history behind them and must not appear as comparable points.
+  const archivedIds = archive ? [] : archivedSnapshotIds(entries ?? []);
   const bundle = buildDetailView({
     now: c.clock.now(),
     source: c.source,
@@ -127,6 +145,7 @@ export async function writeDetail(
     archive: { snapshotDays: c.config.retention.snapshotDays, entries },
     alerts,
     summaries,
+    archivedIds,
   });
   const out: Record<string, string> = {
     [DETAIL_MANIFEST_PATH]: stableStringify(detailManifestSchema.parse(bundle.manifest)),
@@ -134,6 +153,6 @@ export async function writeDetail(
   for (const file of bundle.files)
     out[file.path] = stableStringify(schemaFor(file.path).parse(file.content));
   await Promise.all(Object.entries(out).map(([path, content]) => c.artifacts.write(path, content)));
-  await removeStaleComparePoints(c, new Set(Object.keys(out)));
+  await removeStaleDetailFiles(c, new Set(Object.keys(out)));
   return out;
 }

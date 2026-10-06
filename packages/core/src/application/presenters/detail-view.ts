@@ -77,6 +77,11 @@ export interface DetailInput {
    * has none to publish; `null` means they could not be read.
    */
   summaries?: readonly TimePointSummary[] | null | undefined;
+  /**
+   * Snapshot ids found in the archive inventory (`archivedSnapshotIds`). Those without a stored
+   * summary are listed in the compare index as `archived` (F-015).
+   */
+  archivedIds?: readonly string[] | undefined;
 }
 
 export interface DetailFile {
@@ -324,8 +329,10 @@ function comparePart(c: Ctx): Part {
     ],
   });
   if (c.summaries === null) return unavailable('the time-point summaries could not be read');
-  if (c.summaries.length === 0) return unavailable('no time point has been judged yet');
-  const index = buildCompareIndex(c.summaries, c.now);
+  const archivedIds = c.archivedIds ?? [];
+  if (c.summaries.length === 0 && archivedIds.length === 0)
+    return unavailable('no time point has been judged yet');
+  const index = buildCompareIndex(c.summaries, c.now, undefined, archivedIds);
   const listed = new Set(index.points.map((p) => p.id));
   return {
     files: [

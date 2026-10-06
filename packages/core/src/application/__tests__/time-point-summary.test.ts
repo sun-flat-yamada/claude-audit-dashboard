@@ -187,6 +187,56 @@ describe('buildCompareIndex', () => {
   });
 });
 
+describe('buildCompareIndex with archived ids', () => {
+  const ARCHIVED = ['2026-08-01T12-00-00Z', '2026-09-08T12-00-00Z', '2026-07-01T12-00-00Z'];
+
+  it('lists summary-less archived ids as archived and an archived id with a summary as a summary', () => {
+    const index = buildCompareIndex([at(15), at(8)], NOW, undefined, ARCHIVED);
+    expect(index.points.map((p) => [p.id, p.state])).toEqual([
+      ['2026-09-15T12-00-00Z', 'summary'],
+      ['2026-09-08T12-00-00Z', 'summary'],
+      ['2026-08-01T12-00-00Z', 'archived'],
+      ['2026-07-01T12-00-00Z', 'archived'],
+    ]);
+    expect(index.points[2]).toEqual({
+      id: '2026-08-01T12-00-00Z',
+      collectedAt: null,
+      state: 'archived',
+      score: null,
+      assessed: null,
+    });
+    expect(compareIndexSchema.safeParse(index).success).toBe(true);
+  });
+
+  it('is deterministic and ignores repeated ids and the input order', () => {
+    const a = buildCompareIndex([at(8), at(15)], NOW, undefined, ARCHIVED);
+    const b = buildCompareIndex(
+      [at(15), at(8)],
+      NOW,
+      undefined,
+      [...ARCHIVED, ...ARCHIVED].reverse(),
+    );
+    expect(b).toEqual(a);
+  });
+
+  it('shares one cap between summary and archived points, newest first', () => {
+    const live = Array.from({ length: 5 }, (_, i) => at(i + 20));
+    const index = buildCompareIndex(live, NOW, 7, ARCHIVED);
+    expect(index.points.map((p) => p.state)).toEqual([
+      ...Array<string>(5).fill('summary'),
+      'archived',
+      'archived',
+    ]);
+    // The oldest archived id is cut by the cap, not a live point.
+    expect(index.points.at(-1)?.id).toBe('2026-08-01T12-00-00Z');
+  });
+
+  it('lists archived ids alone, and nothing for no input', () => {
+    expect(buildCompareIndex([], NOW, undefined, ARCHIVED).points).toHaveLength(3);
+    expect(buildCompareIndex([], NOW, undefined, []).points).toEqual([]);
+  });
+});
+
 describe('paths', () => {
   it('derives the store and published paths from the point id', () => {
     expect(summaryStorePath('2026-09-01T12-00-00Z')).toBe('summaries/2026-09-01T12-00-00Z.json');

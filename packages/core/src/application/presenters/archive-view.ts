@@ -29,6 +29,20 @@ function snapshotIdOf(entry: ArchiveEntry): string | null {
   return sized && SNAPSHOT_ID.test(id) && id.slice(0, 4) === entry.dir ? id : null;
 }
 
+/**
+ * The snapshot ids of the valid `<year>/<id>.json.gz` entries, newest first, each once. Entries
+ * that `summarizeArchiveEntries` ignores are ignored here too (F-015 lists these ids as
+ * `archived` compare points).
+ */
+export function archivedSnapshotIds(entries: readonly ArchiveEntry[]): string[] {
+  const ids = new Set<string>();
+  for (const entry of entries) {
+    const id = snapshotIdOf(entry);
+    if (id !== null) ids.add(id);
+  }
+  return [...ids].sort().reverse();
+}
+
 const min = (a: string, b: string): string => (a < b ? a : b);
 const max = (a: string, b: string): string => (a > b ? a : b);
 
