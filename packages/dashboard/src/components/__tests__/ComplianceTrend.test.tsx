@@ -39,9 +39,18 @@ describe('score trend of the sample (three time points, F-015)', () => {
     expect(within(figure as HTMLElement).getByText('View as table')).toBeInTheDocument();
   });
 
+  it('links the trend to the comparison of the last two points', () => {
+    render(<ComplianceSection compliance={sample().compliance} />);
+    expect(screen.getByRole('link', { name: 'Compare the last two time points' })).toHaveAttribute(
+      'href',
+      '#/compare',
+    );
+  });
+
   it('still needs two points: one point shows no trend chart', () => {
     render(<ComplianceSection compliance={withHistory(sample().compliance, 1)} />);
     expect(document.querySelector('figure')).toBeNull();
+    expect(screen.queryByRole('link', { name: /Compare the last two/ })).not.toBeInTheDocument();
     expect(screen.getByText('Compliance checks')).toBeInTheDocument();
   });
 });

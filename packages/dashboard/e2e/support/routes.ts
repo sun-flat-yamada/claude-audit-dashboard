@@ -7,6 +7,7 @@ import type { APIRequestContext } from '@playwright/test';
 export const STATIC_ROUTES = [
   { path: '/', heading: 'Claude Enterprise Audit Dashboard' },
   { path: '/compliance', heading: 'Compliance results' },
+  { path: '/compare', heading: 'Compare time points' },
   { path: '/models', heading: 'Models' },
   { path: '/claude-code', heading: 'Claude Code' },
   { path: '/console', heading: 'Console API usage and cost' },

@@ -5,6 +5,7 @@ import { matchPath } from './lib/router';
 import { Activity } from './pages/Activity';
 import { Alerts } from './pages/Alerts';
 import { Archive } from './pages/Archive';
+import { Compare } from './pages/Compare';
 import { Compliance } from './pages/Compliance';
 import { Config } from './pages/Config';
 import { ApiKeys } from './pages/ApiKeys';
@@ -54,6 +55,13 @@ export const ROUTES: RouteDef[] = [
     label: 'Compliance',
     nav: true,
     render: (view) => <Compliance view={view} />,
+  },
+  {
+    path: '/compare',
+    pattern: '/compare',
+    label: 'Compare',
+    nav: true,
+    render: (view) => <Compare currency={view.usage?.currency ?? 'USD'} />,
   },
   {
     path: '/models',

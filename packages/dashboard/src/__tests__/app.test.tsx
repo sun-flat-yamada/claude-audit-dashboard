@@ -30,6 +30,11 @@ const DETAIL = import.meta.glob<string>(
     import: 'default',
   },
 );
+const COMPARE = import.meta.glob<string>('../../../../data/sample/detail/compare/*.json', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+});
 const MONTHLY = import.meta.glob<string>('../../../../data/sample/detail/monthly/*.json', {
   eager: true,
   query: '?raw',
@@ -246,6 +251,32 @@ describe('hash routing', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Archive' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Archive' })).toHaveAttribute('aria-current', 'page');
     expect(await screen.findByRole('table', { name: 'Archive by year' })).toBeInTheDocument();
+  });
+
+  it('opens the comparison by deep link with base and target in the hash', async () => {
+    const compare = (name: string) =>
+      Object.entries(COMPARE).find(([path]) => path.endsWith(`/${name}`))?.[1] ?? '{}';
+    const index = JSON.parse(compare('index.json')) as { points: { id: string }[] };
+    const [target, , base] = index.points.map((p) => p.id) as [string, string, string];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: RequestInfo | URL) => {
+        const path = String(url);
+        const file = /\/detail\/compare\/([^/]+\.json)$/.exec(path)?.[1];
+        if (file) return new Response(compare(file));
+        if (path.endsWith('/detail/index.json')) return new Response('{}', { status: 404 });
+        return new Response(SAMPLE ?? '');
+      }),
+    );
+    window.location.hash = `#/compare?base=${base}&target=${target}`;
+    render(<App />);
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Compare time points' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Compare' })).toHaveAttribute('aria-current', 'page');
+    expect(await screen.findByRole('table', { name: 'Rule changes' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Base time point' })).toHaveValue(base);
+    expect(screen.getByRole('combobox', { name: 'Target time point' })).toHaveValue(target);
   });
 
   it('opens the model and group spend heatmap by deep link', async () => {
