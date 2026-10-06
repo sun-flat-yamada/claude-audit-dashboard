@@ -229,7 +229,7 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 | `adoption`        | Analytics `summaries`                                                    | DAU / WAU / MAU、シート、保留招待、製品別アクティブ                                |
 | `spendLimits`     | Spend Limits `GET /v1/organizations/spend_limits/effective`              | 実効上限 (null = 無制限) と当期支出                                                |
 
-任意アダプタのデータセットは §5.4 を参照 (有効にしたときだけ登録され、既定では上表の 13 件のまま)。
+任意アダプタのデータセットは §5.4 を参照 (Console / Claude Code / 機能別の採用状況。有効にしたときだけ登録され、既定では上表の 13 件のまま)。
 
 ### 5.3 通信の契約
 
@@ -245,13 +245,14 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 
 Claude Enterprise 以外の関連データソースを、既存のドメイン・ルールエンジン・オーケストレーターを変えずに追加できることの実証。**設定で有効にしたときだけデータセットを登録する** (`sources.disabled` と同じ「登録しない」方式)。無効の間は coverage に現れないため、既存の 13 データセットの coverage、OP-002 の判定、スコアは変わらない。
 
-| 設定                         | データセット                                                            | API (`docs/API-MAPPING.md` §6)                                                                        | 備考                                                                           |
-| ---------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `sources.console.enabled`    | `consoleWorkspaces` / `consoleApiKeys` / `consoleUsage` / `consoleCost` | Admin `workspaces` / `api_keys` / `usage_report/messages` / `cost_report` (リンクされた Console 組織) | 日次 × (workspace, model)。キー台帳はキー本体・ヒントを保存しない              |
-| `sources.claudeCode.enabled` | `claudeCodeActivity`                                                    | Claude Code Analytics `GET /v1/organizations/usage_report/claude_code` (日ごとに取得)                 | ユーザー (メール) / API キー名 × 日。**個人データのため公開しない (集計のみ)** |
+| 設定                                  | データセット                                                            | API (`docs/API-MAPPING.md` §6)                                                                           | 備考                                                                                  |
+| ------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `sources.console.enabled`             | `consoleWorkspaces` / `consoleApiKeys` / `consoleUsage` / `consoleCost` | Admin `workspaces` / `api_keys` / `usage_report/messages` / `cost_report` (リンクされた Console 組織)    | 日次 × (workspace, model)。キー台帳はキー本体・ヒントを保存しない                     |
+| `sources.claudeCode.enabled`          | `claudeCodeActivity`                                                    | Claude Code Analytics `GET /v1/organizations/usage_report/claude_code` (日ごとに取得)                    | ユーザー (メール) / API キー名 × 日。**個人データのため公開しない (集計のみ)**        |
+| `sources.featureUsage.enabled` (AN-6) | `skillUsage` / `connectorUsage` / `pluginUsage` / `chatProjectUsage`    | Enterprise Analytics `skills` / `connectors` / `plugins` / `apps/chat/projects` (期間ロールアップ、§6.3) | エンティティ × 期間。ユーザー行なし。プロジェクトの作成者 (`created_by`) は保存しない |
 
-- キー: `ANTHROPIC_CONSOLE_ADMIN_API_KEY` (§5.1)。有効でキー未設定・401・403・404 は `unavailable` (理由にキー名を含む。OP-002 が失敗して設定漏れを知らせる)、スキーマ差異は `error`。他のデータセットは収集を続ける。
-- 公開: `dashboard.json` と詳細ファイルには個人単位の行を出さない。画面に現れるのは Data coverage の行 (状態・件数・理由) と `#/config` の Data sources のみ。 `claudeCodeActivity` は個人を含まない集計 (`DashboardView.claudeCode`、AN-4) だけを `#/claude-code` に表示する。 Console の 4 データセットは集計 (`DashboardView.console`、AN-5、API キーは状態ごとの件数のみ) を `#/console` に表示する。
+- キー: `ANTHROPIC_CONSOLE_ADMIN_API_KEY` (§5.1)。`sources.featureUsage` だけは Analytics のキー (`ANTHROPIC_ENTERPRISE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY`、`read:analytics`) を使い、キー未設定時の理由はその変数名を挙げる。有効でキー未設定・401・403・404 は `unavailable` (理由にキー名を含む。OP-002 が失敗して設定漏れを知らせる)、スキーマ差異は `error`。他のデータセットは収集を続ける。
+- 公開: `dashboard.json` と詳細ファイルには個人単位の行を出さない。画面に現れるのは Data coverage の行 (状態・件数・理由) と `#/config` の Data sources のみ。 `claudeCodeActivity` は個人を含まない集計 (`DashboardView.claudeCode`、AN-4) だけを `#/claude-code` に表示する。 Console の 4 データセットは集計 (`DashboardView.console`、AN-5、API キーは状態ごとの件数のみ) を `#/console` に表示する。 機能別の採用状況 (AN-6) は集計 (`DashboardView.features`) を `#/features` に表示する。スキル・コネクタ・プラグイン・**チャットプロジェクトの名前は組織の設定情報として表示する** (プロジェクト名は業務内容を表し得る。公開したくない場合は `sources.featureUsage.enabled` を `false` に戻すか、`sources.disabled` に `chatProjectUsage` だけを加える)。ユーザー ID・メールアドレス・作成者は保存も公開もしない。
 - 確認: 実テナントでの疎通は未確認 (人手)。サンプルは `pnpm demo --profile optional-sources` (合成、`example.com` のみ、gitignored の `data/sample-optional-sources/`)、フィクスチャは `pnpm fixture --optional-sources`。既定の `pnpm demo` の `data/sample/` は変わらない。
 
 ---
@@ -416,6 +417,8 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 3、zod
 
 `claudeCode` (AN-4、任意) は任意データセット `claudeCodeActivity` (`sources.claudeCode.enabled`) の集計で、個人単位の値は持たない (アクターのメールアドレス・API キー名は数えるだけで公開しない): `window` (収集期間)、`currency` (推定コストの通貨、API の推定値は USD)、`users` / `apiKeys` (期間内に活動した distinct なユーザー / API キー数)、`daily` (`{ date, actors, sessions, addedLines, removedLines, commits, pullRequests, accepted, rejected }[]`、`actors` はその日の distinct なユーザーと API キーの数、日付昇順)、`totals` (同じ合計と `acceptRate` = 採用 ÷ (採用 + 却下)、% 小数 1 桁、0 件なら `null`)、`byTerminal` (`{ terminal, sessions, percent }[]`、セッション降順、端末不明は `(unknown)`)、`byModel` (`{ model, inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens, estimatedCost }[]`、推定コスト降順、推定値が無ければ `null`)、`estimatedCost`、`cacheReadShare` (キャッシュ読み取り ÷ 全入力 (未キャッシュ + 読み取り + 書き込み)、入力が無ければ `null`)。データセットが収集済み (`ok`) のときだけ付け、行が 0 件でも空の集計を出す。未収集・無効なら省略する。任意フィールドなので schemaVersion は 3 のままで、追加前の v3 `dashboard.json` も検証を通る。UI は `#/claude-code` (§9.2)。
 
+`features` (AN-6、任意) は任意データセット `skillUsage` / `connectorUsage` / `pluginUsage` / `chatProjectUsage` (`sources.featureUsage.enabled`) の集計: `window` (最初に収集済みのデータセットの収集期間)、`skills` / `connectors` / `plugins` / `projects` (それぞれ `{ total, items }`、`total` は期間内のエンティティ数、`items` は distinct users 降順 → 利用量降順 → キー順の上位 20 件 (`FEATURE_TOP_LIMIT`)。各項目は `key` (スキル・コネクタ名、プラグイン ID (無ければ名前)、プロジェクト ID)、`label` (表示名)、`users`。スキルは `invocations` / `shareStatus` と製品別の `chatConversations` / `claudeCodeSessions` / `coworkSessions` / `officeSessions`、コネクタは `readCalls` / `writeCalls` / `unclassifiedCalls` と製品別の値、プラグインは `invocations` / `installs` / `claudeCodeSessions` / `coworkSessions`、プロジェクトは `messages` / `conversations`。API が値を示さなければ `null`。コネクタには全コネクタの `calls { read, write, unclassified }` (どの行も分類を示さなければ `null`))。そのデータセットが未収集のセクションは `null`。4 つのどれかが収集済み (`ok`) のときだけ付け、どれも未収集なら省略する。ユーザー ID・メールアドレス・プロジェクト作成者は含まない。任意フィールドなので schemaVersion は 3 のまま。UI は `#/features` (§9.2)。
+
 `console` (AN-5、任意) は任意データセット `consoleUsage` / `consoleCost` / `consoleWorkspaces` / `consoleApiKeys` (`sources.console.enabled`) の集計: `window` (`consoleCost`、無ければ `consoleUsage` の収集期間)、`currency` (コスト行で最も多い通貨。他の通貨の行は合算しない、行が無ければ `USD`)、`totalCost` (期間の支出、主通貨単位)、`daily` (`{ date, cost, uncachedInputTokens, cacheReadInputTokens, cacheCreationInputTokens, outputTokens }[]`、日付昇順)、`byModel` / `byWorkspace` / `byCostType` (`{ key, label, value, percent }[]`、支出降順。値の無い行は `(unattributed)`。ワークスペースは `consoleWorkspaces` で名前を解決し、`workspaceId` が `null` の行は `key: default` / `Default workspace`、名前が分からない ID はそのまま)、`tokens` (`{ uncachedInput, cacheRead, cacheWrite, output }`)、`cacheReadShare` (キャッシュ読み取り ÷ 全入力、`usage.cacheHitRate` と同じ定義、入力が無ければ `null`)、`webSearchRequests`、`workspaces` (`{ active, archived }`、既定ワークスペースは数えない。`consoleWorkspaces` 未収集なら `null`)、`apiKeys` (`{ status, count }[]`、件数降順。`consoleApiKeys` 未収集なら `null`)。API キーの名前・ID・作成者は公開しない。`consoleUsage` か `consoleCost` が収集済み (`ok`) のときだけ付け (行が 0 件でも空の集計)、どちらも未収集なら省略する。任意フィールドなので schemaVersion は 3 のまま。UI は `#/console` (§9.2)。
 
 個人単位のデータ (メンバー、API キー、アクティビティ検索、組織/グループ) は `dashboard.json` に入れず、別の**詳細データファイル**で配る (`DETAIL_SCHEMA_VERSION = 2`、`contracts/detail-view.ts`)。`detail/index.json` (マニフェスト: `maskPii`・`source`・各ファイルの `kind`/`path`/`status`/`count`) と、`members.json`・`api-keys.json`・`activity-<yyyy-mm>.json` (月ごと、新しい順、最大 2000 行。`total`/`truncated` で実数を示す)・`org-groups.json` から成り、各ファイルが自前の `schemaVersion` を持つ (`DashboardView` は v3、モデル×グループ集計は `dashboard.json` に載る)。`maskPii=true` では、メールは `j***@example.com`、氏名はイニシャル、IP は除去、ユーザー/キー/招待 ID は `u_`/`k_`/`i_` + 12 桁 hex の安定ハッシュ (ファイル間で結合可能) にする。`maskPii=false` では生値になりマニフェストに記録される。生成は純粋なプレゼンタ (`core/application/presenters/detail-*.ts`) と `collector/src/main/detail.ts` (`pnpm build:detail`、`pnpm pipeline` に含む。書き込み時に zod 検証)。`checkDetailBundle()` (`contracts/detail-bundle.ts`) がマニフェストとファイルの整合・`example.*`・マスクを検査し、`fork:verify` がサンプルに適用する。
@@ -451,6 +454,7 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 3、zod
 | 実効設定               | `#/config`: `detail/config.json`。ルール一覧 (有効 / 無効をアイコン + ラベル + 色、由来、必要データセット、状態フィルタ)、ルールパラメータ (実効値と既定値、上書き / 既定 / 無効)、カスタムルール、通知ポリシー (チャンネルは種別と有効 / 無効のみ)、データソースの有効 / 無効と収集設定、その他 (保持期間、`maskPii`)。全セクションを検索で絞り込み。読み取り専用。未公開 / 未収集 (理由つき) / エラー / 空 / 該当なしの各状態を表示                                                                                                                                                                                                                                                                                                            |
 | モデル                 | `#/models`: `dashboard.json` の `modelMatrix`。概要画面にも最新月のモデル別支出カード (表ビューと `#/models` へのリンク付き。無効時は非表示)。モデル (行) × RBAC グループ (列) のヒートマップ (単一色相の連続スケール、0 から最大値までの線形、凡例に最小・中間・最大)、全セルに値を表示 (色だけに頼らない)、ホバー / フォーカスで正確な値と「そのモデルのグループ非分割支出に占める割合」を表示、矢印キーで移動、グリッドはコンテナ内でスクロール。期間 (全期間 / 月) と検索。月別モデル構成比 (グループ非分割の 100% 積み上げバー、上位 3 モデル + その他)。「View as table」で両方を表に切替 (同じ数値)。グループ重複の注記を常に表示し、行・列の合計は出さない。無効 (有効化の案内つき) / 未収集 (理由つき) / エラー / 空 / 該当なしの各状態 |
 | Claude Code            | `#/claude-code`: `dashboard.json` の `claudeCode` (AN-4)。期間の指標タイル (アクティブユーザー、API キー、セッション、追加 / 削除行、コミット、PR、提案採用率、推定コスト)、日別のユーザー・セッション数と追加 / 削除行 (2 系列の折れ線)、日別の提案採用率 (0〜100% 固定)、ターミナル別セッション (単一色バー)、モデル別トークンと推定コストの表とキャッシュ読み取り率。各チャートに「View as table」。個人・キー名は表示しない。未収集時は有効化手順 (`ANTHROPIC_CONSOLE_ADMIN_API_KEY` と `sources.claudeCode.enabled`) を案内し、有効だが未取得なら coverage の理由を表示する。Overview の Claude Code エンゲージメントパネルからデータがあるときだけリンクする                                                                               |
+| Skills & connectors    | `#/features`: `dashboard.json` の `features` (AN-6)。指標タイル (使われたスキル・コネクタ・プラグイン数、活動のあったチャットプロジェクト数、コネクタ呼び出しの write 比率)、スキル・コネクタ・プラグイン・チャットプロジェクトの distinct users 上位 (単一色バー、先端に利用回数・呼び出し数・メッセージ数)、コネクタ別の read-only / write / unclassified 呼び出し (100% 積み上げバー)。各リストに「View as table」(製品別の会話・セッション数を含む)。人は数えるだけで表示しない。未収集時は有効化手順 (`sources.featureUsage.enabled`、`read:analytics`) を案内し、有効だが未取得のデータセットは coverage の理由を表示する                                                                                                                  |
 | Console API            | `#/console`: `dashboard.json` の `console` (AN-5)。期間の指標タイル (支出、キャッシュ読み取り率、アクティブなワークスペース数・API キー数、Web 検索リクエスト数)、日別支出 (単一系列) と日別トークン種類 (4 系列の折れ線)、モデル別・ワークスペース別・コスト種別の支出 (単一色バー)、トークン種類別の表。各チャートに「View as table」。API キー名は表示しない。未収集時は有効化手順 (`ANTHROPIC_CONSOLE_ADMIN_API_KEY` と `sources.console.enabled`) を案内し、有効だが未取得のデータセットは coverage の理由を表示する                                                                                                                                                                                                                        |
 | アーカイブ             | `#/archive`: `detail/archive.json`。合計 (件数・圧縮サイズ・年数・最古/最新・保持設定) と年別の表 (件数・圧縮サイズ・割合・最古/最新)。状態 (アーカイブ済み / まだなし / 認識できないファイルあり) はアイコン + ラベル + 色。年で検索。未公開 / 未収集 (理由つき) / エラー / 空 (アーカイブなし) / 該当なしの各状態を表示                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | アラート               | `#/alerts`: `detail/alerts.json`。合計 (送信数・確認済み・未確認) と履歴表 (送信時刻・重大度・ルール ID・チャンネル種別・タイトルと ID・確認状態)。確認状態はアイコン + ラベル + 色 (確認済み / 未確認、確認済みは確認者ラベルと時刻つき)。検索と確認状態フィルタ (件数つき)。確認方法 (コマンド `pnpm alerts ack <alert-id> [--by <label>]` と `Acknowledge Alert` ワークフロー) を案内する (SPA は読み取り専用)。未公開 / 未収集 (理由つき) / エラー / 空 (「No alerts sent」) / 一致なしの各状態。                                                                                                                                                                                                                                            |
@@ -660,7 +664,7 @@ pnpm test:e2e --repeat-each=5      # 安定性の確認 (リトライなしで�
 - **プロファイル** (すべて合成データ): `sample` (`data/sample`、既定)、`fixtures` (`pnpm fixture`)、`optional-sources` (`pnpm demo --profile optional-sources`、B4 の 5 データセットが収集済み)、`optional-unavailable` (同じ構成で Console キーなし: 5 データセットが Unavailable と理由)、`unavailable` (詳細ファイルが 404)、`empty` (詳細ファイルは公開済みだが行なし)、`stale-detail` / `stale-dashboard` (`schemaVersion` 不一致)。派生プロファイルは公開契約のスキーマで検証してから作る。
 - **ライブデータ禁止**: `DASHBOARD_DATA_SOURCE=live` など `sample` / `fixtures` 以外の指定、`source` が `demo` でない `dashboard.json` は即座に失敗する。`fork:verify` は `e2e/` のスペックが live データを参照していないことも検査する。
 - **決定的な描画**: `reducedMotion: 'reduce'`、`en-US`、`UTC`、チャートのアニメーションなし、外部通信なし (ローカルのプレビューサーバー以外へのリクエストはテスト失敗)、`retries: 0`。
-- **対象**: Phase A の全画面、B1 フィクスチャテナント、B2 (F-003 のダウンロード内容、F-005 から F-014)、B3 (アーカイブの件数・サイズ)、B4 (Data coverage の新データセットと Unavailable の理由、既定プロファイルは不変)、AN-4 (`#/claude-code` の集計表示と未収集時の案内)、AN-5 (`#/console` の集計表示と未収集時の案内)、空 / 未公開 / 不一致の表示、キーボードのみの操作、390px で横スクロールなし。
+- **対象**: Phase A の全画面、B1 フィクスチャテナント、B2 (F-003 のダウンロード内容、F-005 から F-014)、B3 (アーカイブの件数・サイズ)、B4 (Data coverage の新データセットと Unavailable の理由、既定プロファイルは不変)、AN-4 (`#/claude-code` の集計表示と未収集時の案内)、AN-5 (`#/console` の集計表示と未収集時の案内)、AN-6 (`#/features` の集計表示、未収集時の案内、403 時の理由)、空 / 未公開 / 不一致の表示、キーボードのみの操作、390px で横スクロールなし。
 - **アクセシビリティ**: axe の `wcag2a` / `wcag2aa` を全ルート × ライト / ダークで実行し、critical / serious は 0 件。結果は各テストに JSON で添付する。
 
 ### 18.4 コミット規約
@@ -673,36 +677,38 @@ pnpm test:e2e --repeat-each=5      # 安定性の確認 (リトライなしで�
 
 `config/default.json` (すべて省略可、zod で検証。不正値は起動時にエラー):
 
-| キー                                      | 既定                                | 内容                                             |
-| ----------------------------------------- | ----------------------------------- | ------------------------------------------------ |
-| `dashboard.title`                         | `Claude Enterprise Audit Dashboard` | 表示名                                           |
-| `dashboard.maskPii`                       | `true`                              | ダッシュボードのメールアドレスをマスク           |
-| `sources.disabled`                        | `[]`                                | 収集しないデータセット                           |
-| `sources.members.provider`                | `admin`                             | `admin` / `compliance`                           |
-| `sources.memberActivity.lookbackDays`     | `90`                                | 最終活動を探す期間 (1〜366)                      |
-| `sources.groups.maxMemberRequests`        | `200`                               | グループメンバー取得の上限リクエスト数           |
-| `sources.console.enabled`                 | `false`                             | Console Admin API の 4 データセット (任意、§5.4) |
-| `sources.console.lookbackDays`            | `30`                                | その収集期間 (1〜366)                            |
-| `sources.claudeCode.enabled`              | `false`                             | Claude Code Analytics のデータセット (任意)      |
-| `sources.claudeCode.lookbackDays`         | `7`                                 | その収集期間 (1〜31。1 日 1 系列のリクエスト)    |
-| `sources.usageMatrix.enabled`             | `false`                             | モデル×グループのコスト収集 (任意、F-010)        |
-| `sources.usageMatrix.lookbackDays`        | `90`                                | その収集期間 (1〜366)                            |
-| `sources.activities.initialLookbackHours` | `168`                               | 初回の取得期間                                   |
-| `sources.activities.overlapMinutes`       | `10`                                | 時間窓の重複                                     |
-| `sources.activities.lagMinutes`           | `2`                                 | 取得遅延                                         |
-| `sources.activities.pageSize`             | `5000`                              | 1 ページの件数 (最大 5000)                       |
-| `sources.activities.includeTypes`         | `[]`                                | 取得する type (空 = すべて)                      |
-| `sources.activities.excludeTypes`         | 閲覧系 8 種                         | 除外する type                                    |
-| `compliance.disabledRules`                | `[]`                                | 無効にするルール ID                              |
-| `compliance.params.<ID>`                  | `{}`                                | ルールごとの引数 (例: `UA-002.monthlyBudget`)    |
-| `notifications.statuses`                  | `["fail", "warning"]`               | 通知する状態                                     |
-| `notifications.minSeverity`               | `high`                              | 通知する最低重大度                               |
-| `notifications.cooldownMinutes`           | `360`                               | 同じ内容を再送しない時間                         |
-| `retention.snapshotDays`                  | `365`                               | アーカイブまでの日数                             |
-| `capacity.maxTotalMiB`                    | `1024`                              | `data/audit` の総量の上限 MiB (0 = 判定しない)   |
-| `capacity.maxMonthlyGrowthMiB`            | `50`                                | 30 日あたり増分の上限 MiB (0 = 判定しない)       |
-| `capacity.warnRatio`                      | `0.8`                               | 上限のこの割合以上で警告 (0 より大きく 1 以下)   |
-| `capacity.windowDays`                     | `30`                                | 増分を測る期間 (1〜366)                          |
+| キー                                      | 既定                                | 内容                                                                            |
+| ----------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------- |
+| `dashboard.title`                         | `Claude Enterprise Audit Dashboard` | 表示名                                                                          |
+| `dashboard.maskPii`                       | `true`                              | ダッシュボードのメールアドレスをマスク                                          |
+| `sources.disabled`                        | `[]`                                | 収集しないデータセット                                                          |
+| `sources.members.provider`                | `admin`                             | `admin` / `compliance`                                                          |
+| `sources.memberActivity.lookbackDays`     | `90`                                | 最終活動を探す期間 (1〜366)                                                     |
+| `sources.groups.maxMemberRequests`        | `200`                               | グループメンバー取得の上限リクエスト数                                          |
+| `sources.console.enabled`                 | `false`                             | Console Admin API の 4 データセット (任意、§5.4)                                |
+| `sources.console.lookbackDays`            | `30`                                | その収集期間 (1〜366)                                                           |
+| `sources.claudeCode.enabled`              | `false`                             | Claude Code Analytics のデータセット (任意)                                     |
+| `sources.claudeCode.lookbackDays`         | `7`                                 | その収集期間 (1〜31。1 日 1 系列のリクエスト)                                   |
+| `sources.featureUsage.enabled`            | `false`                             | スキル・コネクタ・プラグイン・チャットプロジェクトの採用状況 (任意、§5.4、AN-6) |
+| `sources.featureUsage.lookbackDays`       | `30`                                | その期間ロールアップの日数 (1〜366)                                             |
+| `sources.usageMatrix.enabled`             | `false`                             | モデル×グループのコスト収集 (任意、F-010)                                       |
+| `sources.usageMatrix.lookbackDays`        | `90`                                | その収集期間 (1〜366)                                                           |
+| `sources.activities.initialLookbackHours` | `168`                               | 初回の取得期間                                                                  |
+| `sources.activities.overlapMinutes`       | `10`                                | 時間窓の重複                                                                    |
+| `sources.activities.lagMinutes`           | `2`                                 | 取得遅延                                                                        |
+| `sources.activities.pageSize`             | `5000`                              | 1 ページの件数 (最大 5000)                                                      |
+| `sources.activities.includeTypes`         | `[]`                                | 取得する type (空 = すべて)                                                     |
+| `sources.activities.excludeTypes`         | 閲覧系 8 種                         | 除外する type                                                                   |
+| `compliance.disabledRules`                | `[]`                                | 無効にするルール ID                                                             |
+| `compliance.params.<ID>`                  | `{}`                                | ルールごとの引数 (例: `UA-002.monthlyBudget`)                                   |
+| `notifications.statuses`                  | `["fail", "warning"]`               | 通知する状態                                                                    |
+| `notifications.minSeverity`               | `high`                              | 通知する最低重大度                                                              |
+| `notifications.cooldownMinutes`           | `360`                               | 同じ内容を再送しない時間                                                        |
+| `retention.snapshotDays`                  | `365`                               | アーカイブまでの日数                                                            |
+| `capacity.maxTotalMiB`                    | `1024`                              | `data/audit` の総量の上限 MiB (0 = 判定しない)                                  |
+| `capacity.maxMonthlyGrowthMiB`            | `50`                                | 30 日あたり増分の上限 MiB (0 = 判定しない)                                      |
+| `capacity.warnRatio`                      | `0.8`                               | 上限のこの割合以上で警告 (0 より大きく 1 以下)                                  |
+| `capacity.windowDays`                     | `30`                                | 増分を測る期間 (1〜366)                                                         |
 
 環境変数: `ANTHROPIC_ENTERPRISE_API_KEY` ほか §12.2、`ANTHROPIC_BASE_URL` (テスト用)、`DATA_DIR` (既定 `data`)、`CONFIG_DIR` (既定 `config`)、`DASHBOARD_URL`、`SMTP_SECURE`。相対パスは pnpm を起動したディレクトリ基準で解決する。
 

@@ -5,7 +5,7 @@ category: 'rules'
 type: 'specification'
 status: 'active'
 date: 2026-10-05
-updated: 2026-10-05
+updated: 2026-10-06
 lang: 'en'
 tags:
   - 'rules'
@@ -48,6 +48,7 @@ data/audit        ← Orphan branch. Audit snapshots, reports and state (per for
 | Alert acknowledgements    | `data/alerts/ack.json` (written by `pnpm alerts ack` / the `Acknowledge Alert` workflow; not published)                                                                                                                                                                                          | `data/audit` (orphan) | ❌ Never           |
 | Monthly cost (public)     | `data/detail/monthly/{index,<id>}.json` (mapped subset; no per-person data)                                                                                                                                                                                                                      | `data/audit` (orphan) | ❌ Never           |
 | Optional-source snapshots | `data/snapshots/<id>/{consoleWorkspaces,consoleApiKeys,consoleUsage,consoleCost,claudeCodeActivity}.json` (only with `sources.console.enabled` / `sources.claudeCode.enabled`; `claudeCodeActivity` rows are per user or per key name and are never published, aggregate-only)                   | `data/audit` (orphan) | ❌ Never           |
+| Feature usage snapshots   | `data/snapshots/<id>/{skillUsage,connectorUsage,pluginUsage,chatProjectUsage}.json` (only with `sources.featureUsage.enabled`; range roll-ups per skill / connector / plugin / chat project, no user rows, no project creator; published only as the `features` aggregate of `dashboard.json`)   | `data/audit` (orphan) | ❌ Never           |
 | Collector state           | `data/state.json` (cursors, projections, notifications incl. the alert send history)                                                                                                                                                                                                             | `data/audit` (orphan) | ❌ Never           |
 | Archived data             | `data/archive/<year>/<id>.json.gz`                                                                                                                                                                                                                                                               | `data/audit` (orphan) | ❌ Never           |
 
