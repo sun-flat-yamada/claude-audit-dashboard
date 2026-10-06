@@ -1,6 +1,6 @@
 import type { DashboardClaudeCode, DashboardView } from '@claude-audit/core/contracts';
 import { Card, Empty, TableView } from '../components/Card';
-import { CELL, HEAD, Notice } from '../components/DetailControls';
+import { HEAD, Notice } from '../components/DetailControls';
 import { ScrollRegion } from '../components/ScrollRegion';
 import { ShareBars } from '../components/ShareBars';
 import { TimeSeriesChart } from '../components/TimeSeriesChart';
@@ -87,6 +87,9 @@ function DailyCharts({ cc }: { cc: ClaudeCode }) {
     </div>
   );
 }
+
+/** Numbers and model ids never break; the table scrolls inside its own box on narrow screens. */
+const CELL = 'border-b border-[var(--grid)] px-2 py-2 whitespace-nowrap';
 
 const MODEL_HEADERS = ['Input', 'Output', 'Cache read', 'Cache write', 'Estimated cost'];
 
