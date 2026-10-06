@@ -88,7 +88,7 @@ What happens when something is missing:
 - Either way every other dataset keeps collecting.
 
 > [!NOTE]
-> `claudeCodeActivity` rows are per user (e-mail) or per API key name. They are stored only in the snapshot files on the `data/audit` branch, like `members`, and are **never published**: the dashboard shows only the coverage row (status and record count). Verification against a real tenant has not been done yet; capture and sanitize responses as described in "Capturing real responses" below.
+> `claudeCodeActivity` rows are per user (e-mail) or per API key name. They are stored only in the snapshot files on the `data/audit` branch, like `members`, and are **never published**: the dashboard shows the coverage row (status and record count) and, on the Claude Code page (`#/claude-code`), aggregates only (distinct counts, sums, terminals and models; no e-mail address or key name). Verification against a real tenant has not been done yet; capture and sanitize responses as described in "Capturing real responses" below.
 
 To try the optional sources without a key: `pnpm demo --profile optional-sources` (synthetic tenant, writes the gitignored `data/sample-optional-sources/`) and `pnpm fixture --optional-sources` (tenant-shape fixtures plus official-shape examples, writes `data/fixture-optional-sources/`). Plain `pnpm demo` / `pnpm fixture` are unchanged.
 
