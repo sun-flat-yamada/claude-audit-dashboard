@@ -3,28 +3,33 @@ import { NavBar } from './components/NavBar';
 import { ThemeToggle } from './components/ThemeToggle';
 import { loadDashboard, type LoadState } from './lib/data';
 import { useHashRoute } from './lib/router';
-import { findRoute, NotFound, ROUTES } from './routes';
+import { findRoute, NAV_GROUPS, NotFound, ROUTES } from './routes';
 
 function Shell({ view }: { view: Extract<LoadState, { status: 'ready' }>['view'] }) {
   const [path, go] = useHashRoute();
   const match = findRoute(path);
   const items = ROUTES.filter((r) => r.nav);
   return (
-    <>
+    <div className="lg:flex">
       <NavBar
         items={items}
+        groups={NAV_GROUPS}
         current={match?.route.navPath ?? match?.route.path ?? ''}
         onNavigate={go}
         actions={<ThemeToggle />}
       />
-      <main id="main" tabIndex={-1} className="mx-auto max-w-7xl px-4 py-8 outline-none sm:px-6">
+      <main
+        id="main"
+        tabIndex={-1}
+        className="mx-auto w-full max-w-7xl min-w-0 px-4 py-8 outline-none sm:px-6"
+      >
         {match ? (
           match.route.render(view, match.params)
         ) : (
           <NotFound path={path} onHome={() => go('/')} />
         )}
       </main>
-    </>
+    </div>
   );
 }
 
