@@ -62,7 +62,10 @@ export function Overview({ view }: { view: DashboardView }) {
       </div>
       <ModelMatrixCard matrix={view.modelMatrix} />
       <AdoptionSection adoption={view.adoption} />
-      <ProductEngagementSection engagement={view.engagement} />
+      <ProductEngagementSection
+        engagement={view.engagement}
+        claudeCodePage={view.claudeCode !== undefined}
+      />
       <ActivitySection activity={view.activity} />
       <CoverageSection coverage={view.coverage} />
       <footer className="pb-4 text-sm text-[var(--text-muted)]">

@@ -89,7 +89,13 @@ function AcceptRateBars({
   );
 }
 
-function ClaudeCodePanel({ cc }: { cc: NonNullable<DashboardEngagement['claudeCode']> }) {
+function ClaudeCodePanel({
+  cc,
+  pageLink,
+}: {
+  cc: NonNullable<DashboardEngagement['claudeCode']>;
+  pageLink: boolean;
+}) {
   return (
     <div className="mt-6">
       <h3 className="text-sm font-semibold">Claude Code</h3>
@@ -114,6 +120,13 @@ function ClaudeCodePanel({ cc }: { cc: NonNullable<DashboardEngagement['claudeCo
           />
         </div>
       )}
+      {pageLink && (
+        <p className="mt-3 text-sm">
+          <a className="underline" href="#/claude-code">
+            Open the Claude Code page for daily trends, terminals and cost by model
+          </a>
+        </p>
+      )}
     </div>
   );
 }
@@ -125,8 +138,11 @@ function ClaudeCodePanel({ cc }: { cc: NonNullable<DashboardEngagement['claudeCo
  */
 export function ProductEngagementSection({
   engagement,
+  claudeCodePage = false,
 }: {
   engagement: DashboardEngagement | undefined;
+  /** Links the Claude Code panel to `#/claude-code` when that page has data. */
+  claudeCodePage?: boolean;
 }) {
   if (!engagement) return null;
   const range = windowRange(engagement.window);
@@ -150,7 +166,9 @@ export function ProductEngagementSection({
         Active members: of {formatInteger(engagement.members)} members with an activity row.
         Sessions and conversations are distinct counts per member, summed.
       </p>
-      {engagement.claudeCode && <ClaudeCodePanel cc={engagement.claudeCode} />}
+      {engagement.claudeCode && (
+        <ClaudeCodePanel cc={engagement.claudeCode} pageLink={claudeCodePage} />
+      )}
     </Card>
   );
 }
