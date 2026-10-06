@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `collect-audit.yml` manual inputs `retention_days` and `dry_run`, validated through the environment by `.github/scripts/validate-dispatch-inputs.sh`
 - Test support that synthesizes 400+ days of 6-hourly history and commits it into a temporary git repository (dedup, archive-does-not-shrink and threshold tests); capacity guideline and the yearly orphan-branch rotation procedure in `docs/CHANGE-PLAN.md` section 9.4 and `docs/DEPLOYMENT.md` (figures are synthetic-based, to be re-validated with real data)
 
+### Fixed
+
+- Compare page follow-up (F-015, #117, refs #110 / PR #113): at 390px the rule, coverage and key-figure tables no longer break words mid-word (their cells wrap between words only and short values never wrap; the shared `CELL` of the other detail screens is unchanged); the rule and coverage tables keep a minimum width so their region scrolls sideways instead of crushing the columns, and the rule table shows Change next to Rule. The rule-changes subtitle now names the real order (regressed, no longer assessed, added, removed, now assessed, improved), the unknown-id alert points to the selectors "above", and with only `base` in the hash the target is the newest point other than the base (it could be the base itself). New E2E spec `e2e/sample/compare.spec.ts` (390px, default and picked: no page-level horizontal scroll, no word broken across lines, the rule table scrolls in its region)
+
 ### Changed
 
 - Grouped dashboard navigation (AN-7, #112): the 14 nav items no longer hide behind a horizontal scroll at 1280px. Routes carry an optional `group` (ordered by `NAV_GROUPS`: Usage, Directory, Operations after the ungrouped Overview and Compliance); from 1024px the navigation is a sticky side column with every link visible, below 1024px a `Menu` disclosure button (`aria-expanded` / `aria-controls`, Escape closes and returns focus, choosing a link closes it) shows the same grouped links. Links stay `<a href="#/...">`, so deep links, the current-page highlight and the Tab order (now in group order) keep working
