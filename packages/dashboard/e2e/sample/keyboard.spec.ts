@@ -3,21 +3,22 @@ import { openRoute } from '../support/app';
 import { STATIC_ROUTES } from '../support/routes';
 import { expect, test } from '../support/test';
 
+/** Navigation labels in Tab order: ungrouped, then the Usage, Directory and Operations groups. */
 const NAV_LABELS = [
   'Overview',
   'Compliance',
-  'Members',
-  'API keys',
-  'Activity',
-  'Monthly report',
   'Models',
   'Claude Code',
   'Console API',
   'Skills & connectors',
+  'Monthly report',
+  'Members',
+  'API keys',
+  'Organizations',
+  'Activity',
+  'Alerts',
   'Configuration',
   'Archive',
-  'Alerts',
-  'Organizations',
 ];
 
 /** Accessible name of the focused element (what a screen reader would announce first). */
