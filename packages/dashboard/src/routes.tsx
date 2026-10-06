@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import type { DashboardView } from '@claude-audit/core/contracts';
-import type { NavItem } from './components/NavBar';
+import type { NavGroup, NavItem } from './components/NavBar';
 import { matchPath } from './lib/router';
 import { Activity } from './pages/Activity';
 import { Alerts } from './pages/Alerts';
@@ -29,7 +29,17 @@ export interface RouteDef extends NavItem {
   render(view: DashboardView, params: Record<string, string>): ReactElement;
 }
 
-/** Later work units append their pages here; the router and nav need no other change. */
+/** Navigation groups in display order; a route joins one with its `group` id. */
+export const NAV_GROUPS: NavGroup[] = [
+  { id: 'usage', label: 'Usage' },
+  { id: 'directory', label: 'Directory' },
+  { id: 'operations', label: 'Operations' },
+];
+
+/**
+ * Later work units append their pages here (with a `group` from `NAV_GROUPS`); the router and nav
+ * need no other change. The navigation shows the ungrouped items first, then each group in order.
+ */
 export const ROUTES: RouteDef[] = [
   {
     path: '/',
@@ -46,30 +56,42 @@ export const ROUTES: RouteDef[] = [
     render: (view) => <Compliance view={view} />,
   },
   {
-    path: '/members',
-    pattern: '/members',
-    label: 'Members',
+    path: '/models',
+    pattern: '/models',
+    label: 'Models',
+    group: 'usage',
     nav: true,
-    render: () => <Members />,
+    render: (view) => <Models view={view} />,
   },
   {
-    path: '/keys',
-    pattern: '/keys',
-    label: 'API keys',
+    path: '/claude-code',
+    pattern: '/claude-code',
+    label: 'Claude Code',
+    group: 'usage',
     nav: true,
-    render: () => <ApiKeys />,
+    render: (view) => <ClaudeCode view={view} />,
   },
   {
-    path: '/activity',
-    pattern: '/activity',
-    label: 'Activity',
+    path: '/console',
+    pattern: '/console',
+    label: 'Console API',
+    group: 'usage',
     nav: true,
-    render: () => <Activity />,
+    render: (view) => <ConsolePage view={view} />,
+  },
+  {
+    path: '/features',
+    pattern: '/features',
+    label: 'Skills & connectors',
+    group: 'usage',
+    nav: true,
+    render: (view) => <Features view={view} />,
   },
   {
     path: '/reports/monthly',
     pattern: '/reports/monthly',
     label: 'Monthly report',
+    group: 'usage',
     nav: true,
     render: () => <MonthlyReport />,
   },
@@ -82,58 +104,26 @@ export const ROUTES: RouteDef[] = [
     render: (_view, params) => <MonthlyReport id={params.id ?? ''} />,
   },
   {
-    path: '/models',
-    pattern: '/models',
-    label: 'Models',
+    path: '/members',
+    pattern: '/members',
+    label: 'Members',
+    group: 'directory',
     nav: true,
-    render: (view) => <Models view={view} />,
+    render: () => <Members />,
   },
   {
-    path: '/claude-code',
-    pattern: '/claude-code',
-    label: 'Claude Code',
+    path: '/keys',
+    pattern: '/keys',
+    label: 'API keys',
+    group: 'directory',
     nav: true,
-    render: (view) => <ClaudeCode view={view} />,
-  },
-  {
-    path: '/console',
-    pattern: '/console',
-    label: 'Console API',
-    nav: true,
-    render: (view) => <ConsolePage view={view} />,
-  },
-  {
-    path: '/features',
-    pattern: '/features',
-    label: 'Skills & connectors',
-    nav: true,
-    render: (view) => <Features view={view} />,
-  },
-  {
-    path: '/config',
-    pattern: '/config',
-    label: 'Configuration',
-    nav: true,
-    render: () => <Config />,
-  },
-  {
-    path: '/archive',
-    pattern: '/archive',
-    label: 'Archive',
-    nav: true,
-    render: () => <Archive />,
-  },
-  {
-    path: '/alerts',
-    pattern: '/alerts',
-    label: 'Alerts',
-    nav: true,
-    render: () => <Alerts />,
+    render: () => <ApiKeys />,
   },
   {
     path: '/orgs',
     pattern: '/orgs',
     label: 'Organizations',
+    group: 'directory',
     nav: true,
     render: () => <Organizations />,
   },
@@ -152,6 +142,38 @@ export const ROUTES: RouteDef[] = [
     nav: false,
     navPath: '/orgs',
     render: (_view, params) => <GroupDetail id={params.id ?? ''} />,
+  },
+  {
+    path: '/activity',
+    pattern: '/activity',
+    label: 'Activity',
+    group: 'operations',
+    nav: true,
+    render: () => <Activity />,
+  },
+  {
+    path: '/alerts',
+    pattern: '/alerts',
+    label: 'Alerts',
+    group: 'operations',
+    nav: true,
+    render: () => <Alerts />,
+  },
+  {
+    path: '/config',
+    pattern: '/config',
+    label: 'Configuration',
+    group: 'operations',
+    nav: true,
+    render: () => <Config />,
+  },
+  {
+    path: '/archive',
+    pattern: '/archive',
+    label: 'Archive',
+    group: 'operations',
+    nav: true,
+    render: () => <Archive />,
   },
 ];
 
