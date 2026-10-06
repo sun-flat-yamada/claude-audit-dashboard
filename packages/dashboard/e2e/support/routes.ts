@@ -9,6 +9,7 @@ export const STATIC_ROUTES = [
   { path: '/activity', heading: 'Activity' },
   { path: '/reports/monthly', heading: 'Monthly cost report' },
   { path: '/models', heading: 'Models' },
+  { path: '/claude-code', heading: 'Claude Code' },
   { path: '/config', heading: 'Configuration' },
   { path: '/archive', heading: 'Archive' },
   { path: '/alerts', heading: 'Alerts' },

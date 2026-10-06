@@ -105,7 +105,9 @@ function withoutConsoleKey(dashboard) {
       ? { ...entry, status: 'unavailable', count: null, asOf: null, reason: NO_KEY_REASON }
       : entry,
   );
-  return { ...dashboard, coverage };
+  const view = { ...dashboard, coverage };
+  delete view.claudeCode; // the aggregate exists only when the dataset was collected (AN-4)
+  return view;
 }
 
 function dashboardOf(profile, dashboard) {
