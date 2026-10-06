@@ -8,6 +8,7 @@ import { Archive } from './pages/Archive';
 import { Compliance } from './pages/Compliance';
 import { Config } from './pages/Config';
 import { ApiKeys } from './pages/ApiKeys';
+import { ClaudeCode } from './pages/ClaudeCode';
 import { GroupDetail } from './pages/GroupDetail';
 import { Members } from './pages/Members';
 import { Models } from './pages/Models';
@@ -84,6 +85,13 @@ export const ROUTES: RouteDef[] = [
     label: 'Models',
     nav: true,
     render: (view) => <Models view={view} />,
+  },
+  {
+    path: '/claude-code',
+    pattern: '/claude-code',
+    label: 'Claude Code',
+    nav: true,
+    render: (view) => <ClaudeCode view={view} />,
   },
   {
     path: '/config',

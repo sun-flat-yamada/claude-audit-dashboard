@@ -73,6 +73,17 @@ describe('Product engagement (AN-3)', () => {
     expect(screen.getByRole('columnheader', { name: 'Accept rate' })).toBeInTheDocument();
   });
 
+  it('links the Claude Code page only when it has data (AN-4)', () => {
+    const { unmount } = render(<ProductEngagementSection engagement={engagement()} />);
+    expect(screen.queryByRole('link', { name: /Claude Code page/ })).toBeNull();
+    unmount();
+    render(<ProductEngagementSection engagement={engagement()} claudeCodePage />);
+    expect(screen.getByRole('link', { name: /Claude Code page/ })).toHaveAttribute(
+      'href',
+      '#/claude-code',
+    );
+  });
+
   it('omits the Claude Code panel without Claude Code data', () => {
     render(<ProductEngagementSection engagement={engagement({ claudeCode: null })} />);
     expect(screen.queryByRole('heading', { name: 'Claude Code' })).toBeNull();
