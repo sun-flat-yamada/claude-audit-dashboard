@@ -44,6 +44,11 @@ export function ComplianceSection({
             domain={[0, 100]}
             height={160}
           />
+          <p className="mt-2 text-sm">
+            <a href="#/compare" className="underline">
+              Compare the last two time points
+            </a>
+          </p>
         </div>
       )}
       <ComplianceResults results={compliance.results} stamp={stamp} />

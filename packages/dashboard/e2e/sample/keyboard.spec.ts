@@ -7,6 +7,7 @@ import { expect, test } from '../support/test';
 const NAV_LABELS = [
   'Overview',
   'Compliance',
+  'Compare',
   'Models',
   'Claude Code',
   'Console API',
