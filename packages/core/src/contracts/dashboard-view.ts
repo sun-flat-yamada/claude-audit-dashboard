@@ -260,6 +260,50 @@ const claudeCode = z.object({
   cacheReadShare: z.number().nullable(),
 });
 
+/**
+ * Console API usage and cost aggregate (AN-5) from the optional `consoleUsage`, `consoleCost`,
+ * `consoleWorkspaces` and `consoleApiKeys` datasets (`sources.console.enabled`). Aggregates
+ * only: API keys are counted by status, never named. Absent when neither usage nor cost was
+ * collected or in a `dashboard.json` written before it.
+ */
+const consoleView = z.object({
+  window: z.object({ from: z.string(), to: z.string() }).nullable(),
+  /** Currency of every amount (the most frequent one of the cost rows; others are left out). */
+  currency: z.string(),
+  /** Spend over the window in major units. */
+  totalCost: z.number(),
+  /** Ascending; cost in major units, tokens by type. */
+  daily: z.array(
+    z.object({
+      date: z.string(),
+      cost: z.number(),
+      uncachedInputTokens: z.number(),
+      cacheReadInputTokens: z.number(),
+      cacheCreationInputTokens: z.number(),
+      outputTokens: z.number(),
+    }),
+  ),
+  /** Spend shares, highest first; `key` `(unattributed)` when the row had no value. */
+  byModel: z.array(share),
+  /** `key` is the workspace id (`default` for the default workspace), `label` its name. */
+  byWorkspace: z.array(share),
+  /** `tokens`, `web_search`, `code_execution`, ... */
+  byCostType: z.array(share),
+  tokens: z.object({
+    uncachedInput: z.number(),
+    cacheRead: z.number(),
+    cacheWrite: z.number(),
+    output: z.number(),
+  }),
+  /** Cache reads as a percent of all input tokens (one decimal), null when there was none. */
+  cacheReadShare: z.number().nullable(),
+  webSearchRequests: z.number(),
+  /** Null when `consoleWorkspaces` was not collected (the default workspace is not counted). */
+  workspaces: z.object({ active: z.number(), archived: z.number() }).nullable(),
+  /** Keys per raw status, most first; null when `consoleApiKeys` was not collected. */
+  apiKeys: z.array(z.object({ status: z.string(), count: z.number() })).nullable(),
+});
+
 const activity = z.object({
   total: z.number(),
   window: z.object({ from: z.string(), to: z.string() }).nullable(),
@@ -308,6 +352,7 @@ export const dashboardViewSchema = z.object({
   activity: activity.nullable(),
   engagement: engagement.optional(),
   claudeCode: claudeCode.optional(),
+  console: consoleView.optional(),
   insights: z.array(insight),
   /** null when the optional collection is off (`sources.usageMatrix.enabled`). */
   modelMatrix: modelMatrix.nullable(),
@@ -323,6 +368,7 @@ export type DashboardAdoption = z.infer<typeof adoption>;
 export type DashboardActivity = z.infer<typeof activity>;
 export type DashboardEngagement = z.infer<typeof engagement>;
 export type DashboardClaudeCode = z.infer<typeof claudeCode>;
+export type DashboardConsole = z.infer<typeof consoleView>;
 export type DashboardInsight = z.infer<typeof insight>;
 export type DashboardModelMatrix = z.infer<typeof modelMatrix>;
 export type DashboardModelMatrixData = z.infer<typeof matrixData>;

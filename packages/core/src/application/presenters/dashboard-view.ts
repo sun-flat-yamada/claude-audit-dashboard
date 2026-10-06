@@ -27,6 +27,7 @@ import { maskEmails } from '../../domain/util/mask.js';
 import { percent, round } from '../../domain/util/numbers.js';
 import { monthKey } from '../../domain/util/time.js';
 import { claudeCodeView } from './dashboard-claude-code.js';
+import { consoleView } from './dashboard-console.js';
 import { productEngagement } from './dashboard-engagement.js';
 import { buildModelMatrix, type UsageMatrixInput } from './usage-matrix-view.js';
 
@@ -365,6 +366,28 @@ function claudeCode(snapshot: AuditSnapshot | null, data: DatasetMap) {
   return { claudeCode: claudeCodeView(data.claudeCodeActivity, window) };
 }
 
+/** The dataset's rows when it was collected, else `fallback`. */
+const rowsIf = <K extends DatasetName, F>(
+  snapshot: AuditSnapshot | null,
+  data: DatasetMap,
+  name: K,
+  fallback: F,
+): DatasetMap[K] | F => (collected(snapshot, name) ? data[name] : fallback);
+
+/** Console usage and cost aggregate (AN-5); absent unless usage or cost was collected. */
+function consoleUsage(snapshot: AuditSnapshot | null, data: DatasetMap) {
+  if (!collected(snapshot, 'consoleUsage') && !collected(snapshot, 'consoleCost')) return {};
+  const coverage = snapshot?.coverage;
+  const view = consoleView({
+    usage: rowsIf(snapshot, data, 'consoleUsage', []),
+    cost: rowsIf(snapshot, data, 'consoleCost', []),
+    workspaces: rowsIf(snapshot, data, 'consoleWorkspaces', null),
+    apiKeys: rowsIf(snapshot, data, 'consoleApiKeys', null),
+    window: coverage?.consoleCost?.window ?? coverage?.consoleUsage?.window ?? null,
+  });
+  return { console: view };
+}
+
 /** Builds the published dashboard contract: aggregates only, PII masked when requested. */
 export function buildDashboardView(input: DashboardInput): DashboardView {
   const mask: Mask = input.maskPii ? maskEmails : (text) => text;
@@ -384,6 +407,7 @@ export function buildDashboardView(input: DashboardInput): DashboardView {
     activity: activity(input, data, mask),
     ...engagement(input.snapshot, data),
     ...claudeCode(input.snapshot, data),
+    ...consoleUsage(input.snapshot, data),
     insights: input.insights.map(({ id, kind, priority, title, detail }) => ({
       id,
       kind,
