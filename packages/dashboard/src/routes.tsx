@@ -9,6 +9,7 @@ import { Compliance } from './pages/Compliance';
 import { Config } from './pages/Config';
 import { ApiKeys } from './pages/ApiKeys';
 import { ClaudeCode } from './pages/ClaudeCode';
+import { ConsolePage } from './pages/Console';
 import { GroupDetail } from './pages/GroupDetail';
 import { Members } from './pages/Members';
 import { Models } from './pages/Models';
@@ -92,6 +93,13 @@ export const ROUTES: RouteDef[] = [
     label: 'Claude Code',
     nav: true,
     render: (view) => <ClaudeCode view={view} />,
+  },
+  {
+    path: '/console',
+    pattern: '/console',
+    label: 'Console API',
+    nav: true,
+    render: (view) => <ConsolePage view={view} />,
   },
   {
     path: '/config',
