@@ -29,6 +29,8 @@ import {
   assertNotLive,
   assertSynthetic,
   BASE_PATH,
+  FEATURE_DATASETS,
+  FEATURE_DENIED_REASON,
   NO_KEY_REASON,
   OPTIONAL_DATASETS,
   PROFILES,
@@ -98,17 +100,29 @@ function staleDetail(dir) {
   }
 }
 
-/** What the collector publishes when the optional sources are on but the key is missing. */
+const unavailable = (entry, reason) => ({
+  ...entry,
+  status: 'unavailable',
+  count: null,
+  asOf: null,
+  reason,
+});
+
+/**
+ * What the collector publishes when the optional sources are on but the Console key is missing
+ * and the Analytics key lacks `read:analytics` for the feature usage endpoints.
+ */
 function withoutConsoleKey(dashboard) {
-  const coverage = dashboard.coverage.map((entry) =>
-    OPTIONAL_DATASETS.includes(entry.dataset)
-      ? { ...entry, status: 'unavailable', count: null, asOf: null, reason: NO_KEY_REASON }
-      : entry,
-  );
+  const coverage = dashboard.coverage.map((entry) => {
+    if (OPTIONAL_DATASETS.includes(entry.dataset)) return unavailable(entry, NO_KEY_REASON);
+    if (FEATURE_DATASETS.includes(entry.dataset)) return unavailable(entry, FEATURE_DENIED_REASON);
+    return entry;
+  });
   const view = { ...dashboard, coverage };
-  // The aggregates exist only when their datasets were collected (AN-4, AN-5).
+  // The aggregates exist only when their datasets were collected (AN-4, AN-5, AN-6).
   delete view.claudeCode;
   delete view.console;
+  delete view.features;
   return view;
 }
 
