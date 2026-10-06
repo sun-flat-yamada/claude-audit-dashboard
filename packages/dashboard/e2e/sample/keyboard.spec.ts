@@ -11,6 +11,7 @@ const NAV_LABELS = [
   'Activity',
   'Monthly report',
   'Models',
+  'Claude Code',
   'Configuration',
   'Archive',
   'Alerts',
