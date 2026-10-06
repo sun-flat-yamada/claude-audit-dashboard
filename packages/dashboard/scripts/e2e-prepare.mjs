@@ -17,6 +17,7 @@ import {
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  compareIndexSchema,
   dashboardViewSchema,
   detailActivitySchema,
   detailAlertsSchema,
@@ -80,6 +81,10 @@ function emptyDetail(dir) {
     const file = join(dir, name);
     if (existsSync(file)) writeJson(file, schema.parse({ ...readJson(file), ...patch }));
   }
+  const compare = join(dir, 'compare', 'index.json');
+  if (existsSync(compare)) {
+    writeJson(compare, compareIndexSchema.parse({ ...readJson(compare), points: [] }));
+  }
   for (const name of readdirSync(dir).filter((n) => /^activity-\d{4}-\d{2}\.json$/.test(n))) {
     const file = join(dir, name);
     writeJson(
@@ -87,6 +92,24 @@ function emptyDetail(dir) {
       detailActivitySchema.parse({ ...readJson(file), items: [], total: 0, truncated: false }),
     );
   }
+}
+
+/** Snapshots archived before F-015 (no summary): the index lists their ids only (PR4, D-2). */
+const ARCHIVED_POINT_IDS = ['2026-09-08T12-00-00Z', '2026-08-18T12-00-00Z', '2026-08-04T12-00-00Z'];
+
+/** The sample's compare index plus `archived` entries, newest first, validated by the contract. */
+function withArchivedPoints(dir) {
+  const file = join(dir, 'compare', 'index.json');
+  const index = readJson(file);
+  const archived = ARCHIVED_POINT_IDS.map((id) => ({
+    id,
+    collectedAt: null,
+    state: 'archived',
+    score: null,
+    assessed: null,
+  }));
+  const points = [...index.points, ...archived].sort((a, b) => (a.id < b.id ? 1 : -1));
+  writeJson(file, compareIndexSchema.parse({ ...index, points }));
 }
 
 function staleDetail(dir) {
@@ -152,6 +175,7 @@ function assemble(profile) {
     cpSync(join(source, 'detail'), join(data, 'detail'), { recursive: true });
     if (profile.variant === 'empty') emptyDetail(join(data, 'detail'));
     if (profile.variant === 'detail-schema') staleDetail(join(data, 'detail'));
+    if (profile.variant === 'compare-archived') withArchivedPoints(join(data, 'detail'));
   }
   console.log(`E2E profile ${profile.name}: ${profile.description}`);
 }

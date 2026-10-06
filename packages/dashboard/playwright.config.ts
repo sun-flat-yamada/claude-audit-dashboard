@@ -7,12 +7,13 @@ assertNotLive(process.env);
 
 /** Specs per project: `e2e/shared` runs on several profiles, the other folders on one. */
 const SHARED: Record<string, string[]> = {
-  sample: ['shared', 'sample'],
-  fixtures: ['shared', 'fixtures'],
-  'optional-sources': ['optional-sources'],
+  sample: ['shared', 'sample', 'compare'],
+  fixtures: ['shared', 'fixtures', 'compare'],
+  'optional-sources': ['optional-sources', 'compare'],
   'optional-unavailable': ['optional-sources'],
-  unavailable: ['shared', 'unavailable'],
-  empty: ['shared', 'empty'],
+  unavailable: ['shared', 'unavailable', 'compare'],
+  empty: ['shared', 'empty', 'compare'],
+  'compare-archived': ['compare'],
   'stale-detail': ['stale'],
   'stale-dashboard': ['stale'],
 };

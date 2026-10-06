@@ -12,7 +12,7 @@ export const FIRST_PORT = 4310;
  * @property {string} name Playwright project name
  * @property {string} source Directory (repository relative) holding dashboard.json and detail/
  * @property {string} hint Command that creates the source when it is missing
- * @property {'copy' | 'no-detail' | 'dashboard-schema' | 'detail-schema' | 'empty' | 'optional-unavailable'} variant
+ * @property {'copy' | 'no-detail' | 'dashboard-schema' | 'detail-schema' | 'empty' | 'optional-unavailable' | 'compare-archived'} variant
  * @property {string} description
  */
 
@@ -61,6 +61,14 @@ export const PROFILES = [
     hint: 'run `pnpm demo`',
     variant: 'empty',
     description: 'detail files present but without rows',
+  },
+  {
+    name: 'compare-archived',
+    source: 'data/sample',
+    hint: 'run `pnpm demo`',
+    variant: 'compare-archived',
+    description:
+      'the sample whose compare index also lists three archived snapshots without a summary (F-015)',
   },
   {
     name: 'stale-detail',

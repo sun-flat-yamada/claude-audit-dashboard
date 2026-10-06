@@ -59,6 +59,25 @@ test.describe('stale detail files (schemaVersion mismatch)', () => {
     });
   }
 
+  test('the compare screen names the outdated index file and the command', async ({ page }) => {
+    await openRoute(page, '/compare');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Compare time points' }),
+    ).toBeVisible();
+    const alert = page.getByRole('alert');
+    await expect(alert).toHaveText(
+      'Failed to load time-point comparison data: detail/compare/index.json is not in the supported format (schemaVersion 999). Re-run `pnpm build:detail` (or `pnpm demo` for the sample data) to regenerate it.',
+    );
+    await expect(page.getByRole('combobox')).toHaveCount(0);
+    await expect(page.getByRole('table')).toHaveCount(0);
+  });
+
+  test('a deep link to a pair of points shows the same message', async ({ page }) => {
+    await page.goto('./#/compare?base=2026-09-01T12-00-00Z&target=2026-09-29T12-00-00Z');
+    await expect(page.getByRole('alert')).toContainText('detail/compare/index.json');
+    await expect(page.getByRole('alert')).toContainText('pnpm build:detail');
+  });
+
   test('an organization page names the problem as well', async ({ page }) => {
     await openRoute(page, '/orgs/5f0c7a1e-1111-4a1a-9a11-000000000001');
     await expect(page.getByRole('heading', { level: 1, name: 'Organization' })).toBeVisible();
