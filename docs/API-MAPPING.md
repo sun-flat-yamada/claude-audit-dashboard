@@ -128,10 +128,13 @@ Enterprise のロールは `user`, `managed`, `owner`, `membership_admin`, `prim
 
 **リンクされた Console 組織の Admin API** と **Claude Code Analytics API** を、設定で有効にしたときだけ収集する。どちらも **Console 組織の Admin API キー** (`sk-ant-admin...`、環境変数 `ANTHROPIC_CONSOLE_ADMIN_API_KEY`) が必要で、Enterprise キーや `ANTHROPIC_ADMIN_API_KEY` (Enterprise の Admin 系統の上書き) にはフォールバックしない。API 仕様の差異は [api-spec-mismatch-findings.md](api-spec-mismatch-findings.md) §4 を参照。**実テナントでの疎通は未確認** (人手のタスク。`--capture-raw` で採取しサニタイズしてフィクスチャに反映する)。
 
-| 設定                         | データセット                                                            | 無効時                                            |
-| ---------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------- |
-| `sources.console.enabled`    | `consoleWorkspaces` / `consoleApiKeys` / `consoleUsage` / `consoleCost` | 登録されず coverage に現れない (既存の挙動と同一) |
-| `sources.claudeCode.enabled` | `claudeCodeActivity`                                                    | 同上                                              |
+| 設定                           | データセット                                                                      | 無効時                                            |
+| ------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `sources.console.enabled`      | `consoleWorkspaces` / `consoleApiKeys` / `consoleUsage` / `consoleCost`           | 登録されず coverage に現れない (既存の挙動と同一) |
+| `sources.claudeCode.enabled`   | `claudeCodeActivity`                                                              | 同上                                              |
+| `sources.featureUsage.enabled` | `skillUsage` / `connectorUsage` / `pluginUsage` / `chatProjectUsage` (AN-6、§6.3) | 同上                                              |
+
+例外として `sources.featureUsage` (AN-6) は Console キーではなく Enterprise Analytics API のキー (`ANTHROPIC_ENTERPRISE_API_KEY` または `ANTHROPIC_ANALYTICS_API_KEY`、`read:analytics`) を使う。
 
 有効でキー未設定、または 401 / 403 / 404 は `unavailable` (理由にキー名を含む。OP-002 が設定漏れを知らせる)、スキーマ差異は `error`。他のデータセットの収集は止まらない。
 
@@ -154,22 +157,39 @@ Enterprise のロールは `user`, `managed`, `owner`, `membership_admin`, `prim
 
 行はユーザー (メールアドレス) または API キー名単位の個人データ。スナップショット (`data/audit`) にだけ保存し、`dashboard.json` と詳細ファイルには**公開しない** (集計のみ: coverage の件数)。
 
+### 6.3 機能別の採用状況 (AN-6、Enterprise Analytics API、`read:analytics`)
+
+スキル・コネクタ・プラグイン・claude.ai チャットプロジェクトの採用状況を、`sources.featureUsage.lookbackDays` (既定 30、1〜366) 日の**期間ロールアップ**で 1 系列ずつ取得する。共通パラメータは `starting_date = max(今日 − lookbackDays, 2026-01-01)`、`ending_date` なし (API が今日を使う)、`limit=1000`、`group_by[]` / `filter[]` なし (行にユーザーを含めない)。ページングはページトークン (`page` / `next_page`)。すべて `looseObject` と `nullish` で寛容に読み、必須フィールド (名前・ID と `distinct_user_count` など) の欠落はスキーマ差異 (`error`) とする。
+
+| エンドポイント                      | ドメイン                                                                                                                                                                                                                                                                                                                                                                                  |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /analytics/skills`             | `SkillUsage { name ← skill_name, displayName ← skill_display_name, users ← distinct_user_count, invocations ← invocation_count, shareStatus ← share_status, chatConversations ← chat_metrics.distinct_conversation_skill_used_count, claudeCodeSessions / coworkSessions ← *.distinct_session_skill_used_count, officeSessions ← office_metrics.{excel,outlook,powerpoint,word} の合計 }` |
+| `GET /analytics/connectors`         | `ConnectorUsage { name ← connector_name, displayName ← connector_display_name, users, readCalls ← read_call_count, writeCalls ← write_call_count, unclassifiedCalls ← unclassified_call_count, managedAuthUsers ← managed_auth_distinct_user_count, individualAuthUsers ← individual_auth_distinct_user_count, 製品別の会話 / セッション数 (skills と同じ) }`                             |
+| `GET /analytics/plugins`            | `PluginUsage { name ← plugin_name, pluginId ← plugin_id, users, invocations ← invocation_count, installs ← install_count, claudeCodeSessions / coworkSessions ← *.distinct_session_plugin_used_count }`                                                                                                                                                                                   |
+| `GET /analytics/apps/chat/projects` | `ChatProjectUsage { id ← project_id, name ← project_name, users, messages ← message_count, conversations ← distinct_conversation_count, createdAt ← created_at }`。**`created_by` (作成者のユーザー ID とメールアドレス) はスキーマに含めず、読まない・保存しない**                                                                                                                       |
+
+`enable_count` (期間ロールアップでは常に null)、`estimated_overage_spend` / `attributed_list_price` / `currency`、`rbac_group_*`、`user_id`、`product` は写像しない。distinct 系の会話 / セッション数は期間ロールアップでは HLL の概算 (誤差 2% 未満) または `null`。コネクタの read / write 分類は 2026-05-29 以降の日にだけあり、それより前を含む期間では `null` (API がサーバー側で判定)。managed / individual 認証の利用者数は期間が 2026-07-01 以降に始まる場合だけ値を持つ。
+
+公開: `dashboard.json` の任意フィールド `features` に、種類ごとに利用者数 (distinct users) 上位 20 件と総件数、コネクタ呼び出しの read / write / unclassified 合計を出す (§ BLUEPRINT の契約)。スキル・コネクタ・プラグイン・プロジェクトの**名前は組織の設定情報として公開する**。ユーザー ID・メールアドレス・作成者は公開しない。
+
 ---
 
 ## 7. 使わない API と理由
 
-| API                                                                      | 理由                                                                                                                      |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| Compliance の chats / files / projects / sessions                        | 本文・添付・トランスクリプトの閲覧権限 (`read:compliance_user_data`) を要する。監査ダッシュボードの目的を超えるため対象外 |
-| 書き込み・削除系 (`write:*`, `delete:*`)                                 | 読み取り専用の監査基盤とするため                                                                                          |
-| Admin API の workspaces / api_keys / usage_report / cost_report          | Claude Console 組織向け。Enterprise キーでは使えない (リンクされた Console 組織への対応は §6 の任意アダプタ)              |
-| Claude Code Analytics API (`/v1/organizations/usage_report/claude_code`) | Console の Admin API キーが必要。§6 の任意アダプタ (既定オフ)                                                             |
+| API                                                                                                 | 理由                                                                                                                      |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Compliance の chats / files / projects / sessions                                                   | 本文・添付・トランスクリプトの閲覧権限 (`read:compliance_user_data`) を要する。監査ダッシュボードの目的を超えるため対象外 |
+| 書き込み・削除系 (`write:*`, `delete:*`)                                                            | 読み取り専用の監査基盤とするため                                                                                          |
+| Admin API の workspaces / api_keys / usage_report / cost_report                                     | Claude Console 組織向け。Enterprise キーでは使えない (リンクされた Console 組織への対応は §6 の任意アダプタ)              |
+| Claude Code Analytics API (`/v1/organizations/usage_report/claude_code`)                            | Console の Admin API キーが必要。§6 の任意アダプタ (既定オフ)                                                             |
+| Analytics API の `skills` / `connectors` / `plugins` / `apps/chat/projects` の `group_by[]=user_id` | 個人単位の利用状況になるため使わない。§6.3 は組織全体のロールアップだけを任意で取得する                                   |
 
 ---
 
 ## 8. 一次情報
 
 - Compliance API: <https://platform.claude.com/docs/en/manage-claude/compliance-api>
+- Analytics API (skills / connectors / plugins / chat projects): <https://platform.claude.com/docs/en/api/http/beta/organization/analytics/skills/list>、[connectors](https://platform.claude.com/docs/en/api/http/beta/organization/analytics/connectors/list)、[plugins](https://platform.claude.com/docs/en/api/http/beta/organization/analytics/plugins/list)、[apps/chat/projects](https://platform.claude.com/docs/en/api/http/beta/organization/analytics/apps/chat/projects/list)
 - Set up the Compliance API (キー種別・スコープ): <https://platform.claude.com/docs/en/manage-claude/compliance-api-access>
 - Query the Activity Feed: <https://platform.claude.com/docs/en/manage-claude/compliance-activity-feed>
 - Design your compliance integration (window polling / cursor): <https://platform.claude.com/docs/en/manage-claude/compliance-integration-patterns>

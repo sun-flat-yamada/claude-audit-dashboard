@@ -92,6 +92,23 @@ What happens when something is missing:
 
 The Console datasets appear as aggregates on the Console API page (`#/console`: daily spend, spend by model, workspace and cost type, token types, the cache read share and workspace / key counts; API keys are counted by status, never named).
 
+## Optional source: skill, connector, plugin and chat project adoption
+
+`sources.featureUsage.enabled` (AN-6, **off by default**) collects how many people used each skill, connector (MCP), plugin and claude.ai chat project over the last `lookbackDays` days (default 30, 1-366), as one range roll-up per endpoint of the Enterprise Analytics API (`GET /v1/organizations/analytics/skills`, `/connectors`, `/plugins`, `/apps/chat/projects`). It needs **no new secret**: it uses the key of the built-in analytics datasets (`ANTHROPIC_ENTERPRISE_API_KEY`, or `ANTHROPIC_ANALYTICS_API_KEY`) with the `read:analytics` scope.
+
+```json
+{
+  "sources": {
+    "featureUsage": { "enabled": true, "lookbackDays": 30 }
+  }
+}
+```
+
+The datasets `skillUsage`, `connectorUsage`, `pluginUsage` and `chatProjectUsage` appear in Data coverage, and the Skills & connectors page (`#/features`) shows the top 20 of each kind by distinct users, with the connector read-only / write / unclassified call split. A denied endpoint (HTTP 401 / 403 / 404, e.g. a key without `read:analytics`) makes only that dataset `unavailable`; the rest keeps collecting.
+
+> [!IMPORTANT]
+> The page shows the **names** of skills, connectors, plugins and chat projects (organization configuration). Chat project names can describe the work they hold. People are only counted: user ids and e-mail addresses are never requested, and the project creator (`created_by`) is dropped while parsing and never stored. To keep project names out of the dashboard, add `chatProjectUsage` to `sources.disabled`; to stop the whole source, set `sources.featureUsage.enabled` back to `false`.
+
 To try the optional sources without a key: `pnpm demo --profile optional-sources` (synthetic tenant, writes the gitignored `data/sample-optional-sources/`) and `pnpm fixture --optional-sources` (tenant-shape fixtures plus official-shape examples, writes `data/fixture-optional-sources/`). Plain `pnpm demo` / `pnpm fixture` are unchanged.
 
 ## Step 3: GitHub Pages
