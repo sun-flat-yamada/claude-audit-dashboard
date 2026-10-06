@@ -207,6 +207,59 @@ const engagement = z.object({
   webSearches: z.number().nullable(),
 });
 
+const codeCounts = {
+  sessions: z.number(),
+  addedLines: z.number(),
+  removedLines: z.number(),
+  commits: z.number(),
+  pullRequests: z.number(),
+  /** Edit / write tool proposals accepted and rejected, summed over all tools. */
+  accepted: z.number(),
+  rejected: z.number(),
+};
+
+/**
+ * Claude Code activity aggregate (AN-4) from the optional `claudeCodeActivity` dataset
+ * (`sources.claudeCode.enabled`). Aggregates only: actors (e-mail addresses and API key names)
+ * are counted, never published. Absent when the dataset was not collected or in a
+ * `dashboard.json` written before it.
+ */
+const claudeCode = z.object({
+  window: z.object({ from: z.string(), to: z.string() }).nullable(),
+  /** Currency of `estimatedCost` (the API estimates in USD). */
+  currency: z.string(),
+  /** Distinct users (`user` actors) and API keys (`api` actors) with activity in the window. */
+  users: z.number(),
+  apiKeys: z.number(),
+  /** Ascending; `actors` is the number of distinct users and API keys active that day. */
+  daily: z.array(z.object({ date: z.string(), actors: z.number(), ...codeCounts })),
+  totals: z.object({
+    ...codeCounts,
+    /** Accepted as a percent of accepted + rejected (one decimal), null when there were none. */
+    acceptRate: z.number().nullable(),
+  }),
+  /** Most sessions first; `percent` of all sessions. */
+  byTerminal: z.array(
+    z.object({ terminal: z.string(), sessions: z.number(), percent: z.number() }),
+  ),
+  /** Highest estimated cost first (then most tokens). */
+  byModel: z.array(
+    z.object({
+      model: z.string(),
+      inputTokens: z.number(),
+      outputTokens: z.number(),
+      cacheReadTokens: z.number(),
+      cacheCreationTokens: z.number(),
+      /** Null when no row of the model carried an estimate. */
+      estimatedCost: z.number().nullable(),
+    }),
+  ),
+  /** Sum of the model estimates; null when none was given. */
+  estimatedCost: z.number().nullable(),
+  /** Cache reads as a percent of all input tokens (uncached + cache read + cache write). */
+  cacheReadShare: z.number().nullable(),
+});
+
 const activity = z.object({
   total: z.number(),
   window: z.object({ from: z.string(), to: z.string() }).nullable(),
@@ -254,6 +307,7 @@ export const dashboardViewSchema = z.object({
   adoption: adoption.nullable(),
   activity: activity.nullable(),
   engagement: engagement.optional(),
+  claudeCode: claudeCode.optional(),
   insights: z.array(insight),
   /** null when the optional collection is off (`sources.usageMatrix.enabled`). */
   modelMatrix: modelMatrix.nullable(),
@@ -268,6 +322,7 @@ export type DashboardUsage = z.infer<typeof usage>;
 export type DashboardAdoption = z.infer<typeof adoption>;
 export type DashboardActivity = z.infer<typeof activity>;
 export type DashboardEngagement = z.infer<typeof engagement>;
+export type DashboardClaudeCode = z.infer<typeof claudeCode>;
 export type DashboardInsight = z.infer<typeof insight>;
 export type DashboardModelMatrix = z.infer<typeof modelMatrix>;
 export type DashboardModelMatrixData = z.infer<typeof matrixData>;
