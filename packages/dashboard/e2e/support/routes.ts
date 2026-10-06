@@ -1,21 +1,24 @@
 import type { APIRequestContext } from '@playwright/test';
 
-/** Hash routes of `src/routes.tsx` without parameters, with the heading each one renders. */
+/**
+ * Hash routes of `src/routes.tsx` without parameters, with the heading each one renders, in the
+ * order of the grouped navigation (ungrouped, then Usage, Directory and Operations).
+ */
 export const STATIC_ROUTES = [
   { path: '/', heading: 'Claude Enterprise Audit Dashboard' },
   { path: '/compliance', heading: 'Compliance results' },
-  { path: '/members', heading: 'Members' },
-  { path: '/keys', heading: 'API keys' },
-  { path: '/activity', heading: 'Activity' },
-  { path: '/reports/monthly', heading: 'Monthly cost report' },
   { path: '/models', heading: 'Models' },
   { path: '/claude-code', heading: 'Claude Code' },
   { path: '/console', heading: 'Console API usage and cost' },
   { path: '/features', heading: 'Skills, connectors, plugins and projects' },
+  { path: '/reports/monthly', heading: 'Monthly cost report' },
+  { path: '/members', heading: 'Members' },
+  { path: '/keys', heading: 'API keys' },
+  { path: '/orgs', heading: 'Organizations' },
+  { path: '/activity', heading: 'Activity' },
+  { path: '/alerts', heading: 'Alerts' },
   { path: '/config', heading: 'Configuration' },
   { path: '/archive', heading: 'Archive' },
-  { path: '/alerts', heading: 'Alerts' },
-  { path: '/orgs', heading: 'Organizations' },
 ] as const;
 
 export interface Ids {
