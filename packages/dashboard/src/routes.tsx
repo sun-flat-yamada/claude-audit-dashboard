@@ -10,6 +10,7 @@ import { Config } from './pages/Config';
 import { ApiKeys } from './pages/ApiKeys';
 import { ClaudeCode } from './pages/ClaudeCode';
 import { ConsolePage } from './pages/Console';
+import { Features } from './pages/Features';
 import { GroupDetail } from './pages/GroupDetail';
 import { Members } from './pages/Members';
 import { Models } from './pages/Models';
@@ -100,6 +101,13 @@ export const ROUTES: RouteDef[] = [
     label: 'Console API',
     nav: true,
     render: (view) => <ConsolePage view={view} />,
+  },
+  {
+    path: '/features',
+    pattern: '/features',
+    label: 'Skills & connectors',
+    nav: true,
+    render: (view) => <Features view={view} />,
   },
   {
     path: '/config',
