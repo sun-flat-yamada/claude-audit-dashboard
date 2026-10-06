@@ -197,6 +197,14 @@ describe('selection', () => {
     expect(select('Base time point')).toHaveValue(T3);
   });
 
+  it('with only the newest point as base the target is the next newest, not the base itself', async () => {
+    open({}, `#/compare?base=${T3}`);
+    await screen.findByRole('table', { name: 'Rule changes' });
+    expect(select('Base time point')).toHaveValue(T3);
+    expect(select('Target time point')).toHaveValue(T2);
+    expect(screen.queryByText(/same time point/)).not.toBeInTheDocument();
+  });
+
   it('changes the diff and the hash when a selector changes (no history entry)', async () => {
     const before = window.history.length;
     open();
@@ -222,7 +230,7 @@ describe('selection', () => {
   it('reports an unknown id without crashing and keeps the selectors usable', async () => {
     open({}, `#/compare?base=nope&target=${T3}`);
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'The base time point "nope" is not in the list of comparable points',
+      'The base time point "nope" is not in the list of comparable points. Choose one above.',
     );
     expect(screen.queryByRole('table', { name: 'Rule changes' })).not.toBeInTheDocument();
     await userEvent.selectOptions(select('Base time point'), T2);
@@ -294,8 +302,14 @@ describe('results of the sample points', () => {
     const rows = within(table).getAllByRole('row').slice(1);
     const expected = diff().rules.changes;
     expect(rows).toHaveLength(expected.length);
+    // The change sits next to the rule id so it is visible before the table scrolls sideways.
+    expect(
+      within(table)
+        .getAllByRole('columnheader')
+        .map((h) => h.textContent),
+    ).toEqual(['Rule', 'Change', 'Name', 'Severity', 'Base', 'Target']);
     expect(within(rows[0] as HTMLElement).getByText(expected[0]?.id ?? '')).toBeInTheDocument();
-    const classes = rows.map((r) => within(r).getAllByRole('cell').at(-1)?.textContent);
+    const classes = rows.map((r) => within(r).getAllByRole('cell').at(0)?.textContent);
     const regressed = classes.filter((c) => c?.includes('Regressed')).length;
     expect(regressed).toBe(diff().rules.counts.regressed);
     expect(classes.slice(0, regressed).every((c) => c?.includes('Regressed'))).toBe(true);
