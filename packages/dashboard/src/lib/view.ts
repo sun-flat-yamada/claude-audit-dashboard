@@ -66,7 +66,7 @@ export interface TokenSeries {
  * Output sits before cache write so that the two lines that usually run close together
  * (cache read and output) get the orange / aqua slots instead of the weaker orange / yellow pair.
  */
-const TOKEN_TYPES: readonly TokenSeries[] = [
+export const TOKEN_TYPES: readonly TokenSeries[] = [
   { key: 'uncachedInputTokens', label: 'Uncached input', color: 'var(--series-1)' },
   { key: 'cacheReadInputTokens', label: 'Cache read', color: 'var(--series-2)' },
   { key: 'outputTokens', label: 'Output', color: 'var(--series-3)' },
