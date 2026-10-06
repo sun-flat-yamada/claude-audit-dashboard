@@ -178,7 +178,7 @@ function Populated({ f }: { f: Features }) {
         <Section title="Top skills" none="No skill was used in the period." section={f.skills}>
           {(items) => (
             <>
-              <ShareBars items={userBars(items, skillUsage)} />
+              <ShareBars wrap items={userBars(items, skillUsage)} />
               <TableView columns={SKILL_COLUMNS} rows={skillRows(items)} />
             </>
           )}
@@ -190,7 +190,7 @@ function Populated({ f }: { f: Features }) {
         >
           {(items) => (
             <>
-              <ShareBars items={userBars(items, connectorUsage)} />
+              <ShareBars wrap items={userBars(items, connectorUsage)} />
               <TableView columns={CONNECTOR_COLUMNS} rows={connectorRows(items)} />
             </>
           )}
@@ -199,7 +199,7 @@ function Populated({ f }: { f: Features }) {
         <Section title="Top plugins" none="No plugin was used in the period." section={f.plugins}>
           {(items) => (
             <>
-              <ShareBars items={userBars(items, pluginUsage)} />
+              <ShareBars wrap items={userBars(items, pluginUsage)} />
               <TableView columns={PLUGIN_COLUMNS} rows={pluginRows(items)} />
             </>
           )}
@@ -211,7 +211,7 @@ function Populated({ f }: { f: Features }) {
         >
           {(items) => (
             <>
-              <ShareBars items={userBars(items, projectUsage)} />
+              <ShareBars wrap items={userBars(items, projectUsage)} />
               <TableView columns={PROJECT_COLUMNS} rows={projectRows(items)} />
             </>
           )}

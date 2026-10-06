@@ -10,15 +10,18 @@ export interface BarItem {
 /**
  * Horizontal bars for one measure over nominal categories: one hue (slot 1) for every bar,
  * <=24px thick, 4px rounded data-end, value at the tip. Every value is also a visible label.
+ * `wrap` lets long labels wrap instead of being truncated (long names next to a long value).
  */
-export function ShareBars({ items }: { items: readonly BarItem[] }) {
+export function ShareBars({ items, wrap = false }: { items: readonly BarItem[]; wrap?: boolean }) {
   const max = Math.max(...items.map((i) => i.value), 0);
   return (
     <ul className="space-y-2.5">
       {items.map((item) => (
         <li key={item.key} title={`${item.label}: ${item.display}`} className="group">
           <div className="flex justify-between gap-3 text-sm">
-            <span className="truncate">{item.label}</span>
+            <span className={wrap ? 'min-w-0 [overflow-wrap:anywhere]' : 'truncate'}>
+              {item.label}
+            </span>
             <span className="tabular shrink-0 text-[var(--text-secondary)]">{item.display}</span>
           </div>
           <div className="mt-1 h-3">
