@@ -49,10 +49,10 @@ Rebased onto main after the model x group aggregate moved into `DashboardView` v
 | :----------------------- | :------------------------------------- | :----------------------------------------------- |
 | Code-Data Decoupling     | `pnpm fork:verify`                     | Clean (exit 0)                                   |
 | TypeScript Check         | `pnpm typecheck`                       | Pass (exit 0)                                    |
-| Unit & Integration Tests | `pnpm test`                            | core 281, collector 281, dashboard 352, scripts 32 pass |
+| Unit & Integration Tests | `pnpm test`                            | core 287, collector 286, dashboard 358, scripts 32 pass |
 | Zero Secret / PII Scan   | `pnpm secret-scan`                     | 0 leaks (exit 0)                                 |
 | Production Build         | `pnpm build`                           | Built                                            |
 | Lint / Format (CI)       | `pnpm lint && pnpm format:check`       | Clean                                            |
 | Dependency audit         | `pnpm audit:deps`                      | No known vulnerabilities                         |
-| E2E and axe              | `pnpm test:e2e` (full suite)           | 362 passed, 15 skipped (as before), axe clean    |
+| E2E and axe              | `pnpm test:e2e` (full suite)           | 362 passed, 14 skipped (as on main), axe clean    |
 | Determinism              | `pnpm demo` twice                      | identical output                                 |
