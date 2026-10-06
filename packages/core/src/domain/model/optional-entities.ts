@@ -84,3 +84,74 @@ export interface ClaudeCodeActivity {
   toolRejected: number;
   models: ClaudeCodeModelUsage[];
 }
+
+/**
+ * Sessions or conversations per product in which a skill or connector was used over the
+ * collection window (approximate distinct counts from the API). Null when the API could not
+ * state the value; `office` is the sum of the Excel, Outlook, PowerPoint and Word sessions.
+ */
+export interface FeatureProductCounts {
+  chatConversations: number | null;
+  claudeCodeSessions: number | null;
+  coworkSessions: number | null;
+  officeSessions: number | null;
+}
+
+/**
+ * Adoption of one skill over the collection window (Analytics API range roll-up). Skills are
+ * organization configuration: no user field is kept.
+ */
+export interface SkillUsage extends FeatureProductCounts {
+  /** Stable key; an opaque id for organization and plugin skills. */
+  name: string;
+  /** Readable name when the API resolved one. */
+  displayName: string | null;
+  /** Distinct users who invoked the skill in the window. */
+  users: number;
+  /** Invocations in the window; null when invocation reporting is not enabled. */
+  invocations: number | null;
+  /** `private`, `organization` or `public` (claude.ai only); null otherwise. */
+  shareStatus: string | null;
+}
+
+/** Adoption of one connector (MCP) over the collection window. */
+export interface ConnectorUsage extends FeatureProductCounts {
+  name: string;
+  displayName: string | null;
+  users: number;
+  /** Tool calls annotated read-only / not read-only / without annotation; null when not stated. */
+  readCalls: number | null;
+  writeCalls: number | null;
+  unclassifiedCalls: number | null;
+  /** Distinct users on an organization-managed / their own credential; null when not stated. */
+  managedAuthUsers: number | null;
+  individualAuthUsers: number | null;
+}
+
+/** Adoption of one plugin (Claude Code and Cowork) over the collection window. */
+export interface PluginUsage {
+  name: string;
+  /** Stable id such as `name@marketplace`; null for redacted third-party plugins. */
+  pluginId: string | null;
+  /** Distinct users with install or invocation activity. */
+  users: number;
+  invocations: number;
+  /** Distinct users who installed it in the window; null when not stated. */
+  installs: number | null;
+  claudeCodeSessions: number | null;
+  coworkSessions: number | null;
+}
+
+/**
+ * Activity of one claude.ai chat project over the collection window. The creator (a person) is
+ * dropped by the adapter and never stored.
+ */
+export interface ChatProjectUsage {
+  id: string;
+  name: string;
+  users: number;
+  messages: number;
+  /** Distinct conversations; null when the API could not compute it. */
+  conversations: number | null;
+  createdAt: string | null;
+}

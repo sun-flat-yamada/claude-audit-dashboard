@@ -304,6 +304,67 @@ const consoleView = z.object({
   apiKeys: z.array(z.object({ status: z.string(), count: z.number() })).nullable(),
 });
 
+/** Most entities kept per kind in `features` (highest distinct users first); the rest are counted. */
+export const FEATURE_TOP_LIMIT = 20;
+
+/** Sessions / conversations per product; null when the API could not state the value. */
+const featureProducts = {
+  chatConversations: z.number().nullable(),
+  claudeCodeSessions: z.number().nullable(),
+  coworkSessions: z.number().nullable(),
+  officeSessions: z.number().nullable(),
+};
+
+/** One kind of entity: `total` entities in the window, the top `FEATURE_TOP_LIMIT` in `items`. */
+const featureSection = <T extends z.ZodRawShape>(item: T) =>
+  z.object({
+    total: z.number().int().nonnegative(),
+    /** Most distinct users first, then most use, then by name. */
+    items: z.array(z.object({ key: z.string(), label: z.string(), users: z.number(), ...item })),
+  });
+
+const nullableCount = z.number().nullable();
+
+/**
+ * Skill, connector, plugin and chat project adoption (AN-6) from the optional `skillUsage`,
+ * `connectorUsage`, `pluginUsage` and `chatProjectUsage` datasets
+ * (`sources.featureUsage.enabled`), each a range roll-up over the collection window. Names are
+ * organization configuration and are published; user ids, e-mail addresses and project
+ * creators never are. A section is null when its dataset was not collected; the whole field is
+ * absent when none was, or in a `dashboard.json` written before it.
+ */
+const features = z.object({
+  window: z.object({ from: z.string(), to: z.string() }).nullable(),
+  skills: featureSection({
+    invocations: nullableCount,
+    /** `private`, `organization` or `public` (claude.ai only). */
+    shareStatus: z.string().nullable(),
+    ...featureProducts,
+  }).nullable(),
+  connectors: featureSection({
+    readCalls: nullableCount,
+    writeCalls: nullableCount,
+    unclassifiedCalls: nullableCount,
+    ...featureProducts,
+  })
+    .extend({
+      /** Tool calls of every connector by read-only annotation; null when no row stated it. */
+      calls: z.object({ read: z.number(), write: z.number(), unclassified: z.number() }).nullable(),
+    })
+    .nullable(),
+  plugins: featureSection({
+    invocations: z.number(),
+    installs: nullableCount,
+    claudeCodeSessions: nullableCount,
+    coworkSessions: nullableCount,
+  }).nullable(),
+  /** claude.ai chat projects; `key` is the project id. */
+  projects: featureSection({
+    messages: z.number(),
+    conversations: nullableCount,
+  }).nullable(),
+});
+
 const activity = z.object({
   total: z.number(),
   window: z.object({ from: z.string(), to: z.string() }).nullable(),
@@ -353,6 +414,7 @@ export const dashboardViewSchema = z.object({
   engagement: engagement.optional(),
   claudeCode: claudeCode.optional(),
   console: consoleView.optional(),
+  features: features.optional(),
   insights: z.array(insight),
   /** null when the optional collection is off (`sources.usageMatrix.enabled`). */
   modelMatrix: modelMatrix.nullable(),
@@ -369,6 +431,7 @@ export type DashboardActivity = z.infer<typeof activity>;
 export type DashboardEngagement = z.infer<typeof engagement>;
 export type DashboardClaudeCode = z.infer<typeof claudeCode>;
 export type DashboardConsole = z.infer<typeof consoleView>;
+export type DashboardFeatures = z.infer<typeof features>;
 export type DashboardInsight = z.infer<typeof insight>;
 export type DashboardModelMatrix = z.infer<typeof modelMatrix>;
 export type DashboardModelMatrixData = z.infer<typeof matrixData>;

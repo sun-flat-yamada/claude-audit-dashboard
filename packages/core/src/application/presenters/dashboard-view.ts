@@ -28,6 +28,7 @@ import { percent, round } from '../../domain/util/numbers.js';
 import { monthKey } from '../../domain/util/time.js';
 import { claudeCodeView } from './dashboard-claude-code.js';
 import { consoleView } from './dashboard-console.js';
+import { featuresView } from './dashboard-features.js';
 import { productEngagement } from './dashboard-engagement.js';
 import { buildModelMatrix, type UsageMatrixInput } from './usage-matrix-view.js';
 
@@ -388,6 +389,28 @@ function consoleUsage(snapshot: AuditSnapshot | null, data: DatasetMap) {
   return { console: view };
 }
 
+const FEATURE_DATASETS = [
+  'skillUsage',
+  'connectorUsage',
+  'pluginUsage',
+  'chatProjectUsage',
+] as const satisfies readonly DatasetName[];
+
+/** Skill, connector, plugin and chat project adoption (AN-6); absent unless one was collected. */
+function features(snapshot: AuditSnapshot | null, data: DatasetMap) {
+  const done = FEATURE_DATASETS.filter((name) => collected(snapshot, name));
+  if (done.length === 0) return {};
+  const first = done[0];
+  const view = featuresView({
+    skills: rowsIf(snapshot, data, 'skillUsage', null),
+    connectors: rowsIf(snapshot, data, 'connectorUsage', null),
+    plugins: rowsIf(snapshot, data, 'pluginUsage', null),
+    projects: rowsIf(snapshot, data, 'chatProjectUsage', null),
+    window: (first && snapshot?.coverage[first]?.window) ?? null,
+  });
+  return { features: view };
+}
+
 /** Builds the published dashboard contract: aggregates only, PII masked when requested. */
 export function buildDashboardView(input: DashboardInput): DashboardView {
   const mask: Mask = input.maskPii ? maskEmails : (text) => text;
@@ -408,6 +431,7 @@ export function buildDashboardView(input: DashboardInput): DashboardView {
     ...engagement(input.snapshot, data),
     ...claudeCode(input.snapshot, data),
     ...consoleUsage(input.snapshot, data),
+    ...features(input.snapshot, data),
     insights: input.insights.map(({ id, kind, priority, title, detail }) => ({
       id,
       kind,
