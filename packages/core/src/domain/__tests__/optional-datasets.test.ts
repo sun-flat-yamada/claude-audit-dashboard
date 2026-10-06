@@ -20,15 +20,19 @@ describe('optional dataset registration', () => {
     for (const name of OPTIONAL_DATASET_NAMES) expect(DATASET_NAMES).not.toContain(name);
   });
 
-  it('adds the five optional datasets to the map and to the known names', () => {
+  it('adds the nine optional datasets to the map and to the known names', () => {
     expect(OPTIONAL_DATASET_NAMES).toEqual([
       'consoleWorkspaces',
       'consoleApiKeys',
       'consoleUsage',
       'consoleCost',
       'claudeCodeActivity',
+      'skillUsage',
+      'connectorUsage',
+      'pluginUsage',
+      'chatProjectUsage',
     ]);
-    expect(ALL_DATASET_NAMES).toHaveLength(18);
+    expect(ALL_DATASET_NAMES).toHaveLength(22);
     for (const name of ALL_DATASET_NAMES) expect(isDatasetName(name)).toBe(true);
     expect(isDatasetName('unknownDataset')).toBe(false);
     expect(isOptionalDatasetName('members')).toBe(false);
@@ -45,6 +49,14 @@ describe('optional dataset registration', () => {
       'consoleCost',
     ]);
     expect(datasetsOfSource('claudeCode')).toEqual(['claudeCodeActivity']);
-    expect(new Set(Object.values(OPTIONAL_SOURCES))).toEqual(new Set(['console', 'claudeCode']));
+    expect(datasetsOfSource('featureUsage')).toEqual([
+      'skillUsage',
+      'connectorUsage',
+      'pluginUsage',
+      'chatProjectUsage',
+    ]);
+    expect(new Set(Object.values(OPTIONAL_SOURCES))).toEqual(
+      new Set(['console', 'claudeCode', 'featureUsage']),
+    );
   });
 });
