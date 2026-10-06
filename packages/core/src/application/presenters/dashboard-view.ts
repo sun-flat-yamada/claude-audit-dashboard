@@ -26,6 +26,7 @@ import { countBy, sortedByValue, sumBy, totalsBy } from '../../domain/util/colle
 import { maskEmails } from '../../domain/util/mask.js';
 import { percent, round } from '../../domain/util/numbers.js';
 import { monthKey } from '../../domain/util/time.js';
+import { claudeCodeView } from './dashboard-claude-code.js';
 import { productEngagement } from './dashboard-engagement.js';
 import { buildModelMatrix, type UsageMatrixInput } from './usage-matrix-view.js';
 
@@ -347,6 +348,13 @@ function engagement(snapshot: AuditSnapshot | null, data: DatasetMap) {
   return view ? { engagement: view } : {};
 }
 
+/** Claude Code aggregate (AN-4); absent unless the optional dataset was collected. */
+function claudeCode(snapshot: AuditSnapshot | null, data: DatasetMap) {
+  if (!collected(snapshot, 'claudeCodeActivity')) return {};
+  const window = snapshot?.coverage.claudeCodeActivity?.window ?? null;
+  return { claudeCode: claudeCodeView(data.claudeCodeActivity, window) };
+}
+
 /** Builds the published dashboard contract: aggregates only, PII masked when requested. */
 export function buildDashboardView(input: DashboardInput): DashboardView {
   const mask: Mask = input.maskPii ? maskEmails : (text) => text;
@@ -365,6 +373,7 @@ export function buildDashboardView(input: DashboardInput): DashboardView {
     adoption: adoption(input.snapshot, data),
     activity: activity(input, data, mask),
     ...engagement(input.snapshot, data),
+    ...claudeCode(input.snapshot, data),
     insights: input.insights.map(({ id, kind, priority, title, detail }) => ({
       id,
       kind,
