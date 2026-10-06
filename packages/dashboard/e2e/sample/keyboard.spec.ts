@@ -64,7 +64,7 @@ test.describe('keyboard only', () => {
   }) => {
     await openRoute(page, '/');
     const seen: string[] = [];
-    for (let i = 0; i < 1 + NAV_LABELS.length + 3 + 3; i += 1) {
+    for (let i = 0; i < 1 + NAV_LABELS.length + 3 + 4; i += 1) {
       await page.keyboard.press('Tab');
       seen.push(await focusedName(page));
     }
@@ -76,10 +76,12 @@ test.describe('keyboard only', () => {
       'System',
     ]);
     // The sample carries three time points (F-015), so the Compliance card opens with the score
-    // trend chart (named by its date axis) and its "View as table" twin before the status filter.
-    const [chart, table, filter] = seen.slice(-3);
+    // trend chart (named by its date axis), its "View as table" twin and the link to compare the
+    // last two time points before the status filter.
+    const [chart, table, compare, filter] = seen.slice(-4);
     expect(chart).toMatch(/^\d{2}-\d{2}/);
     expect(table).toBe('View as table');
+    expect(compare).toBe('Compare the last two time points');
     expect(filter).toMatch(/^All \d+$/);
   });
 
