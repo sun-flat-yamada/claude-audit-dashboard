@@ -21,21 +21,22 @@ import { writeDetail } from './detail.js';
 import { writeFiles } from './write-files.js';
 import { check, collect, writeDashboard } from './workflows.js';
 
-/** The fixture profile with both optional sources on; one day of Claude Code history is recorded. */
+/** The fixture profile with every optional source on; one day of Claude Code history is recorded. */
 const enableOptionalSources = (config: AppConfig): AppConfig => ({
   ...config,
   sources: {
     ...config.sources,
     console: { enabled: true, lookbackDays: 30 },
     claudeCode: { enabled: true, lookbackDays: 1 },
+    featureUsage: { enabled: true, lookbackDays: 30 },
   },
 });
 
 export interface FixtureTenantOptions {
   fixtureDir: string;
   /**
-   * Also enable the optional sources (Console Admin, Claude Code Analytics) with a synthetic
-   * Console key and replay their official-shape fixtures next to the tenant.
+   * Also enable the optional sources (Console Admin, Claude Code Analytics, feature usage) with
+   * a synthetic Console key and replay their official-shape fixtures next to the tenant.
    */
   optionalSources?: boolean | undefined;
   cwd?: string | undefined;

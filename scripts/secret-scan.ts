@@ -126,6 +126,7 @@ const REQUIRED_DIRS = [
   'packages/collector/src/adapters/anthropic/__tests__/fixtures/tenant',
   'packages/collector/src/adapters/anthropic/__tests__/fixtures/console',
   'packages/collector/src/adapters/anthropic/__tests__/fixtures/claude-code',
+  'packages/collector/src/adapters/anthropic/__tests__/fixtures/feature-usage',
 ];
 
 console.log('🔒 Secret Scanner');

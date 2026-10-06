@@ -1,0 +1,87 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/skills",
+    "query": {
+      "limit": ["1000"],
+      "starting_date": ["2026-08-31"],
+      "page": ["page_demo_skills_2"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "chat_metrics": {
+            "distinct_conversation_skill_used_count": 40
+          },
+          "claude_code_metrics": {
+            "distinct_session_skill_used_count": 5
+          },
+          "cowork_metrics": {
+            "distinct_session_skill_used_count": null
+          },
+          "distinct_user_count": 18,
+          "office_metrics": {
+            "excel": {
+              "distinct_session_skill_used_count": 21
+            },
+            "outlook": {
+              "distinct_session_skill_used_count": null
+            },
+            "powerpoint": {
+              "distinct_session_skill_used_count": null
+            },
+            "word": {
+              "distinct_session_skill_used_count": null
+            }
+          },
+          "skill_name": "xlsx",
+          "attributed_list_price": null,
+          "currency": null,
+          "enable_count": null,
+          "estimated_overage_spend": null,
+          "invocation_count": 77,
+          "share_status": null,
+          "skill_display_name": null
+        },
+        {
+          "chat_metrics": {
+            "distinct_conversation_skill_used_count": null
+          },
+          "claude_code_metrics": {
+            "distinct_session_skill_used_count": null
+          },
+          "cowork_metrics": {
+            "distinct_session_skill_used_count": null
+          },
+          "distinct_user_count": 1,
+          "office_metrics": {
+            "excel": {
+              "distinct_session_skill_used_count": null
+            },
+            "outlook": {
+              "distinct_session_skill_used_count": null
+            },
+            "powerpoint": {
+              "distinct_session_skill_used_count": null
+            },
+            "word": {
+              "distinct_session_skill_used_count": null
+            }
+          },
+          "skill_name": "skill_01DemoPrivateSkill",
+          "attributed_list_price": null,
+          "currency": null,
+          "enable_count": null,
+          "estimated_overage_spend": null,
+          "invocation_count": null,
+          "share_status": "private",
+          "skill_display_name": null
+        }
+      ],
+      "next_page": null
+    },
+    "status": 200
+  }
+}

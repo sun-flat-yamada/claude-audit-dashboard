@@ -2,6 +2,7 @@ import { DataUnavailableError, gatherDatasets } from '@claude-audit/core';
 import { describe, expect, it } from 'vitest';
 import { ClaudeCodeApi } from '../claude-code-api.js';
 import { ConsoleAdminApi } from '../console-admin-api.js';
+import { FeatureUsageApi } from '../feature-usage-api.js';
 import { HttpClient } from '../http-client.js';
 import {
   createOptionalCollectors,
@@ -16,8 +17,9 @@ const off: OptionalSettings = {
   disabled: [],
   console: { enabled: false, lookbackDays: 30 },
   claudeCode: { enabled: false, lookbackDays: 7 },
+  featureUsage: { enabled: false, lookbackDays: 30 },
 };
-const none: OptionalApis = { console: null, claudeCode: null };
+const none: OptionalApis = { console: null, claudeCode: null, featureUsage: null };
 
 const names = (collectors: { dataset: string }[]) => collectors.map((c) => c.dataset);
 
@@ -28,7 +30,11 @@ describe('createOptionalCollectors (registration)', () => {
       apiKey: 'k',
       fetchImpl: (async () => new Response('{}')) as never,
     });
-    const apis = { console: new ConsoleAdminApi(http), claudeCode: new ClaudeCodeApi(http) };
+    const apis = {
+      console: new ConsoleAdminApi(http),
+      claudeCode: new ClaudeCodeApi(http),
+      featureUsage: new FeatureUsageApi(http),
+    };
     expect(createOptionalCollectors(apis, off)).toEqual([]);
   });
 
@@ -42,6 +48,13 @@ describe('createOptionalCollectors (registration)', () => {
       'consoleCost',
     ]);
     expect(names(createOptionalCollectors(none, claudeOn))).toEqual(['claudeCodeActivity']);
+    const featuresOn = { ...off, featureUsage: { ...off.featureUsage, enabled: true } };
+    expect(names(createOptionalCollectors(none, featuresOn))).toEqual([
+      'skillUsage',
+      'connectorUsage',
+      'pluginUsage',
+      'chatProjectUsage',
+    ]);
   });
 
   it('skips datasets listed in sources.disabled', () => {
@@ -49,6 +62,7 @@ describe('createOptionalCollectors (registration)', () => {
       disabled: ['consoleApiKeys', 'members'] as const,
       console: { enabled: true, lookbackDays: 30 },
       claudeCode: { enabled: true, lookbackDays: 7 },
+      featureUsage: { enabled: false, lookbackDays: 30 },
     };
     expect(names(createOptionalCollectors(none, { ...on, disabled: [...on.disabled] }))).toEqual([
       'consoleWorkspaces',
@@ -76,5 +90,21 @@ describe('createOptionalCollectors (registration)', () => {
       expect(meta.reason).toContain('Enterprise keys do not work');
     }
     expect(Object.keys(gathered.coverage)).toHaveLength(5);
+  });
+
+  it('feature usage without the Analytics key is unavailable and names the Analytics variables', async () => {
+    const on = { ...off, featureUsage: { enabled: true, lookbackDays: 30 } };
+    const gathered = await gatherDatasets(createOptionalCollectors(none, on), context);
+    expect(Object.keys(gathered.coverage)).toEqual([
+      'skillUsage',
+      'connectorUsage',
+      'pluginUsage',
+      'chatProjectUsage',
+    ]);
+    for (const meta of Object.values(gathered.coverage)) {
+      expect(meta.status).toBe('unavailable');
+      expect(meta.reason).toContain('ANTHROPIC_ANALYTICS_API_KEY');
+      expect(meta.reason).not.toContain('ANTHROPIC_CONSOLE_ADMIN_API_KEY');
+    }
   });
 });

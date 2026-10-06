@@ -59,7 +59,7 @@ async function readTree(root: string): Promise<Map<string, string>> {
 
 const AFTER = new Date(FIXTURE_NOW.getTime() + 86_400_000);
 
-/** The B1 tenant plus the optional fixtures, both sources on, collected into `dataDir`. */
+/** The B1 tenant plus the optional fixtures, every optional source on, collected into `dataDir`. */
 async function collectWithOptionalSources(dataDir: string): Promise<string> {
   const replay = await withOptionalFixtures(
     await createFixtureFetch(fixtureDir),
@@ -83,6 +83,7 @@ async function collectWithOptionalSources(dataDir: string): Promise<string> {
         ...config.sources,
         console: { enabled: true, lookbackDays: 30 },
         claudeCode: { enabled: true, lookbackDays: 1 },
+        featureUsage: { enabled: true, lookbackDays: 30 },
       },
     }),
   });

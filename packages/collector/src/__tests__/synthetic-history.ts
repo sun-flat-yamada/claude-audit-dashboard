@@ -38,7 +38,8 @@ export interface HistoryOptions {
   intervalHours?: number;
   start?: Date;
   /**
-   * Also carry the datasets of the optional sources (B4: Console, Claude Code). Off by default,
+   * Also carry the datasets of the optional sources (B4: Console, Claude Code; AN-6: feature
+   * usage). Off by default,
    * so existing tests keep the 13 built-in datasets.
    */
   optionalSources?: boolean;
@@ -68,6 +69,10 @@ export const CHANGE_PERIOD: Readonly<Record<DatasetName, number>> = {
   consoleUsage: 4,
   consoleCost: 4,
   claudeCodeActivity: 4,
+  skillUsage: 4,
+  connectorUsage: 4,
+  pluginUsage: 4,
+  chatProjectUsage: 4,
 };
 
 type Row = Record<string, unknown>;
@@ -214,6 +219,12 @@ function variant(name: DatasetName, base: Items, epoch: number, step: number, no
       return rollingRows(base, now);
     case 'activities':
       return newActivities(base, step, now);
+    case 'skillUsage':
+    case 'connectorUsage':
+    case 'pluginUsage':
+    case 'chatProjectUsage':
+      // Range roll-ups: one row per entity whose counts move with the window.
+      return base.map((row) => ({ ...row, users: Number(row.users ?? 0) + (epoch % 5) }));
   }
 }
 

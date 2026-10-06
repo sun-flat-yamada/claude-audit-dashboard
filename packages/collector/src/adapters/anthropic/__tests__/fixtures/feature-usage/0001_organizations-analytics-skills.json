@@ -1,0 +1,86 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/skills",
+    "query": {
+      "limit": ["1000"],
+      "starting_date": ["2026-08-31"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "chat_metrics": {
+            "distinct_conversation_skill_used_count": 31
+          },
+          "claude_code_metrics": {
+            "distinct_session_skill_used_count": null
+          },
+          "cowork_metrics": {
+            "distinct_session_skill_used_count": 4
+          },
+          "distinct_user_count": 14,
+          "office_metrics": {
+            "excel": {
+              "distinct_session_skill_used_count": 0
+            },
+            "outlook": {
+              "distinct_session_skill_used_count": 0
+            },
+            "powerpoint": {
+              "distinct_session_skill_used_count": 0
+            },
+            "word": {
+              "distinct_session_skill_used_count": 9
+            }
+          },
+          "skill_name": "docx",
+          "attributed_list_price": null,
+          "currency": null,
+          "enable_count": null,
+          "estimated_overage_spend": null,
+          "invocation_count": 52,
+          "share_status": null,
+          "skill_display_name": null
+        },
+        {
+          "chat_metrics": {
+            "distinct_conversation_skill_used_count": 96
+          },
+          "claude_code_metrics": {
+            "distinct_session_skill_used_count": 12
+          },
+          "cowork_metrics": {
+            "distinct_session_skill_used_count": 8
+          },
+          "distinct_user_count": 22,
+          "office_metrics": {
+            "excel": {
+              "distinct_session_skill_used_count": null
+            },
+            "outlook": {
+              "distinct_session_skill_used_count": null
+            },
+            "powerpoint": {
+              "distinct_session_skill_used_count": null
+            },
+            "word": {
+              "distinct_session_skill_used_count": null
+            }
+          },
+          "skill_name": "skill_01DemoExampleBrandVoice",
+          "attributed_list_price": null,
+          "currency": null,
+          "enable_count": null,
+          "estimated_overage_spend": null,
+          "invocation_count": 140,
+          "share_status": "organization",
+          "skill_display_name": "Example Brand Voice"
+        }
+      ],
+      "next_page": "page_demo_skills_2"
+    },
+    "status": 200
+  }
+}

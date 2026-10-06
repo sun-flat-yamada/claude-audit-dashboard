@@ -4,10 +4,17 @@ import { replayFetch, type ReplayFetch } from '../anthropic/replay-fetch.js';
 
 /**
  * Official-reference-shaped captures of the optional APIs sit next to the tenant fixtures
- * (`.../fixtures/tenant`, `.../fixtures/console`, `.../fixtures/claude-code`).
+ * (`.../fixtures/tenant`, `.../fixtures/console`, `.../fixtures/claude-code`,
+ * `.../fixtures/feature-usage`).
  */
 export const CONSOLE_FIXTURE_DIR = 'console';
 export const CLAUDE_CODE_FIXTURE_DIR = 'claude-code';
+export const FEATURE_USAGE_FIXTURE_DIR = 'feature-usage';
+
+const CONSOLE_PATH =
+  /^\/v1\/organizations\/(workspaces|api_keys|usage_report\/messages|cost_report)$/;
+const FEATURE_USAGE_PATH =
+  /^\/v1\/organizations\/analytics\/(skills|connectors|plugins|apps\/chat\/projects)$/;
 
 /** The directory that holds the optional fixtures, derived from the tenant fixture directory. */
 export const optionalFixturesRoot = (tenantFixtureDir: string): string =>
@@ -40,9 +47,9 @@ function claudeCodeResponse(entries: readonly RawCaptureEntry[], url: URL): Resp
 }
 
 /**
- * Chains the optional-API fixtures in front of another replay (the B1 tenant): the Console
- * endpoints replay as captured, the Claude Code endpoint answers per day, everything else goes
- * to `base`.
+ * Chains the optional-API fixtures in front of another replay (the B1 tenant): the Console and
+ * feature usage endpoints replay as captured, the Claude Code endpoint answers per day,
+ * everything else goes to `base`.
  */
 export async function withOptionalFixtures(
   base: ReplayFetch,
@@ -51,21 +58,24 @@ export async function withOptionalFixtures(
   const consoleReplay = replayFetch(
     await loadCaptureEntries(join(fixturesRoot, CONSOLE_FIXTURE_DIR)),
   );
+  const featureReplay = replayFetch(
+    await loadCaptureEntries(join(fixturesRoot, FEATURE_USAGE_FIXTURE_DIR)),
+  );
   const claudeCode = await loadCaptureEntries(join(fixturesRoot, CLAUDE_CODE_FIXTURE_DIR));
   const calls = base.calls;
+  const replayed = async (replay: ReplayFetch, input: string | URL | Request, url: URL) => {
+    const response = await replay.fetch(input);
+    calls.push(url);
+    return response;
+  };
   const impl = (async (input: string | URL | Request) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     if (url.pathname === CLAUDE_CODE_PATH) {
       calls.push(url);
       return claudeCodeResponse(claudeCode, url);
     }
-    const optional =
-      /^\/v1\/organizations\/(workspaces|api_keys|usage_report\/messages|cost_report)$/;
-    if (optional.test(url.pathname)) {
-      const response = await consoleReplay.fetch(input);
-      calls.push(url);
-      return response;
-    }
+    if (CONSOLE_PATH.test(url.pathname)) return replayed(consoleReplay, input, url);
+    if (FEATURE_USAGE_PATH.test(url.pathname)) return replayed(featureReplay, input, url);
     return base.fetch(input);
   }) as typeof fetch;
   return { fetch: impl, calls };

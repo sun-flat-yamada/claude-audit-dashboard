@@ -1,0 +1,117 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/connectors",
+    "query": {
+      "limit": ["1000"],
+      "starting_date": ["2026-08-31"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "chat_metrics": {
+            "distinct_conversation_connector_used_count": 44
+          },
+          "claude_code_metrics": {
+            "distinct_session_connector_used_count": 120
+          },
+          "connector_name": "github",
+          "cowork_metrics": {
+            "distinct_session_connector_used_count": 6
+          },
+          "distinct_user_count": 19,
+          "office_metrics": {
+            "excel": {
+              "distinct_session_connector_used_count": null
+            },
+            "outlook": {
+              "distinct_session_connector_used_count": null
+            },
+            "powerpoint": {
+              "distinct_session_connector_used_count": null
+            },
+            "word": {
+              "distinct_session_connector_used_count": null
+            }
+          },
+          "connector_display_name": null,
+          "individual_auth_distinct_user_count": 4,
+          "managed_auth_distinct_user_count": 15,
+          "read_call_count": 420,
+          "unclassified_call_count": 30,
+          "write_call_count": 85
+        },
+        {
+          "chat_metrics": {
+            "distinct_conversation_connector_used_count": 150
+          },
+          "claude_code_metrics": {
+            "distinct_session_connector_used_count": null
+          },
+          "connector_name": "google_drive",
+          "cowork_metrics": {
+            "distinct_session_connector_used_count": 10
+          },
+          "distinct_user_count": 25,
+          "office_metrics": {
+            "excel": {
+              "distinct_session_connector_used_count": 3
+            },
+            "outlook": {
+              "distinct_session_connector_used_count": 0
+            },
+            "powerpoint": {
+              "distinct_session_connector_used_count": 2
+            },
+            "word": {
+              "distinct_session_connector_used_count": 1
+            }
+          },
+          "connector_display_name": null,
+          "individual_auth_distinct_user_count": null,
+          "managed_auth_distinct_user_count": null,
+          "read_call_count": 610,
+          "unclassified_call_count": 48,
+          "write_call_count": 12
+        },
+        {
+          "chat_metrics": {
+            "distinct_conversation_connector_used_count": 20
+          },
+          "claude_code_metrics": {
+            "distinct_session_connector_used_count": 4
+          },
+          "connector_name": "mcpsrv_01DemoExampleWiki",
+          "cowork_metrics": {
+            "distinct_session_connector_used_count": null
+          },
+          "distinct_user_count": 7,
+          "office_metrics": {
+            "excel": {
+              "distinct_session_connector_used_count": null
+            },
+            "outlook": {
+              "distinct_session_connector_used_count": null
+            },
+            "powerpoint": {
+              "distinct_session_connector_used_count": null
+            },
+            "word": {
+              "distinct_session_connector_used_count": null
+            }
+          },
+          "connector_display_name": "Example Wiki",
+          "individual_auth_distinct_user_count": null,
+          "managed_auth_distinct_user_count": null,
+          "read_call_count": null,
+          "unclassified_call_count": null,
+          "write_call_count": null
+        }
+      ],
+      "next_page": null
+    },
+    "status": 200
+  }
+}

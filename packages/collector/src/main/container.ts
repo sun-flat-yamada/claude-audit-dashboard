@@ -26,6 +26,7 @@ import { ClaudeCodeApi } from '../adapters/anthropic/claude-code-api.js';
 import { ComplianceApi } from '../adapters/anthropic/compliance-api.js';
 import { ConsoleAdminApi } from '../adapters/anthropic/console-admin-api.js';
 import { HttpClient } from '../adapters/anthropic/http-client.js';
+import { FeatureUsageApi } from '../adapters/anthropic/feature-usage-api.js';
 import { createOptionalCollectors } from '../adapters/anthropic/optional-collectors.js';
 import {
   FileRawCapture,
@@ -107,20 +108,28 @@ function anthropicApis(
   };
 }
 
-/** Opt-in sources (B4): registered only when enabled in config; one Console Admin key serves both. */
+/**
+ * Opt-in sources: registered only when enabled in config. One Console Admin key serves the B4
+ * sources; feature usage (AN-6) reads the Analytics API with the Analytics key.
+ */
 function optionalCollectors(
   env: Environment,
   config: AppConfig,
   fetchImpl: typeof fetch | undefined,
   capture: RawCapture | undefined,
 ): DatasetCollector[] {
-  const { console: consoleSource, claudeCode } = config.sources;
-  const http = env.keys.console
-    ? new HttpClient({ apiKey: env.keys.console, baseUrl: env.baseUrl, fetchImpl, capture })
-    : null;
+  const { console: consoleSource, claudeCode, featureUsage } = config.sources;
+  const client = (apiKey: string | undefined) =>
+    apiKey ? new HttpClient({ apiKey, baseUrl: env.baseUrl, fetchImpl, capture }) : null;
+  const http = client(env.keys.console);
+  const analytics = client(env.keys.analytics);
   return createOptionalCollectors(
-    { console: http && new ConsoleAdminApi(http), claudeCode: http && new ClaudeCodeApi(http) },
-    { disabled: disabledDatasets(config), console: consoleSource, claudeCode },
+    {
+      console: http && new ConsoleAdminApi(http),
+      claudeCode: http && new ClaudeCodeApi(http),
+      featureUsage: analytics && new FeatureUsageApi(analytics),
+    },
+    { disabled: disabledDatasets(config), console: consoleSource, claudeCode, featureUsage },
   );
 }
 

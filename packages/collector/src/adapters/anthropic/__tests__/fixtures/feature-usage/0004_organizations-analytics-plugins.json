@@ -1,0 +1,44 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/plugins",
+    "query": {
+      "limit": ["1000"],
+      "starting_date": ["2026-08-31"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "claude_code_metrics": {
+            "distinct_session_plugin_used_count": 64
+          },
+          "cowork_metrics": {
+            "distinct_session_plugin_used_count": null
+          },
+          "distinct_user_count": 11,
+          "install_count": 9,
+          "invocation_count": 230,
+          "plugin_name": "code-review",
+          "plugin_id": "code-review@example-marketplace"
+        },
+        {
+          "claude_code_metrics": {
+            "distinct_session_plugin_used_count": 5
+          },
+          "cowork_metrics": {
+            "distinct_session_plugin_used_count": 3
+          },
+          "distinct_user_count": 3,
+          "install_count": null,
+          "invocation_count": 17,
+          "plugin_name": "third-party-plugin",
+          "plugin_id": null
+        }
+      ],
+      "next_page": null
+    },
+    "status": 200
+  }
+}
