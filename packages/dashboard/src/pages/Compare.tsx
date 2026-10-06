@@ -186,7 +186,7 @@ function selectionProblem(
 ): string | null {
   const check = checkPoint(points, id);
   if (check.status === 'unknown')
-    return `The ${role} time point "${id}" is not in the list of comparable points. Choose one below.`;
+    return `The ${role} time point "${id}" is not in the list of comparable points. Choose one above.`;
   if (check.status === 'archived')
     return `The ${role} time point ${formatPointId(id)} is archived without a summary: restore it first (see below).`;
   return null;

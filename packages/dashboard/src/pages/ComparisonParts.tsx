@@ -84,14 +84,23 @@ export function SummaryCard({ diff }: { diff: TimePointDiff }) {
   );
 }
 
+/**
+ * Cells of the compare tables. Text wraps between words only (`break-words` keeps the longest
+ * word as the column's minimum width, unlike the shared `CELL`), short values never wrap, and
+ * the tables keep a minimum width so their `ScrollRegion` scrolls on a phone instead.
+ */
+const TEXT = CELL.replace('[overflow-wrap:anywhere]', 'break-words');
+const NOWRAP = `${TEXT} whitespace-nowrap`;
+const NUMBER = `${NOWRAP} tabular`;
+
 function RuleTable({ rows }: { rows: readonly RuleRow[] }) {
   return (
     <ScrollRegion label="Rule changes" className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
+      <table className="w-full min-w-[36rem] text-left text-sm">
         <caption className="sr-only">Rule changes</caption>
         <thead>
           <tr>
-            {['Rule', 'Name', 'Severity', 'Base', 'Target', 'Change'].map((c) => (
+            {['Rule', 'Change', 'Name', 'Severity', 'Base', 'Target'].map((c) => (
               <th key={c} scope="col" className={HEAD}>
                 {c}
               </th>
@@ -101,21 +110,21 @@ function RuleTable({ rows }: { rows: readonly RuleRow[] }) {
         <tbody>
           {rows.map((r) => (
             <tr key={r.id}>
-              <th scope="row" className={`${CELL} text-left font-medium whitespace-nowrap`}>
+              <th scope="row" className={`${NOWRAP} text-left font-medium`}>
                 {r.id}
               </th>
-              <td className={CELL}>{r.name}</td>
-              <td className={CELL}>
+              <td className={NOWRAP}>
+                <ChangeBadge change={r.change} />
+              </td>
+              <td className={TEXT}>{r.name}</td>
+              <td className={NOWRAP}>
                 <SeverityLabel severity={r.severity} />
               </td>
-              <td className={CELL}>
+              <td className={NOWRAP}>
                 <StatusOrNone status={r.from} />
               </td>
-              <td className={CELL}>
+              <td className={NOWRAP}>
                 <StatusOrNone status={r.to} />
-              </td>
-              <td className={CELL}>
-                <ChangeBadge change={r.change} />
               </td>
             </tr>
           ))}
@@ -145,7 +154,7 @@ export function RuleChangesCard({
   return (
     <Card
       title="Rule changes"
-      subtitle="Regressed rules first, then improved, added or removed and rules whose assessment changed. Unchanged rules are behind their own filter."
+      subtitle="Regressed rules first, then rules no longer assessed, added, removed, now assessed and improved. Unchanged rules are behind their own filter."
     >
       <div className="mb-4 space-y-3">
         <FilterChips
@@ -195,7 +204,7 @@ export function CoverageCard({ diff }: { diff: TimePointDiff }) {
         <Empty>No dataset changed its collection state.</Empty>
       ) : (
         <ScrollRegion label="Data coverage changes" className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[36rem] text-left text-sm">
             <caption className="sr-only">Data coverage changes</caption>
             <thead>
               <tr>
@@ -209,19 +218,19 @@ export function CoverageCard({ diff }: { diff: TimePointDiff }) {
             <tbody>
               {changes.map((c) => (
                 <tr key={c.dataset}>
-                  <th scope="row" className={`${CELL} text-left font-medium`}>
+                  <th scope="row" className={`${TEXT} text-left font-medium`}>
                     {c.dataset}
                   </th>
-                  <td className={CELL}>
+                  <td className={NOWRAP}>
                     <StatusOrNone status={c.from} />
                   </td>
-                  <td className={CELL}>
+                  <td className={NOWRAP}>
                     <StatusOrNone status={c.to} />
                   </td>
-                  <td className={CELL}>
+                  <td className={NOWRAP}>
                     <ChangeBadge change={c.change} />
                   </td>
-                  <td className={`${CELL} tabular`}>{itemCount(c)}</td>
+                  <td className={NUMBER}>{itemCount(c)}</td>
                 </tr>
               ))}
             </tbody>
@@ -235,12 +244,12 @@ export function CoverageCard({ diff }: { diff: TimePointDiff }) {
 function KpiRow({ kpi, currency }: { kpi: KpiDelta; currency: string }) {
   return (
     <tr>
-      <th scope="row" className={`${CELL} text-left font-medium`}>
+      <th scope="row" className={`${TEXT} text-left font-medium`}>
         {kpi.label}
       </th>
-      <td className={`${CELL} tabular`}>{formatKpiValue(kpi.unit, kpi.base, currency)}</td>
-      <td className={`${CELL} tabular`}>{formatKpiValue(kpi.unit, kpi.target, currency)}</td>
-      <td className={`${CELL} tabular`}>{formatKpiDelta(kpi.unit, kpi.delta, currency)}</td>
+      <td className={NUMBER}>{formatKpiValue(kpi.unit, kpi.base, currency)}</td>
+      <td className={NUMBER}>{formatKpiValue(kpi.unit, kpi.target, currency)}</td>
+      <td className={NUMBER}>{formatKpiDelta(kpi.unit, kpi.delta, currency)}</td>
     </tr>
   );
 }
