@@ -42,11 +42,10 @@ test.describe('stale detail files (schemaVersion mismatch)', () => {
     await expect(page.getByRole('alert')).toHaveCount(0);
   });
 
-  // Screens that read dashboard.json only (overview, compliance, models, Claude Code, Console API)
-  // never fetch detail files.
-  const detailScreens = STATIC_ROUTES.filter(
-    (r) => !['/', '/compliance', '/models', '/claude-code', '/console'].includes(r.path),
-  );
+  // Screens that read dashboard.json only (overview, compliance, models, Claude Code, Console API,
+  // skills and connectors) never fetch detail files.
+  const DASHBOARD_ONLY = ['/', '/compliance', '/models', '/claude-code', '/console', '/features'];
+  const detailScreens = STATIC_ROUTES.filter((r) => !DASHBOARD_ONLY.includes(r.path));
   for (const screen of detailScreens) {
     test(`${screen.path} reports the outdated file and how to regenerate it`, async ({ page }) => {
       await openRoute(page, screen.path);

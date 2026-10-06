@@ -11,6 +11,7 @@ export const STATIC_ROUTES = [
   { path: '/models', heading: 'Models' },
   { path: '/claude-code', heading: 'Claude Code' },
   { path: '/console', heading: 'Console API usage and cost' },
+  { path: '/features', heading: 'Skills, connectors, plugins and projects' },
   { path: '/config', heading: 'Configuration' },
   { path: '/archive', heading: 'Archive' },
   { path: '/alerts', heading: 'Alerts' },

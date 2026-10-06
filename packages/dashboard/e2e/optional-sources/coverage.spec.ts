@@ -2,16 +2,21 @@ import type { DashboardView, DetailConfig } from '@claude-audit/core/contracts';
 import { openRoute, readData } from '../support/app';
 import { expect, test } from '../support/test';
 
-const OPTIONAL = [
+/** The B4 datasets (Console Admin key). */
+const B4 = [
   'consoleWorkspaces',
   'consoleApiKeys',
   'consoleUsage',
   'consoleCost',
   'claudeCodeActivity',
 ];
+/** The AN-6 feature usage datasets (Analytics key). */
+const FEATURES = ['skillUsage', 'connectorUsage', 'pluginUsage', 'chatProjectUsage'];
+const OPTIONAL = [...B4, ...FEATURES];
 
-// B4: the optional Console and Claude Code datasets in Data coverage.
-// Profiles: "optional-sources" (collected) and "optional-unavailable" (enabled, no Console key).
+// B4 and AN-6: the optional Console, Claude Code and feature usage datasets in Data coverage.
+// Profiles: "optional-sources" (collected) and "optional-unavailable" (enabled, no Console key,
+// feature usage denied with HTTP 403).
 test.describe('B4 optional datasets in Data coverage', () => {
   const coverage = (page: import('@playwright/test').Page) =>
     page.locator('section', {
@@ -55,7 +60,9 @@ test.describe('B4 optional datasets in Data coverage', () => {
         .locator('tbody tr')
         .filter({ has: page.getByRole('cell', { name: dataset, exact: true }) });
       await expect(row).toContainText('Unavailable');
-      await expect(row).toContainText('ANTHROPIC_CONSOLE_ADMIN_API_KEY');
+      await expect(row).toContainText(
+        B4.includes(dataset) ? 'ANTHROPIC_CONSOLE_ADMIN_API_KEY' : 'read:analytics',
+      );
       await expect(row.getByRole('cell').nth(2)).toHaveText('—');
     }
     const collected = view.coverage.filter((c) => !OPTIONAL.includes(c.dataset));

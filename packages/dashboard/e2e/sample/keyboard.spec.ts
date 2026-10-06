@@ -13,6 +13,7 @@ const NAV_LABELS = [
   'Models',
   'Claude Code',
   'Console API',
+  'Skills & connectors',
   'Configuration',
   'Archive',
   'Alerts',

@@ -45,7 +45,7 @@ export const PROFILES = [
     hint: 'run `pnpm demo --profile optional-sources`',
     variant: 'optional-unavailable',
     description:
-      'optional sources enabled but no Console Admin key: the five datasets are unavailable',
+      'optional sources enabled but no Console Admin key and no read:analytics scope: the nine datasets are unavailable',
   },
   {
     name: 'unavailable',
@@ -126,6 +126,13 @@ export const OPTIONAL_DATASETS = [
   'consoleCost',
   'claudeCodeActivity',
 ];
+
+/** The feature usage datasets (AN-6): Analytics API, a 403 in the unavailable profile. */
+export const FEATURE_DATASETS = ['skillUsage', 'connectorUsage', 'pluginUsage', 'chatProjectUsage'];
+
+/** What the collector records for a key without the `read:analytics` scope (an HTTP 403). */
+export const FEATURE_DENIED_REASON =
+  'HTTP 403 from /v1/organizations/analytics: permission_error (the key lacks read:analytics)';
 
 /** The reason the collector records for a missing key (`optional-collectors.ts`). */
 export const NO_KEY_REASON =
