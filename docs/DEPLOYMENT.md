@@ -231,6 +231,17 @@ DATA_DIR=./restored pnpm build:data --snapshot 2024-05-01T06-00-00Z    # dashboa
 DATA_DIR=./restored pnpm build:detail --snapshot 2024-05-01T06-00-00Z  # detail files for it
 ```
 
+To compare an archived snapshot (F-015) that has no stored summary (it is listed on `#/compare` as archived and disabled), in a checkout that has the data (`.github/scripts/data-branch.sh restore`):
+
+```bash
+pnpm restore 2024-05-01T06-00-00Z                      # same as pnpm cli restore <id>
+pnpm build:detail --snapshot 2024-05-01T06-00-00Z      # writes data/summaries/<id>.json for that snapshot
+pnpm build:detail                                      # the latest data again (restored points stay listed)
+.github/scripts/data-branch.sh save "docs: summary of an archived snapshot"
+```
+
+An archived snapshot whose summary was stored is comparable without any of this. The summary rebuilt from the restored snapshot equals the one written when it was judged, so the diff does not depend on whether the snapshot was ever archived. Run the three build steps in a working copy that is not published in between, because `--snapshot` writes the detail files of that older snapshot.
+
 Restored files are byte-identical to the originals (the collector's own writer is used); an existing snapshot is never overwritten and the archive is never modified. Restore into a separate `--out` directory to inspect old data: inside the live data directory the next `pnpm archive` would archive the restored snapshot again (to the same bytes). Without a stored compliance report the rules are evaluated in memory as of the snapshot's collection time.
 
 ### Yearly rotation of the orphan branch

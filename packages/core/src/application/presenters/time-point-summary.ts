@@ -51,25 +51,41 @@ export function buildTimePointSummary(input: TimePointInput): TimePointSummary {
 }
 
 /**
- * The selectable points, newest first, at most `limit` (default 90). Summaries are the only
- * source here; the `archived` state (ids known from the archive inventory, no summary) is added
- * by the caller that knows the archive.
+ * The selectable points, newest first, at most `limit` (default 90). A stored summary makes a
+ * point `summary` (also when its snapshot was archived: the summary outlives the snapshot).
+ * `archivedIds` are the snapshot ids known from the archive inventory; those without a summary
+ * are listed as `archived` (no per-point file, score unknown) so the UI can explain how to
+ * restore them. Both kinds share the cap. Pure and deterministic: ids sort chronologically and
+ * a repeated id is listed once, as `summary` when it has one.
  */
 export function buildCompareIndex(
   summaries: readonly TimePointSummary[],
   now: Date,
   limit: number = COMPARE_POINT_LIMIT,
+  archivedIds: readonly string[] = [],
 ): CompareIndex {
-  const newest = [...summaries].sort((a, b) => byCode(b.id, a.id)).slice(0, limit);
-  return {
-    schemaVersion: COMPARE_SCHEMA_VERSION,
-    generatedAt: now.toISOString(),
-    points: newest.map((s) => ({
+  const withSummary = new Set(summaries.map((s) => s.id));
+  const points: CompareIndex['points'] = [
+    ...summaries.map((s) => ({
       id: s.id,
       collectedAt: s.collectedAt,
-      state: 'summary',
+      state: 'summary' as const,
       score: s.score,
       assessed: s.assessed,
     })),
+    ...[...new Set(archivedIds)]
+      .filter((id) => !withSummary.has(id))
+      .map((id) => ({
+        id,
+        collectedAt: null,
+        state: 'archived' as const,
+        score: null,
+        assessed: null,
+      })),
+  ];
+  return {
+    schemaVersion: COMPARE_SCHEMA_VERSION,
+    generatedAt: now.toISOString(),
+    points: points.sort((a, b) => byCode(b.id, a.id)).slice(0, limit),
   };
 }

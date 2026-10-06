@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { checkDetailBundle, detailArchiveSchema } from '../../contracts/index.js';
 import {
+  archivedSnapshotIds,
   buildArchiveView,
   summarizeArchiveEntries,
   type ArchiveEntry,
@@ -17,6 +18,23 @@ const A = '2024-03-01T06-00-00Z';
 const B = '2024-11-15T06-00-00Z';
 const C = '2025-01-02T06-00-00Z';
 const D = '2026-05-09T06-00-00Z';
+
+describe('archivedSnapshotIds', () => {
+  it('lists the valid ids newest first, once, and skips what the inventory ignores', () => {
+    const entries = [
+      entry(B, 10),
+      entry(A, 10),
+      entry(A, 20),
+      entry(D, 10),
+      entry(C, 10, '2024'),
+      { dir: '2024', name: 'notes.txt', bytes: 5 },
+      entry('2024-05-01T06-00-00Z', -1),
+      { dir: '', name: `${A}.json.gz`, bytes: 1 },
+    ];
+    expect(archivedSnapshotIds(entries)).toEqual([D, B, A]);
+    expect(archivedSnapshotIds([])).toEqual([]);
+  });
+});
 
 describe('summarizeArchiveEntries', () => {
   it('is empty for no entries', () => {
