@@ -177,7 +177,7 @@ function Timeline({ rows }: { rows: readonly ActivityItem[] }) {
                       {matched.map((r) => (
                         <span
                           key={r}
-                          className="inline-flex items-center rounded border border-[var(--border)] px-1 py-0.5 font-mono text-[11px] font-medium text-[var(--status-warning)]"
+                          className="inline-flex items-center rounded border border-[var(--border)] bg-[var(--surface-2)] px-1.5 py-0.5 font-mono text-[11px] font-medium text-[var(--text-primary)]"
                         >
                           {r}
                         </span>
