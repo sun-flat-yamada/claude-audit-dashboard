@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   DETAIL_MANIFEST_PATH,
   detailActivityPath,
@@ -9,6 +9,7 @@ import {
 } from '@claude-audit/core/contracts';
 import { StatusBadge } from '../components/Badges';
 import { Card, Empty } from '../components/Card';
+import { DailyActivityChart } from '../components/DailyActivityChart';
 import {
   CELL,
   DateField,
@@ -20,24 +21,30 @@ import {
 } from '../components/DetailControls';
 import {
   ACTIVITY_PAGE_SIZE,
+  ACTIVITY_RULES,
   actorBadge,
   actorKindLabel,
   activityMonths,
   activityUnavailable,
+  dailyActivityCounts,
   filterActivity,
+  formatActivityQuery,
+  matchActivityRules,
   monthEnd,
   monthLabel,
-  NO_ACTIVITY_FILTER,
   pageCount,
   pageSlice,
+  parseActivityQuery,
   typeLabel,
   uniqueActorKinds,
   uniqueTypes,
   type ActivityFilter,
   type ActivityItem,
+  type ActivityRouteState,
 } from '../lib/activity-view';
 import { useDetailFile } from '../lib/detail-data';
 import { formatTimestamp } from '../lib/format';
+import { replaceQuery, useHashQuery } from '../lib/router';
 import { ScrollRegion } from '../components/ScrollRegion';
 
 export interface ActivityProps {
@@ -46,7 +53,27 @@ export interface ActivityProps {
 }
 
 const SUBJECT = { kind: 'activity', plural: 'activity', title: 'Activity' } as const;
-const COLUMNS = ['Time', 'Activity', 'Actor', 'Identity', 'Organization'];
+const COLUMNS = ['Time', 'Activity', 'Rule', 'Actor', 'Identity', 'Organization'];
+
+function RuleSelect({
+  value,
+  onChange,
+}: {
+  value: ActivityRuleFilter;
+  onChange: (rule: ActivityRuleFilter) => void;
+}) {
+  return (
+    <SelectField label="Rule match" value={value} onChange={onChange}>
+      <option value="all">All events</option>
+      <option value="any">Any watch match</option>
+      {ACTIVITY_RULES.map((r) => (
+        <option key={r.id} value={r.id}>
+          {r.id}: {r.name}
+        </option>
+      ))}
+    </SelectField>
+  );
+}
 
 function Filters({
   items,
@@ -87,6 +114,7 @@ function Filters({
           </option>
         ))}
       </SelectField>
+      <RuleSelect value={filter.rule} onChange={(rule) => set({ rule })} />
       <DateField
         label="From date"
         value={filter.from}
@@ -132,21 +160,40 @@ function Timeline({ rows }: { rows: readonly ActivityItem[] }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((item) => (
-            <tr key={item.id}>
-              <th scope="row" className={`${CELL} tabular text-left font-normal`}>
-                {formatTimestamp(item.createdAt)}
-              </th>
-              <td className={CELL}>{typeLabel(item.type)}</td>
-              <td className={CELL}>
-                <StatusBadge status={actorBadge(item.actor.kind)} />
-              </td>
-              <td className={CELL}>
-                <Identity actor={item.actor} />
-              </td>
-              <td className={`${CELL} font-mono text-xs`}>{item.organizationId ?? '–'}</td>
-            </tr>
-          ))}
+          {rows.map((item) => {
+            const matched = matchActivityRules(item);
+            return (
+              <tr key={item.id}>
+                <th scope="row" className={`${CELL} tabular text-left font-normal`}>
+                  {formatTimestamp(item.createdAt)}
+                </th>
+                <td className={CELL}>{typeLabel(item.type)}</td>
+                <td className={CELL}>
+                  {matched.length === 0 ? (
+                    <span className="text-[var(--text-muted)]">–</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {matched.map((r) => (
+                        <span
+                          key={r}
+                          className="inline-flex items-center rounded border border-[var(--border)] px-1 py-0.5 font-mono text-[11px] font-medium text-[var(--status-warning)]"
+                        >
+                          {r}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </td>
+                <td className={CELL}>
+                  <StatusBadge status={actorBadge(item.actor.kind)} />
+                </td>
+                <td className={CELL}>
+                  <Identity actor={item.actor} />
+                </td>
+                <td className={`${CELL} font-mono text-xs`}>{item.organizationId ?? '–'}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </ScrollRegion>
@@ -189,29 +236,33 @@ function Pager({
   );
 }
 
-function MonthContent({ data }: { data: DetailActivity }) {
-  const [filter, setFilter] = useState<ActivityFilter>(NO_ACTIVITY_FILTER);
-  const [page, setPage] = useState(1);
+function MonthContent({
+  data,
+  filter,
+  page,
+  onFilterChange,
+  onPageChange,
+}: {
+  data: DetailActivity;
+  filter: ActivityFilter;
+  page: number;
+  onFilterChange: (next: ActivityFilter) => void;
+  onPageChange: (next: number) => void;
+}) {
   const matches = useMemo(() => filterActivity(data.items, filter), [data.items, filter]);
+  const counts = useMemo(() => dailyActivityCounts(matches, data.month), [matches, data.month]);
   const pages = pageCount(matches.length);
   const current = Math.min(page, pages);
   const first = (current - 1) * ACTIVITY_PAGE_SIZE + 1;
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {data.truncated && (
         <Notice role="status">
           {`This month has ${data.total} activities; the file keeps only the newest ${data.items.length}. Older activities of ${monthLabel(data.month)} are not shown.`}
         </Notice>
       )}
-      <Filters
-        items={data.items}
-        month={data.month}
-        filter={filter}
-        onChange={(next) => {
-          setFilter(next);
-          setPage(1);
-        }}
-      />
+      <Filters items={data.items} month={data.month} filter={filter} onChange={onFilterChange} />
+      <DailyActivityChart counts={counts} month={monthLabel(data.month)} />
       {data.items.length === 0 ? (
         <Empty>No activity was recorded in {monthLabel(data.month)}.</Empty>
       ) : matches.length === 0 ? (
@@ -222,14 +273,28 @@ function MonthContent({ data }: { data: DetailActivity }) {
             {`Showing ${first}–${Math.min(current * ACTIVITY_PAGE_SIZE, matches.length)} of ${matches.length} matching activities (${data.total} in the month).`}
           </p>
           <Timeline rows={pageSlice(matches, current)} />
-          <Pager page={current} pages={pages} onPage={setPage} />
+          <Pager page={current} pages={pages} onPage={onPageChange} />
         </>
       )}
     </div>
   );
 }
 
-function MonthView({ month, options }: { month: string; options: ActivityProps }) {
+function MonthView({
+  month,
+  filter,
+  page,
+  onFilterChange,
+  onPageChange,
+  options,
+}: {
+  month: string;
+  filter: ActivityFilter;
+  page: number;
+  onFilterChange: (next: ActivityFilter) => void;
+  onPageChange: (next: number) => void;
+  options: ActivityProps;
+}) {
   const file = useDetailFile(detailActivityPath(month), detailActivitySchema, options);
   if (file.status === 'loading')
     return <Notice role="status">{`Loading ${monthLabel(month)}…`}</Notice>;
@@ -239,7 +304,15 @@ function MonthView({ month, options }: { month: string; options: ActivityProps }
     return (
       <Notice role="status">{`Activity for ${monthLabel(month)} is listed but not published.`}</Notice>
     );
-  return <MonthContent data={file.data} />;
+  return (
+    <MonthContent
+      data={file.data}
+      filter={filter}
+      page={page}
+      onFilterChange={onFilterChange}
+      onPageChange={onPageChange}
+    />
+  );
 }
 
 function MonthPicker({
@@ -262,6 +335,27 @@ function MonthPicker({
   );
 }
 
+function useActivityRouteState(manifest: DetailManifest) {
+  const months = useMemo(() => activityMonths(manifest).map((m) => m.month), [manifest]);
+  const defaultMonth = months[0] ?? '';
+  const query = useHashQuery();
+  const state = useMemo(() => parseActivityQuery(query, months), [query, months]);
+
+  const updateState = useCallback(
+    (patch: Partial<ActivityRouteState>) => {
+      const next: ActivityRouteState = {
+        month: patch.month ?? state.month,
+        filter: patch.filter ?? state.filter,
+        page: patch.page ?? (patch.filter ? 1 : state.page),
+      };
+      replaceQuery('/activity', formatActivityQuery(next, defaultMonth));
+    },
+    [state, defaultMonth],
+  );
+
+  return { months, state, updateState };
+}
+
 function ActivityContent({
   manifest,
   options,
@@ -269,11 +363,10 @@ function ActivityContent({
   manifest: DetailManifest;
   options: ActivityProps;
 }) {
-  const months = activityMonths(manifest).map((m) => m.month);
-  const [chosen, setChosen] = useState<string | null>(null);
-  const month = chosen && months.includes(chosen) ? chosen : months[0];
+  const { months, state, updateState } = useActivityRouteState(manifest);
+
   const unavailable = activityUnavailable(manifest);
-  if (!month) {
+  if (!state.month) {
     const reason = unavailable?.reason ? ` (${unavailable.reason})` : '';
     return (
       <Notice role="status">
@@ -291,10 +384,22 @@ function ActivityContent({
           ? 'Identifiers, e-mail addresses and IPs are masked (maskPii is on).'
           : 'Identifiers, e-mail addresses and IPs are shown unmasked (maskPii is off).'}
       </p>
-      <Card title="Activity timeline" subtitle={`${monthLabel(month)}, newest first`}>
+      <Card title="Activity timeline" subtitle={`${monthLabel(state.month)}, newest first`}>
         <div className="space-y-3">
-          <MonthPicker months={months} value={month} onChange={setChosen} />
-          <MonthView key={month} month={month} options={options} />
+          <MonthPicker
+            months={months}
+            value={state.month}
+            onChange={(m) => updateState({ month: m, page: 1 })}
+          />
+          <MonthView
+            key={state.month}
+            month={state.month}
+            filter={state.filter}
+            page={state.page}
+            onFilterChange={(f) => updateState({ filter: f, page: 1 })}
+            onPageChange={(p) => updateState({ page: p })}
+            options={options}
+          />
         </div>
       </Card>
     </div>

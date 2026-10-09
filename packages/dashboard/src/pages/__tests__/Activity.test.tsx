@@ -280,4 +280,64 @@ describe('Activity page', () => {
     expect(fetched(spy).filter((u) => u.includes('activity-'))).toHaveLength(3);
     expect(document.body.textContent).not.toMatch(/@(?!example\.com)[a-z0-9-]+\.[a-z]+/i);
   });
+
+  it('filters activity by rule match and displays rule badges', async () => {
+    const user = userEvent.setup();
+    const items = [
+      mkItem('2026-09', 0, { type: 'claude_chat_created' }),
+      mkItem('2026-09', 1, { type: 'primary_owner_transferred' }),
+      mkItem('2026-09', 2, { type: 'api_key_created' }),
+    ];
+    open({
+      'detail/index.json': manifest([entry('2026-09')]),
+      'detail/activity-2026-09.json': monthFile('2026-09', 3, { items }),
+    });
+
+    await screen.findByRole('table', { name: 'Activity timeline' });
+    expect(screen.getByText('AM-001')).toBeInTheDocument();
+    expect(screen.getByText('AM-004')).toBeInTheDocument();
+
+    const ruleSelect = screen.getByRole('combobox', { name: 'Rule match' });
+    await user.selectOptions(ruleSelect, 'AM-001');
+    expect(screen.getByText('AM-001')).toBeInTheDocument();
+    expect(screen.queryByText('AM-004')).not.toBeInTheDocument();
+    expect(screen.getByText(/Showing 1–1 of 1 matching activities/)).toBeInTheDocument();
+
+    await user.selectOptions(ruleSelect, 'any');
+    expect(screen.getByText(/Showing 1–2 of 2 matching activities/)).toBeInTheDocument();
+  });
+
+  it('renders daily activity chart and toggles to table view', async () => {
+    const user = userEvent.setup();
+    open(REPLIES);
+    await screen.findByRole('table', { name: 'Activity timeline' });
+
+    expect(screen.getByRole('img', { name: /Daily activity bar chart/ })).toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: 'View as table' });
+    await user.click(toggle);
+
+    expect(screen.getByRole('table', { name: /Daily activity counts/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View as chart' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'View as chart' }));
+    expect(screen.getByRole('img', { name: /Daily activity bar chart/ })).toBeInTheDocument();
+  });
+
+  it('restores state from location hash query and updates query when filters change', async () => {
+    window.location.hash = '#/activity?month=2026-08&type=claude_file_uploaded&page=1';
+    const user = userEvent.setup();
+    open(REPLIES);
+
+    await screen.findByRole('table', { name: 'Activity timeline' });
+    expect(screen.getByRole('combobox', { name: 'Month' })).toHaveValue('2026-08');
+    expect(screen.getByRole('combobox', { name: 'Activity type' })).toHaveValue(
+      'claude_file_uploaded',
+    );
+
+    const search = screen.getByRole('searchbox', { name: 'Search activity' });
+    await user.type(search, 'test-query');
+    expect(window.location.hash).toContain('q=test-query');
+
+    window.location.hash = '';
+  });
 });
