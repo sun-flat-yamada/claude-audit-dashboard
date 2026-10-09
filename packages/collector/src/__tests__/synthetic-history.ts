@@ -311,7 +311,7 @@ export const HISTORY_BRANCH = 'data/audit';
 
 /** Runs git in `repo` with fixed identity and no global configuration. */
 export function git(repo: string, args: readonly string[], env: NodeJS.ProcessEnv = {}): string {
-  return execFileSync('git', ['-C', repo, ...args], {
+  return execFileSync('git', ['-C', repo, '-c', 'gc.auto=0', ...args], {
     encoding: 'utf8',
     env: {
       PATH: process.env.PATH,
@@ -394,7 +394,7 @@ export async function buildHistoryRepo(
   const stream = importStream(history).join('');
   const result = spawnSync(
     'git',
-    ['-C', dir, '-c', 'pack.compression=1', 'fast-import', '--quiet'],
+    ['-C', dir, '-c', 'gc.auto=0', '-c', 'pack.compression=1', 'fast-import', '--quiet'],
     {
       input: stream,
       env: { PATH: process.env.PATH, HOME: dir, GIT_CONFIG_GLOBAL: '/dev/null' },

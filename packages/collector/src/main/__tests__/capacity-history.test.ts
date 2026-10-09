@@ -37,11 +37,13 @@ const tempDir = async (name: string): Promise<string> => {
   return dir;
 };
 afterAll(async () => {
-  await Promise.all(
-    roots.map((dir) =>
-      rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }).catch(() => {}),
-    ),
-  );
+  for (const dir of roots) {
+    try {
+      await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    } catch {
+      // Temporary directory cleanup is best-effort.
+    }
+  }
 });
 
 const blobsOf = (m: { datasets: { dataset: string; blobs: number }[] }, name: string): number =>
