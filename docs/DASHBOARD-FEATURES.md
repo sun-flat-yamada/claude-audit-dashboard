@@ -17,25 +17,25 @@
 
 ## Feature matrix
 
-| ID    | Feature                         | Priority | Status                                                        | Contract fields                                             |
-| ----- | ------------------------------- | -------- | ------------------------------------------------------------- | ----------------------------------------------------------- |
-| F-001 | Organization overview           | P0       | ✅ Phase A                                                    | `title`, `organizations`, `collectedAt`, `kpis`             |
-| F-002 | Compliance score and trend      | P0       | ✅ Phase A                                                    | `kpis[score]`, `compliance.history`                         |
-| F-003 | Compliance results              | P0       | ✅ Phase A + CSV / JSON export (B2-1)                         | `compliance.results`, `compliance.byCategory`               |
-| F-004 | Usage and cost                  | P0       | ✅ Phase A                                                    | `usage.daily`, `usage.byProduct/byModel/byGroup`            |
-| F-005 | Activity                        | P0       | ✅ Phase A aggregates; B2 (B2-3, `#/activity`) search         | `activity`                                                  |
-| F-006 | Member view                     | P1       | ✅ Phase B2 (B2-4, `#/members`)                               | detail `members.json` (B2-2)                                |
-| F-007 | API key inventory               | P1       | ✅ Phase B2 (B2-5, `#/keys`)                                  | detail `api-keys.json` (B2-2)                               |
-| F-008 | Alert history                   | P1       | ✅ B2-6 (`#/alerts`)                                          | detail `alerts.json`                                        |
-| F-009 | Monthly cost report view        | P1       | ✅ B2-7 (`#/reports/monthly`, `#/reports/monthly/<id>`)       | detail `monthly/index.json`, `monthly/<id>.json`            |
-| F-010 | Model usage analytics           | P1       | ✅ Phase A + B2-8 (`#/models`, opt-in model × group data)     | `usage.byModel`, `insights`, `modelMatrix`                  |
-| F-011 | Light / dark theme              | P2       | ✅ Phase A (follows system); toggle UI in Phase B2 (B2-9)     | —                                                           |
-| F-012 | Organization / group drill-down | P2       | ✅ B2-10 (`#/orgs`, `#/orgs/<id>`, `#/groups/<id>`)           | detail `org-groups.json`, `members.json`                    |
-| F-013 | Data coverage and retention     | P2       | ✅ coverage in Phase A; archive inventory B2-11 (`#/archive`) | `coverage`, detail `archive.json`                           |
-| F-014 | Configuration view (read-only)  | P2       | ✅ B2-12 (`#/config`)                                         | detail `config.json`                                        |
-| F-015 | Snapshot comparison             | P3       | ✅ Implemented (#101 / #106 / #110 / #116 / #119, refs #42)   | `#/compare?base=<id>&target=<id>`; data: detail `compare/*` |
-| F-016 | Adoption (DAU / WAU / MAU)      | P1       | ✅ Phase A                                                    | `adoption`                                                  |
-| F-017 | Insights                        | P1       | ✅ Phase A                                                    | `insights`                                                  |
+| ID    | Feature                         | Priority | Status                                                                     | Contract fields                                             |
+| ----- | ------------------------------- | -------- | -------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| F-001 | Organization overview           | P0       | ✅ Phase A                                                                 | `title`, `organizations`, `collectedAt`, `kpis`             |
+| F-002 | Compliance score and trend      | P0       | ✅ Phase A                                                                 | `kpis[score]`, `compliance.history`                         |
+| F-003 | Compliance results              | P0       | ✅ Phase A + CSV / JSON export (B2-1)                                      | `compliance.results`, `compliance.byCategory`               |
+| F-004 | Usage and cost                  | P0       | ✅ Phase A                                                                 | `usage.daily`, `usage.byProduct/byModel/byGroup`            |
+| F-005 | Activity                        | P0       | ✅ Phase A aggregates; B2 (B2-3 & B2-13, `#/activity`) search & deep links | `activity`                                                  |
+| F-006 | Member view                     | P1       | ✅ Phase B2 (B2-4, `#/members`)                                            | detail `members.json` (B2-2)                                |
+| F-007 | API key inventory               | P1       | ✅ Phase B2 (B2-5, `#/keys`)                                               | detail `api-keys.json` (B2-2)                               |
+| F-008 | Alert history                   | P1       | ✅ B2-6 (`#/alerts`)                                                       | detail `alerts.json`                                        |
+| F-009 | Monthly cost report view        | P1       | ✅ B2-7 (`#/reports/monthly`, `#/reports/monthly/<id>`)                    | detail `monthly/index.json`, `monthly/<id>.json`            |
+| F-010 | Model usage analytics           | P1       | ✅ Phase A + B2-8 (`#/models`, opt-in model × group data)                  | `usage.byModel`, `insights`, `modelMatrix`                  |
+| F-011 | Light / dark theme              | P2       | ✅ Phase A (follows system); toggle UI in Phase B2 (B2-9)                  | —                                                           |
+| F-012 | Organization / group drill-down | P2       | ✅ B2-10 (`#/orgs`, `#/orgs/<id>`, `#/groups/<id>`)                        | detail `org-groups.json`, `members.json`                    |
+| F-013 | Data coverage and retention     | P2       | ✅ coverage in Phase A; archive inventory B2-11 (`#/archive`)              | `coverage`, detail `archive.json`                           |
+| F-014 | Configuration view (read-only)  | P2       | ✅ B2-12 (`#/config`)                                                      | detail `config.json`                                        |
+| F-015 | Snapshot comparison             | P3       | ✅ Implemented (#101 / #106 / #110 / #116 / #119, refs #42)                | `#/compare?base=<id>&target=<id>`; data: detail `compare/*` |
+| F-016 | Adoption (DAU / WAU / MAU)      | P1       | ✅ Phase A                                                                 | `adoption`                                                  |
+| F-017 | Insights                        | P1       | ✅ Phase A                                                                 | `insights`                                                  |
 
 ---
 
@@ -79,7 +79,7 @@
   - Search (type, actor ID / e-mail / IP, organization), activity type, actor kind and a date range (inclusive UTC days within the month); filters reset the page to 1.
   - Timeline table, newest first, 50 rows per page with Previous / Next and "Page n of m". Actor kind is shown as icon + label + color (User, API key, Unauthenticated, ...). Identifiers, e-mail addresses and IPs are printed exactly as published (masked while the manifest says `maskPii: true`) with a note.
   - A capped month (`truncated`) shows "This month has N activities; the file keeps only the newest M".
-  - Not included yet: filter state in the URL (the router has no query support) and a count-by-day chart.
+  - Phase B2 (B2-13, #83): Filter state in the URL (via hash query `#/activity?<params>`, bidirectional sync without extra history entries, page reset on filter change), rule-match filter for activity-watch rules (AM-001–AM-007) with rule badges in timeline rows, and count-by-day activity chart (`DailyActivityChart`) with accessible "View as table" toggle (no horizontal scroll at 390 px).
   - The demo tenant has three UTC months (July / August routine history, September recent events) so paging and month switching can be tried on the sample.
 
 ### F-011 Light / dark theme

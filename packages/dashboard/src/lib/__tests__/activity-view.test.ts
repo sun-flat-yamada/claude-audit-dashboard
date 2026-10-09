@@ -5,12 +5,16 @@ import {
   actorKindLabel,
   activityMonths,
   activityUnavailable,
+  dailyActivityCounts,
   filterActivity,
+  formatActivityQuery,
+  matchActivityRules,
   monthEnd,
   monthLabel,
   NO_ACTIVITY_FILTER,
   pageCount,
   pageSlice,
+  parseActivityQuery,
   uniqueActorKinds,
   uniqueTypes,
   type ActivityItem,
@@ -141,5 +145,132 @@ describe('labels', () => {
     expect(monthEnd('2026-09')).toBe('2026-09-30');
     expect(monthEnd('2028-02')).toBe('2028-02-29');
     expect(monthEnd('2026-12')).toBe('2026-12-31');
+  });
+});
+
+describe('rule matching', () => {
+  it('matches AM-001 for role changes and AM-004 for api key lifecycle', () => {
+    const roleItem = item('1', { type: 'primary_owner_transferred' });
+    const keyItem = item('2', { type: 'api_key_created' });
+    const chatItem = item('3', { type: 'claude_chat_created' });
+
+    expect(matchActivityRules(roleItem)).toEqual(['AM-001']);
+    expect(matchActivityRules(keyItem)).toEqual(['AM-004']);
+    expect(matchActivityRules(chatItem)).toEqual([]);
+  });
+
+  it('filters activity by rule match (all, any, specific rule ID)', () => {
+    const r1 = item('1', { type: 'primary_owner_transferred' });
+    const r2 = item('2', { type: 'api_key_created' });
+    const r3 = item('3', { type: 'claude_chat_created' });
+    const list = [r1, r2, r3];
+
+    expect(filterActivity(list, { ...NO_ACTIVITY_FILTER, rule: 'all' })).toHaveLength(3);
+    expect(filterActivity(list, { ...NO_ACTIVITY_FILTER, rule: 'any' })).toEqual([r1, r2]);
+    expect(filterActivity(list, { ...NO_ACTIVITY_FILTER, rule: 'AM-001' })).toEqual([r1]);
+    expect(filterActivity(list, { ...NO_ACTIVITY_FILTER, rule: 'AM-004' })).toEqual([r2]);
+    expect(filterActivity(list, { ...NO_ACTIVITY_FILTER, rule: 'AM-002' })).toEqual([]);
+  });
+});
+
+describe('dailyActivityCounts', () => {
+  it('aggregates events across days in the month and fills days with 0', () => {
+    const list = [
+      item('1', { createdAt: '2026-09-01T08:00:00.000Z' }),
+      item('2', { createdAt: '2026-09-01T12:00:00.000Z' }),
+      item('3', { createdAt: '2026-09-05T15:00:00.000Z' }),
+    ];
+    const counts = dailyActivityCounts(list, '2026-09');
+    expect(counts).toHaveLength(30);
+    expect(counts[0]).toEqual({ date: '2026-09-01', day: 1, count: 2 });
+    expect(counts[1]).toEqual({ date: '2026-09-02', day: 2, count: 0 });
+    expect(counts[4]).toEqual({ date: '2026-09-05', day: 5, count: 1 });
+  });
+
+  it('returns empty array when month is missing', () => {
+    expect(dailyActivityCounts([], '')).toEqual([]);
+  });
+});
+
+describe('parseActivityQuery and formatActivityQuery', () => {
+  const months = ['2026-09', '2026-08'];
+
+  it('parses empty query into default state', () => {
+    const state = parseActivityQuery({}, months);
+    expect(state.month).toBe('2026-09');
+    expect(state.page).toBe(1);
+    expect(state.filter).toEqual(NO_ACTIVITY_FILTER);
+  });
+
+  it('parses valid query parameters and ignores unknown keys', () => {
+    const state = parseActivityQuery(
+      {
+        month: '2026-08',
+        q: 'search-term',
+        type: 'api_key_created',
+        actorKind: 'user_actor',
+        from: '2026-08-01',
+        to: '2026-08-15',
+        rule: 'AM-004',
+        page: '3',
+        unknown: 'ignore-me',
+      },
+      months,
+    );
+    expect(state.month).toBe('2026-08');
+    expect(state.page).toBe(3);
+    expect(state.filter.query).toBe('search-term');
+    expect(state.filter.type).toBe('api_key_created');
+    expect(state.filter.actorKind).toBe('user_actor');
+    expect(state.filter.from).toBe('2026-08-01');
+    expect(state.filter.to).toBe('2026-08-15');
+    expect(state.filter.rule).toBe('AM-004');
+  });
+
+  it('falls back to default month if given unknown month', () => {
+    const state = parseActivityQuery({ month: '2020-01' }, months);
+    expect(state.month).toBe('2026-09');
+  });
+
+  it('falls back to page 1 on invalid page number', () => {
+    expect(parseActivityQuery({ page: '-1' }, months).page).toBe(1);
+    expect(parseActivityQuery({ page: 'abc' }, months).page).toBe(1);
+  });
+
+  it('formats state into query omitting defaults', () => {
+    const formatted = formatActivityQuery(
+      {
+        month: '2026-09',
+        page: 1,
+        filter: NO_ACTIVITY_FILTER,
+      },
+      '2026-09',
+    );
+    expect(formatted).toEqual({});
+  });
+
+  it('formats non-default values into query', () => {
+    const formatted = formatActivityQuery(
+      {
+        month: '2026-08',
+        page: 2,
+        filter: {
+          query: 'test',
+          type: 'api_key_created',
+          actorKind: 'all',
+          from: '',
+          to: '',
+          rule: 'AM-004',
+        },
+      },
+      '2026-09',
+    );
+    expect(formatted).toEqual({
+      month: '2026-08',
+      page: '2',
+      q: 'test',
+      type: 'api_key_created',
+      rule: 'AM-004',
+    });
   });
 });
