@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@claude-audit/core": "workspace:*",
-    "nodemailer": "^10.0.13",
+    "nodemailer": "^10.0.15",
     "zod": "^4.6.5"
   },
   "devDependencies": {
