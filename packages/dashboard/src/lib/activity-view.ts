@@ -5,6 +5,8 @@ export type ActivityItem = DetailActivity['items'][number];
 /** Timeline rows per page. */
 export const ACTIVITY_PAGE_SIZE = 50;
 
+export type ActivityRuleFilter = string;
+
 export interface ActivityFilter {
   /** Case-insensitive match on type, actor id / e-mail / IP and organization. */
   query: string;
@@ -16,7 +18,7 @@ export interface ActivityFilter {
   from: string;
   to: string;
   /** Rule-match filter: 'all', 'any' (any watch match), or rule ID ('AM-001'..). */
-  rule: string;
+  rule: ActivityRuleFilter;
 }
 
 export const NO_ACTIVITY_FILTER: ActivityFilter = {

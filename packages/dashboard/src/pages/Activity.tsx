@@ -41,6 +41,7 @@ import {
   type ActivityFilter,
   type ActivityItem,
   type ActivityRouteState,
+  type ActivityRuleFilter,
 } from '../lib/activity-view';
 import { useDetailFile } from '../lib/detail-data';
 import { formatTimestamp } from '../lib/format';
