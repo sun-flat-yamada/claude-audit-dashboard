@@ -1,0 +1,24 @@
+# Tasks: E2E Test Data Completion (#85)
+
+- [/] Phase 1: Planning and Scoping <!-- id: 0 -->
+  - [x] Investigate missing test data requirements and existing implementations <!-- id: 1 -->
+  - [ ] Author implementation_plan.md and task.md <!-- id: 2 -->
+- [ ] Phase 2: Synthetic Sample Missing Cases (#85 AC-3) <!-- id: 3 -->
+  - [ ] Add organization-scoped members to synthetic demo tenant in `demo-source.ts` <!-- id: 4 -->
+  - [ ] Add an unattributed deviation (`organizationId: null`) in `demo-source.ts` <!-- id: 5 -->
+  - [ ] Add a rotation-soon API key (age ~150 days) in `demo-source.ts` <!-- id: 6 -->
+  - [ ] Verify compliance rules and update golden tests with expected changes <!-- id: 7 -->
+- [ ] Phase 3: Fixture Tenant Monthly Report & Model x Group Matrix (#85 AC-2) <!-- id: 8 -->
+  - [ ] Add tenant-shaped cost report fixture for `group_by[]=model&group_by[]=rbac_group_id` (`0028_organizations-analytics-cost-report.json`) <!-- id: 9 -->
+  - [ ] Update `runFixtureTenant` in `fixture.ts` to collect usage matrix when enabled and write monthly report view (`detail/monthly/*.json`) <!-- id: 10 -->
+  - [ ] Add unit tests for fixture tenant monthly report and model x group outputs <!-- id: 11 -->
+- [ ] Phase 4: Empty and Unavailable Demo Profiles (#85 AC-1) <!-- id: 12 -->
+  - [ ] Extend `DemoProfile` in `demo.ts` with `'empty'` and `'unavailable'` <!-- id: 13 -->
+  - [ ] Implement `empty` and `unavailable` profile generation in `writeDemoSample` <!-- id: 14 -->
+  - [ ] Update `commands.ts` and `stage-data.mjs` to support `empty` and `unavailable` sources <!-- id: 15 -->
+  - [ ] Add component and CLI tests for `empty` and `unavailable` profiles <!-- id: 16 -->
+- [ ] Phase 5: Verification and Documentation (#85 AC-4, AC-6, AC-7) <!-- id: 17 -->
+  - [ ] Regenerate `data/sample/` and `data/fixture/` <!-- id: 18 -->
+  - [ ] Update `docs/BLUEPRINT.md`, `docs/DASHBOARD-FEATURES.md`, and `CONTRIBUTING.md` <!-- id: 19 -->
+  - [ ] Run full quality gate (`pnpm fork:verify && pnpm typecheck && pnpm test && pnpm secret-scan && pnpm build && pnpm lint && pnpm format:check`) <!-- id: 20 -->
+  - [ ] Seal evidence in `walkthrough.md` <!-- id: 21 -->
