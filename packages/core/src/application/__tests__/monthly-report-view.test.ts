@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DETAIL_SCHEMA_VERSION,
   MONTHLY_INDEX_PATH,
   checkDetailBundle,
   monthlyReportIndexSchema,
@@ -140,7 +141,7 @@ describe('monthly files in the detail bundle check', () => {
     const report = buildMonthlyReportView(overlapping(), NOW);
     if (!report) throw new Error('fixture');
     const manifest = {
-      schemaVersion: 2,
+      schemaVersion: DETAIL_SCHEMA_VERSION,
       generatedAt: NOW.toISOString(),
       collectedAt: null,
       source: 'demo',

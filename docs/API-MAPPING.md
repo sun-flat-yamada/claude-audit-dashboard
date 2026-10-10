@@ -112,6 +112,8 @@ Enterprise のロールは `user`, `managed`, `owner`, `membership_admin`, `prim
 
 `rbac_group_id` 別の値は「所属していた全グループに計上」されるため合計が総額を超え得る。総額は group_by 無しの行を使う。各バケットは上位 100 グループまで。
 
+組織単位の支出 (F-012, #84 調査結果): `cost_report` の `group_by[]` パラメータは `total`, `product`, `model`, `rbac_group_id` の 4 種類のみサポートされており、リンク組織単位 (`organization_id`) のグルーピングは API 側に存在しない。またユーザー別の支出データ (`users` エンドポイントにはトークン・支出の記載なし) も提供されないため、組織所属メンバーから組織支出を算出することも不可能である。したがって、組織単位の支出は API データソースが存在せず取得・算出できない (画面およびドキュメントにその旨を明記する)。
+
 ---
 
 ## 5. Spend Limits API (`/v1/organizations/spend_limits/*`、60 req/分/組織)

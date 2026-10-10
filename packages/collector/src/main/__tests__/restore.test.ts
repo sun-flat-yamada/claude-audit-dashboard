@@ -43,7 +43,10 @@ async function readTree(root: string): Promise<Map<string, string>> {
   const pairs = await Promise.all(
     files.map(async (e): Promise<[string, string]> => {
       const full = join(e.parentPath, e.name);
-      return [full.slice(root.length + 1), (await readFile(full)).toString('base64')];
+      return [
+        full.slice(root.length + 1).replaceAll('\\', '/'),
+        (await readFile(full)).toString('base64'),
+      ];
     }),
   );
   return new Map(pairs.sort(([a], [b]) => a.localeCompare(b)));

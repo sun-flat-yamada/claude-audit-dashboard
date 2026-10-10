@@ -146,6 +146,8 @@ export const detailOrgGroupsSchema = z.object({
       memberCount: z.number().int().nullable(),
       /** Month-to-date spend attributed to the group; groups overlap, so do not sum them. */
       monthToDateCost: z.number().nullable(),
+      /** Member ids belonging to the group (masked when maskPii is on). */
+      memberIds: z.array(z.string()).nullish(),
     }),
   ),
   /** Failing / warning configuration (CF-xxx) results, one row per affected organization. */

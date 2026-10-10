@@ -187,6 +187,8 @@ const credentials = (now: Date): Credential[] => [
   },
 ];
 
+const demoMemberId = (n: number) => `user_demo_${String(n).padStart(3, '0')}`;
+
 const GROUPS: Group[] = [
   {
     id: 'rbac_group_demo_engineering',
@@ -194,6 +196,7 @@ const GROUPS: Group[] = [
     source: 'scim',
     roleIds: ['rbac_role_demo_builder'],
     memberCount: 18,
+    memberIds: Array.from({ length: 18 }, (_, i) => demoMemberId(i + 1)),
   },
   {
     id: 'rbac_group_demo_legal',
@@ -201,14 +204,23 @@ const GROUPS: Group[] = [
     source: 'direct',
     roleIds: ['rbac_role_demo_reviewer'],
     memberCount: 6,
+    memberIds: Array.from({ length: 6 }, (_, i) => demoMemberId(i + 19)),
   },
-  { id: 'rbac_group_demo_sales', name: 'Sales', source: 'scim', roleIds: [], memberCount: 9 },
+  {
+    id: 'rbac_group_demo_sales',
+    name: 'Sales',
+    source: 'scim',
+    roleIds: [],
+    memberCount: 9,
+    memberIds: Array.from({ length: 9 }, (_, i) => demoMemberId(i + 25)),
+  },
   {
     id: 'rbac_group_demo_pilot',
     name: 'Pilot Program',
     source: 'direct',
     roleIds: ['rbac_role_demo_builder'],
     memberCount: 0,
+    memberIds: [],
   },
 ];
 

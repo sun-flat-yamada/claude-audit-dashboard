@@ -31,6 +31,26 @@
     {
       "id": "rbac_group_demo_engineering",
       "memberCount": 18,
+      "memberIds": [
+        "u_fb1d8c8dd150",
+        "u_a45f06097b5a",
+        "u_6657720365da",
+        "u_a812cfd10359",
+        "u_8b6c198a3fa3",
+        "u_25bc60c28f44",
+        "u_e4c2752fe694",
+        "u_212582c9c4e5",
+        "u_fa51f9078653",
+        "u_64783789293b",
+        "u_7bf50d3eac66",
+        "u_9dc9842e5c3a",
+        "u_f6865d116752",
+        "u_17450ffd6926",
+        "u_7ad385507ec5",
+        "u_3c84e8ca082f",
+        "u_0480ce9f0ca5",
+        "u_9d410da40b42"
+      ],
       "monthToDateCost": 3343.11,
       "name": "Engineering",
       "source": "scim"
@@ -38,6 +58,14 @@
     {
       "id": "rbac_group_demo_legal",
       "memberCount": 6,
+      "memberIds": [
+        "u_97f5edc7241d",
+        "u_03e801c2a22a",
+        "u_3e2b992cb74f",
+        "u_735613831814",
+        "u_a062674c11d0",
+        "u_3b22301ffb84"
+      ],
       "monthToDateCost": 573.09,
       "name": "Legal",
       "source": "direct"
@@ -45,6 +73,7 @@
     {
       "id": "rbac_group_demo_pilot",
       "memberCount": 0,
+      "memberIds": [],
       "monthToDateCost": 0,
       "name": "Pilot Program",
       "source": "direct"
@@ -52,6 +81,17 @@
     {
       "id": "rbac_group_demo_sales",
       "memberCount": 9,
+      "memberIds": [
+        "u_d12c07700324",
+        "u_e600e1fc3b39",
+        "u_fe38ecfd4a13",
+        "u_49222785682b",
+        "u_5d651e8c5b71",
+        "u_3367344307e1",
+        "u_250e8af3f27a",
+        "u_a95905a75d79",
+        "u_7b983a1ea9f3"
+      ],
       "monthToDateCost": 1050.69,
       "name": "Sales",
       "source": "scim"

@@ -99,13 +99,14 @@
 - Daily, weekly and monthly active users as three lines with a legend (the weekly and monthly series converge, so values are read from the tooltip and table rather than end labels).
 - Subtitle: assigned seats, pending invites and monthly adoption rate from the latest summary.
 
-### F-012 Organization / group drill-down (B2-10)
+### F-012 Organization / group drill-down (B2-10, B2-14 #84)
 
-- Routes `#/orgs` (index, "Organizations" in the nav), `#/orgs/<id>` and `#/groups/<id>` (deep links; sub-pages keep "Organizations" current). Source: `detail/org-groups.json`; the organization page also reads `detail/members.json` and the manifest (`maskPii` note, reason a dataset is unavailable).
+- Routes `#/orgs` (index, "Organizations" in the nav), `#/orgs/<id>` and `#/groups/<id>` (deep links; sub-pages keep "Organizations" current). Source: `detail/org-groups.json`; both organization and group pages also read `detail/members.json` and the manifest (`maskPii` note, reason a dataset is unavailable).
 - Index: linked organizations (members, deviation count), RBAC groups (source, members, month-to-date spend; groups overlap so spend is not additive), search across both, and an "Unattributed deviations" card.
-- Organization page: configuration deviations (CF-xxx) with severity and status as icon / dot + label + color, and the organization's members (joined by `organizationId`, printed as published). Group page: source, member count, month-to-date spend and its share of the highest-spending group (never summed).
-- Deviations belong to an organization only when the check evidence IDs match a linked organization; otherwise `organizationId` is null and the row appears under "Unattributed".
-- Contract limits: a group carries only `memberCount` (no member list, so none is shown and no join is invented), deviations are not attributed to groups, and spend exists per group only (none per organization). When no member carries an organization (as in the synthetic sample), the organization member list says so instead of showing an empty join.
+- Organization page: configuration deviations (CF-xxx) with severity and status as icon / dot + label + color, and the organization's members (joined by `organizationId`, printed as published). Spend note: explains that per-organization spend is unavailable because the Enterprise Analytics API only groups costs by total, product, model, or RBAC group, and per-user spend is not provided to compute organization totals.
+- Group page: source, member count, month-to-date spend and its share of the highest-spending group (never summed), configuration deviation scope boundary note (deviations apply to organizations only; RBAC groups have no effective settings), and the group's members (joined by `memberIds`, printed as published respecting `maskPii`).
+- Deviations belong to an organization only when the check evidence IDs match a linked organization; otherwise `organizationId` is null and the row appears under "Unattributed". Configuration deviations are evaluated per organization, not per RBAC group.
+- Contract & boundaries: groups carry `memberIds` (joined with `detail/members.json`; when absent, explains member list was not collected), deviations are not attributed to groups, and spend is attributed to RBAC groups only (Enterprise Analytics API does not support organization-level cost breakdown). When no member carries an organization, the organization member list explains that members are unscoped.
 - States: loading, not published, not collected (manifest reason), error (alert), empty, no match, unknown id (not found).
 
 ### F-009 Monthly cost report viewer (B2-7)
@@ -166,7 +167,7 @@
 - Table of member (name, e-mail), role, last activity date and status. Status is icon + label + color: Active, Inactive (AC-001) and Unknown (activity not collected, never shown as inactive). Inactive rows are also tinted. The inactivity threshold shown is the file's `inactiveDays` (the effective AC-001 value), not a constant.
 - Search (name, e-mail, role), role filter, status filter with counts, sort by name / role / last active / status (inactive first by default). Pending invites are listed in their own table.
 - States: loading, not published (file absent), not collected (manifest `unavailable` with its reason), error (alert), no members, no match for the filters.
-- Group membership is not part of the `detail-members` contract (only `organizationId`), so it is not shown; the group drill-down (F-012) carries member counts per group.
+- Group membership is carried via memberIds in `detail/org-groups.json`, cross-referenced with members on the group drill-down (F-012).
 
 ### F-007 API key inventory (B2-5)
 
@@ -180,7 +181,7 @@
 
 ## Detail data files (B2-2)
 
-The screens of F-005 (search), F-006, F-007, F-008, F-009, F-010 (model x group), F-012, F-013 (archive) and F-014 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 1`, zod schemas in `@claude-audit/core/contracts`).
+The screens of F-005 (search), F-006, F-007, F-008, F-009, F-010 (model x group), F-012, F-013 (archive) and F-014 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 3`, zod schemas in `@claude-audit/core/contracts`).
 
 | File                             | Content                                                                                                                                               |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -188,7 +189,7 @@ The screens of F-005 (search), F-006, F-007, F-008, F-009, F-010 (model x group)
 | `detail/members.json`            | Members (role, organization, `active`, `lastActiveOn`), invites, the AC-001 `inactiveDays` threshold                                                  |
 | `detail/api-keys.json`           | Keys (scopes, active, created / expires, creator, `lastSeenAt`), AK-001 / AK-003 thresholds, usage window start                                       |
 | `detail/activity-<yyyy-mm>.json` | One file per UTC month, newest first, capped at 2000 rows (`total` and `truncated` give the real count)                                               |
-| `detail/org-groups.json`         | Organizations, RBAC groups (member count, month-to-date spend; groups overlap), CF-xxx deviations                                                     |
+| `detail/org-groups.json`         | Organizations, RBAC groups (member count, member IDs, month-to-date spend; groups overlap), CF-xxx deviations                                         |
 | `detail/config.json`             | Effective configuration (allowlisted): rules with state / origin / effective parameters, custom rules, notification policy, sources                   |
 | `detail/archive.json`            | Archive inventory: per-year snapshot count, compressed bytes, oldest / newest snapshot id, totals, retention setting (ids, years, counts, bytes only) |
 | `detail/alerts.json`             | Alert history: sent alerts (time, severity, channel kinds, rule ids, redacted title) joined with their acknowledgement (time, masked label)           |

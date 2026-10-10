@@ -1,5 +1,5 @@
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
-import { isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import { z } from 'zod';
 import { stableStringify } from '../storage/file-store.js';
 
@@ -94,9 +94,9 @@ export function resolveCaptureDir(baseDir: string, dir: string, ci: string | und
     throw new Error('Raw capture is disabled in CI: it stores real tenant data');
   }
   const resolved = resolve(baseDir, dir);
-  const rel = relative(baseDir, resolved);
-  const outside = rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel);
-  const local = rel === LOCAL_CAPTURE_DIR || rel.startsWith(`${LOCAL_CAPTURE_DIR}${sep}`);
+  const rel = relative(baseDir, resolved).replaceAll('\\', '/');
+  const outside = rel === '..' || rel.startsWith('../') || isAbsolute(rel);
+  const local = rel === LOCAL_CAPTURE_DIR || rel.startsWith(`${LOCAL_CAPTURE_DIR}/`);
   if (!outside && !local) {
     throw new Error(
       `Raw capture directory must be outside the repository or under ${LOCAL_CAPTURE_DIR}/ (gitignored): ${rel || '.'}`,
