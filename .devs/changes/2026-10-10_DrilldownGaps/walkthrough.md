@@ -4,7 +4,7 @@
 Resolves Issue #84 (Phase B2-14, F-012 drill-down gaps):
 1. **Group Member List**:
    - Extended `Group` entity in `@claude-audit/core` with `memberIds: string[] | null`.
-   - Bumped `DETAIL_SCHEMA_VERSION` from 2 to 3 in `detail-view.ts` and updated `detailOrgGroupsSchema` with `memberIds: z.array(z.string()).nullish()`.
+   - Maintained `DETAIL_SCHEMA_VERSION = 2` in `detail-view.ts` for backward-compatibility across all detail endpoints and updated `detailOrgGroupsSchema` with `memberIds: z.array(z.string()).nullish()`.
    - Updated `buildDetailOrgGroups` to mask member IDs using `input.mask.id('u', id)` when `maskPii` is enabled, preserving stable joinability with `detail/members.json`.
    - Updated collector's `AdminApi.listGroups` to collect group member IDs via `PATHS.groupMembers(groupId)`.
    - Updated demo source with synthetic member IDs for demo groups and regenerated sample data via `pnpm demo`.
@@ -29,7 +29,7 @@ Resolves Issue #84 (Phase B2-14, F-012 drill-down gaps):
   - `Organizations.test.tsx`: 27 tests passed including group member rendering, `maskPii` on/off handling, and organization spend absence notices.
 
 ### 2. Quality Gate
-- `pnpm fork:verify`: ✅ PASS (Fork-safe, valid detail schema v3, example.com only)
+- `pnpm fork:verify`: ✅ PASS (Fork-safe, valid detail schema v2, example.com only)
 - `pnpm typecheck`: ✅ PASS (clean across all 3 workspace packages)
 - `pnpm secret-scan`: ✅ PASS (0 secrets detected)
 - `pnpm build`: ✅ PASS (production bundles compiled cleanly)

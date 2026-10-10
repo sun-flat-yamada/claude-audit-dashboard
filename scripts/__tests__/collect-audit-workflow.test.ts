@@ -1,12 +1,17 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const script = '.github/scripts/validate-dispatch-inputs.sh';
 const workflow = readFileSync('.github/workflows/collect-audit.yml', 'utf8');
+
+const bashCmd =
+  process.platform === 'win32' && existsSync('C:/Program Files/Git/bin/bash.exe')
+    ? 'C:/Program Files/Git/bin/bash.exe'
+    : 'bash';
 
 function validate(env: Record<string, string>): {
   status: number | null;
@@ -14,9 +19,9 @@ function validate(env: Record<string, string>): {
   stderr: string;
 } {
   const dir = mkdtempSync(join(tmpdir(), 'dispatch-inputs-'));
-  const out = join(dir, 'output');
+  const out = join(dir, 'output').replaceAll('\\', '/');
   try {
-    const result = spawnSync('bash', [script], {
+    const result = spawnSync(bashCmd, [script], {
       env: { PATH: process.env.PATH, GITHUB_OUTPUT: out, ...env },
       encoding: 'utf8',
     });
@@ -35,14 +40,14 @@ function validate(env: Record<string, string>): {
 describe('collect-audit dispatch inputs', () => {
   it('accepts no input (scheduled run) and defaults to no override and no dry run', () => {
     const r = validate({});
-    assert.equal(r.status, 0);
+    assert.equal(r.status, 0, r.stderr);
     assert.equal(r.output, 'retention_days=\ndry_run=false\n');
   });
 
   it('accepts a whole number of days and the booleans', () => {
     for (const days of ['1', '7', '365', '99999']) {
       const r = validate({ RETENTION_DAYS: days, DRY_RUN: 'true' });
-      assert.equal(r.status, 0, days);
+      assert.equal(r.status, 0, `${days}: ${r.stderr}`);
       assert.equal(r.output, `retention_days=${days}\ndry_run=true\n`);
     }
     assert.equal(validate({ DRY_RUN: 'false' }).output, 'retention_days=\ndry_run=false\n');

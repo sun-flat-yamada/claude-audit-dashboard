@@ -181,7 +181,7 @@
 
 ## Detail data files (B2-2)
 
-The screens of F-005 (search), F-006, F-007, F-008, F-009, F-010 (model x group), F-012, F-013 (archive) and F-014 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 3`, zod schemas in `@claude-audit/core/contracts`).
+The screens of F-005 (search), F-006, F-007, F-008, F-009, F-010 (model x group), F-012, F-013 (archive) and F-014 read a manifest plus one file per entity. `DashboardView` stays v2 and aggregate-only; each file carries its own `schemaVersion` (`DETAIL_SCHEMA_VERSION = 2`, zod schemas in `@claude-audit/core/contracts`).
 
 | File                             | Content                                                                                                                                               |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
