@@ -35,6 +35,22 @@ describe('resolveSource', () => {
     expect(resolveSource('live', root, has('data/dashboard.json')).name).toBe('live');
   });
 
+  it('empty reads data/sample-empty and fails with a hint when absent', () => {
+    expect(resolveSource('empty', root, has('data/sample-empty/dashboard.json')).file).toBe(
+      join(root, 'data/sample-empty/dashboard.json'),
+    );
+    expect(() => resolveSource('empty', root, has())).toThrow(/pnpm demo --profile empty/);
+  });
+
+  it('unavailable reads data/sample-unavailable and fails with a hint when absent', () => {
+    expect(
+      resolveSource('unavailable', root, has('data/sample-unavailable/dashboard.json')).file,
+    ).toBe(join(root, 'data/sample-unavailable/dashboard.json'));
+    expect(() => resolveSource('unavailable', root, has())).toThrow(
+      /pnpm demo --profile unavailable/,
+    );
+  });
+
   it('rejects unknown values', () => {
     expect(() => resolveSource('prod', root, has())).toThrow(/Unknown DASHBOARD_DATA_SOURCE/);
   });
@@ -58,6 +74,8 @@ describe('stage', () => {
     write('data/sample/dashboard.json', 'SAMPLE');
     write('data/fixture/dashboard.json', 'FIXTURE');
     write('data/dashboard.json', 'LIVE');
+    write('data/sample-empty/dashboard.json', 'EMPTY');
+    write('data/sample-unavailable/dashboard.json', 'UNAVAILABLE');
   });
   afterEach(() => rmSync(tmp, { recursive: true, force: true }));
 
@@ -66,6 +84,8 @@ describe('stage', () => {
     ['sample', 'SAMPLE'],
     ['fixtures', 'FIXTURE'],
     ['live', 'LIVE'],
+    ['empty', 'EMPTY'],
+    ['unavailable', 'UNAVAILABLE'],
   ])('DASHBOARD_DATA_SOURCE=%s stages %s', (source, expected) => {
     stage({ env: { DASHBOARD_DATA_SOURCE: source }, pkgRoot, log: quiet });
     expect(readFileSync(target(), 'utf-8')).toBe(expected);

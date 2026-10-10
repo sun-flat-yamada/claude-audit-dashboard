@@ -14,7 +14,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { TENANT_FIXTURE_URL } from '../../__tests__/fixture-sets.js';
 import { silentLogger } from '../../infrastructure/runtime.js';
 import { runCli } from '../cli.js';
-import { writeDemoSample } from '../demo.js';
+import { writeDemoSample, type DemoProfile } from '../demo.js';
 import { runFixtureTenant } from '../fixture.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..');
@@ -30,7 +30,7 @@ const detailOf = (files: Record<string, string>) =>
 const coverageOf = (files: Record<string, string>) =>
   Object.fromEntries(parseView(files).coverage.map((c) => [c.dataset, c]));
 
-async function demo(profile?: 'default' | 'optional-sources') {
+async function demo(profile?: DemoProfile) {
   const out = await mkdtemp(join(tmpdir(), 'profile-'));
   try {
     return await writeDemoSample(out, { profile, cwd: ROOT, env: {}, logger: silentLogger });
@@ -68,6 +68,30 @@ describe('demo profiles', () => {
     expect(checkDetailBundle(detailOf(optional), { requireDemo: true })).toEqual([]);
     for (const email of Object.values(optional).join('\n').match(EMAIL) ?? [])
       expect(email).toMatch(/@example\.com$/);
+  });
+
+  it('the empty profile collects 13 datasets with zero items and a valid detail bundle', async () => {
+    const emptyFiles = await demo('empty');
+    const coverage = coverageOf(emptyFiles);
+    expect(Object.keys(coverage)).toHaveLength(13);
+    for (const meta of Object.values(coverage)) {
+      expect(meta).toMatchObject({ status: 'ok', count: 0 });
+    }
+    expect(checkDetailBundle(detailOf(emptyFiles), { requireDemo: true })).toEqual([]);
+    expect(emptyFiles).toHaveProperty('dashboard.json');
+    expect(emptyFiles).toHaveProperty('detail/index.json');
+    expect(emptyFiles).toHaveProperty('detail/members.json');
+  });
+
+  it('the unavailable profile marks datasets as unavailable/error and writes no detail bundle', async () => {
+    const unavailFiles = await demo('unavailable');
+    const coverage = coverageOf(unavailFiles);
+    expect(Object.keys(coverage)).toHaveLength(13);
+    expect(
+      Object.values(coverage).every((m) => m.status === 'unavailable' || m.status === 'error'),
+    ).toBe(true);
+    expect(Object.keys(detailOf(unavailFiles))).toHaveLength(0);
+    expect(unavailFiles).toHaveProperty('dashboard.json');
   });
 
   it('publishes the Claude Code aggregate only in the optional-sources profile (AN-4)', () => {
@@ -204,6 +228,22 @@ describe('CLI flags', () => {
         JSON.parse(await readFile(join(target, 'dashboard.json'), 'utf8')),
       );
       expect(view.coverage).toHaveLength(22);
+
+      const emptyTarget = join(out, 'profile-empty');
+      expect(await runCli(['demo', '--profile', 'empty', '--out', emptyTarget], options)).toBe(0);
+      const emptyView = dashboardViewSchema.parse(
+        JSON.parse(await readFile(join(emptyTarget, 'dashboard.json'), 'utf8')),
+      );
+      expect(emptyView.coverage).toHaveLength(13);
+
+      const unavailTarget = join(out, 'profile-unavailable');
+      expect(
+        await runCli(['demo', '--profile', 'unavailable', '--out', unavailTarget], options),
+      ).toBe(0);
+      const unavailView = dashboardViewSchema.parse(
+        JSON.parse(await readFile(join(unavailTarget, 'dashboard.json'), 'utf8')),
+      );
+      expect(unavailView.coverage).toHaveLength(13);
     } finally {
       await rm(out, { recursive: true, force: true });
     }

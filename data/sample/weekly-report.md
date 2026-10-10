@@ -7,7 +7,7 @@ Generated: 2026-09-29T12:00:00.000Z
 
 | Metric | Value |
 | --- | --- |
-| Compliance score | 70/100 |
+| Compliance score | 65/100 |
 | Score change | +0 |
 | Activities collected | 271 |
 | Cost (7 days) | $1,455.33 |
@@ -25,8 +25,9 @@ Generated: 2026-09-29T12:00:00.000Z
 | UA-003 | Members Without Spend Limit | medium | fail | 3 member(s) have no spend limit |
 | UA-004 | Spend Limit Nearly Exhausted | low | warning | 2 member(s) at or above 90% of their limit |
 | DG-001 | Empty Groups | low | fail | 1 group(s) have no members |
-| CF-003 | IP Allowlist Enabled | medium | fail | 1 of 3 organization(s) deviate on ip_allowlist_enabled |
-| CF-005 | Finite Data Retention | medium | fail | 2 of 3 organization(s) deviate on data_retention_periods |
+| CF-001 | SSO Enforced for claude.ai | high | fail | 1 of 4 organization(s) deviate on sso_claude_ai_enforced |
+| CF-003 | IP Allowlist Enabled | medium | fail | 1 of 4 organization(s) deviate on ip_allowlist_enabled |
+| CF-005 | Finite Data Retention | medium | fail | 2 of 4 organization(s) deviate on data_retention_periods |
 | AM-001 | Privileged Role Changes | high | warning | 1 matching event(s) since the previous collection |
 | AM-003 | Network Restriction Changes | medium | warning | 1 matching event(s) since the previous collection |
 | AM-005 | Data Export Events | medium | warning | 1 matching event(s) since the previous collection |

@@ -13,17 +13,21 @@ import { copyFileSync, cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const SOURCES = ['sample', 'fixtures', 'live'];
+export const SOURCES = ['sample', 'fixtures', 'live', 'empty', 'unavailable'];
 
 const FILES = {
   sample: ['data', 'sample', 'dashboard.json'],
   fixtures: ['data', 'fixture', 'dashboard.json'],
   live: ['data', 'dashboard.json'],
+  empty: ['data', 'sample-empty', 'dashboard.json'],
+  unavailable: ['data', 'sample-unavailable', 'dashboard.json'],
 };
 
 const HINTS = {
   fixtures: 'run `pnpm fixture` first',
   live: 'run `pnpm build:data` first, or use DASHBOARD_DATA_SOURCE=sample',
+  empty: 'run `pnpm demo --profile empty` first',
+  unavailable: 'run `pnpm demo --profile unavailable` first',
 };
 
 /**

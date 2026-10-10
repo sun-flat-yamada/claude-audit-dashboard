@@ -32,12 +32,22 @@ describe('fixture tenant (collect → check → dashboard on the tenant-shape fi
     expect(status('AM-001')).toBe('warning');
   });
 
-  it('produces a valid, masked detail bundle', () => {
+  it('produces a valid, masked detail bundle with monthly report and modelMatrix', () => {
     const detail = Object.fromEntries(
       Object.entries(files).filter(([name]) => name.startsWith('detail/')),
     );
     expect(Object.keys(detail)).toContain('detail/index.json');
+    expect(Object.keys(detail)).toContain('detail/monthly/index.json');
+    expect(Object.keys(detail)).toContain('detail/monthly/monthly-2026-08.json');
     expect(checkDetailBundle(detail, { requireDemo: true })).toEqual([]);
+
+    const view = dashboardViewSchema.parse(JSON.parse(files['dashboard.json'] ?? ''));
+    expect(view.modelMatrix?.status).toBe('ok');
+    if (view.modelMatrix?.status === 'ok') {
+      expect(view.modelMatrix.cells.length).toBeGreaterThan(0);
+      expect(view.modelMatrix.models.length).toBeGreaterThan(0);
+      expect(view.modelMatrix.groups.length).toBeGreaterThan(0);
+    }
   });
 
   it('is deterministic: the same fixtures give byte-identical output', async () => {

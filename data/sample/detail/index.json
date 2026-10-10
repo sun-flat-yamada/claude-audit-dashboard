@@ -11,7 +11,7 @@
       "status": "ok"
     },
     {
-      "count": 4,
+      "count": 5,
       "kind": "api-keys",
       "month": null,
       "path": "detail/api-keys.json",

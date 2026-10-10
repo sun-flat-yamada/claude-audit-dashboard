@@ -1,5 +1,5 @@
 Section,Id,Name,Severity,Base,Target,Change,Delta
-score,score,Compliance score,,73,78,increased,5
+score,score,Compliance score,,68,73,increased,5
 score,assessed,Assessed rules,,27,25,decreased,-2
 rule,UA-002,Cost Budget Threshold,critical,pass,warning,regressed,
 rule,AK-003,API Key Age,medium,pass,fail,regressed,
@@ -16,8 +16,8 @@ rule,CF-006,Public Projects Disabled,medium,fail,pass,improved,
 dataset,groups,groups,,unavailable,error,regressed,
 dataset,invites,invites,,ok,error,regressed,
 dataset,spendLimits,spendLimits,,ok,unavailable,regressed,
-kpi,score,Compliance score,,73,78,increased,5
-kpi,open-findings,Open findings,,11,11,unchanged,0
+kpi,score,Compliance score,,68,73,increased,5
+kpi,open-findings,Open findings,,12,12,unchanged,0
 kpi,members,Members,,34,43,increased,9
 kpi,mau,Monthly active users,,23,35,increased,12
 kpi,seat-utilization,Seat utilization (30d),,51.1,77.8,increased,26.7

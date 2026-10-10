@@ -18,17 +18,24 @@ import type { AppConfig } from '../infrastructure/config.js';
 import { fixedClock } from '../infrastructure/runtime.js';
 import { createContainer } from './container.js';
 import { writeDetail } from './detail.js';
+import { collectUsageMatrix } from './usage-matrix.js';
+import { writeMonthlyView } from './monthly-report.js';
 import { writeFiles } from './write-files.js';
-import { check, collect, writeDashboard } from './workflows.js';
+import { check, collect, generateReport, writeDashboard } from './workflows.js';
 
-/** The fixture profile with every optional source on; one day of Claude Code history is recorded. */
-const enableOptionalSources = (config: AppConfig): AppConfig => ({
+/** The fixture profile configuration: usageMatrix enabled by default; optional sources on when requested. */
+const patchFixtureConfig = (config: AppConfig, optional: boolean): AppConfig => ({
   ...config,
   sources: {
     ...config.sources,
-    console: { enabled: true, lookbackDays: 30 },
-    claudeCode: { enabled: true, lookbackDays: 1 },
-    featureUsage: { enabled: true, lookbackDays: 30 },
+    usageMatrix: { enabled: true, lookbackDays: 90 },
+    ...(optional
+      ? {
+          console: { enabled: true, lookbackDays: 30 },
+          claudeCode: { enabled: true, lookbackDays: 1 },
+          featureUsage: { enabled: true, lookbackDays: 30 },
+        }
+      : {}),
   },
 });
 
@@ -63,7 +70,7 @@ export async function runFixtureTenant(
       env: optional
         ? { ...FIXTURE_ENV, ANTHROPIC_CONSOLE_ADMIN_API_KEY: FIXTURE_CONSOLE_KEY }
         : FIXTURE_ENV,
-      configPatch: optional ? enableOptionalSources : undefined,
+      configPatch: (cfg) => patchFixtureConfig(cfg, optional),
       cwd: options.cwd,
       logger: options.logger,
       dataDir: workDir,
@@ -73,13 +80,21 @@ export async function runFixtureTenant(
     });
     await c.state.save(fixtureState(FIXTURE_NOW));
     await collect(c);
+    await collectUsageMatrix(c);
     const { report } = await check(c);
     const view = await writeDashboard(c);
     const detail = await writeDetail(c);
+    const monthlyMonths = ['2026-07', '2026-08'];
+    const monthlyFiles: Record<string, string> = {};
+    for (const month of monthlyMonths) {
+      const { document } = await generateReport(c, 'monthly', month);
+      Object.assign(monthlyFiles, await writeMonthlyView(c, document));
+    }
     return {
       'dashboard.json': stableStringify(view),
       'compliance-report.json': stableStringify(report),
       ...detail,
+      ...monthlyFiles,
     };
   } finally {
     await rm(workDir, { recursive: true, force: true });

@@ -42,6 +42,9 @@ data/fixture/
 # Generated profiles with the optional sources on (`pnpm fixture --optional-sources`, `pnpm demo --profile optional-sources`)
 data/fixture-optional-sources/
 data/sample-optional-sources/
+# Generated profiles of `pnpm demo --profile empty` and `pnpm demo --profile unavailable`
+data/sample-empty/
+data/sample-unavailable/
 data/state.json
 data/dashboard.json
 !data/.gitkeep

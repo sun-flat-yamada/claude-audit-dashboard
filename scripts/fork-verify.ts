@@ -64,6 +64,9 @@ const forbiddenPaths = [
   // Generated profiles of `pnpm demo --profile optional-sources` / `pnpm fixture --optional-sources`
   'data/sample-optional-sources',
   'data/fixture-optional-sources',
+  // Generated profiles of `pnpm demo --profile empty` / `pnpm demo --profile unavailable`
+  'data/sample-empty',
+  'data/sample-unavailable',
   // Playwright E2E output: the built SPA with a copy of the data of every profile
   'packages/dashboard/.e2e',
 ];

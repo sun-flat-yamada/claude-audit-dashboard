@@ -13,7 +13,12 @@ import { createDemoOptionalCollectors } from '../adapters/demo/demo-optional.js'
 import {
   DEMO_NOW,
   createDemoCollectors,
+  createDemoEmptyCollectors,
+  createDemoUnavailableCollectors,
   demoAckStore,
+  demoEmptyAckStore,
+  demoEmptyState,
+  demoEmptyUsageMatrixInput,
   demoState,
   demoUsageMatrixInput,
 } from '../adapters/demo/demo-source.js';
@@ -33,10 +38,17 @@ import { check, collect, generateReport, writeDashboard } from './workflows.js';
  * `default`: the committed public sample (`data/sample/`, optional sources off).
  * `optional-sources`: the same tenant with the optional Console and Claude Code datasets on
  * (B4); written to a separate, gitignored directory and checked by `fork:verify` when present.
+ * `empty`: every dataset collected but with zero items (`data/sample-empty/`, empty detail bundle).
+ * `unavailable`: simulated service downtime / error (`data/sample-unavailable/`, no detail bundle).
  */
-export type DemoProfile = 'default' | 'optional-sources';
+export type DemoProfile = 'default' | 'optional-sources' | 'empty' | 'unavailable';
 
-export const DEMO_PROFILES: readonly DemoProfile[] = ['default', 'optional-sources'];
+export const DEMO_PROFILES: readonly DemoProfile[] = [
+  'default',
+  'optional-sources',
+  'empty',
+  'unavailable',
+];
 
 export interface DemoOptions {
   profile?: DemoProfile | undefined;
@@ -140,6 +152,70 @@ function demoConfigInput(profile: DemoProfile): Omit<ConfigViewInput, 'now'> {
   };
 }
 
+async function writeUnavailableSample(
+  workDir: string,
+  outDir: string,
+  options: DemoOptions,
+): Promise<Record<string, string>> {
+  const c = await createContainer({
+    env: options.env,
+    cwd: options.cwd,
+    logger: options.logger,
+    dataDir: workDir,
+    clock: fixedClock(DEMO_NOW),
+    collectors: createDemoUnavailableCollectors(),
+    source: 'demo',
+  });
+  await c.state.save(demoEmptyState());
+  await new FsAckRepository(c.store).save(demoEmptyAckStore());
+  await collect(c);
+  const { report } = await check(c);
+  const view = await writeDashboard(c);
+  const weekly = await generateReport(c, 'weekly');
+  const monthly = await generateReport(c, 'monthly');
+  const files: Record<string, string> = {
+    'dashboard.json': stableStringify(view),
+    'compliance-report.json': stableStringify(report),
+    'weekly-report.md': toMarkdown(weekly.document),
+    'monthly-report.md': toMarkdown(monthly.document),
+  };
+  await writeFiles(outDir, files);
+  return files;
+}
+
+async function writeEmptySample(
+  workDir: string,
+  outDir: string,
+  options: DemoOptions,
+): Promise<Record<string, string>> {
+  const c = await createContainer({
+    env: options.env,
+    cwd: options.cwd,
+    logger: options.logger,
+    dataDir: workDir,
+    clock: fixedClock(DEMO_NOW),
+    collectors: createDemoEmptyCollectors(),
+    source: 'demo',
+  });
+  await c.state.save(demoEmptyState());
+  await new FsAckRepository(c.store).save(demoEmptyAckStore());
+  await collect(c);
+  const { report } = await check(c);
+  const view = await writeDashboard(c, undefined, demoEmptyUsageMatrixInput(DEMO_NOW));
+  const weekly = await generateReport(c, 'weekly');
+  const monthly = await generateReport(c, 'monthly');
+  const detail = await writeDetail(c, demoConfigInput('empty'), []);
+  const files: Record<string, string> = {
+    'dashboard.json': stableStringify(view),
+    'compliance-report.json': stableStringify(report),
+    'weekly-report.md': toMarkdown(weekly.document),
+    'monthly-report.md': toMarkdown(monthly.document),
+    ...detail,
+  };
+  await writeFiles(outDir, files);
+  return files;
+}
+
 /**
  * Runs collect → check → dashboard → weekly / monthly reports on the synthetic tenant with a
  * fixed clock, then writes the public sample files. Output is deterministic (golden-tested).
@@ -155,6 +231,15 @@ export async function writeDemoSample(
   const workDir = await mkdtemp(join(tmpdir(), 'claude-audit-demo-'));
   try {
     const profile = options.profile ?? 'default';
+
+    if (profile === 'unavailable') {
+      return await writeUnavailableSample(workDir, outDir, options);
+    }
+
+    if (profile === 'empty') {
+      return await writeEmptySample(workDir, outDir, options);
+    }
+
     // The earlier points first, in the same store: the latest dashboard then carries every
     // point in `compliance.history` and the detail build lists every point's summary.
     const history = await writeDemoHistory(workDir, options);
