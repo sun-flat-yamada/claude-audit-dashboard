@@ -100,7 +100,7 @@ export class AdminApi {
     }));
   }
 
-  private async countMembers(groupId: string): Promise<number> {
+  private async listMemberIds(groupId: string): Promise<string[]> {
     const path = PATHS.groupMembers(groupId);
     const rows = await collectTokenPages(async (page) =>
       parseResponse(
@@ -109,10 +109,10 @@ export class AdminApi {
         path,
       ),
     );
-    return rows.length;
+    return rows.map((r) => r.user_id);
   }
 
-  /** Groups with member counts for the first `maxMemberRequests` groups (one request each). */
+  /** Groups with member counts and member IDs for the first `maxMemberRequests` groups (one request each). */
   async listGroups(maxMemberRequests: number): Promise<Group[]> {
     const rows = await collectTokenPages(async (page) =>
       parseResponse(
@@ -123,13 +123,14 @@ export class AdminApi {
     );
     const groups: Group[] = [];
     for (const [index, g] of rows.entries()) {
-      const memberCount = index < maxMemberRequests ? await this.countMembers(g.id) : null;
+      const memberIds = index < maxMemberRequests ? await this.listMemberIds(g.id) : null;
       groups.push({
         id: g.id,
         name: g.name,
         source: g.source_type,
         roleIds: g.role_ids ?? null,
-        memberCount,
+        memberCount: memberIds !== null ? memberIds.length : null,
+        memberIds,
       });
     }
     return groups;

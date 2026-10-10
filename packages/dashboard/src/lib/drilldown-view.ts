@@ -63,6 +63,13 @@ export function membersOfOrganization(members: readonly Member[], id: string): M
     .sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 }
 
+export function membersOfGroup(members: readonly Member[], group: Group): Member[] {
+  const ids = new Set(group.memberIds);
+  return members
+    .filter((m) => ids.has(m.id))
+    .sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+}
+
 /**
  * Share of the largest group's month-to-date spend, 0-100, or null without a cost figure.
  * Groups overlap, so shares are relative to the largest group and are never summed.

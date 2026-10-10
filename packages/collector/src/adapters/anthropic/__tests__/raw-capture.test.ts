@@ -1,6 +1,6 @@
 import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpClient } from '../http-client.js';
 import {
@@ -110,9 +110,13 @@ describe('resolveCaptureDir', () => {
   const base = '/work/repo';
 
   it('accepts directories outside the repository and under the gitignored data/raw', () => {
-    expect(resolveCaptureDir(base, '../captures', undefined)).toBe('/work/captures');
-    expect(resolveCaptureDir(base, '/var/tmp/captures', undefined)).toBe('/var/tmp/captures');
-    expect(resolveCaptureDir(base, 'data/raw/run1', undefined)).toBe('/work/repo/data/raw/run1');
+    expect(resolveCaptureDir(base, '../captures', undefined)).toBe(resolve('/work/captures'));
+    expect(resolveCaptureDir(base, '/var/tmp/captures', undefined)).toBe(
+      resolve('/var/tmp/captures'),
+    );
+    expect(resolveCaptureDir(base, 'data/raw/run1', undefined)).toBe(
+      resolve(base, 'data/raw/run1'),
+    );
   });
 
   it('refuses locations that Git could pick up', () => {

@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { DETAIL_SCHEMA_VERSION } from '@claude-audit/core/contracts';
 import { GroupDetail } from '../GroupDetail';
 import { OrganizationDetail } from '../OrganizationDetail';
 import { Organizations } from '../Organizations';
@@ -16,7 +17,7 @@ const NOW = '2026-09-29T12:00:00.000Z';
 const O1 = 'org-1';
 const O2 = 'org-2';
 const orgGroups = (over: Record<string, unknown> = {}) => ({
-  schemaVersion: 2,
+  schemaVersion: DETAIL_SCHEMA_VERSION,
   generatedAt: NOW,
   currency: 'USD',
   organizations: [
@@ -24,9 +25,30 @@ const orgGroups = (over: Record<string, unknown> = {}) => ({
     { id: O2, name: 'Example Corp Beta', memberCount: 0 },
   ],
   groups: [
-    { id: 'g-eng', name: 'Engineering', source: 'scim', memberCount: 18, monthToDateCost: 200 },
-    { id: 'g-ops', name: 'Operations', source: 'direct', memberCount: 0, monthToDateCost: 50 },
-    { id: 'g-new', name: 'Pilot', source: 'direct', memberCount: null, monthToDateCost: null },
+    {
+      id: 'g-eng',
+      name: 'Engineering',
+      source: 'scim',
+      memberCount: 18,
+      monthToDateCost: 200,
+      memberIds: null,
+    },
+    {
+      id: 'g-ops',
+      name: 'Operations',
+      source: 'direct',
+      memberCount: 0,
+      monthToDateCost: 50,
+      memberIds: [],
+    },
+    {
+      id: 'g-new',
+      name: 'Pilot',
+      source: 'direct',
+      memberCount: null,
+      monthToDateCost: null,
+      memberIds: null,
+    },
   ],
   deviations: [
     {
@@ -67,14 +89,14 @@ const member = (id: string, organizationId: string | null, name: string, email: 
   lastActiveOn: null,
 });
 const membersFile = (members: unknown[]) => ({
-  schemaVersion: 2,
+  schemaVersion: DETAIL_SCHEMA_VERSION,
   generatedAt: NOW,
   inactiveDays: 60,
   members,
   invites: [],
 });
 const manifest = (over: Record<string, unknown> = {}, files: unknown[] = []) => ({
-  schemaVersion: 2,
+  schemaVersion: DETAIL_SCHEMA_VERSION,
   generatedAt: NOW,
   collectedAt: NOW,
   source: 'demo',
@@ -85,7 +107,7 @@ const manifest = (over: Record<string, unknown> = {}, files: unknown[] = []) => 
 const unavailable = (kind: string, reason: string) => ({
   kind,
   path: `detail/${kind}.json`,
-  schemaVersion: 2,
+  schemaVersion: DETAIL_SCHEMA_VERSION,
   status: 'unavailable',
   reason,
   count: null,
@@ -230,6 +252,15 @@ describe('OrganizationDetail', () => {
     ).toBeInTheDocument();
   });
 
+  it('explains that spend is not available for organizations due to lack of Enterprise Analytics API data source', async () => {
+    open(O1, { groups: orgGroups() });
+    expect(
+      await screen.findByText(
+        /Enterprise Analytics API does not support organization-level cost breakdown/,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('lists the members of the organization, masked as published (maskPii on)', async () => {
     open(O1, {
       groups: orgGroups(),
@@ -317,11 +348,79 @@ describe('GroupDetail', () => {
     expect(screen.getByText(/must not be added up/)).toBeInTheDocument();
   });
 
-  it('states that no member list exists instead of inventing one', async () => {
-    open('g-eng', { groups: orgGroups() });
-    expect(await screen.findByText(/only a member count per group/)).toBeInTheDocument();
+  it('states that member list was not collected when memberIds is missing', async () => {
+    open('g-eng', {
+      groups: orgGroups(),
+      manifest: manifest(),
+      members: membersFile([]),
+    });
+    expect(await screen.findByText(/only member count is available/)).toBeInTheDocument();
     expect(screen.getByText('18')).toBeInTheDocument();
     expect(screen.queryByRole('table')).toBeNull();
+  });
+
+  it('lists the members of the group when memberIds is present', async () => {
+    open('g-eng', {
+      groups: orgGroups({
+        groups: [
+          {
+            id: 'g-eng',
+            name: 'Engineering',
+            source: 'scim',
+            memberCount: 2,
+            monthToDateCost: 200,
+            memberIds: ['u1', 'u2'],
+          },
+        ],
+      }),
+      manifest: manifest(),
+      members: membersFile([
+        member('u1', O1, 'Alice Eng', 'alice@example.com'),
+        member('u2', O2, 'Bob Eng', 'bob@example.com'),
+        member('u3', O1, 'Charlie Ops', 'charlie@example.com'),
+      ]),
+    });
+    const table = await screen.findByRole('table', { name: 'Group members' });
+    expect(within(table).getByText('Alice Eng')).toBeInTheDocument();
+    expect(within(table).getByText('Bob Eng')).toBeInTheDocument();
+    expect(within(table).queryByText('Charlie Ops')).toBeNull();
+  });
+
+  it('shows maskPii note when viewing group members with maskPii on and off', async () => {
+    const groupData = orgGroups({
+      groups: [
+        {
+          id: 'g-eng',
+          name: 'Engineering',
+          source: 'scim',
+          memberCount: 1,
+          monthToDateCost: 100,
+          memberIds: ['u1'],
+        },
+      ],
+    });
+    const { unmount } = open('g-eng', {
+      groups: groupData,
+      manifest: manifest({ maskPii: true }),
+      members: membersFile([member('u1', O1, 'A*** B***', 'a***@example.com')]),
+    });
+    expect(await screen.findByText(/Names and e-mail addresses are masked/)).toBeInTheDocument();
+    unmount();
+    open('g-eng', {
+      groups: groupData,
+      manifest: manifest({ maskPii: false }),
+      members: membersFile([member('u1', O1, 'Alice Smith', 'alice@example.com')]),
+    });
+    expect(
+      await screen.findByText(/Names and e-mail addresses are shown unmasked/),
+    ).toBeInTheDocument();
+  });
+
+  it('notes that deviations are evaluated per organization, not per group', async () => {
+    open('g-ops', { groups: orgGroups() });
+    expect(
+      await screen.findByText(/Configuration deviations are evaluated per organization/),
+    ).toBeInTheDocument();
   });
 
   it('handles uncollected cost and member counts', async () => {

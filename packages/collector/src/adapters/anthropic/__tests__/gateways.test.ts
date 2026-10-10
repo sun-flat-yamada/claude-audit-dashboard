@@ -133,9 +133,11 @@ describe('AdminApi (official examples)', () => {
         source: 'direct',
         roleIds: ['rbac_role_01'],
         memberCount: 1,
+        memberIds: ['user_01'],
       },
     ]);
     expect((await admin.listGroups(0))[0]?.memberCount).toBeNull();
+    expect((await admin.listGroups(0))[0]?.memberIds).toBeNull();
   });
 
   it('converts spend amounts from cents and keeps null as unlimited', async () => {

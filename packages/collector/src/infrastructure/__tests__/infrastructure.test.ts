@@ -1,6 +1,6 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { loadConfig } from '../config.js';
 import { readEnvironment } from '../env.js';
@@ -42,8 +42,8 @@ describe('readEnvironment', () => {
       },
       '/repo/packages/collector',
     );
-    expect(env.dataDir).toBe('/repo/data');
-    expect(env.configDir).toBe('/repo/config');
+    expect(env.dataDir).toBe(resolve('/repo/data'));
+    expect(env.configDir).toBe(resolve('/repo/config'));
     expect(env.smtp).toMatchObject({
       port: 465,
       secure: true,

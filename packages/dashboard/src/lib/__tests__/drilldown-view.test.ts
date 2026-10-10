@@ -7,6 +7,7 @@ import {
   findGroup,
   findOrganization,
   membersAreScoped,
+  membersOfGroup,
   membersOfOrganization,
   orgSummaries,
   sortDeviations,
@@ -108,6 +109,13 @@ describe('members join', () => {
   it('joins by organization id only and sorts by name', () => {
     expect(membersOfOrganization(members, 'o1').map((m) => m.id)).toEqual(['u1', 'u2']);
     expect(membersOfOrganization(members, 'o9')).toEqual([]);
+  });
+
+  it('joins by group memberIds and sorts by name', () => {
+    const g = group({ memberIds: ['u2', 'u1', 'missing'] });
+    expect(membersOfGroup(members, g).map((m) => m.id)).toEqual(['u1', 'u2']);
+    expect(membersOfGroup(members, group({ memberIds: [] }))).toEqual([]);
+    expect(membersOfGroup(members, group({ memberIds: undefined }))).toEqual([]);
   });
 
   it('detects members that carry no organization at all', () => {

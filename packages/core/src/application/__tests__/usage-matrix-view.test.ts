@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dashboardViewSchema } from '../../contracts/index.js';
+import { DETAIL_SCHEMA_VERSION, dashboardViewSchema } from '../../contracts/index.js';
 import { buildDashboardView } from '../presenters/dashboard-view.js';
 import { buildDetailView, DEFAULT_DETAIL_THRESHOLDS } from '../presenters/detail-view.js';
 import {
@@ -202,6 +202,6 @@ describe('modelMatrix in the dashboard view (v3)', () => {
       thresholds: DEFAULT_DETAIL_THRESHOLDS,
     });
     expect(bundle.manifest.files.map((f) => f.kind)).not.toContain('usage-matrix');
-    expect(bundle.manifest.schemaVersion).toBe(2);
+    expect(bundle.manifest.schemaVersion).toBe(DETAIL_SCHEMA_VERSION);
   });
 });

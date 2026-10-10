@@ -1,6 +1,6 @@
 import { cp, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { timestampId, type Clock } from '@claude-audit/core';
 import {
@@ -107,7 +107,10 @@ async function detailBundle(dir: string): Promise<Record<string, string>> {
   const pairs = await Promise.all(
     files.map(async (e): Promise<[string, string]> => {
       const full = join(e.parentPath, e.name);
-      return [`detail/${full.slice(join(dir, 'detail').length + 1)}`, await readFile(full, 'utf8')];
+      return [
+        `detail/${full.slice(join(dir, 'detail').length + 1).replaceAll('\\', '/')}`,
+        await readFile(full, 'utf8'),
+      ];
     }),
   );
   return Object.fromEntries(pairs);
@@ -121,7 +124,7 @@ const exportsOf = (base: TimePointSummary, target: TimePointSummary): string[] =
 const archivedIdsOf = async (dir: string): Promise<string[]> =>
   (await readdir(join(dir, 'archive'), { recursive: true }))
     .filter((f) => f.endsWith('.json.gz'))
-    .map((f) => f.slice(f.lastIndexOf('/') + 1, -'.json.gz'.length))
+    .map((f) => basename(f, '.json.gz'))
     .sort();
 
 // ─── Weekly history (57 points over 400 days): archived listing, restore, diffs ────────────────

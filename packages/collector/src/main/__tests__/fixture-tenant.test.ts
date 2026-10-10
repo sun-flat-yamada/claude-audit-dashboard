@@ -83,7 +83,7 @@ describe('tenant fixture files', () => {
     expect(TENANT_FIXTURE_DIR).toBe(
       'packages/collector/src/adapters/anthropic/__tests__/fixtures/tenant',
     );
-    expect(fixtureDir.endsWith(`${TENANT_FIXTURE_DIR}/`)).toBe(true);
+    expect(fixtureDir.replaceAll('\\', '/').endsWith(`${TENANT_FIXTURE_DIR}/`)).toBe(true);
   });
 
   it('are capture-shaped, synthetic and free of keys, real addresses and non-documentation IPs', async () => {

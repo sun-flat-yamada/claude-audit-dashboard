@@ -129,6 +129,8 @@ export interface Group {
   roleIds: string[] | null;
   /** Null when member counts could not be collected. */
   memberCount: number | null;
+  /** Member IDs belonging to this group, or null/omitted when not collected. */
+  memberIds?: string[] | null;
 }
 
 export interface SettingValue {

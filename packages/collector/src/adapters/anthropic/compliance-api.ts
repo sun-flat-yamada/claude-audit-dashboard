@@ -239,6 +239,7 @@ export class ComplianceApi {
         source: g.source_type,
         roleIds: g.roles ?? null,
         memberCount: null,
+        memberIds: null,
       })),
     );
   }

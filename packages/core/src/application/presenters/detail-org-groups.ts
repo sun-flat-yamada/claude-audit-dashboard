@@ -63,6 +63,7 @@ export function buildDetailOrgGroups(input: DetailOrgGroupsInput): DetailOrgGrou
       source: g.source,
       memberCount: g.memberCount,
       monthToDateCost: groupCost(input, g.id),
+      memberIds: g.memberIds ? g.memberIds.map((id) => input.mask.id('u', id)) : null,
     })),
     deviations: deviations(input),
   };

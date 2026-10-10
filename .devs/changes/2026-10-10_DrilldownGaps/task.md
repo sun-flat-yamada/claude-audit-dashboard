@@ -1,23 +1,23 @@
 # Task: F-012 Drill-down Gaps (Group Member List, Organization Spend Source Explanation) (#84)
 
-- [ ] Phase 1: Issue Definition & Scoping (#84)
-- [ ] Phase 2: Implementation Plan formulated & committed
-- [ ] Phase 3: Core & Contract Layer
-  - [ ] Update `Group` entity with `memberIds` in `entities.ts`
-  - [ ] Bump `DETAIL_SCHEMA_VERSION` to 3 and update `detailOrgGroupsSchema` in `detail-view.ts`
-  - [ ] Update `buildDetailOrgGroups` in `detail-org-groups.ts` with masked `memberIds`
-- [ ] Phase 4: Collector Layer
-  - [ ] Update `admin-api.ts` to collect group member IDs
-  - [ ] Update `demo-source.ts` with synthetic member IDs for demo groups
-  - [ ] Regenerate sample data with `pnpm demo`
-- [ ] Phase 5: Dashboard UI & Helpers
-  - [ ] Add `membersOfGroup` helper in `drilldown-view.ts`
-  - [ ] Render group member list with `MemberRows` in `GroupDetail.tsx`
-  - [ ] Explain absence of group deviations and lack of org-level spend source in `GroupDetail.tsx` and `OrganizationDetail.tsx`
-- [ ] Phase 6: Documentation & Blueprint Sync
-  - [ ] Sync `docs/DASHBOARD-FEATURES.md` (F-012)
-  - [ ] Sync `docs/BLUEPRINT.md` §9
-  - [ ] Sync `docs/API-MAPPING.md`
-- [ ] Phase 7: Local Quality Gate
-  - [ ] `fork:verify`, `typecheck`, `test`, `secret-scan`, `build`, `lint`, `format:check`
-- [ ] Phase 8: Walkthrough Generation & PR Creation
+- [x] Phase 1: Issue Definition & Scoping (#84)
+- [x] Phase 2: Implementation Plan formulated & committed
+- [x] Phase 3: Core & Contract Layer
+  - [x] Update `Group` entity with `memberIds` in `entities.ts`
+  - [x] Bump `DETAIL_SCHEMA_VERSION` to 3 and update `detailOrgGroupsSchema` in `detail-view.ts`
+  - [x] Update `buildDetailOrgGroups` in `detail-org-groups.ts` with masked `memberIds`
+- [x] Phase 4: Collector Layer
+  - [x] Update `admin-api.ts` to collect group member IDs
+  - [x] Update `demo-source.ts` with synthetic member IDs for demo groups
+  - [x] Regenerate sample data with `pnpm demo`
+- [x] Phase 5: Dashboard UI & Helpers
+  - [x] Add `membersOfGroup` helper in `drilldown-view.ts`
+  - [x] Render group member list with `MemberRows` in `GroupDetail.tsx`
+  - [x] Explain absence of group deviations and lack of org-level spend source in `GroupDetail.tsx` and `OrganizationDetail.tsx`
+- [x] Phase 6: Documentation & Blueprint Sync
+  - [x] Sync `docs/DASHBOARD-FEATURES.md` (F-012)
+  - [x] Sync `docs/BLUEPRINT.md` §9
+  - [x] Sync `docs/API-MAPPING.md`
+- [x] Phase 7: Local Quality Gate
+  - [x] `fork:verify`, `typecheck`, `test`, `secret-scan`, `build`, `lint`, `format:check`
+- [x] Phase 8: Walkthrough Generation & PR Creation
