@@ -66,7 +66,8 @@ test.describe('B1 fixture tenant', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: 'Monthly cost report' }),
     ).toBeVisible();
-    await expect(page.getByRole('table', { name: 'Chargeback by RBAC group' })).toBeVisible();
+    await expect(page.getByLabel('Month')).toBeVisible();
+    await expect(page.getByRole('status')).toContainText('was not collected');
     await openRoute(page, '/models');
     await expect(page.getByRole('heading', { level: 1, name: 'Models' })).toBeVisible();
     await openRoute(page, '/');
