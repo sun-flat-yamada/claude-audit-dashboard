@@ -35,7 +35,7 @@
       "joinedAt": "2026-08-30T12:00:00.000Z",
       "lastActiveOn": "2026-09-28",
       "name": "A*** E***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "primary_owner"
     },
     {
@@ -45,7 +45,7 @@
       "joinedAt": "2026-08-13T12:00:00.000Z",
       "lastActiveOn": "2026-09-27",
       "name": "B*** E***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "owner"
     },
     {
@@ -55,8 +55,8 @@
       "joinedAt": "2026-07-27T12:00:00.000Z",
       "lastActiveOn": "2026-09-26",
       "name": "C*** E***",
-      "organizationId": null,
-      "role": "owner"
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "role": "membership_admin"
     },
     {
       "active": true,
@@ -65,8 +65,8 @@
       "joinedAt": "2026-07-10T12:00:00.000Z",
       "lastActiveOn": "2026-09-25",
       "name": "D*** E***",
-      "organizationId": null,
-      "role": "membership_admin"
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "role": "managed"
     },
     {
       "active": true,
@@ -75,8 +75,8 @@
       "joinedAt": "2026-06-23T12:00:00.000Z",
       "lastActiveOn": "2026-09-24",
       "name": "E*** E***",
-      "organizationId": null,
-      "role": "membership_admin"
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
+      "role": "managed"
     },
     {
       "active": true,
@@ -85,7 +85,7 @@
       "joinedAt": "2026-06-06T12:00:00.000Z",
       "lastActiveOn": "2026-09-23",
       "name": "F*** E***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "managed"
     },
     {
@@ -95,7 +95,7 @@
       "joinedAt": "2026-05-20T12:00:00.000Z",
       "lastActiveOn": "2026-09-22",
       "name": "G*** E***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "managed"
     },
     {
@@ -105,7 +105,7 @@
       "joinedAt": "2026-05-03T12:00:00.000Z",
       "lastActiveOn": "2026-09-21",
       "name": "H*** E***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "managed"
     },
     {
@@ -115,7 +115,7 @@
       "joinedAt": "2026-04-16T12:00:00.000Z",
       "lastActiveOn": "2026-09-20",
       "name": "I*** E***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "managed"
     },
     {
@@ -125,7 +125,7 @@
       "joinedAt": "2026-03-30T12:00:00.000Z",
       "lastActiveOn": "2026-09-19",
       "name": "J*** E***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "managed"
     },
     {
@@ -135,7 +135,7 @@
       "joinedAt": "2026-03-13T12:00:00.000Z",
       "lastActiveOn": "2026-09-18",
       "name": "A*** A***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "user"
     },
     {
@@ -145,7 +145,7 @@
       "joinedAt": "2026-02-24T12:00:00.000Z",
       "lastActiveOn": "2026-09-17",
       "name": "B*** A***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "user"
     },
     {
@@ -155,7 +155,7 @@
       "joinedAt": "2026-02-07T12:00:00.000Z",
       "lastActiveOn": "2026-09-16",
       "name": "C*** A***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "user"
     },
     {
@@ -165,7 +165,7 @@
       "joinedAt": "2026-01-21T12:00:00.000Z",
       "lastActiveOn": "2026-09-15",
       "name": "D*** A***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "user"
     },
     {
@@ -175,7 +175,7 @@
       "joinedAt": "2026-01-04T12:00:00.000Z",
       "lastActiveOn": "2026-09-14",
       "name": "E*** A***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "user"
     },
     {
@@ -185,7 +185,7 @@
       "joinedAt": "2025-12-18T12:00:00.000Z",
       "lastActiveOn": "2026-09-28",
       "name": "F*** A***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "user"
     },
     {
@@ -195,7 +195,7 @@
       "joinedAt": "2025-12-01T12:00:00.000Z",
       "lastActiveOn": "2026-09-27",
       "name": "G*** A***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "user"
     },
     {
@@ -205,7 +205,7 @@
       "joinedAt": "2025-11-14T12:00:00.000Z",
       "lastActiveOn": "2026-09-26",
       "name": "H*** A***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-1111-4a1a-9a11-000000000001",
       "role": "user"
     },
     {
@@ -215,8 +215,8 @@
       "joinedAt": "2025-10-28T12:00:00.000Z",
       "lastActiveOn": "2026-09-25",
       "name": "I*** A***",
-      "organizationId": null,
-      "role": "user"
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
+      "role": "primary_owner"
     },
     {
       "active": true,
@@ -225,7 +225,7 @@
       "joinedAt": "2025-10-11T12:00:00.000Z",
       "lastActiveOn": "2026-09-24",
       "name": "J*** A***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
       "role": "user"
     },
     {
@@ -235,7 +235,7 @@
       "joinedAt": "2025-09-24T12:00:00.000Z",
       "lastActiveOn": null,
       "name": "A*** C***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
       "role": "user"
     },
     {
@@ -245,7 +245,7 @@
       "joinedAt": "2025-09-07T12:00:00.000Z",
       "lastActiveOn": "2026-09-22",
       "name": "B*** C***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
       "role": "user"
     },
     {
@@ -255,7 +255,7 @@
       "joinedAt": "2025-08-21T12:00:00.000Z",
       "lastActiveOn": "2026-09-21",
       "name": "C*** C***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
       "role": "user"
     },
     {
@@ -265,7 +265,7 @@
       "joinedAt": "2025-08-04T12:00:00.000Z",
       "lastActiveOn": "2026-09-20",
       "name": "D*** C***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
       "role": "user"
     },
     {
@@ -275,8 +275,8 @@
       "joinedAt": "2025-07-18T12:00:00.000Z",
       "lastActiveOn": "2026-09-19",
       "name": "E*** C***",
-      "organizationId": null,
-      "role": "user"
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
+      "role": "primary_owner"
     },
     {
       "active": true,
@@ -285,7 +285,7 @@
       "joinedAt": "2025-07-01T12:00:00.000Z",
       "lastActiveOn": "2026-09-18",
       "name": "F*** C***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
       "role": "user"
     },
     {
@@ -295,7 +295,7 @@
       "joinedAt": "2025-06-14T12:00:00.000Z",
       "lastActiveOn": "2026-09-17",
       "name": "G*** C***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
       "role": "user"
     },
     {
@@ -305,7 +305,7 @@
       "joinedAt": "2025-05-28T12:00:00.000Z",
       "lastActiveOn": null,
       "name": "H*** C***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
       "role": "user"
     },
     {
@@ -315,7 +315,7 @@
       "joinedAt": "2025-05-11T12:00:00.000Z",
       "lastActiveOn": "2026-09-15",
       "name": "I*** C***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
       "role": "user"
     },
     {
@@ -325,7 +325,7 @@
       "joinedAt": "2025-04-24T12:00:00.000Z",
       "lastActiveOn": "2026-09-14",
       "name": "J*** C***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
       "role": "user"
     },
     {
@@ -335,7 +335,7 @@
       "joinedAt": "2025-04-07T12:00:00.000Z",
       "lastActiveOn": "2026-09-28",
       "name": "A*** D***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
       "role": "user"
     },
     {
@@ -345,7 +345,7 @@
       "joinedAt": "2025-03-21T12:00:00.000Z",
       "lastActiveOn": "2026-09-27",
       "name": "B*** D***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
       "role": "user"
     },
     {
@@ -355,7 +355,7 @@
       "joinedAt": "2025-03-04T12:00:00.000Z",
       "lastActiveOn": "2026-09-26",
       "name": "C*** D***",
-      "organizationId": null,
+      "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
       "role": "user"
     },
     {
@@ -366,7 +366,7 @@
       "lastActiveOn": null,
       "name": "D*** D***",
       "organizationId": null,
-      "role": "user"
+      "role": "primary_owner"
     },
     {
       "active": true,

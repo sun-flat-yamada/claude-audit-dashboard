@@ -15,6 +15,8 @@ describe('E2E data profiles', () => {
     expect(() => assertNotLive({})).not.toThrow();
     expect(() => assertNotLive({ DASHBOARD_DATA_SOURCE: 'sample' })).not.toThrow();
     expect(() => assertNotLive({ DASHBOARD_DATA_SOURCE: 'fixtures' })).not.toThrow();
+    expect(() => assertNotLive({ DASHBOARD_DATA_SOURCE: 'empty' })).not.toThrow();
+    expect(() => assertNotLive({ DASHBOARD_DATA_SOURCE: 'unavailable' })).not.toThrow();
   });
 
   it('only accepts dashboards labelled as the demo tenant', () => {

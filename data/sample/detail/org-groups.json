@@ -2,7 +2,15 @@
   "currency": "USD",
   "deviations": [
     {
-      "message": "1 of 3 organization(s) deviate on ip_allowlist_enabled",
+      "message": "1 of 4 organization(s) deviate on sso_claude_ai_enforced",
+      "organizationId": null,
+      "ruleId": "CF-001",
+      "ruleName": "SSO Enforced for claude.ai",
+      "severity": "high",
+      "status": "fail"
+    },
+    {
+      "message": "1 of 4 organization(s) deviate on ip_allowlist_enabled",
       "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
       "ruleId": "CF-003",
       "ruleName": "IP Allowlist Enabled",
@@ -10,7 +18,7 @@
       "status": "fail"
     },
     {
-      "message": "2 of 3 organization(s) deviate on data_retention_periods",
+      "message": "2 of 4 organization(s) deviate on data_retention_periods",
       "organizationId": "5f0c7a1e-2222-4a1a-9a11-000000000002",
       "ruleId": "CF-005",
       "ruleName": "Finite Data Retention",
@@ -18,7 +26,7 @@
       "status": "fail"
     },
     {
-      "message": "2 of 3 organization(s) deviate on data_retention_periods",
+      "message": "2 of 4 organization(s) deviate on data_retention_periods",
       "organizationId": "5f0c7a1e-3333-4a1a-9a11-000000000003",
       "ruleId": "CF-005",
       "ruleName": "Finite Data Retention",
@@ -100,17 +108,17 @@
   "organizations": [
     {
       "id": "5f0c7a1e-1111-4a1a-9a11-000000000001",
-      "memberCount": null,
+      "memberCount": 18,
       "name": "Example Corp Engineering"
     },
     {
       "id": "5f0c7a1e-2222-4a1a-9a11-000000000002",
-      "memberCount": null,
+      "memberCount": 6,
       "name": "Example Corp Legal"
     },
     {
       "id": "5f0c7a1e-3333-4a1a-9a11-000000000003",
-      "memberCount": null,
+      "memberCount": 9,
       "name": "Example Corp Sales"
     }
   ],

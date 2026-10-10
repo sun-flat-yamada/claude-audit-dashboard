@@ -835,7 +835,7 @@
       },
       {
         "category": "configuration",
-        "failed": 2,
+        "failed": 3,
         "total": 9
       },
       {
@@ -855,22 +855,22 @@
       }
     ],
     "errors": 0,
-    "failed": 10,
+    "failed": 11,
     "history": [
       {
         "date": "2026-09-01T12:00:00.000Z",
-        "score": 73
+        "score": 68
       },
       {
         "date": "2026-09-15T12:00:00.000Z",
-        "score": 78
+        "score": 73
       },
       {
         "date": "2026-09-29T12:00:00.000Z",
-        "score": 70
+        "score": 65
       }
     ],
-    "passed": 15,
+    "passed": 14,
     "results": [
       {
         "category": "access-control",
@@ -902,7 +902,7 @@
       {
         "category": "access-control",
         "evidence": [],
-        "message": "Administrative share within 20% in 1 organization(s)",
+        "message": "Administrative share within 20% in 4 organization(s)",
         "remediation": null,
         "ruleId": "AC-002",
         "ruleName": "Excessive Administrative Roles",
@@ -912,7 +912,7 @@
       {
         "category": "access-control",
         "evidence": [],
-        "message": "Exactly one primary owner in 1 organization(s)",
+        "message": "Exactly one primary owner in 4 organization(s)",
         "remediation": null,
         "ruleId": "AC-003",
         "ruleName": "Single Primary Owner",
@@ -1078,18 +1078,23 @@
       },
       {
         "category": "configuration",
-        "evidence": [],
-        "message": "3 organization(s) meet sso_claude_ai_enforced = true",
-        "remediation": null,
+        "evidence": [
+          {
+            "kind": "setting",
+            "label": "Example Corp Sandbox: sso_claude_ai_enforced = false"
+          }
+        ],
+        "message": "1 of 4 organization(s) deviate on sso_claude_ai_enforced",
+        "remediation": "Enforce single sign-on for claude.ai in organization settings.",
         "ruleId": "CF-001",
         "ruleName": "SSO Enforced for claude.ai",
         "severity": "high",
-        "status": "pass"
+        "status": "fail"
       },
       {
         "category": "configuration",
         "evidence": [],
-        "message": "3 organization(s) meet sso_provisioning_mode in [scim_advanced, scim_permissive]",
+        "message": "4 organization(s) meet sso_provisioning_mode in [scim_advanced, scim_permissive]",
         "remediation": null,
         "ruleId": "CF-002",
         "ruleName": "SCIM Provisioning",
@@ -1104,7 +1109,7 @@
             "label": "Example Corp Sales: ip_allowlist_enabled = false"
           }
         ],
-        "message": "1 of 3 organization(s) deviate on ip_allowlist_enabled",
+        "message": "1 of 4 organization(s) deviate on ip_allowlist_enabled",
         "remediation": "Restrict access to corporate network ranges with the IP allowlist.",
         "ruleId": "CF-003",
         "ruleName": "IP Allowlist Enabled",
@@ -1114,7 +1119,7 @@
       {
         "category": "configuration",
         "evidence": [],
-        "message": "3 organization(s) meet account_session_duration_seconds <= 604800",
+        "message": "4 organization(s) meet account_session_duration_seconds <= 604800",
         "remediation": null,
         "ruleId": "CF-004",
         "ruleName": "Session Duration Limited",
@@ -1133,7 +1138,7 @@
             "label": "Example Corp Sales: data_retention_periods = {\"chat\":{\"type\":\"indefinite\"}}"
           }
         ],
-        "message": "2 of 3 organization(s) deviate on data_retention_periods",
+        "message": "2 of 4 organization(s) deviate on data_retention_periods",
         "remediation": "Configure a fixed data retention period that matches your records policy.",
         "ruleId": "CF-005",
         "ruleName": "Finite Data Retention",
@@ -1143,7 +1148,7 @@
       {
         "category": "configuration",
         "evidence": [],
-        "message": "3 organization(s) meet public_projects_enabled = false",
+        "message": "4 organization(s) meet public_projects_enabled = false",
         "remediation": null,
         "ruleId": "CF-006",
         "ruleName": "Public Projects Disabled",
@@ -1153,7 +1158,7 @@
       {
         "category": "configuration",
         "evidence": [],
-        "message": "3 organization(s) meet code_execution_network_egress_enabled = false",
+        "message": "4 organization(s) meet code_execution_network_egress_enabled = false",
         "remediation": null,
         "ruleId": "CF-007",
         "ruleName": "Code Execution Egress Restricted",
@@ -1163,7 +1168,7 @@
       {
         "category": "configuration",
         "evidence": [],
-        "message": "3 organization(s) meet claude_code_desktop_bypass_permissions_enabled = false",
+        "message": "4 organization(s) meet claude_code_desktop_bypass_permissions_enabled = false",
         "remediation": null,
         "ruleId": "CF-008",
         "ruleName": "Claude Code Permission Bypass Disabled",
@@ -1173,7 +1178,7 @@
       {
         "category": "configuration",
         "evidence": [],
-        "message": "3 organization(s) meet allowed_invite_domains is not empty",
+        "message": "4 organization(s) meet allowed_invite_domains is not empty",
         "remediation": null,
         "ruleId": "CF-009",
         "ruleName": "Invite Domains Restricted",
@@ -1347,7 +1352,7 @@
         "status": "pass"
       }
     ],
-    "score": 70,
+    "score": 65,
     "skipped": 0,
     "warnings": 5
   },
@@ -1378,7 +1383,7 @@
     },
     {
       "asOf": null,
-      "count": 2,
+      "count": 3,
       "dataset": "credentialUsage",
       "reason": null,
       "source": "projection:credentialUsage",
@@ -1386,7 +1391,7 @@
     },
     {
       "asOf": null,
-      "count": 4,
+      "count": 5,
       "dataset": "credentials",
       "reason": null,
       "source": "demo:credentials",
@@ -1434,7 +1439,7 @@
     },
     {
       "asOf": null,
-      "count": 3,
+      "count": 4,
       "dataset": "settings",
       "reason": null,
       "source": "demo:settings",
@@ -1664,14 +1669,14 @@
       "id": "score",
       "label": "Compliance score",
       "unit": "score",
-      "value": 70
+      "value": 65
     },
     {
       "hint": null,
       "id": "open-findings",
       "label": "Open findings",
       "unit": "count",
-      "value": 15
+      "value": 16
     },
     {
       "hint": null,

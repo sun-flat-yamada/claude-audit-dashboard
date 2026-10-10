@@ -253,7 +253,7 @@ const isDemoProfile = (value: string): value is DemoProfile =>
 
 const demoCommand: Command = {
   name: 'demo',
-  usage: 'demo [--out data/sample] [--profile default|optional-sources]',
+  usage: 'demo [--out data/sample] [--profile default|optional-sources|empty|unavailable]',
   description: 'Run everything on the synthetic tenant and refresh the public sample data',
   async run(c, args) {
     const profile = option(args, '--profile') ?? 'default';

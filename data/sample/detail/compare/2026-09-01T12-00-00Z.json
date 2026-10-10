@@ -18,12 +18,12 @@
       "status": "ok"
     },
     {
-      "count": 2,
+      "count": 3,
       "name": "credentialUsage",
       "status": "ok"
     },
     {
-      "count": 4,
+      "count": 5,
       "name": "credentials",
       "status": "ok"
     },
@@ -53,7 +53,7 @@
       "status": "ok"
     },
     {
-      "count": 3,
+      "count": 4,
       "name": "settings",
       "status": "ok"
     },
@@ -78,13 +78,13 @@
       "id": "score",
       "label": "Compliance score",
       "unit": "score",
-      "value": 73
+      "value": 68
     },
     {
       "id": "open-findings",
       "label": "Open findings",
       "unit": "count",
-      "value": 11
+      "value": 12
     },
     {
       "id": "members",
@@ -208,7 +208,7 @@
       "id": "CF-001",
       "name": "SSO Enforced for claude.ai",
       "severity": "high",
-      "status": "pass"
+      "status": "fail"
     },
     {
       "category": "configuration",
@@ -310,6 +310,6 @@
     }
   ],
   "schemaVersion": 1,
-  "score": 73,
+  "score": 68,
   "total": 28
 }

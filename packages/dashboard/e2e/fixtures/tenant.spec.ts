@@ -59,15 +59,15 @@ test.describe('B1 fixture tenant', () => {
     await expect(page.getByRole('table', { name: 'Activity timeline' })).toBeVisible();
   });
 
-  test('screens the fixture tenant does not publish say so instead of failing', async ({
+  test('monthly report and model spend are published and displayed on the fixture tenant', async ({
     page,
   }) => {
     await openRoute(page, '/reports/monthly');
-    await expect(page.getByRole('status')).toContainText('not published');
+    await expect(page.getByRole('table', { name: 'Monthly reports' })).toBeVisible();
     await openRoute(page, '/models');
-    await expect(page.getByText('sources.usageMatrix.enabled')).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Models' })).toBeVisible();
     await openRoute(page, '/');
-    await expect(page.getByRole('heading', { level: 2, name: 'Model spend' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 2, name: 'Model spend' })).toBeVisible();
     await openRoute(page, '/archive');
     await expect(page.getByText('No archived snapshots yet.')).toBeVisible();
     await openRoute(page, '/alerts');

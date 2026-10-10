@@ -175,7 +175,7 @@ describe('selection', () => {
     expect(select('Base time point')).toHaveValue(T2);
     const options = within(select('Base time point')).getAllByRole('option');
     expect(options.map((o) => (o as HTMLOptionElement).value)).toEqual([T3, T2, T1]);
-    expect(options[0]).toHaveTextContent('2026-09-29 12:00 UTC · score 70');
+    expect(options[0]).toHaveTextContent('2026-09-29 12:00 UTC · score 65');
   });
 
   it('uses base and target from the hash and ignores unknown parameters', async () => {

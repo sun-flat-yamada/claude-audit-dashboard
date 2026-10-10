@@ -104,7 +104,9 @@ export function assertNotLive(env) {
     selected !== undefined &&
     selected !== '' &&
     selected !== 'sample' &&
-    selected !== 'fixtures'
+    selected !== 'fixtures' &&
+    selected !== 'empty' &&
+    selected !== 'unavailable'
   ) {
     throw new Error(
       `E2E refuses DASHBOARD_DATA_SOURCE=${selected}: profiles read data/sample, data/fixture and data/sample-optional-sources only (never live data)`,

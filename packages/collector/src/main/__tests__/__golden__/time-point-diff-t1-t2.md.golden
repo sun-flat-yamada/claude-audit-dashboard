@@ -8,7 +8,7 @@
 
 | Figure | Base | Target | Delta |
 | --- | --- | --- | --- |
-| Compliance score | 73 | 78 | +5 |
+| Compliance score | 68 | 73 | +5 |
 | Assessed rules | 27 of 28 | 25 of 29 | -2 |
 
 ## Rule changes (12)
@@ -40,8 +40,8 @@
 
 | KPI | Base | Target | Delta |
 | --- | --- | --- | --- |
-| Compliance score | 73 | 78 | +5 |
-| Open findings | 11 | 11 | 0 |
+| Compliance score | 68 | 73 | +5 |
+| Open findings | 12 | 12 | 0 |
 | Members | 34 | 43 | +9 |
 | Monthly active users | 23 | 35 | +12 |
 | Seat utilization (30d) | 51.1 | 77.8 | +26.7 |

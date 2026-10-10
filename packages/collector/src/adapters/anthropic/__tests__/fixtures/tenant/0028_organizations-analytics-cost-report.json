@@ -1,0 +1,239 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/cost_report",
+    "query": {
+      "bucket_width": ["1d"],
+      "ending_at": ["2026-09-30T11:58:00.000Z"],
+      "group_by[]": ["model", "rbac_group_id"],
+      "starting_at": ["2026-07-03T00:00:00.000Z"]
+    }
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "ending_at": "2026-09-27T00:00:00Z",
+          "results": [
+            {
+              "amount": "42457.000000",
+              "currency": "USD",
+              "list_amount": "50948",
+              "model": "claude-opus-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "28305.000000",
+              "currency": "USD",
+              "list_amount": "33966",
+              "model": "claude-opus-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "43242.000000",
+              "currency": "USD",
+              "list_amount": "51890",
+              "model": "claude-sonnet-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "28828.000000",
+              "currency": "USD",
+              "list_amount": "34594",
+              "model": "claude-sonnet-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            },
+            {
+              "amount": "12767.000000",
+              "currency": "USD",
+              "list_amount": "15320",
+              "model": "claude-haiku-4-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "8511.000000",
+              "currency": "USD",
+              "list_amount": "10213",
+              "model": "claude-haiku-4-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            }
+          ],
+          "starting_at": "2026-09-26T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-28T00:00:00Z",
+          "results": [
+            {
+              "amount": "37515.000000",
+              "currency": "USD",
+              "list_amount": "45018",
+              "model": "claude-opus-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "25011.000000",
+              "currency": "USD",
+              "list_amount": "30013",
+              "model": "claude-opus-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "35558.000000",
+              "currency": "USD",
+              "list_amount": "42670",
+              "model": "claude-sonnet-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "23706.000000",
+              "currency": "USD",
+              "list_amount": "28446",
+              "model": "claude-sonnet-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            },
+            {
+              "amount": "25257.000000",
+              "currency": "USD",
+              "list_amount": "30308",
+              "model": "claude-haiku-4-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "16838.000000",
+              "currency": "USD",
+              "list_amount": "20205",
+              "model": "claude-haiku-4-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            }
+          ],
+          "starting_at": "2026-09-27T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-29T00:00:00Z",
+          "results": [
+            {
+              "amount": "21727.000000",
+              "currency": "USD",
+              "list_amount": "26072",
+              "model": "claude-opus-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "14485.000000",
+              "currency": "USD",
+              "list_amount": "17382",
+              "model": "claude-opus-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "19409.000000",
+              "currency": "USD",
+              "list_amount": "23291",
+              "model": "claude-sonnet-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "12940.000000",
+              "currency": "USD",
+              "list_amount": "15528",
+              "model": "claude-sonnet-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            },
+            {
+              "amount": "40316.000000",
+              "currency": "USD",
+              "list_amount": "48379",
+              "model": "claude-haiku-4-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "26877.000000",
+              "currency": "USD",
+              "list_amount": "32252",
+              "model": "claude-haiku-4-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            }
+          ],
+          "starting_at": "2026-09-28T00:00:00Z"
+        },
+        {
+          "ending_at": "2026-09-30T00:00:00Z",
+          "results": [
+            {
+              "amount": "1939.000000",
+              "currency": "USD",
+              "list_amount": "2327",
+              "model": "claude-opus-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "1293.000000",
+              "currency": "USD",
+              "list_amount": "1552",
+              "model": "claude-opus-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "15322.000000",
+              "currency": "USD",
+              "list_amount": "18386",
+              "model": "claude-sonnet-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_69VbrMnSPaA9SkIZwJmdb02z"
+            },
+            {
+              "amount": "10215.000000",
+              "currency": "USD",
+              "list_amount": "12258",
+              "model": "claude-sonnet-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            },
+            {
+              "amount": "52923.000000",
+              "currency": "USD",
+              "list_amount": "63508",
+              "model": "claude-haiku-4-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_88JiOsLFMXBRbqmos5v9mNLX"
+            },
+            {
+              "amount": "35282.000000",
+              "currency": "USD",
+              "list_amount": "42338",
+              "model": "claude-haiku-4-5",
+              "product": null,
+              "rbac_group_id": "rbac_group_50MYzTmTkiRONgS8EqSNeP6R"
+            }
+          ],
+          "starting_at": "2026-09-29T00:00:00Z"
+        }
+      ],
+      "data_refreshed_at": "2026-09-30T06:00:00Z",
+      "has_more": false,
+      "next_page": null,
+      "organization_id": "org_32VmPKvoDkOX1JzQQGQd9EZ9"
+    },
+    "status": 200
+  }
+}

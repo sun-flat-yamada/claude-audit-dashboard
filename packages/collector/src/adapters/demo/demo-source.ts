@@ -22,6 +22,7 @@ import type {
   UsageRow,
 } from '@claude-audit/core';
 import {
+  DataUnavailableError,
   addDays,
   aggregateMatrixRows,
   alertId,
@@ -64,15 +65,22 @@ const LAST = ['Engineer', 'Analyst', 'Counsel', 'Designer'];
 const INACTIVE = new Set([20, 27, 33, 35]);
 
 const roleFor = (i: number): string =>
-  i === 0
+  i === 0 || i === 18 || i === 24 || i === 33
     ? 'primary_owner'
-    : i <= 2
+    : i === 1
       ? 'owner'
-      : i <= 4
+      : i === 2
         ? 'membership_admin'
         : i <= 9
           ? 'managed'
           : 'user';
+
+function orgIdFor(i: number): string | null {
+  if (i < 18) return ORGS[0]?.id ?? null;
+  if (i < 24) return ORGS[1]?.id ?? null;
+  if (i < 33) return ORGS[2]?.id ?? null;
+  return null;
+}
 
 function members(now: Date): Member[] {
   return Array.from({ length: 40 }, (_, i) => {
@@ -84,7 +92,7 @@ function members(now: Date): Member[] {
       email: `${first}.${last}@example.com`.toLowerCase(),
       name: `${first} ${last}`,
       role: roleFor(i),
-      organizationId: null,
+      organizationId: orgIdFor(i),
       joinedAt: ago(now, joinedDaysAgo),
     };
   });
@@ -118,7 +126,7 @@ function settings(): OrgSettings[] {
     { ip: true, retention: { all: { type: 'fixed', duration: 84, timescale: 'month' } } },
     { ip: false, retention: retention(null) },
   ];
-  return ORGS.map((org, i) => {
+  const list: OrgSettings[] = ORGS.map((org, i) => {
     const custom = perOrg[i] ?? perOrg[0]!;
     const values: Record<string, unknown> = {
       sso_claude_ai_enforced: true,
@@ -139,6 +147,26 @@ function settings(): OrgSettings[] {
       ),
     };
   });
+  // Unlinked workspace not present in ORGS (evaluates to unattributed deviation in detail/org-groups.json)
+  const unlinkedValues: Record<string, unknown> = {
+    sso_claude_ai_enforced: false, // Deviates on CF-001
+    sso_provisioning_mode: 'scim_advanced',
+    ip_allowlist_enabled: true,
+    account_session_duration_seconds: 86_400,
+    data_retention_periods: retention(90),
+    public_projects_enabled: false,
+    code_execution_network_egress_enabled: false,
+    claude_code_desktop_bypass_permissions_enabled: false,
+    allowed_invite_domains: ['example.com'],
+  };
+  list.push({
+    organizationId: '5f0c7a1e-9999-4a1a-9a11-000000000099',
+    organizationName: 'Example Corp Sandbox',
+    values: Object.fromEntries(
+      Object.entries(unlinkedValues).map(([name, value]) => [name, { type: typeof value, value }]),
+    ),
+  });
+  return list;
 }
 
 const credentials = (now: Date): Credential[] => [
@@ -184,6 +212,15 @@ const credentials = (now: Date): Credential[] => [
     createdAt: ago(now, 500),
     expiresAt: null,
     createdBy: null,
+  },
+  {
+    id: 'apikey_demo_reporting',
+    name: 'Scheduled reporting',
+    scopes: ['read:compliance_activities'],
+    active: true,
+    createdAt: ago(now, 150),
+    expiresAt: null,
+    createdBy: 'user_demo_001',
   },
 ];
 
@@ -555,6 +592,44 @@ export function createDemoCollectors(): DatasetCollector[] {
   ];
 }
 
+const DEMO_CORE_DATASETS: readonly DatasetName[] = [
+  'organizations',
+  'members',
+  'invites',
+  'groups',
+  'settings',
+  'credentials',
+  'spendLimits',
+  'activities',
+  'memberActivity',
+  'adoption',
+  'usage',
+  'cost',
+];
+
+/** Demo collectors that return zero items for every core dataset. */
+export function createDemoEmptyCollectors(): DatasetCollector[] {
+  return DEMO_CORE_DATASETS.map((dataset) => ({
+    dataset,
+    source: `demo:${dataset}`,
+    collect: async () => ({ items: [] }),
+  }));
+}
+
+/** Demo collectors that simulate service unavailability (one error, remaining unavailable). */
+export function createDemoUnavailableCollectors(): DatasetCollector[] {
+  return DEMO_CORE_DATASETS.map((dataset, index) => ({
+    dataset,
+    source: `demo:${dataset}`,
+    collect: async () => {
+      if (index === 0) {
+        throw new Error('Connection reset by peer');
+      }
+      throw new DataUnavailableError('HTTP 503 Service Unavailable');
+    },
+  }));
+}
+
 /**
  * Synthetic alert sends for the sample (F-008): several channels and severities, from a day to
  * three weeks old, in `state.json` `notifications.history` shape.
@@ -633,9 +708,25 @@ export const demoState = (now: Date): CollectorState => ({
   projections: {
     credentialUsage: {
       observedSince: ago(now, 120),
-      lastSeen: { apikey_demo_dashboard: ago(now, 0.25), apikey_demo_siem: ago(now, 2) },
+      lastSeen: {
+        apikey_demo_dashboard: ago(now, 0.25),
+        apikey_demo_siem: ago(now, 2),
+        apikey_demo_reporting: ago(now, 5),
+      },
     },
   },
+});
+
+/** Empty starting state for the empty and unavailable profiles (no notifications, no key projections). */
+export const demoEmptyState = (): CollectorState => ({
+  ...initialState(),
+  notifications: { lastSent: {}, history: [] },
+});
+
+/** Empty acknowledgement store. */
+export const demoEmptyAckStore = (): AckStore => ({
+  schemaVersion: 1,
+  acks: [],
 });
 
 // ─── Model x group matrix (F-010) ───────────────────────────────────────────
@@ -711,5 +802,15 @@ export function demoUsageMatrixInput(now: Date): UsageMatrixInput {
     asOf: '2026-09-29T08:00:00.000Z',
     window: { from: '2026-06-01T00:00:00.000Z', to: now.toISOString() },
     data: aggregateMatrixRows(pairs, byModel),
+  };
+}
+
+/** Empty model x group usage matrix input (status ok, zero rows). */
+export function demoEmptyUsageMatrixInput(now: Date): UsageMatrixInput {
+  return {
+    status: 'ok',
+    asOf: toIsoDate(now) + 'T00:00:00.000Z',
+    window: { from: ago(now, 90), to: now.toISOString() },
+    data: aggregateMatrixRows([], []),
   };
 }

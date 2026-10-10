@@ -10,8 +10,8 @@
   },
   "hasChanges": true,
   "score": {
-    "base": 78,
-    "target": 70,
+    "base": 73,
+    "target": 65,
     "delta": -8,
     "baseAssessed": 25,
     "targetAssessed": 30,
@@ -167,16 +167,16 @@
       "id": "score",
       "label": "Compliance score",
       "unit": "score",
-      "base": 78,
-      "target": 70,
+      "base": 73,
+      "target": 65,
       "delta": -8
     },
     {
       "id": "open-findings",
       "label": "Open findings",
       "unit": "count",
-      "base": 11,
-      "target": 15,
+      "base": 12,
+      "target": 16,
       "delta": 4
     },
     {
