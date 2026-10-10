@@ -9,7 +9,7 @@ import type {
 } from '@claude-audit/core';
 import { DataUnavailableError, OPTIONAL_SOURCES, addDays, startOfUtcDay } from '@claude-audit/core';
 import type { ClaudeCodeApi } from './claude-code-api.js';
-import { classify } from './collectors.js';
+import { classify } from './classify-error.js';
 import type { ConsoleAdminApi } from './console-admin-api.js';
 import { FEATURE_PATHS, type FeatureUsageApi } from './feature-usage-api.js';
 

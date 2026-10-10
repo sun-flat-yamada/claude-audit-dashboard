@@ -1,9 +1,16 @@
 import {
+  DATASET_NAMES,
   OPTIONAL_SOURCES,
   type ConfigViewInput,
+  type DatasetName,
   type OptionalDatasetName,
 } from '@claude-audit/core';
 import type { Container } from './container.js';
+
+/** Datasets registered in this container (built-ins + collectors registered by active sources). */
+export const registeredDatasets = (c: Container): DatasetName[] => [
+  ...new Set([...DATASET_NAMES, ...c.collectors.map((col) => col.dataset)]),
+];
 
 /** Optional datasets whose source flag is on (and that are not listed in `sources.disabled`). */
 export const enabledOptionalDatasets = (c: Container): OptionalDatasetName[] =>
@@ -25,6 +32,7 @@ export function configViewInput(c: Container): Omit<ConfigViewInput, 'now'> {
     disabledRules: compliance.disabledRules,
     ruleParams: compliance.params,
     disabledDatasets: sources.disabled,
+    registeredDatasets: registeredDatasets(c),
     enabledOptionalDatasets: enabledOptionalDatasets(c),
     membersProvider: sources.members.provider,
     memberActivityLookbackDays: sources.memberActivity.lookbackDays,

@@ -16,7 +16,6 @@ import {
 import type { AdminApi } from './admin-api.js';
 import type { AnalyticsApi } from './analytics-api.js';
 import type { ActivityQuery, ComplianceApi } from './compliance-api.js';
-import { ApiError } from './http-client.js';
 
 /** Gateways per API family; null when no key is configured for that family. */
 export interface AnthropicApis {
@@ -42,13 +41,8 @@ const KEY_VARIABLE: Readonly<Record<Family, string>> = {
   analytics: 'ANTHROPIC_ANALYTICS_API_KEY',
 };
 
-/** 401 / 403 / 404 mean "not collectable with this key or plan", not a transient failure. */
-const UNAVAILABLE_STATUS = new Set([401, 403, 404]);
-
-export const classify = (error: unknown): unknown =>
-  error instanceof ApiError && UNAVAILABLE_STATUS.has(error.status)
-    ? new DataUnavailableError(error.message)
-    : error;
+export { UNAVAILABLE_STATUS, classify } from './classify-error.js';
+import { classify } from './classify-error.js';
 
 /** Adapts one gateway call to a dataset collector, handling missing keys and access errors. */
 function via<F extends Family, K extends DatasetName>(

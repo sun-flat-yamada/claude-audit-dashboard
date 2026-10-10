@@ -40,6 +40,8 @@ export interface ConfigViewInput {
   disabledDatasets: readonly string[];
   /** Optional datasets whose source is enabled in config (B4); absent datasets are not listed. */
   enabledOptionalDatasets?: readonly DatasetName[] | undefined;
+  /** Explicit list of registered datasets (derived from collectors). When omitted, falls back to built-ins plus enabled optional. */
+  registeredDatasets?: readonly DatasetName[] | undefined;
   membersProvider: string;
   memberActivityLookbackDays: number;
   groupMemberRequestLimit: number;
@@ -181,8 +183,12 @@ const unknownIds = (ids: Iterable<string>, known: ReadonlySet<string>): string[]
   [...new Set(ids)].filter((id) => RULE_ID.test(id) && !known.has(id)).sort();
 
 function sourcesOf(input: ConfigViewInput): DetailConfig['sources'] {
+  const names = input.registeredDatasets ?? [
+    ...DATASET_NAMES,
+    ...(input.enabledOptionalDatasets ?? []),
+  ];
   return {
-    datasets: [...DATASET_NAMES, ...(input.enabledOptionalDatasets ?? [])].map((name) => ({
+    datasets: names.map((name) => ({
       name,
       enabled: !input.disabledDatasets.includes(name),
     })),

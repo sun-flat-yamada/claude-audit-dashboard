@@ -45,38 +45,61 @@ export interface HistoryOptions {
   optionalSources?: boolean;
 }
 
-/**
- * How often (in snapshots) each dataset's content changes. The default interval of 6 hours means
- * 4 snapshots per day: `4` is daily, `28` weekly. `Infinity` never changes after the first
- * snapshot, so git stores it once; `1` changes every snapshot (new activity events only).
- */
-export const CHANGE_PERIOD: Readonly<Record<DatasetName, number>> = {
-  organizations: Infinity,
-  settings: 240,
-  groups: 120,
-  credentials: 56,
-  credentialUsage: 28,
-  members: 28,
-  invites: 12,
-  spendLimits: 4,
-  memberActivity: 4,
-  adoption: 4,
-  usage: 4,
-  cost: 4,
-  activities: 1,
-  consoleWorkspaces: 240,
-  consoleApiKeys: 56,
-  consoleUsage: 4,
-  consoleCost: 4,
-  claudeCodeActivity: 4,
-  skillUsage: 4,
-  connectorUsage: 4,
-  pluginUsage: 4,
-  chatProjectUsage: 4,
-};
-
 type Row = Record<string, unknown>;
 type Items = Row[];
+
+export type VariantGenerator = (base: Items, epoch: number, step: number, now: Date) => Items;
+
+export interface DatasetHistoryRule {
+  readonly period: number;
+  readonly variant: VariantGenerator;
+}
+
+export const SYNTHETIC_HISTORY_RULES = new Map<string, DatasetHistoryRule>();
+
+export function registerSyntheticHistoryRule(name: string, rule: DatasetHistoryRule): void {
+  SYNTHETIC_HISTORY_RULES.set(name, rule);
+}
+
+export function syntheticHistoryRuleFor(name: string): DatasetHistoryRule {
+  return (
+    SYNTHETIC_HISTORY_RULES.get(name) ?? {
+      period: 4,
+      variant: (base) => base,
+    }
+  );
+}
+
+/**
+ * How often (in snapshots) each dataset's content changes. Derived from SYNTHETIC_HISTORY_RULES.
+ * The default interval of 6 hours means 4 snapshots per day: `4` is daily, `28` weekly.
+ * `Infinity` never changes after the first snapshot; `1` changes every snapshot.
+ */
+export const CHANGE_PERIOD: Readonly<Record<DatasetName, number>> = new Proxy(
+  {} as Record<DatasetName, number>,
+  {
+    get(_target, prop: string) {
+      return syntheticHistoryRuleFor(prop).period;
+    },
+    has(_target, prop: string) {
+      return SYNTHETIC_HISTORY_RULES.has(prop);
+    },
+    ownKeys() {
+      return Array.from(SYNTHETIC_HISTORY_RULES.keys());
+    },
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (SYNTHETIC_HISTORY_RULES.has(prop)) {
+        return {
+          configurable: true,
+          enumerable: true,
+          value: syntheticHistoryRuleFor(prop).period,
+          writable: false,
+        };
+      }
+      return undefined;
+    },
+  },
+);
 
 /** Days of rolling usage / cost / adoption rows a snapshot carries (the collector's range). */
 const ROLLING_DAYS = 30;
@@ -148,26 +171,31 @@ const withSuffix = (row: Row, key: string, suffix: string): Row => ({
   [key]: `${String(row[key])}${suffix}`,
 });
 
-/** The items of `name` for epoch `epoch` (the number of changes so far) at `now`. */
-function variant(name: DatasetName, base: Items, epoch: number, step: number, now: Date): Items {
-  const [first] = base;
-  switch (name) {
-    case 'organizations':
-      return base;
-    case 'settings':
-      return base.map((row, i) =>
+const DEFAULT_HISTORY_RULES: Record<DatasetName, DatasetHistoryRule> = {
+  organizations: { period: Infinity, variant: (base) => base },
+  settings: {
+    period: 240,
+    variant: (base, epoch) =>
+      base.map((row, i) =>
         i === 0
           ? {
               ...row,
               values: { ...(row.values as Row), synthetic_epoch: { type: 'number', value: epoch } },
             }
           : row,
-      );
-    case 'groups':
-      return base.map((row, i) =>
+      ),
+  },
+  groups: {
+    period: 120,
+    variant: (base, epoch) =>
+      base.map((row, i) =>
         i === 0 ? { ...row, memberCount: Number(row.memberCount ?? 0) + epoch } : row,
-      );
-    case 'credentials':
+      ),
+  },
+  credentials: {
+    period: 56,
+    variant: (base, epoch) => {
+      const [first] = base;
       return first && epoch > 0
         ? [
             ...base,
@@ -177,9 +205,17 @@ function variant(name: DatasetName, base: Items, epoch: number, step: number, no
             },
           ]
         : base;
-    case 'credentialUsage':
-      return base.map((row) => ({ ...row, lastSeenAt: now.toISOString() }));
-    case 'members':
+    },
+  },
+  credentialUsage: {
+    period: 28,
+    variant: (base, _epoch, _step, now) =>
+      base.map((row) => ({ ...row, lastSeenAt: now.toISOString() })),
+  },
+  members: {
+    period: 28,
+    variant: (base, epoch) => {
+      const [first] = base;
       return first && epoch > 0
         ? [
             ...base,
@@ -192,15 +228,28 @@ function variant(name: DatasetName, base: Items, epoch: number, step: number, no
             })),
           ]
         : base;
-    case 'invites':
-      return base.map((row, i) => (i === 0 ? withSuffix(row, 'id', `-s${String(epoch)}`) : row));
-    case 'spendLimits':
-      return base.map((row) => ({ ...row, spent: round(Number(row.spent ?? 0) + (epoch % 7)) }));
-    case 'memberActivity':
-      return base.map((row) => (row.active ? { ...row, lastActiveOn: toIsoDate(now) } : row));
-    case 'consoleWorkspaces':
-      return base;
-    case 'consoleApiKeys':
+    },
+  },
+  invites: {
+    period: 12,
+    variant: (base, epoch) =>
+      base.map((row, i) => (i === 0 ? withSuffix(row, 'id', `-s${String(epoch)}`) : row)),
+  },
+  spendLimits: {
+    period: 4,
+    variant: (base, epoch) =>
+      base.map((row) => ({ ...row, spent: round(Number(row.spent ?? 0) + (epoch % 7)) })),
+  },
+  memberActivity: {
+    period: 4,
+    variant: (base, _epoch, _step, now) =>
+      base.map((row) => (row.active ? { ...row, lastActiveOn: toIsoDate(now) } : row)),
+  },
+  consoleWorkspaces: { period: 240, variant: (base) => base },
+  consoleApiKeys: {
+    period: 56,
+    variant: (base, epoch) => {
+      const [first] = base;
       return first && epoch > 0
         ? [
             ...base,
@@ -210,22 +259,44 @@ function variant(name: DatasetName, base: Items, epoch: number, step: number, no
             },
           ]
         : base;
-    case 'adoption':
-    case 'usage':
-    case 'cost':
-    case 'consoleUsage':
-    case 'consoleCost':
-    case 'claudeCodeActivity':
-      return rollingRows(base, now);
-    case 'activities':
-      return newActivities(base, step, now);
-    case 'skillUsage':
-    case 'connectorUsage':
-    case 'pluginUsage':
-    case 'chatProjectUsage':
-      // Range roll-ups: one row per entity whose counts move with the window.
-      return base.map((row) => ({ ...row, users: Number(row.users ?? 0) + (epoch % 5) }));
-  }
+    },
+  },
+  adoption: { period: 4, variant: (base, _epoch, _step, now) => rollingRows(base, now) },
+  usage: { period: 4, variant: (base, _epoch, _step, now) => rollingRows(base, now) },
+  cost: { period: 4, variant: (base, _epoch, _step, now) => rollingRows(base, now) },
+  consoleUsage: { period: 4, variant: (base, _epoch, _step, now) => rollingRows(base, now) },
+  consoleCost: { period: 4, variant: (base, _epoch, _step, now) => rollingRows(base, now) },
+  claudeCodeActivity: { period: 4, variant: (base, _epoch, _step, now) => rollingRows(base, now) },
+  activities: { period: 1, variant: (base, _epoch, step, now) => newActivities(base, step, now) },
+  skillUsage: {
+    period: 4,
+    variant: (base, epoch) =>
+      base.map((row) => ({ ...row, users: Number(row.users ?? 0) + (epoch % 5) })),
+  },
+  connectorUsage: {
+    period: 4,
+    variant: (base, epoch) =>
+      base.map((row) => ({ ...row, users: Number(row.users ?? 0) + (epoch % 5) })),
+  },
+  pluginUsage: {
+    period: 4,
+    variant: (base, epoch) =>
+      base.map((row) => ({ ...row, users: Number(row.users ?? 0) + (epoch % 5) })),
+  },
+  chatProjectUsage: {
+    period: 4,
+    variant: (base, epoch) =>
+      base.map((row) => ({ ...row, users: Number(row.users ?? 0) + (epoch % 5) })),
+  },
+};
+
+for (const [name, rule] of Object.entries(DEFAULT_HISTORY_RULES)) {
+  registerSyntheticHistoryRule(name, rule);
+}
+
+/** The items of `name` for epoch `epoch` (the number of changes so far) at `now`. */
+function variant(name: DatasetName, base: Items, epoch: number, step: number, now: Date): Items {
+  return syntheticHistoryRuleFor(name).variant(base, epoch, step, now);
 }
 
 const epochOf = (name: DatasetName, step: number): number => {
