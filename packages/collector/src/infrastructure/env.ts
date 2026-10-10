@@ -43,8 +43,30 @@ export interface SmtpEnvironment {
   to: string[];
 }
 
+export interface KeyFamilyDefinition {
+  readonly id: string;
+  readonly envVar: string;
+  readonly fallbackToEnterprise?: boolean;
+}
+
+export const KEY_FAMILIES: KeyFamilyDefinition[] = [
+  { id: 'compliance', envVar: 'ANTHROPIC_COMPLIANCE_API_KEY', fallbackToEnterprise: true },
+  { id: 'analytics', envVar: 'ANTHROPIC_ANALYTICS_API_KEY', fallbackToEnterprise: true },
+  { id: 'admin', envVar: 'ANTHROPIC_ADMIN_API_KEY', fallbackToEnterprise: true },
+  { id: 'console', envVar: 'ANTHROPIC_CONSOLE_ADMIN_API_KEY', fallbackToEnterprise: false },
+];
+
+export function registerKeyFamily(family: KeyFamilyDefinition): void {
+  const existing = KEY_FAMILIES.findIndex((f) => f.id === family.id);
+  if (existing >= 0) {
+    KEY_FAMILIES[existing] = family;
+  } else {
+    KEY_FAMILIES.push(family);
+  }
+}
+
 export interface Environment {
-  /** Key per API family; each falls back to ANTHROPIC_ENTERPRISE_API_KEY. */
+  /** Key per API family; each falls back to ANTHROPIC_ENTERPRISE_API_KEY unless configured otherwise. */
   keys: {
     compliance?: string | undefined;
     analytics?: string | undefined;
@@ -54,6 +76,7 @@ export interface Environment {
      * Enterprise key and is not `ANTHROPIC_ADMIN_API_KEY` (the Enterprise admin override).
      */
     console?: string | undefined;
+    [familyId: string]: string | undefined;
   };
   baseUrl: string | undefined;
   /** Opt-in raw response capture directory (`CAPTURE_RAW_DIR`; the CLI flag wins). */
@@ -92,6 +115,9 @@ function smtpFrom(env: Env): SmtpEnvironment | null {
  * Relative directories resolve against the directory pnpm was started from (`INIT_CWD`),
  * so `pnpm collect` at the repository root writes to `<root>/data`.
  */
+const sanitizeSecret = (val: string | undefined): string | undefined =>
+  val && val.trim() !== '' ? val.trim() : undefined;
+
 export function readEnvironment(
   source: NodeJS.ProcessEnv = process.env,
   cwd: string = process.cwd(),
@@ -99,12 +125,19 @@ export function readEnvironment(
   const env = envSchema.parse(source);
   const base = env.INIT_CWD ?? cwd;
   const shared = env.ANTHROPIC_ENTERPRISE_API_KEY;
+  const keys: Record<string, string | undefined> = {};
+  for (const family of KEY_FAMILIES) {
+    const fromSchema = (env as Record<string, string | undefined>)[family.envVar];
+    const raw = fromSchema !== undefined ? fromSchema : sanitizeSecret(source[family.envVar]);
+    keys[family.id] = raw ?? (family.fallbackToEnterprise ? shared : undefined);
+  }
   return {
     keys: {
-      compliance: env.ANTHROPIC_COMPLIANCE_API_KEY ?? shared,
-      analytics: env.ANTHROPIC_ANALYTICS_API_KEY ?? shared,
-      admin: env.ANTHROPIC_ADMIN_API_KEY ?? shared,
-      console: env.ANTHROPIC_CONSOLE_ADMIN_API_KEY,
+      compliance: keys.compliance,
+      analytics: keys.analytics,
+      admin: keys.admin,
+      console: keys.console,
+      ...keys,
     },
     baseUrl: env.ANTHROPIC_BASE_URL,
     captureRawDir: env.CAPTURE_RAW_DIR,

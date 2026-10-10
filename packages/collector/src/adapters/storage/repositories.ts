@@ -14,8 +14,10 @@ import { stableStringify, type FileStore } from './file-store.js';
 
 type Item = Record<string, unknown>;
 
+export type StorageSortKeyFn = (item: Record<string, unknown>) => string;
+
 /** Stable item order per dataset so re-collected, unchanged data is byte-identical. */
-const SORT_KEYS: Partial<Record<DatasetName, (item: Item) => string>> = {
+export const SORT_KEYS: Partial<Record<DatasetName, StorageSortKeyFn>> = {
   activities: (a) => `${String(a.createdAt)}|${String(a.id)}`,
   usage: (r) => `${String(r.date)}|${String(r.dimension)}|${String(r.key ?? '')}`,
   cost: (r) => `${String(r.date)}|${String(r.dimension)}|${String(r.key ?? '')}`,
@@ -35,8 +37,16 @@ const SORT_KEYS: Partial<Record<DatasetName, (item: Item) => string>> = {
   chatProjectUsage: (r) => String(r.id),
 };
 
+export function registerStorageSortKey(dataset: DatasetName, keyFn: StorageSortKeyFn): void {
+  SORT_KEYS[dataset] = keyFn;
+}
+
+export function storageSortKeyFor(dataset: DatasetName): StorageSortKeyFn {
+  return SORT_KEYS[dataset] ?? ((item: Item) => String(item.id ?? ''));
+}
+
 const sortForStorage = (dataset: DatasetName, items: readonly unknown[]): unknown[] => {
-  const key = SORT_KEYS[dataset] ?? ((item: Item) => String(item.id ?? ''));
+  const key = storageSortKeyFor(dataset);
   return [...(items as Item[])].sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
 };
 

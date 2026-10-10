@@ -291,11 +291,18 @@ export const inactiveMembers = defineRule({
 ### 8.3 新しい API エンドポイント / データセットを追加する
 
 1. `DatasetMap` に 1 行 (`newThing: NewThing[]`)
-2. ゲートウェイにメソッド + zod スキーマ + 写像
+2. ゲートウェイにメソッド + zod スキーマ + 写像（エラー分類は `classify` / `classify-error.ts` を利用）
 3. `collectors.ts` に `DatasetCollector` を 1 件登録
 4. 利用するルール・分析は `requires: ['newThing']` を宣言
+5. （必要に応じて）スナップショットの決定論的ソートキーを `registerStorageSortKey('newThing', fn)` で登録（未登録時は `id` 順）
+6. （テスト用）長期合成履歴の挙動を `registerSyntheticHistoryRule('newThing', { period, variant })` で登録
 
-**任意 (opt-in) のデータセット** にする場合 (既存の利用者に `unavailable` → OP-002 の fail という回帰を起こさないため): 1 を `OptionalDatasetMap` と `OPTIONAL_SOURCES` (有効化する設定フラグ) に書き、3 を `createOptionalCollectors` に登録する。フラグが偽の間はコレクタを返さないので coverage に現れない。有効でキー未設定・401・403・404 は `unavailable`、スキーマ差異は `error`。B4 の Console Admin API / Claude Code Analytics がこの形 (`adapters/anthropic/optional-collectors.ts`)。
+**任意 (opt-in) のデータセット** にする場合 (既存の利用者に `unavailable` → OP-002 の fail という回帰を起こさないため):
+
+1. ドメイン層: `OptionalDatasetMap` (`domain/model/optional-datasets.ts`) と `OPTIONAL_SOURCES` (有効化する設定フラグ) に定義。
+2. アダプタ層: 専用の API キーファミリが必要な場合は `registerKeyFamily({ id, envVar, fallbackToEnterprise })` を登録し、コレクタを `createOptionalCollectors` (`adapters/anthropic/optional-collectors.ts`) に追加。
+3. 自動反映: 設定画面 (`#/config`) は登録コレクタからデータセット一覧を自動導出するため presenter の編集は不要。コンテナ配線や保存テーブルの個別変更も不要（新規ファイル + レジストリ登録で完結）。
+4. エラー動作: フラグが偽の間はコレクタを返さないので coverage に現れない。有効でキー未設定・401・403・404 は `unavailable`、スキーマ差異は `error`。B4 の Console Admin API / Claude Code Analytics がこの形。
 
 ### 8.4 API の変更 (項目名・ページング・バージョン) に追随する
 

@@ -91,16 +91,25 @@ export interface ContainerOptions {
   source?: 'live' | 'demo' | undefined;
 }
 
+/** Creates an HttpClient configured with the key of the given registered key family, if set. */
+export function createHttpClientForFamily(
+  env: Environment,
+  familyId: string,
+  fetchImpl?: typeof fetch,
+  capture?: RawCapture,
+): HttpClient | null {
+  const apiKey = env.keys[familyId];
+  return apiKey ? new HttpClient({ apiKey, baseUrl: env.baseUrl, fetchImpl, capture }) : null;
+}
+
 function anthropicApis(
   env: Environment,
   fetchImpl: typeof fetch | undefined,
   capture: RawCapture | undefined,
 ): AnthropicApis {
-  const client = (apiKey: string | undefined) =>
-    apiKey ? new HttpClient({ apiKey, baseUrl: env.baseUrl, fetchImpl, capture }) : null;
-  const compliance = client(env.keys.compliance);
-  const admin = client(env.keys.admin);
-  const analytics = client(env.keys.analytics);
+  const compliance = createHttpClientForFamily(env, 'compliance', fetchImpl, capture);
+  const admin = createHttpClientForFamily(env, 'admin', fetchImpl, capture);
+  const analytics = createHttpClientForFamily(env, 'analytics', fetchImpl, capture);
   return {
     compliance: compliance && new ComplianceApi(compliance),
     admin: admin && new AdminApi(admin),
@@ -119,10 +128,8 @@ function optionalCollectors(
   capture: RawCapture | undefined,
 ): DatasetCollector[] {
   const { console: consoleSource, claudeCode, featureUsage } = config.sources;
-  const client = (apiKey: string | undefined) =>
-    apiKey ? new HttpClient({ apiKey, baseUrl: env.baseUrl, fetchImpl, capture }) : null;
-  const http = client(env.keys.console);
-  const analytics = client(env.keys.analytics);
+  const http = createHttpClientForFamily(env, 'console', fetchImpl, capture);
+  const analytics = createHttpClientForFamily(env, 'analytics', fetchImpl, capture);
   return createOptionalCollectors(
     {
       console: http && new ConsoleAdminApi(http),
