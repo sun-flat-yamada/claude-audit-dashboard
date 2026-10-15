@@ -26,7 +26,7 @@
     "lint:fix": "eslint src --fix"
   },
   "dependencies": {
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "rimraf": "^6.0.0",
