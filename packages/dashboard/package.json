@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "@claude-audit/core": "workspace:*",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-is": "^19.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-is": "^19.3.1",
     "recharts": "^3.10.1"
   },
   "devDependencies": {
