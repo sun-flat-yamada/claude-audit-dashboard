@@ -122,3 +122,7 @@ jobs:
         if: always() && steps.pipeline.outcome == 'success' && steps.inputs.outputs.dry_run != 'true'
         run: |
           .github/scripts/data-branch.sh save "chore: audit data $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+        env:
+          # Fork-safety: data-branch.sh refuses to save from a public repository.
+          REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
+          GH_TOKEN: ${{ github.token }}

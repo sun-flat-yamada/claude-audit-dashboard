@@ -15,6 +15,7 @@ import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { checkDetailBundle, dashboardViewSchema } from '../packages/core/src/contracts/index.js';
+import { FORBIDDEN_PATHS, findTrackedLiveData } from './fork-verify-paths.js';
 
 const ROOT = resolve(import.meta.dirname, '..');
 let errors = 0;
@@ -49,40 +50,14 @@ console.log('═'.repeat(50));
 // --- Check 1: No live data on main branch ---
 console.log('\n📁 Check 1: Live data isolation');
 
-const forbiddenPaths = [
-  'data/snapshots',
-  'data/reports',
-  'data/dashboard.json',
-  'data/state.json',
-  'data/archive',
-  'data/raw',
-  'data/fixture',
-  'data/detail',
-  'data/alerts',
-  'data/usage-matrix',
-  'data/summaries',
-  // Generated profiles of `pnpm demo --profile optional-sources` / `pnpm fixture --optional-sources`
-  'data/sample-optional-sources',
-  'data/fixture-optional-sources',
-  // Generated profiles of `pnpm demo --profile empty` / `pnpm demo --profile unavailable`
-  'data/sample-empty',
-  'data/sample-unavailable',
-  // Playwright E2E output: the built SPA with a copy of the data of every profile
-  'packages/dashboard/.e2e',
-];
-
 const trackedFiles = listTrackedFiles();
 if (trackedFiles) {
   // Inside a git checkout: only files that are actually tracked matter.
   // Local, gitignored runtime data (e.g. after `pnpm collect`) is fine.
-  for (const rel of forbiddenPaths) {
-    const hits = trackedFiles.filter(
-      (f) => (f === rel || f.startsWith(`${rel}/`)) && !f.endsWith('.gitkeep'),
-    );
-    if (hits.length > 0) fail(`Live data tracked by git: ${hits.join(', ')}`);
-  }
+  const hits = findTrackedLiveData(trackedFiles);
+  if (hits.length > 0) fail(`Live data tracked by git: ${hits.join(', ')}`);
 } else {
-  for (const rel of forbiddenPaths) {
+  for (const rel of FORBIDDEN_PATHS) {
     const abs = join(ROOT, rel);
     if (existsSync(abs)) {
       const stat = statSync(abs);

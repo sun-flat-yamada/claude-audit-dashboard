@@ -62,3 +62,7 @@ jobs:
       - name: Save the report to the data/audit branch
         run: |
           .github/scripts/data-branch.sh save "chore: monthly report $(date -u +%Y-%m-%d) [skip ci]"
+        env:
+          # Fork-safety: data-branch.sh refuses to save from a public repository.
+          REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
+          GH_TOKEN: ${{ github.token }}

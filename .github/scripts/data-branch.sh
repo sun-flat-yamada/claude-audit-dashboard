@@ -6,6 +6,10 @@
 #
 # `save` mirrors data/ (deletions included, e.g. archived snapshots), so it must follow a
 # successful `restore` in the same job. data/sample/ and .gitkeep files are never copied.
+#
+# `save` refuses to write from a public repository (fork-safety): the workflows pass
+# REPOSITORY_VISIBILITY (public | private | internal). Unset outside GitHub Actions means a
+# local run; unset inside Actions is resolved with `gh api` and fails closed when unknown.
 set -euo pipefail
 
 BRANCH="${DATA_BRANCH:-data/audit}"
@@ -32,8 +36,37 @@ restore() {
   touch "$STAMP"
 }
 
+resolve_visibility() {
+  if [ -n "${REPOSITORY_VISIBILITY:-}" ]; then
+    printf '%s' "$REPOSITORY_VISIBILITY"
+  elif [ "${GITHUB_ACTIONS:-}" = "true" ] && [ -n "${GITHUB_REPOSITORY:-}" ]; then
+    gh api "repos/$GITHUB_REPOSITORY" --jq .visibility 2>/dev/null || true
+  elif [ "${GITHUB_ACTIONS:-}" != "true" ]; then
+    printf 'local'
+  fi
+}
+
+guard_visibility() {
+  local visibility
+  visibility="$(resolve_visibility | tr '[:upper:]' '[:lower:]')"
+  case "$visibility" in
+    private | internal | local) return 0 ;;
+    public)
+      echo "::error::Refusing to save live audit data: this repository is public. Make it private (or internal) first." >&2
+      ;;
+    "")
+      echo "::error::Refusing to save live audit data: could not determine the repository visibility (set REPOSITORY_VISIBILITY)." >&2
+      ;;
+    *)
+      echo "::error::Refusing to save live audit data: unknown repository visibility." >&2
+      ;;
+  esac
+  exit 1
+}
+
 save() {
   local message="$1" worktree
+  guard_visibility
   [ -f "$STAMP" ] || { echo "::error::Run 'data-branch.sh restore' before 'save'" >&2; exit 1; }
   worktree="$(mktemp -d)"
   # shellcheck disable=SC2064 # expand now: the variable is local to this function
