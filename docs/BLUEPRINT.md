@@ -579,7 +579,7 @@ Private リポジトリの Pages は既定で公開されるため、アクセ�
 ```text
 claude-audit-dashboard/
 ├── .github/
-│   ├── actions/setup/            共通セットアップ (pnpm + Node 22 + install + build)
+│   ├── actions/setup/            共通セットアップ (固定 pnpm + .nvmrc の Node + install + build)
 │   ├── scripts/data-branch.sh    data/audit の restore / save
 │   └── workflows/                ci / collect-audit / weekly-report / monthly-report / deploy-pages / secret-scan
 ├── config/
@@ -601,16 +601,16 @@ claude-audit-dashboard/
 
 ## 16. 技術スタック
 
-| 領域      | 採用                                                                |
-| --------- | ------------------------------------------------------------------- |
-| 言語      | TypeScript 5 (strict、`exactOptionalPropertyTypes`)                 |
-| 実行環境  | Node.js 22.13 以上、pnpm 9 (workspace)                              |
-| 検証      | zod 4                                                               |
-| collector | Node 標準 API (fetch、fs、zlib)、nodemailer                         |
-| dashboard | React 19、Vite 8 (Rolldown)、Tailwind CSS 4、Recharts 3             |
-| テスト    | Vitest 5 (core / collector / dashboard)                             |
-| 品質      | ESLint 10 (typescript-eslint)、Prettier 3、secret-scan、fork:verify |
-| CI/CD     | GitHub Actions、GitHub Pages                                        |
+| 領域      | 採用                                                                                   |
+| --------- | -------------------------------------------------------------------------------------- |
+| 言語      | TypeScript 5 (strict、`exactOptionalPropertyTypes`)                                    |
+| 実行環境  | Node.js 22.13 以上 (`.nvmrc`)、pnpm 9 (workspace、Corepack で `packageManager` に固定) |
+| 検証      | zod 4                                                                                  |
+| collector | Node 標準 API (fetch、fs、zlib)、nodemailer                                            |
+| dashboard | React 19、Vite 8 (Rolldown)、Tailwind CSS 4、Recharts 3                                |
+| テスト    | Vitest 5 (core / collector / dashboard)                                                |
+| 品質      | ESLint 10 (typescript-eslint)、Prettier 3、secret-scan、fork:verify                    |
+| CI/CD     | GitHub Actions、GitHub Pages                                                           |
 
 ---
 

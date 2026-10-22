@@ -96,7 +96,7 @@ claude-audit-dashboard/
 ├── .agents/                   # AI コーディングエージェント向けの規約・スキル・エージェント定義 (change-dev, fork-sync)
 ├── .devs/changes/             # change-dev の計画・タスク・walkthrough 成果物 (変更ごとに 1 フォルダ)
 ├── .github/
-│   ├── actions/setup/         # 共通セットアップ (pnpm、Node 22、install、任意のビルド)
+│   ├── actions/setup/         # 共通セットアップ (固定した pnpm、.nvmrc の Node、install、任意のビルド)
 │   ├── scripts/data-branch.sh # data/audit ブランチの restore / save
 │   └── workflows/             # ci, collect-audit, weekly-report, monthly-report, deploy-pages, secret-scan, release
 ├── config/
@@ -167,9 +167,10 @@ claude-audit-dashboard/
 
 ## ローカル開発
 
-API キーは不要です。合成テナントですべてを動かせます。
+API キーは不要です。合成テナントですべてを動かせます。Node.js 22 (`.nvmrc`) と、Corepack が `package.json` の `packageManager` から用意する pnpm を使います。それ以外のバージョンの pnpm は実行を拒否する (`.npmrc`) ため、ローカルの pnpm の違いで lockfile が書き換わることはありません。
 
 ```bash
+corepack enable    # 初回のみ: package.json の packageManager で固定した pnpm を使う
 pnpm install
 pnpm demo          # 合成テナントで全処理を実行し data/sample/ を再生成
 pnpm dev           # ダッシュボード: http://localhost:5173/claude-audit-dashboard/

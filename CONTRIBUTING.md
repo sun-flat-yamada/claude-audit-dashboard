@@ -25,13 +25,14 @@ To prevent edit collisions, git index locks, and untracked file bleed in multi-a
 
 ### 1. Prerequisites & Initial Setup
 
-- **Node.js**: v22.x+ (Recommended: LTS)
-- **pnpm**: v9.x+
+- **Node.js**: v22 (the version in `.nvmrc`; `nvm use` / `fnm use` pick it up)
+- **pnpm**: provided by **Corepack** (bundled with Node.js 22). Run `corepack enable` once; it runs the exact version pinned in `package.json` (`packageManager`, with its integrity hash). Do not install pnpm globally with npm: any other pnpm version refuses to run in this repository (`package-manager-strict-version` in `.npmrc`). See [docs/SETUP.md](docs/SETUP.md#troubleshooting) when Corepack itself fails
 - **Git** & **GitHub CLI (`gh`)**
 
 ```bash
 git clone https://github.com/your-username/claude-audit-dashboard.git
 cd claude-audit-dashboard
+corepack enable
 pnpm install
 npm run fork:verify
 ```
