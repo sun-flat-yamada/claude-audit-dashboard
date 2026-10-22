@@ -2,8 +2,9 @@ import { queryOf, type RawCaptureEntry } from './raw-capture.js';
 
 /**
  * Parameters that choose between several responses of one endpoint (paging cursors and the
- * grouping dimension). Everything else (time windows, limits) is ignored, so a recorded
- * tenant answers regardless of the clock a test or the fixture source uses.
+ * grouping dimension). Everything else (time windows, limits) is ignored when choosing, so a
+ * recorded tenant answers regardless of the clock a test or the fixture source uses; the
+ * Activity Feed window and the bucketed report range are then applied to the chosen body.
  */
 const SELECTORS = ['after_id', 'page', 'group_by[]', 'statuses[]'] as const;
 
@@ -11,6 +12,31 @@ const sameSelectors = (recorded: Record<string, string[]>, requested: Record<str
   SELECTORS.every((name) => (recorded[name] ?? []).join(',') === (requested[name] ?? []).join(','));
 
 const ACTIVITIES = '/v1/compliance/activities';
+
+/** Bucketed Analytics reports: the API returns only the buckets inside the requested range. */
+const BUCKET_REPORTS = new Set([
+  '/v1/organizations/analytics/cost_report',
+  '/v1/organizations/analytics/usage_report',
+]);
+
+/**
+ * Keeps the recorded buckets that start inside the requested range, so a range split into
+ * several requests (the model x group matrix) does not receive the same recording repeatedly.
+ */
+function bucketWindowed(body: unknown, url: URL): unknown {
+  const from = Date.parse(url.searchParams.get('starting_at') ?? '');
+  const to = Date.parse(url.searchParams.get('ending_at') ?? '');
+  const data = (body as { data?: unknown } | null)?.data;
+  if (!BUCKET_REPORTS.has(url.pathname) || !Array.isArray(data) || Number.isNaN(from)) return body;
+  const inRange = (bucket: { starting_at?: string }): boolean => {
+    const at = Date.parse(bucket.starting_at ?? '');
+    return at >= from && (Number.isNaN(to) || at < to);
+  };
+  return {
+    ...(body as object),
+    data: data.filter((bucket) => inRange(bucket as { starting_at?: string })),
+  };
+}
 
 /**
  * The Activity Feed applies the `created_at.gte` / `created_at.lt` window server-side; a replay
@@ -48,7 +74,7 @@ export function replayFetch(entries: readonly RawCaptureEntry[]): ReplayFetch {
       (e) => e.request.path === url.pathname && sameSelectors(e.request.query, query),
     );
     const status = hit?.response.status ?? 404;
-    const recorded = hit ? windowed(hit.response.body, url) : undefined;
+    const recorded = hit ? bucketWindowed(windowed(hit.response.body, url), url) : undefined;
     const body = recorded ?? {
       type: 'error',
       error: { type: 'not_found_error', message: 'Not found' },

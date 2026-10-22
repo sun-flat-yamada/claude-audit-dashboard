@@ -13,6 +13,7 @@ import type {
 import {
   ACTIVE_USER_PRODUCTS,
   MINOR_AMOUNT,
+  addDays,
   earlierOf,
   laterOf,
   minorToMajor,
@@ -26,6 +27,12 @@ import { engagementShape, memberEngagement } from './user-engagement.js';
 
 /** The Enterprise Analytics API has no data before this date. */
 export const ANALYTICS_EPOCH = new Date('2026-01-01T00:00:00.000Z');
+
+/** `cost_report` / `usage_report`: one request may span at most this many days. */
+export const MAX_REPORT_RANGE_DAYS = 31;
+
+/** `group_by[]` returns at most this many rows per time bucket (there is no remainder row). */
+export const GROUP_ROW_CAP = 100;
 
 const nullableNumber = z.number().nullish();
 
@@ -130,6 +137,33 @@ const stringOrNull = (value: unknown): string | null => (typeof value === 'strin
 
 const clampStart = (date: Date): Date => laterOf(date, ANALYTICS_EPOCH);
 
+/** Consecutive windows of at most `days` days that cover `range` exactly (none when it is empty). */
+export function splitRange(range: DateRange, days = MAX_REPORT_RANGE_DAYS): DateRange[] {
+  const windows: DateRange[] = [];
+  for (let start = range.start; start.getTime() < range.end.getTime();) {
+    const end = earlierOf(addDays(start, days), range.end);
+    windows.push({ start, end });
+    start = end;
+  }
+  return windows;
+}
+
+/** The oldest watermark wins so no part is treated as fresher than the others. */
+const oldestMark = (marks: readonly (string | undefined)[]): string | undefined =>
+  marks.filter((m): m is string => m !== undefined).sort()[0];
+
+/** One bucketed report request: `group_by[]` fields and an optional `rbac_group_ids[]` filter. */
+interface BucketRequest {
+  groupBy: readonly string[];
+  groups?: readonly string[];
+}
+
+interface MatrixPart {
+  items: MatrixCostRow[];
+  asOf: string | undefined;
+  capped: boolean;
+}
+
 const PATHS = {
   users: '/v1/organizations/analytics/users',
   summaries: '/v1/organizations/analytics/summaries',
@@ -194,13 +228,16 @@ export class AnalyticsApi {
     return { items, window: { from: range.start.toISOString(), to: range.end.toISOString() } };
   }
 
-  /** Daily buckets for one dimension; returns rows plus the `data_refreshed_at` watermark. */
+  /**
+   * Daily buckets for one request; returns rows, the `data_refreshed_at` watermark and whether a
+   * bucket reached the per-bucket group cap (rows beyond it are missing).
+   */
   private async buckets<T extends z.ZodType>(
     path: string,
     result: T,
     range: DateRange,
     now: Date,
-    fields: readonly string[],
+    request: BucketRequest,
   ) {
     let asOf: string | undefined;
     const buckets = await collectTokenPages(async (page) => {
@@ -209,7 +246,8 @@ export class AnalyticsApi {
         ending_at: earlierOf(range.end, now).toISOString(),
         bucket_width: '1d',
         limit: 31,
-        group_by: fields.length > 0 ? fields : undefined,
+        group_by: request.groupBy.length > 0 ? request.groupBy : undefined,
+        rbac_group_ids: request.groups,
         page,
       };
       const body = parseResponse(bucketPage(result), await this.http.getJson(path, query), path);
@@ -223,19 +261,16 @@ export class AnalyticsApi {
         raw: r as z.output<T>,
       })),
     );
-    return { rows, asOf };
+    const capped = buckets.some((b) => b.results.length >= GROUP_ROW_CAP);
+    return { rows, asOf, capped };
   }
 
   async usageReport(range: DateRange, now: Date): Promise<CollectResult<UsageRow[]>> {
     const parts = await Promise.all(
       DIMENSIONS.map(async (dimension) => {
-        const { rows, asOf } = await this.buckets(
-          PATHS.usage,
-          usageResultSchema,
-          range,
-          now,
-          fieldsOf(dimension),
-        );
+        const { rows, asOf } = await this.buckets(PATHS.usage, usageResultSchema, range, now, {
+          groupBy: fieldsOf(dimension),
+        });
         const items: UsageRow[] = rows.map(({ date, record, raw }) => ({
           date,
           dimension,
@@ -258,13 +293,9 @@ export class AnalyticsApi {
   async costReport(range: DateRange, now: Date): Promise<CollectResult<CostRow[]>> {
     const parts = await Promise.all(
       DIMENSIONS.map(async (dimension) => {
-        const { rows, asOf } = await this.buckets(
-          PATHS.cost,
-          costResultSchema,
-          range,
-          now,
-          fieldsOf(dimension),
-        );
+        const { rows, asOf } = await this.buckets(PATHS.cost, costResultSchema, range, now, {
+          groupBy: fieldsOf(dimension),
+        });
         const items: CostRow[] = rows.map(({ date, record, raw }) => ({
           date,
           dimension,
@@ -281,30 +312,76 @@ export class AnalyticsApi {
 
   /**
    * Opt-in model x RBAC group cost (F-010): the pairwise `group_by[]=model&group_by[]=rbac_group_id`
-   * request (not confirmed against a real tenant, see docs/API-MAPPING.md) plus the ungrouped
-   * per-model request that gives the additive model mix. A rejected request throws, and the caller
-   * records it as unavailable.
+   * request plus the ungrouped-by-group per-model request that gives the additive model mix, both
+   * split into windows of at most 31 days (the report rejects longer ranges with HTTP 400). A
+   * pairwise window that reaches the per-bucket group cap is re-fetched per RBAC group. A rejected
+   * request throws, and the caller records it as unavailable.
    */
   async costMatrix(
     range: DateRange,
     now: Date,
   ): Promise<CollectResult<{ pairs: MatrixCostRow[]; byModel: MatrixCostRow[] }>> {
-    const load = async (fields: readonly string[]) => {
-      const { rows, asOf } = await this.buckets(PATHS.cost, costResultSchema, range, now, fields);
-      const items: MatrixCostRow[] = rows.map(({ date, record, raw }) => ({
-        date,
-        model: stringOrNull(record.model),
-        group: stringOrNull(record.rbac_group_id),
-        amount: minorToMajor(raw.amount),
-        currency: raw.currency,
-      }));
-      return { items, asOf };
-    };
-    const [pairs, byModel] = await Promise.all([load(['model', 'rbac_group_id']), load(['model'])]);
+    const windows = splitRange({ start: clampStart(range.start), end: earlierOf(range.end, now) });
+    const pairs: MatrixPart[] = [];
+    const byModel: MatrixPart[] = [];
+    for (const window of windows) {
+      pairs.push(await this.matrixPairs(window, now));
+      byModel.push(await this.matrixRows(window, now, { groupBy: ['model'] }));
+    }
     return {
-      items: { pairs: pairs.items, byModel: byModel.items },
-      asOf: [pairs.asOf, byModel.asOf].filter((m): m is string => m !== undefined).sort()[0],
+      items: { pairs: pairs.flatMap((p) => p.items), byModel: byModel.flatMap((p) => p.items) },
+      asOf: oldestMark([...pairs, ...byModel].map((p) => p.asOf)),
       window: { from: range.start.toISOString(), to: range.end.toISOString() },
+    };
+  }
+
+  /** Cost rows of one window; rows of a group-filtered request are tagged with that group. */
+  private async matrixRows(
+    window: DateRange,
+    now: Date,
+    request: BucketRequest,
+    group: string | null = null,
+  ): Promise<MatrixPart> {
+    const { rows, asOf, capped } = await this.buckets(
+      PATHS.cost,
+      costResultSchema,
+      window,
+      now,
+      request,
+    );
+    const items = rows.map(({ date, record, raw }) => ({
+      date,
+      model: stringOrNull(record.model),
+      group: group ?? stringOrNull(record.rbac_group_id),
+      amount: minorToMajor(raw.amount),
+      currency: raw.currency,
+    }));
+    return { items, asOf, capped };
+  }
+
+  /**
+   * Pairwise rows of one window. When a bucket reached the group cap, the named groups of the
+   * window are re-fetched one by one (`rbac_group_ids[]` + `group_by[]=model`); the filter never
+   * matches unassigned usage, so the "no group" rows of the capped response are kept as they are.
+   */
+  private async matrixPairs(window: DateRange, now: Date): Promise<MatrixPart> {
+    const pairwise = await this.matrixRows(window, now, { groupBy: ['model', 'rbac_group_id'] });
+    if (!pairwise.capped) return pairwise;
+    const listed = await this.matrixRows(window, now, { groupBy: ['rbac_group_id'] });
+    const ids = [...new Set(listed.items.map((r) => r.group))].filter(
+      (id): id is string => id !== null,
+    );
+    const perGroup: MatrixPart[] = [];
+    for (const id of ids) {
+      perGroup.push(await this.matrixRows(window, now, { groupBy: ['model'], groups: [id] }, id));
+    }
+    return {
+      items: [
+        ...pairwise.items.filter((r) => r.group === null),
+        ...perGroup.flatMap((p) => p.items),
+      ],
+      asOf: oldestMark([pairwise, listed, ...perGroup].map((p) => p.asOf)),
+      capped: false,
     };
   }
 }
@@ -314,13 +391,9 @@ function collate<T>(
   parts: { items: T[]; asOf: string | undefined }[],
   range: DateRange,
 ): CollectResult<T[]> {
-  const marks = parts
-    .map((p) => p.asOf)
-    .filter((m): m is string => m !== undefined)
-    .sort();
   return {
     items: parts.flatMap((p) => p.items),
-    asOf: marks[0],
+    asOf: oldestMark(parts.map((p) => p.asOf)),
     window: { from: range.start.toISOString(), to: range.end.toISOString() },
   };
 }

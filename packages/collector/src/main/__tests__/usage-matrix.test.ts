@@ -55,9 +55,24 @@ describe('optional model x group matrix', () => {
   });
 
   it('collects, maps and publishes the matrix in dashboard.json when enabled', async () => {
-    const { code, api } = await run({ ANTHROPIC_ENTERPRISE_API_KEY: MOCK_KEY }, ON);
+    // The fixture row (2026-09-29) belongs to the last window; earlier windows have no data.
+    const { code, api } = await run({ ANTHROPIC_ENTERPRISE_API_KEY: MOCK_KEY }, ON, {
+      [COST]: (url: URL) =>
+        Date.parse(url.searchParams.get('ending_at')!) > Date.parse('2026-09-29T00:00:00Z')
+          ? (FIXTURES[COST] as (u: URL) => { body: unknown })(url)
+          : { body: { data: [], has_more: false, next_page: null } },
+    });
     expect(code).toBe(0);
-    expect(api.calls.filter(pairwise).map((u) => u.pathname)).toEqual([COST]);
+    // lookbackDays 90 (default) in windows of at most 31 days: the report rejects longer ranges.
+    const windows = api.calls.filter(pairwise);
+    expect(windows.map((u) => u.pathname)).toEqual([COST, COST, COST]);
+    for (const u of windows) {
+      const days =
+        (Date.parse(u.searchParams.get('ending_at')!) -
+          Date.parse(u.searchParams.get('starting_at')!)) /
+        86_400_000;
+      expect(days).toBeLessThanOrEqual(31);
+    }
     const file = (await view()).modelMatrix;
     if (file?.status !== 'ok') throw new Error('expected an ok matrix');
     expect(file.months).toEqual(['2026-09']);
