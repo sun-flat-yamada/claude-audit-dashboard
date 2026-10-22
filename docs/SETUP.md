@@ -48,6 +48,7 @@ Missing scopes do not break collection: the affected datasets are reported as `u
 | `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO`                                                      | Secret   | No       | Sender and comma-separated recipients                                                                                                                                  |
 | `DASHBOARD_URL`                                                                            | Variable | No       | Dashboard link included in alerts and reports                                                                                                                          |
 | `ENABLE_SCHEDULED_JOBS`                                                                    | Variable | No       | `true` enables the schedules (set it after Step 4)                                                                                                                     |
+| `AUDIT_CONFIG_OVERRIDES`                                                                   | Variable | No       | JSON object merged over `config/default.json` without editing `main` — see [Configuration overrides](#configuration-overrides-without-editing-main)                    |
 | `PAGES_DATA_SOURCE`                                                                        | Variable | No       | `live` publishes live data to Pages — see [DEPLOYMENT.md](DEPLOYMENT.md)                                                                                               |
 | `PAGES_DETAIL_DATA`                                                                        | Variable | No       | `true` (with `PAGES_DATA_SOURCE=live`) also publishes per-person detail files and the effective configuration; Private Pages only — see [DEPLOYMENT.md](DEPLOYMENT.md) |
 
@@ -155,6 +156,21 @@ Schedules once enabled:
 
 `config/custom-rules.json` — add configuration baselines (`CF-xxx`) and activity watches (`AM-xxx`) without code; see [BLUEPRINT §7.3](BLUEPRINT.md#73-カスタムルール-コード不要). Invalid values stop the run with a precise message instead of being ignored.
 
+### Configuration overrides without editing `main`
+
+Editing `config/default.json` in a fork makes its `main` differ from upstream, and **Sync fork** then conflicts. Instead, set the repository **variable** `AUDIT_CONFIG_OVERRIDES` (Settings → Secrets and variables → Actions → Variables) to a JSON object. The collection, weekly, monthly and acknowledgement workflows pass it to every step, and it is merged over `config/default.json` before validation:
+
+```json
+{ "sources": { "activities": { "excludeTypes": [] }, "featureUsage": { "enabled": true } } }
+```
+
+This example collects the content-view activity types (excluded by default) and turns on the skill, connector, plugin and chat project adoption source, with `main` unchanged.
+
+- Objects merge key by key; **arrays and single values replace** the file value (`"excludeTypes": []` clears the list, it does not append). Only fields of [BLUEPRINT appendix A](BLUEPRINT.md#付録-a-設定スキーマ) are accepted, with the same limits.
+- Invalid JSON, a value that is not an object, or a field that fails validation stops the run with `Invalid AUDIT_CONFIG_OVERRIDES`. The message names the field path and the kind of problem (for example `sources.claudeCode.lookbackDays (too_big)`) but **never the value**.
+- The effective configuration page (`#/config`, `detail/config.json`) shows the merged result; secrets are still never part of it. Do not put secrets in the variable: variables are readable by everyone with repository read access. Locally, set the same name in `.env`.
+- `config/custom-rules.json` is not affected.
+
 Manual runs of **Collect Audit Data** accept two optional inputs: `retention_days` (archive snapshots older than this many days, 1-99999; empty uses `retention.snapshotDays`) and `dry_run` (run everything but send no alerts and save nothing to `data/audit`). Each run also measures the size of `data/audit` (`pnpm size`, see [DEPLOYMENT.md](DEPLOYMENT.md#long-term-retention-size-monitoring-and-rotation-of-dataaudit)); the step only ever warns and never fails the collection.
 
 ## Local runs
@@ -222,14 +238,15 @@ Every alert sent is listed on the dashboard's **Alerts** page (`#/alerts`, a rea
 
 ## Troubleshooting
 
-| Symptom                                            | Cause and fix                                                                                                                                              |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Every dataset `unavailable: No key for …`          | `ANTHROPIC_ENTERPRISE_API_KEY` is not set for the workflow                                                                                                 |
-| `unavailable` with a 403 message                   | The key lacks the scope named in the message — add it in claude.ai (a new key may be required)                                                             |
-| `settings` / `credentials` unavailable with 404    | The Compliance API organization settings endpoint is not available for your tenant yet                                                                     |
-| OP-001 fails                                       | No successful collection in the last 24 hours — check the collect workflow                                                                                 |
-| Score shows `(N of 30 rules assessed)`             | Some rules lacked data; see the dashboard's Data coverage section                                                                                          |
-| `Invalid config/default.json`                      | The message lists each invalid field; fix it or remove the field to use the default                                                                        |
-| `This project is configured to use v9.x.y of pnpm` | A globally installed pnpm of another version ran. Run `corepack enable` (remove the global pnpm with `npm uninstall -g pnpm` if it still shadows Corepack) |
-| `Cannot find matching keyid` from Corepack         | The Corepack bundled with an older Node.js has outdated signing keys: `npm install -g corepack@latest`, then `corepack enable`                             |
-| `corepack: command not found`                      | Node.js 25 and later no longer bundle Corepack: use Node.js 22 (`.nvmrc`) or `npm install -g corepack`                                                     |
+| Symptom                                            | Cause and fix                                                                                                                                                       |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Every dataset `unavailable: No key for …`          | `ANTHROPIC_ENTERPRISE_API_KEY` is not set for the workflow                                                                                                          |
+| `unavailable` with a 403 message                   | The key lacks the scope named in the message — add it in claude.ai (a new key may be required)                                                                      |
+| `settings` / `credentials` unavailable with 404    | The Compliance API organization settings endpoint is not available for your tenant yet                                                                              |
+| OP-001 fails                                       | No successful collection in the last 24 hours — check the collect workflow                                                                                          |
+| Score shows `(N of 30 rules assessed)`             | Some rules lacked data; see the dashboard's Data coverage section                                                                                                   |
+| `Invalid config/default.json`                      | The message lists each invalid field; fix it or remove the field to use the default                                                                                 |
+| `Invalid AUDIT_CONFIG_OVERRIDES`                   | The repository variable is not a valid JSON object or sets an invalid field (path and issue code in the message, the value is not shown); fix or clear the variable |
+| `This project is configured to use v9.x.y of pnpm` | A globally installed pnpm of another version ran. Run `corepack enable` (remove the global pnpm with `npm uninstall -g pnpm` if it still shadows Corepack)          |
+| `Cannot find matching keyid` from Corepack         | The Corepack bundled with an older Node.js has outdated signing keys: `npm install -g corepack@latest`, then `corepack enable`                                      |
+| `corepack: command not found`                      | Node.js 25 and later no longer bundle Corepack: use Node.js 22 (`.nvmrc`) or `npm install -g corepack`                                                              |

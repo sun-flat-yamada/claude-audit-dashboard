@@ -719,6 +719,8 @@ pnpm test:e2e --repeat-each=5      # 安定性の確認 (リトライなしで�
 
 環境変数: `ANTHROPIC_ENTERPRISE_API_KEY` ほか §12.2、`ANTHROPIC_BASE_URL` (テスト用)、`DATA_DIR` (既定 `data`)、`CONFIG_DIR` (既定 `config`)、`DASHBOARD_URL`、`SMTP_SECURE`。相対パスは pnpm を起動したディレクトリ基準で解決する。
 
+**上書き (`AUDIT_CONFIG_OVERRIDES`、#156)**: 任意の環境変数 `AUDIT_CONFIG_OVERRIDES` (JSON オブジェクト) を `config/default.json` の上に deep merge し、同じ zod スキーマで検証する。オブジェクトはキーごとに再帰的に merge し、配列・スカラー・`null` はファイルの値を置き換える (配列は連結しない)。`__proto__` / `constructor` / `prototype` キーは拒否する。ファイル自体の不正はこれまでどおり `Invalid config/default.json` で報告し、上書き後の不正は `Invalid AUDIT_CONFIG_OVERRIDES (values not shown)` としてフィールドのパスと zod の issue code だけを示す (不正 JSON もパーサのメッセージを出さない)。上書き値はエラーにもログにも出さない。収集・週次・月次・確認 (`ack-alert`) のワークフローはジョブ単位で `AUDIT_CONFIG_OVERRIDES: ${{ vars.AUDIT_CONFIG_OVERRIDES }}` を渡すため、fork は `main` を編集せずにリポジトリ変数だけで設定を変えられる。実効設定 (`detail/config.json`) は merge 後の設定から作る。`config/custom-rules.json` は対象外。
+
 ---
 
 ## 付録 B: 用語集
