@@ -211,6 +211,141 @@ describe('AnalyticsApi model x group matrix (assumed shape, see docs/API-MAPPING
   });
 });
 
+const DAY_MS = 86_400_000;
+const COST_PATH = '/v1/organizations/analytics/cost_report';
+const spanDays = (u: URL) =>
+  (Date.parse(u.searchParams.get('ending_at')!) - Date.parse(u.searchParams.get('starting_at')!)) /
+  DAY_MS;
+const costPage = (results: Record<string, unknown>[], startingAt: string) => ({
+  body: {
+    data: [{ starting_at: startingAt, ending_at: startingAt, results }],
+    has_more: false,
+    next_page: null,
+    data_refreshed_at: '2026-09-30T06:00:00Z',
+  },
+});
+
+describe('AnalyticsApi model x group matrix: 31-day windows and the group cap', () => {
+  it('splits a 90-day range into windows the cost report accepts (it rejects more than 31 days)', async () => {
+    const { analytics, api } = gateways({
+      [COST_PATH]: (url: URL) =>
+        spanDays(url) > 31
+          ? {
+              status: 400,
+              body: {
+                type: 'error',
+                error: {
+                  type: 'invalid_request_error',
+                  message: 'date range must span at most 31 days',
+                },
+              },
+            }
+          : costPage(
+              [
+                {
+                  amount: '100',
+                  currency: 'USD',
+                  model: 'claude-opus-5',
+                  rbac_group_id: url.searchParams.getAll('group_by[]').includes('rbac_group_id')
+                    ? 'rbac_group_01'
+                    : null,
+                },
+              ],
+              url.searchParams.get('starting_at')!,
+            ),
+    });
+    const start = new Date('2026-07-02T00:00:00.000Z');
+    const result = await analytics.costMatrix({ start, end: NOW }, NOW);
+
+    expect(api.calls.map((u) => u.searchParams.getAll('group_by[]'))).toEqual([
+      ['model', 'rbac_group_id'],
+      ['model'],
+      ['model', 'rbac_group_id'],
+      ['model'],
+      ['model', 'rbac_group_id'],
+      ['model'],
+    ]);
+    expect(api.calls.every((u) => spanDays(u) <= 31)).toBe(true);
+    const pairwise = api.calls.filter((_, i) => i % 2 === 0);
+    expect(pairwise[0]?.searchParams.get('starting_at')).toBe(start.toISOString());
+    expect(pairwise.at(-1)?.searchParams.get('ending_at')).toBe(NOW.toISOString());
+    for (const [i, call] of pairwise.slice(1).entries()) {
+      expect(call.searchParams.get('starting_at')).toBe(pairwise[i]?.searchParams.get('ending_at'));
+    }
+    expect(result.items.pairs).toHaveLength(3);
+    expect(result.items.pairs.every((r) => r.group === 'rbac_group_01')).toBe(true);
+    expect(result.items.byModel).toHaveLength(3);
+    expect(result.window).toEqual({ from: start.toISOString(), to: NOW.toISOString() });
+  });
+
+  it('re-fetches a capped pairwise window per RBAC group and keeps its unassigned rows', async () => {
+    const start = new Date('2026-08-21T00:00:00.000Z');
+    const groups = ['rbac_group_a', 'rbac_group_b', 'rbac_group_c'];
+    const capped = [
+      { amount: '500', currency: 'USD', model: 'claude-opus-5', rbac_group_id: null },
+      ...Array.from({ length: 99 }, (_, i) => ({
+        amount: '100',
+        currency: 'USD',
+        model: `model-${String(i)}`,
+        rbac_group_id: groups[i % 3],
+      })),
+    ];
+    const { analytics, api } = gateways({
+      [COST_PATH]: (url: URL) => {
+        const at = url.searchParams.get('starting_at')!;
+        const by = url.searchParams.getAll('group_by[]').join(',');
+        const filter = url.searchParams.getAll('rbac_group_ids[]');
+        if (filter.length > 0)
+          return costPage([{ amount: '300', currency: 'USD', model: `only-${filter[0]!}` }], at);
+        if (by === 'rbac_group_id')
+          return costPage(
+            [...groups, null].map((g) => ({ amount: '1', currency: 'USD', rbac_group_id: g })),
+            at,
+          );
+        if (by === 'model,rbac_group_id' && at === start.toISOString()) return costPage(capped, at);
+        return costPage(
+          [
+            {
+              amount: '200',
+              currency: 'USD',
+              model: 'claude-opus-5',
+              rbac_group_id: 'rbac_group_a',
+            },
+          ],
+          at,
+        );
+      },
+    });
+    const result = await analytics.costMatrix({ start, end: NOW }, NOW);
+
+    const shape = (u: URL) =>
+      [
+        u.searchParams.getAll('group_by[]').join(','),
+        u.searchParams.getAll('rbac_group_ids[]').join(','),
+      ].join('|');
+    expect(api.calls.map(shape)).toEqual([
+      'model,rbac_group_id|',
+      'rbac_group_id|',
+      'model|rbac_group_a',
+      'model|rbac_group_b',
+      'model|rbac_group_c',
+      'model|',
+      'model,rbac_group_id|',
+      'model|',
+    ]);
+    expect(
+      result.items.pairs.map(({ model, group, amount }) => ({ model, group, amount })),
+    ).toEqual([
+      { model: 'claude-opus-5', group: null, amount: 5 },
+      { model: 'only-rbac_group_a', group: 'rbac_group_a', amount: 3 },
+      { model: 'only-rbac_group_b', group: 'rbac_group_b', amount: 3 },
+      { model: 'only-rbac_group_c', group: 'rbac_group_c', amount: 3 },
+      { model: 'claude-opus-5', group: 'rbac_group_a', amount: 2 },
+    ]);
+    expect(result.asOf).toBe('2026-09-30T06:00:00Z');
+  });
+});
+
 describe('AnalyticsApi (official examples)', () => {
   it('derives activity from counters when last_activity_date is absent', async () => {
     const { analytics, api } = gateways();
