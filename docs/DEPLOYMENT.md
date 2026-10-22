@@ -199,6 +199,34 @@ Users download the artifact and open `index.html` locally:
 
 ---
 
+## Protecting the data branches
+
+Live audit data lives only on `data/audit` (and, from #154, the monthly ledger under `data/ledger/` on the same branch). Three settings keep it there.
+
+### No saving from a public repository
+
+`.github/scripts/data-branch.sh save` refuses to write when the repository is public: it prints `::error::Refusing to save live audit data: this repository is public` and exits non-zero, so the workflow run fails at the save step and nothing is pushed. Every workflow that writes the branch (`collect-audit.yml`, `weekly-report.yml`, `monthly-report.yml`, `ack-alert.yml`) passes `REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}` and `GH_TOKEN: ${{ github.token }}` to the save step. When the event payload carries no visibility (for example a `schedule` run), the script asks `gh api repos/<owner>/<repo>` and fails closed if it still cannot tell. `private` and `internal` save as before; a local run (outside GitHub Actions, variable unset) is unchanged.
+
+If a run fails with this error, make the repository **Private** or **Internal** (Settings → General → Danger Zone → Change visibility) before running it again. Data already pushed to a public `data/audit` is exposed: rotate the credentials it could reveal and follow the rotation below to replace the branch history.
+
+### Ruleset: no deletion or force push of `data/**`
+
+A git branch can be deleted or rewritten, which would destroy or alter the audit trail. Protect it with a repository ruleset (Settings → Rules → Rulesets → New ruleset → New branch ruleset):
+
+1. **Ruleset name**: `audit data`; **Enforcement status**: Active.
+2. **Bypass list**: leave empty (add a maintainer role only if you perform the yearly rotation below; the workflows never need a bypass).
+3. **Target branches**: Add target → Include by pattern → `data/**`.
+4. **Branch rules**: enable **Restrict deletions** and **Block force pushes**. Do not enable _Require a pull request before merging_ or _Require status checks_: the workflows push commits directly with `GITHUB_TOKEN`.
+5. Save. `data-branch.sh save` only adds commits (fast-forward), so collection keeps working.
+
+The yearly rotation creates `data/audit-next` and renames branches; with this ruleset active, a maintainer in the bypass list performs it (or disables the ruleset for the duration).
+
+### Fork of a fork: copy `main` only
+
+A downstream fork holds its own `data/audit`. When anyone forks **that** fork, GitHub copies every branch unless _Copy the `main` branch only_ is checked, and the new fork then contains the live data. Always create a fork of a fork with **Copy the `main` branch only** checked. If a copy was made without it, delete the `data/*` branches in the new fork immediately (and treat the data as disclosed to whoever can read that fork). Upstream (`sun-flat-yamada/claude-audit-dashboard`) has no data branch, so forking upstream is safe either way.
+
+---
+
 ## Long-Term Retention, Size Monitoring and Rotation of `data/audit`
 
 `data/audit` is a git branch, so its size only ever grows: a snapshot that `pnpm archive` moves to `archive/<year>/<id>.json.gz` stays in the history as the blobs it had before, and the `.json.gz` file is added on top (gzip output does not deduplicate or delta against other archives). **Archiving shrinks the working tree, not the repository.** To bound the repository size you rotate the branch (below). The numbers behind the defaults are in [CHANGE-PLAN.md](CHANGE-PLAN.md) section 9.4; they are measured on a synthetic tenant and must be re-validated with your own data.
@@ -300,7 +328,9 @@ The dashboard itself shows whether it renders demo or live data (header badge, f
 
 When setting up a fork for your organization:
 
-- [ ] Set repository to **Private** or **Internal**
+- [ ] Set repository to **Private** or **Internal** (`data-branch.sh save` refuses to save from a public repository)
+- [ ] Add the `data/**` ruleset (restrict deletions, block force pushes) — see [Protecting the data branches](#protecting-the-data-branches)
+- [ ] When forking a downstream fork, check **Copy the `main` branch only**
 - [ ] Configure secrets (`ANTHROPIC_ENTERPRISE_API_KEY`, notification channels) — see [SETUP.md](SETUP.md)
 - [ ] Choose a deployment option above; set `PAGES_DATA_SOURCE=live` only for access-controlled Pages, and `PAGES_DETAIL_DATA=true` only for Private Pages (Option 1)
 - [ ] Run the first collection: `workflow_dispatch` on "Collect Audit Data"

@@ -50,6 +50,7 @@ data/audit        ← Orphan branch. Audit snapshots, reports and state (per for
 | Optional-source snapshots | `data/snapshots/<id>/{consoleWorkspaces,consoleApiKeys,consoleUsage,consoleCost,claudeCodeActivity}.json` (only with `sources.console.enabled` / `sources.claudeCode.enabled`; `claudeCodeActivity` rows are per user or per key name and are never published, aggregate-only)                                     | `data/audit` (orphan) | ❌ Never           |
 | Feature usage snapshots   | `data/snapshots/<id>/{skillUsage,connectorUsage,pluginUsage,chatProjectUsage}.json` (only with `sources.featureUsage.enabled`; range roll-ups per skill / connector / plugin / chat project, no user rows, no project creator; published only as the `features` aggregate of `dashboard.json`)                     | `data/audit` (orphan) | ❌ Never           |
 | Collector state           | `data/state.json` (cursors, projections, notifications incl. the alert send history)                                                                                                                                                                                                                               | `data/audit` (orphan) | ❌ Never           |
+| Monthly ledger            | `data/ledger/<yyyy-mm>/` (long-term retention, #154; gitignored and checked by `pnpm fork:verify`)                                                                                                                                                                                                                 | `data/audit` (orphan) | ❌ Never           |
 | Archived data             | `data/archive/<year>/<id>.json.gz`                                                                                                                                                                                                                                                                                 | `data/audit` (orphan) | ❌ Never           |
 
 ### Why Orphan Branch?
@@ -70,6 +71,12 @@ All reads and writes of the branch go through `.github/scripts/data-branch.sh`:
 ```
 
 The first successful `save` creates the orphan branch. `save` refuses to run without a prior `restore` in the same checkout (it mirrors deletions, e.g. archived snapshots), never copies `data/sample/`, and is serialized by the `audit-data` concurrency group shared by every writing workflow.
+
+### Branch protection (fork-safety)
+
+- **No saving from a public repository**: `save` exits non-zero with `::error::` when `REPOSITORY_VISIBILITY` is `public` (or any value other than `private` / `internal`). Every writing workflow (`collect-audit.yml`, `weekly-report.yml`, `monthly-report.yml`, `ack-alert.yml`) passes `REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}` and `GH_TOKEN: ${{ github.token }}` to its save step; inside GitHub Actions an empty value is resolved with `gh api repos/<owner>/<repo>` and the save fails closed when it stays unknown. Outside Actions an unset value is a local run (unchanged).
+- **Deletion / force push**: protect `data/**` with a repository ruleset (restrict deletions, block force pushes); steps in `docs/DEPLOYMENT.md` (_Protecting the data branches_).
+- **Fork of a fork**: a fork of a downstream fork must be created with _Copy the `main` branch only_, otherwise GitHub copies `data/audit` (live data) too.
 
 ### Dashboard Build Pipeline
 
@@ -96,7 +103,7 @@ Locally, `pnpm dev` / `pnpm build:dashboard` stage `data/dashboard.json` when it
 
 The `pnpm fork:verify` script ensures:
 
-1. No live data paths are tracked on the code branch
+1. No live data paths are tracked on the code branch (`FORBIDDEN_PATHS` in `scripts/fork-verify-paths.ts`, including `data/ledger/`)
 2. `data/sample/dashboard.json` (and, when present, the gitignored `data/sample-optional-sources/` written by `pnpm demo --profile optional-sources`) matches the published `DashboardView` contract and has `source: "demo"`; `data/sample/detail/` matches the detail contract with masked identifiers and `example.*` e-mails only
 3. `data/sample/` contains only `example.*` e-mail addresses
 4. No secrets in tracked files; `.gitignore` excludes `.env`, `node_modules`, `dist`; `.env.example` holds no real values
