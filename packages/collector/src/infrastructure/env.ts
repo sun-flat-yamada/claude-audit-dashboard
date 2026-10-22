@@ -18,6 +18,7 @@ const envSchema = z.object({
   CI: optional,
   DATA_DIR: optional,
   CONFIG_DIR: optional,
+  AUDIT_CONFIG_OVERRIDES: optional,
   INIT_CWD: optional,
   DASHBOARD_URL: optional,
   SLACK_WEBHOOK_URL: optional,
@@ -87,6 +88,8 @@ export interface Environment {
   baseDir: string;
   dataDir: string;
   configDir: string;
+  /** `AUDIT_CONFIG_OVERRIDES`: a JSON object merged over `config/default.json` (raw; may be sensitive). */
+  configOverrides: string | undefined;
   dashboardUrl: string | undefined;
   slackWebhookUrl: string | undefined;
   discordWebhookUrl: string | undefined;
@@ -145,6 +148,7 @@ export function readEnvironment(
     baseDir: base,
     dataDir: resolve(base, env.DATA_DIR ?? 'data'),
     configDir: resolve(base, env.CONFIG_DIR ?? 'config'),
+    configOverrides: env.AUDIT_CONFIG_OVERRIDES,
     dashboardUrl: env.DASHBOARD_URL,
     slackWebhookUrl: env.SLACK_WEBHOOK_URL,
     discordWebhookUrl: env.DISCORD_WEBHOOK_URL,

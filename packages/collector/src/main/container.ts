@@ -214,7 +214,7 @@ function resolveSources(
 
 export async function createContainer(options: ContainerOptions = {}): Promise<Container> {
   const env = readEnvironment(options.env, options.cwd);
-  const loaded = await loadConfig(env.configDir);
+  const loaded = await loadConfig(env.configDir, env.configOverrides);
   const { customRules } = loaded;
   const config = options.configPatch ? options.configPatch(loaded.config) : loaded.config;
   const logger = options.logger ?? consoleLogger;

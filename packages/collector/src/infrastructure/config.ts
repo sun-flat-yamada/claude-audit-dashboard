@@ -9,6 +9,11 @@ import {
   type DatasetName,
 } from '@claude-audit/core';
 import { z } from 'zod';
+import {
+  CONFIG_OVERRIDES_VARIABLE,
+  mergeConfigOverrides,
+  parseConfigOverrides,
+} from './config-overrides.js';
 
 /** Placeholder defaults; derived from the synthetic history (docs/CHANGE-PLAN.md section 9). */
 const CAPACITY_DEFAULTS = {
@@ -126,15 +131,37 @@ function parseOrExplain<S extends z.ZodType>(schema: S, value: unknown, file: st
   return parsed.data;
 }
 
-/** Loads `default.json` and `custom-rules.json` (both optional) from the config directory. */
+const issuePath = (path: readonly PropertyKey[]): string =>
+  path.length ? path.map(String).join('.') : '(root)';
+
+/**
+ * Validates the configuration with the overrides merged in. The message names each failing
+ * field and the zod issue code only: zod messages can quote values, and the values come from
+ * the overrides.
+ */
+function applyOverrides(fileConfig: unknown, raw: string | undefined): AppConfig | undefined {
+  const overrides = parseConfigOverrides(raw);
+  if (!overrides) return undefined;
+  const parsed = appConfigSchema.safeParse(mergeConfigOverrides(fileConfig, overrides));
+  if (parsed.success) return parsed.data;
+  const fields = parsed.error.issues.map((issue) => `  - ${issuePath(issue.path)} (${issue.code})`);
+  throw new Error(
+    `Invalid ${CONFIG_OVERRIDES_VARIABLE} (values not shown):\n${[...new Set(fields)].join('\n')}`,
+  );
+}
+
+/**
+ * Loads `default.json` and `custom-rules.json` (both optional) from the config directory. The
+ * optional `overrides` (`AUDIT_CONFIG_OVERRIDES`, a JSON object) are deep-merged over
+ * `default.json` (arrays replace) and the result is validated with the same schema.
+ */
 export async function loadConfig(
   configDir: string,
+  overrides?: string,
 ): Promise<{ config: AppConfig; customRules: CustomRules }> {
-  const config = parseOrExplain(
-    appConfigSchema,
-    await readJsonFile(join(configDir, 'default.json')),
-    'config/default.json',
-  );
+  const fileConfig = await readJsonFile(join(configDir, 'default.json'));
+  const fromFile = parseOrExplain(appConfigSchema, fileConfig, 'config/default.json');
+  const config = applyOverrides(fileConfig, overrides) ?? fromFile;
   const customRules = parseOrExplain(
     customRulesSchema,
     await readJsonFile(join(configDir, 'custom-rules.json')),
