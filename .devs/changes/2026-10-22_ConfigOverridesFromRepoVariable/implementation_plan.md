@@ -56,4 +56,4 @@ Issue #156 (U2, parent #154). A downstream fork can change collection settings (
 
 ### Manual Verification
 
-- `AUDIT_CONFIG_OVERRIDES='{"sources":{"featureUsage":{"enabled":true}}}' pnpm demo`-style local run is not needed; the container test covers the effective config view.
+- Not required: `config-overrides-view.test.ts` builds a container with the variable set and checks the effective configuration view input.
