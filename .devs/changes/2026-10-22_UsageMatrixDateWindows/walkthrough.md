@@ -34,8 +34,21 @@ The change was prepared in an isolated session without network access to the npm
 | Reproduction | new window and cap tests on the old `analytics-api.ts` | ✅ fail before, pass after |
 | Fixture tenant output | `fixture` and `fixture --optional-sources` before / after | ✅ byte-identical (`modelMatrix` `ok`) |
 | Format | `prettier --check` on the changed files, `docs`, `CHANGELOG.md` (without the Tailwind plugin, which only affects class strings) | ✅ Clean |
-| Lint | `pnpm lint` | ⏳ to run locally |
-| Full gate | `pnpm fork:verify && pnpm typecheck && pnpm test && pnpm secret-scan && pnpm build && pnpm lint && pnpm format:check` | ⏳ to run locally before the PR |
+
+### Local Quality Gate
+
+Run after the rebase onto `upstream/main` (`f594efd`), in the sibling worktree, on Windows with Node v24.13.0 and pnpm 9.15.4 (Corepack, `pnpm install --frozen-lockfile`):
+
+| Stage | Command | Result |
+| :-- | :-- | :-- |
+| Code-Data Decoupling | `pnpm fork:verify` | ✅ PASSED |
+| TypeScript Check | `pnpm typecheck` | ✅ exit 0 |
+| Unit & Integration Tests | `pnpm test` | ✅ 1,175 passed (core 316, dashboard 464, collector 323, scripts 72), 0 failed |
+| Zero Secret / PII Scan | `pnpm secret-scan` | ✅ CLEAN |
+| Production Build | `pnpm build` | ✅ exit 0 (the dashboard chunk-size notice is unrelated: no dashboard file changed) |
+| Lint | `pnpm lint` | ✅ 0 problems |
+| Format | `pnpm format:check` | ✅ All matched files use Prettier code style |
+| Dependency Audit (CI) | `pnpm audit:deps` | ✅ No known vulnerabilities found |
 
 ### Manual Verification (human, key holder)
 
