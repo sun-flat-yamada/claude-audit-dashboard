@@ -72,3 +72,6 @@ jobs:
           .github/scripts/data-branch.sh save "chore: acknowledge alert $ALERT_ID [skip ci]"
         env:
           ALERT_ID: ${{ inputs.alert-id }}
+          # Fork-safety: data-branch.sh refuses to save from a public repository.
+          REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
+          GH_TOKEN: ${{ github.token }}

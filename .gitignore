@@ -35,6 +35,8 @@ data/detail/
 data/alerts/
 data/usage-matrix/
 data/summaries/
+# Monthly ledger (long-term retention): lives only on the data/audit orphan branch
+data/ledger/
 # Raw API captures (pnpm collect --capture-raw data/raw/<run>): real tenant data, never committed
 data/raw/
 # Fixture-tenant output of `pnpm fixture` (synthetic, regenerated; read by DASHBOARD_DATA_SOURCE=fixtures)
