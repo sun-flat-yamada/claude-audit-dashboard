@@ -24,6 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     # Scheduled runs are opt-in: set repository variable ENABLE_SCHEDULED_JOBS=true.
     if: github.event_name != 'schedule' || vars.ENABLE_SCHEDULED_JOBS == 'true'
+    # Optional JSON object merged over config/default.json (repository variable; docs/SETUP.md).
+    # Job-level so every step that loads the configuration sees the same settings.
+    env:
+      AUDIT_CONFIG_OVERRIDES: ${{ vars.AUDIT_CONFIG_OVERRIDES }}
     steps:
       - uses: actions/checkout@v7
         with:

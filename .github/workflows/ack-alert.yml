@@ -30,6 +30,10 @@ jobs:
     runs-on: ubuntu-latest
     # The workflow file itself comes from the dispatched ref, so only main may run it.
     if: github.ref == 'refs/heads/main'
+    # Optional JSON object merged over config/default.json (repository variable; docs/SETUP.md).
+    # Job-level so every step that loads the configuration sees the same settings.
+    env:
+      AUDIT_CONFIG_OVERRIDES: ${{ vars.AUDIT_CONFIG_OVERRIDES }}
     steps:
       # Inputs reach the shell only through environment variables and are validated strictly
       # before anything else runs; they are never interpolated into a script.
