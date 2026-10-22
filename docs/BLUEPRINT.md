@@ -162,6 +162,7 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 | 実効設定 (許可リスト)    | `data/detail/config.json` (シークレット・URL・メール・パスを含まない。`pnpm build:detail` が生成)                                                                                                                                                                             | `data/audit` | しない          |
 | 月次コスト公開データ     | `data/detail/monthly/{index,<id>}.json` (個人単位データなし。`report monthly` が生成)                                                                                                                                                                                         | `data/audit` | しない          |
 | コレクタ状態             | `data/state.json` (カーソル、投影状態、通知記録と送信履歴)                                                                                                                                                                                                                    | `data/audit` | しない          |
+| 月次台帳                 | `data/ledger/<yyyy-mm>/` (長期保管、#154。gitignore 済みで `pnpm fork:verify` が検査)                                                                                                                                                                                         | `data/audit` | しない          |
 | アーカイブ               | `data/archive/<year>/<id>.json.gz`                                                                                                                                                                                                                                            | `data/audit` | しない          |
 | アラート履歴             | `data/detail/alerts.json` (ID・送信時刻・重大度・チャンネル種別・ルール ID・伏せ字処理済みタイトル・確認者ラベルのみ。`pnpm build:detail` が生成)                                                                                                                             | `data/audit` | しない          |
 | 時点サマリー (F-015)     | `data/summaries/<snapshot id>.json` (判定したスナップショットごとのスコア・評価済み件数・ルールとデータセットごとのステータス・KPI 値のみ。証跡・ラベル・個人単位データなし。`pnpm check` がレポートの隣に書き、スナップショットのアーカイブ後も残る。Pages には直接出さない) | `data/audit` | しない          |
@@ -171,6 +172,8 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 | アーカイブ在庫           | `data/detail/archive.json` (年別の件数・圧縮サイズ・最古/最新 ID のみ。`pnpm build:detail` が生成)                                                                                                                                                                            | `data/audit` | しない          |
 
 `data/audit` への読み書きは `.github/scripts/data-branch.sh` (`restore` / `save`) に集約する。`save` は直前の `restore` を必須とし、アーカイブによる削除も反映する。サンプルと `.gitkeep` は保存しない。書き込むワークフローは同じ `concurrency` グループ (`audit-data`) で直列化する。
+
+データブランチの保護 (#155): `save` は `REPOSITORY_VISIBILITY` が `public` (または `private` / `internal` 以外) のとき `::error::` を出して非 0 で終了する。書き込む全ワークフロー (`collect-audit.yml`、`weekly-report.yml`、`monthly-report.yml`、`ack-alert.yml`) は save ステップに `REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}` と `GH_TOKEN: ${{ github.token }}` を渡す。Actions 内で値が空 (`schedule` などペイロードにリポジトリ情報が無い場合) は `gh api repos/<owner>/<repo>` で取得し、判別できなければ保存しない (fail closed)。Actions 外で未設定ならローカル実行として従来どおり。削除・強制 push は `data/**` のリポジトリルールセットで防ぎ、fork の fork は "Copy the `main` branch only" で作る (手順は `docs/DEPLOYMENT.md`)。
 
 ### 4.3 サンプルとライブの分離
 
@@ -185,7 +188,7 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 
 `pnpm fork:verify` は次を検証する。
 
-1. ライブデータのパス (`data/snapshots`、`data/reports`、`data/archive`、`data/dashboard.json`、`data/detail`、`data/state.json`) が git で追跡されていない
+1. ライブデータのパス (`data/snapshots`、`data/reports`、`data/archive`、`data/dashboard.json`、`data/detail`、`data/state.json`、`data/ledger` など。一覧は `scripts/fork-verify-paths.ts` の `FORBIDDEN_PATHS`) が git で追跡されていない
 2. `data/sample/dashboard.json` (と、存在すれば gitignored の `data/sample-optional-sources/`。`pnpm demo --profile optional-sources` の出力) が公開契約 (`dashboardViewSchema`) に一致し、`source` が `demo` である。先行時点の `history/<snapshot id>/dashboard.json` も同じ契約で検査する。`data/sample/detail/` は詳細データ契約 (§9.1) に一致し、`example.*` 以外のメールと未マスクの識別子を含まない
 3. `data/sample/` のメールアドレスが `example.*` ドメインだけである
 4. 追跡ファイルにシークレットのパターンが無い
