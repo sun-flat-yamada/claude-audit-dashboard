@@ -7,7 +7,7 @@ For hosting choices (who can see the dashboard), read [DEPLOYMENT.md](DEPLOYMENT
 
 1. **Claude Enterprise** with the Compliance API enabled for your organization, and access to the **primary owner** account (only the primary owner can create the key).
 2. A **Private or Internal** fork of this repository.
-3. For local runs: **Node.js >= 22.13** and **pnpm >= 9**.
+3. For local runs: **Node.js 22** (>= 22.13, `.nvmrc`) and **Corepack** (bundled with Node.js 22; run `corepack enable` once). Corepack provides the pnpm pinned in `package.json` (`packageManager`); another pnpm version refuses to run here.
 
 ## Step 1: Create the Enterprise API key
 
@@ -162,6 +162,7 @@ Manual runs of **Collect Audit Data** accept two optional inputs: `retention_day
 ```bash
 git clone https://github.com/YOUR_ORG/claude-audit-dashboard.git
 cd claude-audit-dashboard
+corepack enable   # once per machine / Node.js install
 pnpm install
 
 # Without a key: synthetic tenant
@@ -221,11 +222,14 @@ Every alert sent is listed on the dashboard's **Alerts** page (`#/alerts`, a rea
 
 ## Troubleshooting
 
-| Symptom                                         | Cause and fix                                                                                  |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Every dataset `unavailable: No key for …`       | `ANTHROPIC_ENTERPRISE_API_KEY` is not set for the workflow                                     |
-| `unavailable` with a 403 message                | The key lacks the scope named in the message — add it in claude.ai (a new key may be required) |
-| `settings` / `credentials` unavailable with 404 | The Compliance API organization settings endpoint is not available for your tenant yet         |
-| OP-001 fails                                    | No successful collection in the last 24 hours — check the collect workflow                     |
-| Score shows `(N of 30 rules assessed)`          | Some rules lacked data; see the dashboard's Data coverage section                              |
-| `Invalid config/default.json`                   | The message lists each invalid field; fix it or remove the field to use the default            |
+| Symptom                                            | Cause and fix                                                                                                                                              |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Every dataset `unavailable: No key for …`          | `ANTHROPIC_ENTERPRISE_API_KEY` is not set for the workflow                                                                                                 |
+| `unavailable` with a 403 message                   | The key lacks the scope named in the message — add it in claude.ai (a new key may be required)                                                             |
+| `settings` / `credentials` unavailable with 404    | The Compliance API organization settings endpoint is not available for your tenant yet                                                                     |
+| OP-001 fails                                       | No successful collection in the last 24 hours — check the collect workflow                                                                                 |
+| Score shows `(N of 30 rules assessed)`             | Some rules lacked data; see the dashboard's Data coverage section                                                                                          |
+| `Invalid config/default.json`                      | The message lists each invalid field; fix it or remove the field to use the default                                                                        |
+| `This project is configured to use v9.x.y of pnpm` | A globally installed pnpm of another version ran. Run `corepack enable` (remove the global pnpm with `npm uninstall -g pnpm` if it still shadows Corepack) |
+| `Cannot find matching keyid` from Corepack         | The Corepack bundled with an older Node.js has outdated signing keys: `npm install -g corepack@latest`, then `corepack enable`                             |
+| `corepack: command not found`                      | Node.js 25 and later no longer bundle Corepack: use Node.js 22 (`.nvmrc`) or `npm install -g corepack`                                                     |

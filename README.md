@@ -96,7 +96,7 @@ claude-audit-dashboard/
 ├── .agents/                   # Rules, skills and agent personas (change-dev, fork-sync) for AI coding agents
 ├── .devs/changes/             # change-dev plan / task / walkthrough artifacts, one folder per change
 ├── .github/
-│   ├── actions/setup/         # Shared setup (pnpm, Node 22, install, optional build)
+│   ├── actions/setup/         # Shared setup (pinned pnpm, Node from .nvmrc, install, optional build)
 │   ├── scripts/data-branch.sh # restore / save of the data/audit branch
 │   └── workflows/             # ci, collect-audit, weekly-report, monthly-report, deploy-pages, secret-scan, release
 ├── config/
@@ -167,9 +167,10 @@ Step-by-step guide: [docs/SETUP.md](docs/SETUP.md). Hosting options: [docs/DEPLO
 
 ## Local development
 
-No API key is needed: the synthetic tenant drives everything.
+No API key is needed: the synthetic tenant drives everything. Use Node.js 22 (`.nvmrc`) and the pnpm that Corepack provides from `packageManager` in `package.json`; any other pnpm version refuses to run (`.npmrc`), so the lockfile never changes because of a local pnpm.
 
 ```bash
+corepack enable    # once: runs the pnpm pinned in package.json (packageManager)
 pnpm install
 pnpm demo          # run the whole pipeline on the synthetic tenant and refresh data/sample/
 pnpm dev           # dashboard at http://localhost:5173/claude-audit-dashboard/

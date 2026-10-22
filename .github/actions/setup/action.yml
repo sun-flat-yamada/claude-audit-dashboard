@@ -1,5 +1,5 @@
 name: Setup workspace
-description: Install pnpm, Node.js 22 and the workspace dependencies, then optionally run one build script.
+description: Install pnpm (the packageManager pin in package.json), Node.js (.nvmrc) and the workspace dependencies, then optionally run one build script.
 
 inputs:
   build:
@@ -10,10 +10,11 @@ inputs:
 runs:
   using: composite
   steps:
+    # No `version:` input: pnpm/action-setup installs the exact packageManager pin.
     - uses: pnpm/action-setup@v6
     - uses: actions/setup-node@v7
       with:
-        node-version: 22
+        node-version-file: .nvmrc
         cache: pnpm
     - name: Install dependencies
       shell: bash
