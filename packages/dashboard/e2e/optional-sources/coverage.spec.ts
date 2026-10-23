@@ -10,8 +10,14 @@ const B4 = [
   'consoleCost',
   'claudeCodeActivity',
 ];
-/** The AN-6 feature usage datasets (Analytics key). */
-const FEATURES = ['skillUsage', 'connectorUsage', 'pluginUsage', 'chatProjectUsage'];
+/** The AN-6 feature usage datasets and the ledger's daily member activity (Analytics key). */
+const FEATURES = [
+  'skillUsage',
+  'connectorUsage',
+  'pluginUsage',
+  'chatProjectUsage',
+  'memberActivityDaily',
+];
 const OPTIONAL = [...B4, ...FEATURES];
 
 // B4 and AN-6: the optional Console, Claude Code and feature usage datasets in Data coverage.
