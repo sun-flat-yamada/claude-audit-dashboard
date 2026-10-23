@@ -71,6 +71,11 @@ export interface LedgerKeyring {
   readonly recipients: readonly LedgerRecipient[];
   readonly identities: readonly LedgerIdentity[];
   readonly pipeline: LedgerPipelineKey | null;
+  /**
+   * Further pipeline keys that only read (a backup file of an earlier key, #174 U9); new files are
+   * wrapped for `pipeline` alone.
+   */
+  readonly readPipelines?: readonly LedgerPipelineKey[];
 }
 
 const fingerprintOf = (label: string, raw: Buffer): string =>
@@ -111,19 +116,25 @@ export function parseIdentity(text: string): LedgerIdentity {
   return { privateKey, recipient: recipientOfRaw(rawPublicOf(createPublicKey(privateKey))) };
 }
 
-/** The first line of an identity file that is not blank and not a `#` comment. */
-export function parseIdentityFile(content: string): LedgerIdentity {
-  const line = content
+/** The first line of a key file that is not blank and not a `#` comment. */
+const keyLineOf = (content: string): string =>
+  content
     .split(/\r?\n/)
     .map((l) => l.trim())
-    .find((l) => l !== '' && !l.startsWith('#'));
-  return parseIdentity(line ?? '');
-}
+    .find((l) => l !== '' && !l.startsWith('#')) ?? '';
+
+/** An identity file (`pnpm ledger keygen`): comments, then the `CADL-SECRET-...` line. */
+export const parseIdentityFile = (content: string): LedgerIdentity =>
+  parseIdentity(keyLineOf(content));
 
 export function parsePipelineKey(text: string): LedgerPipelineKey {
   const key = rawKey(text, PIPELINE_KEY_PREFIX, 'LEDGER_PIPELINE_KEY');
   return { key, fingerprint: fingerprintOf('pipeline', key) };
 }
+
+/** A pipeline-key backup file (`pnpm ledger keygen --pipeline`): comments, then the key line. */
+export const parsePipelineKeyFile = (content: string): LedgerPipelineKey =>
+  parsePipelineKey(keyLineOf(content));
 
 export const formatRecipient = (recipient: LedgerRecipient): string =>
   `${PUBLIC_KEY_PREFIX}${recipient.raw.toString('base64url')}`;
@@ -224,9 +235,11 @@ const UNWRAP: Readonly<Record<string, (stanza: Stanza, keys: LedgerKeyring) => B
     return open(wrapKey, b64(stanza.iv), b64(stanza.key));
   },
   pipeline(stanza, keys) {
-    if (!keys.pipeline || keys.pipeline.fingerprint !== stanza.id) return null;
+    const candidates = [keys.pipeline, ...(keys.readPipelines ?? [])];
+    const pipeline = candidates.find((k) => k?.fingerprint === stanza.id);
+    if (!pipeline) return null;
     const iv = b64(stanza.iv);
-    return open(hkdf(keys.pipeline.key, iv, HKDF_INFO.pipeline), iv, b64(stanza.key));
+    return open(hkdf(pipeline.key, iv, HKDF_INFO.pipeline), iv, b64(stanza.key));
   },
 };
 

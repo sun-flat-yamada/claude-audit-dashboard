@@ -27,6 +27,7 @@ import {
   parsePipelineKey,
   parseRecipient,
   type LedgerIdentity,
+  type LedgerPipelineKey,
 } from './ledger-crypto.js';
 
 /** SHA-256 (hex) of a UTF-8 text: the ledger's content hash. */
@@ -428,6 +429,8 @@ export interface LedgerKeySettings {
   pipelineKey: string | undefined;
   /** Local recipient identities (`pnpm ledger decrypt` only). */
   identities?: readonly LedgerIdentity[];
+  /** Pipeline keys read from a local backup file; they only read (`decrypt`, `encrypt`, #174). */
+  readPipelineKeys?: readonly LedgerPipelineKey[];
 }
 
 /**
@@ -450,8 +453,9 @@ export function ledgerCodecsFor(settings: LedgerKeySettings): LedgerCodecs {
       'ledger.encryption.recipients is set but LEDGER_PIPELINE_KEY is not: the ledger is left unchanged',
     );
   const identities = settings.identities ?? [];
-  if (!pipeline && identities.length === 0) return plainLedgerCodecs;
-  const encrypted = encryptedLedgerCodec({ recipients, identities, pipeline });
+  const readPipelines = settings.readPipelineKeys ?? [];
+  if (!pipeline && identities.length === 0 && readPipelines.length === 0) return plainLedgerCodecs;
+  const encrypted = encryptedLedgerCodec({ recipients, identities, pipeline, readPipelines });
   return recipients.length > 0
     ? { write: encrypted, read: [gzipLedgerCodec] }
     : { write: gzipLedgerCodec, read: [encrypted] };
