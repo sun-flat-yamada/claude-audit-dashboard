@@ -56,7 +56,7 @@
       "status": "ok"
     },
     {
-      "count": 32,
+      "count": 34,
       "kind": "config",
       "month": null,
       "path": "detail/config.json",

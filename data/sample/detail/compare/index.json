@@ -2,21 +2,21 @@
   "generatedAt": "2026-09-29T12:00:00.000Z",
   "points": [
     {
-      "assessed": 30,
+      "assessed": 32,
       "collectedAt": "2026-09-29T12:00:00.000Z",
       "id": "2026-09-29T12-00-00Z",
       "score": 65,
       "state": "summary"
     },
     {
-      "assessed": 25,
+      "assessed": 27,
       "collectedAt": "2026-09-15T12:00:00.000Z",
       "id": "2026-09-15T12-00-00Z",
       "score": 73,
       "state": "summary"
     },
     {
-      "assessed": 27,
+      "assessed": 29,
       "collectedAt": "2026-09-01T12:00:00.000Z",
       "id": "2026-09-01T12-00-00Z",
       "score": 68,

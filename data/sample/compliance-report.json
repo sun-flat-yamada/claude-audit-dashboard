@@ -250,11 +250,33 @@
       "category": "operational",
       "details": {},
       "evidence": [],
-      "message": "All 13 datasets collected",
+      "message": "All 14 datasets collected",
       "remediation": null,
       "ruleId": "OP-002",
       "ruleName": "Data Source Coverage",
       "severity": "high",
+      "status": "pass"
+    },
+    {
+      "category": "operational",
+      "details": {},
+      "evidence": [],
+      "message": "Ledger verified 6h ago",
+      "remediation": null,
+      "ruleId": "OP-003",
+      "ruleName": "Ledger Verification",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "category": "operational",
+      "details": {},
+      "evidence": [],
+      "message": "2 of 3 month(s) sealed, none overdue",
+      "remediation": null,
+      "ruleId": "OP-004",
+      "ruleName": "Ledger Month Sealing",
+      "severity": "medium",
       "status": "pass"
     },
     {
@@ -642,7 +664,7 @@
       },
       "operational": {
         "failed": 0,
-        "total": 2
+        "total": 4
       },
       "usage-anomaly": {
         "failed": 2,
@@ -658,10 +680,10 @@
       "low": 2,
       "medium": 6
     },
-    "passed": 14,
+    "passed": 16,
     "score": 65,
     "skipped": 0,
-    "total": 30,
+    "total": 32,
     "warnings": 5
   }
 }

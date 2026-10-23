@@ -1,5 +1,5 @@
 {
-  "assessed": 27,
+  "assessed": 29,
   "collectedAt": "2026-09-01T12:00:00.000Z",
   "datasets": [
     {
@@ -35,6 +35,11 @@
     {
       "count": 2,
       "name": "invites",
+      "status": "ok"
+    },
+    {
+      "count": 1,
+      "name": "ledgerHealth",
       "status": "ok"
     },
     {
@@ -204,6 +209,20 @@
       "status": "fail"
     },
     {
+      "category": "operational",
+      "id": "OP-003",
+      "name": "Ledger Verification",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "category": "operational",
+      "id": "OP-004",
+      "name": "Ledger Month Sealing",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
       "category": "configuration",
       "id": "CF-001",
       "name": "SSO Enforced for claude.ai",
@@ -311,5 +330,5 @@
   ],
   "schemaVersion": 1,
   "score": 68,
-  "total": 28
+  "total": 30
 }
