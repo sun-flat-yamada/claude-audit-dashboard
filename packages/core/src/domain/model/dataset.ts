@@ -13,6 +13,7 @@ import type {
   SpendLimit,
   UsageRow,
 } from './entities.js';
+import type { LedgerHealth } from '../ledger/health.js';
 import {
   OPTIONAL_DATASET_NAMES,
   emptyOptionalData,
@@ -38,6 +39,8 @@ export interface DatasetMap extends OptionalDatasetMap {
   cost: CostRow[];
   adoption: AdoptionDay[];
   spendLimits: SpendLimit[];
+  /** Local: the last ledger verification and the seal state per month (#160, OP-003 / OP-004). */
+  ledgerHealth: LedgerHealth[];
 }
 
 export type DatasetName = keyof DatasetMap;
@@ -60,6 +63,7 @@ export const emptyData = (): DatasetMap => ({
   cost: [],
   adoption: [],
   spendLimits: [],
+  ledgerHealth: [],
 });
 
 /**

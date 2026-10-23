@@ -1,6 +1,8 @@
 import type { ComplianceReport, Severity } from '../domain/compliance/types.js';
 import type { LedgerEntry } from '../domain/ledger/entry.js';
-import type { LedgerManifest } from '../domain/ledger/manifest.js';
+import type { LedgerStatus } from '../domain/ledger/health.js';
+import type { LedgerManifest, LedgerSealRecord } from '../domain/ledger/manifest.js';
+import type { LedgerFileDigest } from '../domain/ledger/verify.js';
 import type { DatasetMap, DatasetName, TimeWindow } from '../domain/model/dataset.js';
 import type { AuditSnapshot } from '../domain/model/snapshot.js';
 import type { DateRange } from '../domain/util/time.js';
@@ -73,6 +75,35 @@ export interface LedgerRepository {
   manifest(month: string): Promise<LedgerManifest | null>;
   /** Recomputes `MANIFEST.json` from the month's files; resolves true when it changed. */
   refreshManifest(month: string): Promise<boolean>;
+  /** Hash and entry count of every dataset file of a month as stored now (U6 verify). */
+  digests(month: string): Promise<LedgerFileDigest[]>;
+  /** Same for the month's `revisions/` files. */
+  revisionDigests(month: string): Promise<LedgerFileDigest[]>;
+  /** Writes `MANIFEST.json` from the month's files with `sealed: true` and the seal record. */
+  seal(month: string, record: LedgerSealRecord): Promise<LedgerManifest>;
+  /** Stored revision entries of a sealed month's dataset; empty when there are none. */
+  readRevisions(month: string, dataset: string): Promise<LedgerEntry[]>;
+  /**
+   * Stores the revision file of a sealed month's dataset and lists it in `MANIFEST.json`
+   * (`revisions`); the dataset files and their manifest entries stay unchanged. Resolves true
+   * when the content changed.
+   */
+  writeRevisions(month: string, dataset: string, entries: readonly LedgerEntry[]): Promise<boolean>;
+}
+
+/** `ledger/STATUS.json` (U6); an unreadable store must make `load` throw. */
+export interface LedgerStatusStore {
+  load(): Promise<LedgerStatus>;
+  save(status: LedgerStatus): Promise<void>;
+}
+
+/**
+ * Receives a month right after it was sealed (U7 adds external storage sinks; none is built in).
+ * A failing sink is reported; it never unseals the month.
+ */
+export interface SealedMonthSink {
+  readonly id: string;
+  deliver(month: string, manifest: LedgerManifest): Promise<void>;
 }
 
 /**

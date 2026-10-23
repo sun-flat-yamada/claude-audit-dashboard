@@ -48,6 +48,7 @@ const emptyLedgerResult = (): LedgerUpdateResult => ({
   changed: [],
   manifests: [],
   sealed: [],
+  revisions: [],
   rejected: {},
   gaps: [],
 });
@@ -59,6 +60,7 @@ function addLedgerResult(total: LedgerUpdateResult, part: LedgerUpdateResult): v
   total.changed = union(total.changed, part.changed);
   total.manifests = union(total.manifests, part.manifests);
   total.sealed = union(total.sealed, part.sealed).sort();
+  total.revisions.push(...part.revisions);
   for (const [dataset, count] of Object.entries(part.rejected))
     total.rejected[dataset] = (total.rejected[dataset] ?? 0) + count;
   total.gaps.push(...part.gaps);
@@ -68,7 +70,7 @@ function addLedgerResult(total: LedgerUpdateResult, part: LedgerUpdateResult): v
  * One fetched unit as an in-memory snapshot holding only that dataset, collected `ok`. Its
  * collection time is the start of the backfill run, so every unit of a run merges alike.
  */
-function unitSnapshot(
+export function unitSnapshot(
   unit: BackfillUnit,
   source: BackfillSource,
   result: CollectResult<unknown[]>,

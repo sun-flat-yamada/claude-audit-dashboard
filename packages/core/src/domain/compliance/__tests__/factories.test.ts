@@ -96,7 +96,7 @@ describe('buildRuleCatalog', () => {
     const ids = rules.map((r) => r.meta.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids).toEqual(expect.arrayContaining(['AC-001', 'OP-002', 'CF-001', 'AM-001']));
-    expect(BUILTIN_RULES).toHaveLength(14);
+    expect(BUILTIN_RULES).toHaveLength(16);
     expect(rules).toHaveLength(
       BUILTIN_RULES.length + DEFAULT_SETTING_BASELINES.length + DEFAULT_ACTIVITY_WATCHES.length,
     );

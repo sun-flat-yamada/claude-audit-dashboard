@@ -7,6 +7,7 @@ import {
   ledgerMonthOf,
   ledgerSpecFor,
   mergeLedgerEntries,
+  NON_LEDGER_DATASETS,
   parseLedgerEntries,
   serializeLedgerEntries,
   type LedgerEntry,
@@ -45,9 +46,13 @@ const usage = (date: string, outputTokens: number, key: string | null = null) =>
 });
 
 describe('ledger dataset registry', () => {
-  it('classifies every dataset, built-in or optional', () => {
-    for (const name of ALL_DATASET_NAMES) expect(ledgerSpecFor(name), name).not.toBeNull();
-    expect(ledgerDatasetNames()).toEqual([...ALL_DATASET_NAMES].sort());
+  it('classifies every dataset, built-in or optional, except the ones derived from the ledger', () => {
+    const recorded = ALL_DATASET_NAMES.filter(
+      (name) => !(NON_LEDGER_DATASETS as readonly string[]).includes(name),
+    );
+    for (const name of recorded) expect(ledgerSpecFor(name), name).not.toBeNull();
+    expect(ledgerDatasetNames()).toEqual([...recorded].sort());
+    expect(ledgerSpecFor('ledgerHealth')).toBeNull();
     expect(ledgerSpecFor('activities')?.kind).toBe('event');
     expect(ledgerSpecFor('usage')?.kind).toBe('daily');
     expect(ledgerSpecFor('memberActivity')?.kind).toBe('rollup');
