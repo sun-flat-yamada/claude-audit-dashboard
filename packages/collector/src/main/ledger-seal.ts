@@ -6,7 +6,7 @@ import {
   type LedgerSealResult,
   type SealDatasetCheck,
 } from '@claude-audit/core';
-import { FsLedgerRepository, sha256Hex } from '../adapters/storage/ledger.js';
+import { sha256Hex } from '../adapters/storage/ledger.js';
 import { FsLedgerStatusStore } from '../adapters/storage/ledger-status.js';
 import type { Container } from './container.js';
 import { backfillPlanOf, defaultBackfillDatasets } from './ledger-backfill.js';
@@ -58,7 +58,7 @@ export async function ledgerSeal(c: Container, args: SealArgs): Promise<LedgerSe
     { month, datasets, plan },
     {
       source: (dataset) => c.backfill.get(dataset),
-      repository: new FsLedgerRepository(c.store),
+      repository: c.ledger(),
       hash: sha256Hex,
       clock: c.clock,
       status: new FsLedgerStatusStore(c.store),

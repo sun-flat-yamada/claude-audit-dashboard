@@ -19,6 +19,7 @@ const envSchema = z.object({
   DATA_DIR: optional,
   CONFIG_DIR: optional,
   AUDIT_CONFIG_OVERRIDES: optional,
+  LEDGER_PIPELINE_KEY: optional,
   INIT_CWD: optional,
   DASHBOARD_URL: optional,
   SLACK_WEBHOOK_URL: optional,
@@ -90,6 +91,11 @@ export interface Environment {
   configDir: string;
   /** `AUDIT_CONFIG_OVERRIDES`: a JSON object merged over `config/default.json` (raw; may be sensitive). */
   configOverrides: string | undefined;
+  /**
+   * `LEDGER_PIPELINE_KEY` (#162 U8): the symmetric key the workflows read the encrypted ledger
+   * with (an Actions secret). Never a recipient's private key.
+   */
+  ledgerPipelineKey: string | undefined;
   dashboardUrl: string | undefined;
   slackWebhookUrl: string | undefined;
   discordWebhookUrl: string | undefined;
@@ -149,6 +155,7 @@ export function readEnvironment(
     dataDir: resolve(base, env.DATA_DIR ?? 'data'),
     configDir: resolve(base, env.CONFIG_DIR ?? 'config'),
     configOverrides: env.AUDIT_CONFIG_OVERRIDES,
+    ledgerPipelineKey: env.LEDGER_PIPELINE_KEY,
     dashboardUrl: env.DASHBOARD_URL,
     slackWebhookUrl: env.SLACK_WEBHOOK_URL,
     discordWebhookUrl: env.DISCORD_WEBHOOK_URL,

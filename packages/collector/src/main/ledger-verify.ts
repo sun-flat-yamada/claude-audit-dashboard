@@ -5,7 +5,6 @@ import {
   verifyLedger,
   type LedgerVerifyResult,
 } from '@claude-audit/core';
-import { FsLedgerRepository } from '../adapters/storage/ledger.js';
 import { FsLedgerStatusStore } from '../adapters/storage/ledger-status.js';
 import type { Container } from './container.js';
 import { notifyOnce } from './notify-once.js';
@@ -39,7 +38,7 @@ export async function ledgerVerify(c: Container, args: VerifyArgs): Promise<Ledg
   const settings = c.config.ledger.verify;
   const status = new FsLedgerStatusStore(c.store);
   const result = await verifyLedger({
-    repository: new FsLedgerRepository(c.store),
+    repository: c.ledger(),
     status,
     clock: c.clock,
     settings,

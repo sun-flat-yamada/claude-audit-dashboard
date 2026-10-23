@@ -138,6 +138,12 @@ export const appConfigSchema = z.object({
           notifyAfterDays: z.number().int().min(1).default(7),
         })
         .prefault({}),
+      /**
+       * Encryption of the ledger files at rest (#162 U8). Empty (the default) leaves them plain;
+       * a non-empty list encrypts every written file to these public keys (`cadl-pub-...`, from
+       * `pnpm ledger keygen`) and to the workflows' `LEDGER_PIPELINE_KEY`.
+       */
+      encryption: z.object({ recipients: z.array(z.string().min(1)).default([]) }).prefault({}),
     })
     .prefault({}),
 });
