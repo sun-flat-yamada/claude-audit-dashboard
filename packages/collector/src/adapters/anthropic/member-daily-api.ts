@@ -1,5 +1,5 @@
 import type { CollectResult, MemberDayActivity } from '@claude-audit/core';
-import { addDays, laterOf, startOfUtcDay, toIsoDate } from '@claude-audit/core';
+import { addDays, laterOf, startOfUtcDay, toIsoDate, type DateRange } from '@claude-audit/core';
 import { ANALYTICS_EPOCH, memberActivityOf, userActivitySchema } from './analytics-api.js';
 import { ApiError, type HttpClient } from './http-client.js';
 import { collectTokenPages, parseResponse, tokenPage } from './paginate.js';
@@ -36,6 +36,24 @@ export function dailyActivityDays(lookbackDays: number, now: Date): Date[] {
   return days;
 }
 
+const ceilToDay = (date: Date): Date => {
+  const day = startOfUtcDay(date);
+  return day.getTime() === date.getTime() ? day : addDays(day, 1);
+};
+
+/** The UTC days that start inside `range`, from 2026-01-01 up to the newest published day. */
+export function publishedDaysIn(range: DateRange, now: Date): Date[] {
+  const latest = latestPublishedDay(now);
+  const days: Date[] = [];
+  for (
+    let day = laterOf(ceilToDay(range.start), ANALYTICS_EPOCH);
+    day.getTime() < range.end.getTime() && day.getTime() <= latest.getTime();
+    day = addDays(day, 1)
+  )
+    days.push(day);
+  return days;
+}
+
 /** A 400 for the newest day means it is not published yet (the error names the latest day). */
 const notYetPublished = (error: unknown): boolean =>
   error instanceof ApiError && error.status === 400;
@@ -67,11 +85,19 @@ export class MemberDailyActivityApi {
    * The last `lookbackDays` published days. Re-fetching a day a later run is the point: the API
    * revises recent days by a few percent, and the ledger keeps the newest collection of a day.
    */
-  async listDailyActivity(
-    lookbackDays: number,
+  listDailyActivity(lookbackDays: number, now: Date): Promise<CollectResult<MemberDayActivity[]>> {
+    return this.listDays(dailyActivityDays(lookbackDays, now), now);
+  }
+
+  /** Every published day of `range` (ledger backfill, #159), oldest first. */
+  listDailyActivityIn(range: DateRange, now: Date): Promise<CollectResult<MemberDayActivity[]>> {
+    return this.listDays(publishedDaysIn(range, now), now);
+  }
+
+  private async listDays(
+    days: readonly Date[],
     now: Date,
   ): Promise<CollectResult<MemberDayActivity[]>> {
-    const days = dailyActivityDays(lookbackDays, now);
     const items: MemberDayActivity[] = [];
     let end = days[0] ?? startOfUtcDay(now);
     const start = end;

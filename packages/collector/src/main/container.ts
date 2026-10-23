@@ -21,6 +21,11 @@ import {
 } from '@claude-audit/core';
 import { AdminApi } from '../adapters/anthropic/admin-api.js';
 import { AnalyticsApi } from '../adapters/anthropic/analytics-api.js';
+import {
+  BACKFILL_MIN_INTERVAL_MS,
+  createBackfillSources,
+  type BackfillDefinition,
+} from '../adapters/anthropic/backfill-sources.js';
 import { createAnthropicCollectors, type AnthropicApis } from '../adapters/anthropic/collectors.js';
 import { ClaudeCodeApi } from '../adapters/anthropic/claude-code-api.js';
 import { ComplianceApi } from '../adapters/anthropic/compliance-api.js';
@@ -69,6 +74,8 @@ export interface Container {
   collectors: DatasetCollector[];
   /** Optional model x group collection (F-010); null when off or without an Analytics key. */
   matrix: MatrixSource | null;
+  /** Datasets `ledger backfill` can fetch, over paced clients per API family (#159). */
+  backfill: Registry<BackfillDefinition>;
   projections: readonly Projection[];
   rules: Rule[];
   analyzers: readonly Analyzer[];
@@ -92,7 +99,14 @@ export interface ContainerOptions {
   configPatch?: ((config: AppConfig) => AppConfig) | undefined;
   /** Replaces the live matrix source (tests, demo). */
   matrix?: MatrixSource | null | undefined;
+  /** Clock (ms) and sleep of the paced backfill clients (tests replace both). */
+  httpTiming?: HttpTiming | undefined;
   source?: 'live' | 'demo' | undefined;
+}
+
+export interface HttpTiming {
+  now?: (() => number) | undefined;
+  sleep?: ((ms: number) => Promise<void>) | undefined;
 }
 
 /** Creates an HttpClient configured with the key of the given registered key family, if set. */
@@ -214,6 +228,42 @@ function notifiers(
   ];
 }
 
+/**
+ * The backfill reads the APIs directly, one paced client per family for the whole run, so the
+ * per-organization rate limits hold across every dataset it fetches.
+ */
+function backfillSources(
+  env: Environment,
+  config: AppConfig,
+  fetchImpl: typeof fetch | undefined,
+  timing: HttpTiming | undefined,
+): Registry<BackfillDefinition> {
+  const paced = (familyId: 'analytics' | 'compliance') => {
+    const apiKey = env.keys[familyId];
+    return apiKey
+      ? new HttpClient({
+          apiKey,
+          baseUrl: env.baseUrl,
+          fetchImpl,
+          minIntervalMs: BACKFILL_MIN_INTERVAL_MS[familyId],
+          now: timing?.now,
+          sleep: timing?.sleep,
+        })
+      : null;
+  };
+  const analytics = paced('analytics');
+  const compliance = paced('compliance');
+  return createBackfillSources(
+    {
+      analytics: analytics && new AnalyticsApi(analytics),
+      featureUsage: analytics && new FeatureUsageApi(analytics),
+      memberActivityDaily: analytics && new MemberDailyActivityApi(analytics),
+      compliance: compliance && new ComplianceApi(compliance),
+    },
+    { activities: config.sources.activities },
+  );
+}
+
 /** Injected collectors / matrix source (demo, tests) win; otherwise the live gateways. */
 function resolveSources(
   options: ContainerOptions,
@@ -260,6 +310,7 @@ export async function createContainer(options: ContainerOptions = {}): Promise<C
     state: new FsStateRepository(store),
     artifacts: fileArtifacts(store),
     ...sources,
+    backfill: backfillSources(env, config, options.fetchImpl, options.httpTiming),
     projections: BUILTIN_PROJECTIONS,
     rules: catalog.rules,
     analyzers: BUILTIN_ANALYZERS,
