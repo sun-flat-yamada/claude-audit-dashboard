@@ -1,31 +1,23 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
 import {
   generateIdentity,
   generatePipelineKey,
-  parseIdentityFile,
   parsePipelineKey,
 } from '../adapters/storage/ledger-crypto.js';
 import { FsLedgerRepository, ledgerCodecsFor, sha256Hex } from '../adapters/storage/ledger.js';
+import { refuseOnUntrustedKeyHost } from '../infrastructure/key-host.js';
 import type { Container } from './container.js';
+import { ledgerKeyCheck } from './ledger-key-check.js';
+import { assertFlags, localKeysOf, namesKeyFile, valueOf } from './ledger-key-files.js';
 
 /**
- * Key handling of the encrypted ledger (#162 U8): `ledger keygen`, `ledger encrypt` and
- * `ledger decrypt`. Key material and decrypted content never reach a log line: keys go to a new
- * file (mode 0600), decrypted files to a directory outside the data directory and the repository.
+ * Key handling of the encrypted ledger (#162 U8, #174 U9): `ledger keygen`, `ledger encrypt`,
+ * `ledger decrypt` and `ledger key-check`. Key material and decrypted content never reach a log
+ * line: keys go to a new file (mode 0600), decrypted files to a directory outside the data
+ * directory and the repository. Whatever handles a private key, a key backup or plaintext refuses
+ * to run on CI and in a Claude Code cloud session (`key-host.ts`).
  */
-
-const isCi = (c: Container): boolean => {
-  const ci = c.env.ci?.toLowerCase();
-  return ci === 'true' || ci === '1';
-};
-
-function refuseOnCi(c: Container, action: string): void {
-  if (isCi(c))
-    throw new Error(
-      `ledger ${action} refuses to run on CI: private keys and decrypted data stay on your machine`,
-    );
-}
 
 /** Resolves `path`; refuses one inside the data directory or the directory pnpm started in. */
 function outsideRepository(c: Container, path: string, what: string): string {
@@ -38,20 +30,6 @@ function outsideRepository(c: Container, path: string, what: string): string {
   return full;
 }
 
-/** The value after `flag`; undefined when the flag is absent. */
-function valueOf(args: readonly string[], flag: string): string | undefined {
-  const at = args.indexOf(flag);
-  if (at < 0) return undefined;
-  const value = args[at + 1];
-  if (!value || value.startsWith('--')) throw new Error(`${flag} requires a value`);
-  return value;
-}
-
-function assertFlags(args: readonly string[], allowed: readonly string[]): void {
-  const unknown = args.filter((a) => a.startsWith('--') && !allowed.includes(a));
-  if (unknown.length > 0) throw new Error(`Unknown option(s): ${unknown.join(', ')}`);
-}
-
 /** Writes a new file readable by the owner only; never overwrites. */
 async function writePrivate(path: string, content: string): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
@@ -61,7 +39,7 @@ async function writePrivate(path: string, content: string): Promise<void> {
 /** `keygen --out <file> [--pipeline]`: a recipient identity, or the workflows' pipeline key. */
 async function keygen(c: Container, args: readonly string[]): Promise<void> {
   assertFlags(args, ['--out', '--pipeline']);
-  refuseOnCi(c, 'keygen');
+  refuseOnUntrustedKeyHost(c.env, 'keygen');
   const out = valueOf(args, '--out');
   if (!out) throw new Error('ledger keygen requires --out <file> (outside the repository)');
   const path = outsideRepository(c, out, 'The key file');
@@ -69,7 +47,7 @@ async function keygen(c: Container, args: readonly string[]): Promise<void> {
     const key = generatePipelineKey();
     await writePrivate(
       path,
-      `# claude-audit ledger pipeline key: store it as the Actions secret LEDGER_PIPELINE_KEY,\n# then delete this file.\n${key}\n`,
+      `# claude-audit ledger pipeline key: store it as the Actions secret LEDGER_PIPELINE_KEY and keep\n# this file offline as the backup (GitHub secrets cannot be read back). Never commit it.\n${key}\n`,
     );
     c.logger.info(
       `Ledger pipeline key ${parsePipelineKey(key).fingerprint} written to ${path} (mode 0600)`,
@@ -85,26 +63,19 @@ async function keygen(c: Container, args: readonly string[]): Promise<void> {
   c.logger.info(`Public key (add to ledger.encryption.recipients): ${recipient}`);
 }
 
-/** The identity of `--identity <file>`, if given (local only: refused on CI). */
-async function identityOf(c: Container, args: readonly string[], action: string) {
-  const path = valueOf(args, '--identity');
-  if (!path) return [];
-  refuseOnCi(c, action);
-  return [parseIdentityFile(await readFile(resolve(c.env.baseDir, path), 'utf8'))];
-}
-
 /**
- * `encrypt [--all] [--identity <file>]`: re-stores the plain files encrypted. `--all` also
- * re-encrypts the encrypted files to the current recipients and pipeline key; `--identity` reads
- * them with a local private key (a new or lost pipeline key).
+ * `encrypt [--all] [--identity <file>] [--pipeline-key <file>]`: re-stores the plain files
+ * encrypted. `--all` also re-encrypts the encrypted files to the current recipients and pipeline
+ * key; `--identity` (a local private key) or `--pipeline-key` (the backup of the previous pipeline
+ * key) reads them when the pipeline key was rotated or lost.
  */
 async function encrypt(c: Container, args: readonly string[]): Promise<void> {
-  assertFlags(args, ['--all', '--identity']);
+  assertFlags(args, ['--all', '--identity', '--pipeline-key']);
   const recipients = c.config.ledger.encryption.recipients;
   if (recipients.length === 0)
     throw new Error('ledger encrypt needs ledger.encryption.recipients (encryption is off)');
-  const identities = await identityOf(c, args, 'encrypt --identity');
-  const codecs = ledgerCodecsFor({ recipients, pipelineKey: c.env.ledgerPipelineKey, identities });
+  const keys = await localKeysOf(c, args, 'encrypt with a key file');
+  const codecs = ledgerCodecsFor({ recipients, pipelineKey: c.env.ledgerPipelineKey, ...keys });
   const repository = new FsLedgerRepository(c.store, codecs);
   let files = 0;
   const months = await repository.months();
@@ -136,16 +107,21 @@ async function decryptMonth(repository: FsLedgerRepository, month: string, out: 
   return { files, mismatches };
 }
 
-/** `decrypt --identity <file> --out <dir> [--month <yyyy-mm>]`: local private key only. */
+/**
+ * `decrypt (--identity <file> | --pipeline-key <file>) --out <dir> [--month <yyyy-mm>]`: a local
+ * private key or the offline backup of the pipeline key; never `LEDGER_PIPELINE_KEY` itself.
+ */
 async function decrypt(c: Container, args: readonly string[]): Promise<void> {
-  assertFlags(args, ['--identity', '--out', '--month']);
-  refuseOnCi(c, 'decrypt');
+  assertFlags(args, ['--identity', '--pipeline-key', '--out', '--month']);
+  refuseOnUntrustedKeyHost(c.env, 'decrypt');
   const outArg = valueOf(args, '--out');
-  if (!valueOf(args, '--identity') || !outArg)
-    throw new Error('ledger decrypt requires --identity <file> and --out <dir>');
+  if (!namesKeyFile(args) || !outArg)
+    throw new Error(
+      'ledger decrypt requires --identity <file> or --pipeline-key <file>, and --out <dir>',
+    );
   const out = outsideRepository(c, outArg, 'The output directory');
-  const identities = await identityOf(c, args, 'decrypt');
-  const codecs = ledgerCodecsFor({ recipients: [], pipelineKey: undefined, identities });
+  const keys = await localKeysOf(c, args, 'decrypt');
+  const codecs = ledgerCodecsFor({ recipients: [], pipelineKey: undefined, ...keys });
   const repository = new FsLedgerRepository(c.store, codecs);
   const month = valueOf(args, '--month');
   const months = month ? [month] : await repository.months();
@@ -162,4 +138,9 @@ async function decrypt(c: Container, args: readonly string[]): Promise<void> {
 }
 
 /** The key actions of `ledger` (registered in its action map). */
-export const LEDGER_KEY_ACTIONS = { keygen, encrypt, decrypt } as const;
+export const LEDGER_KEY_ACTIONS = {
+  keygen,
+  encrypt,
+  decrypt,
+  'key-check': ledgerKeyCheck,
+} as const;

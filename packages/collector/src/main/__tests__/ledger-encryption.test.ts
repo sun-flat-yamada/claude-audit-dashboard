@@ -1,108 +1,29 @@
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { recordRevisions, type LedgerManifest, type Logger } from '@claude-audit/core';
-import { afterAll, describe, expect, it, vi } from 'vitest';
-import { MOCK_KEY, backfillTenant } from '../../__tests__/backfill-tenant.js';
-import { fakeTimer } from '../../__tests__/fake-timer.js';
+import { recordRevisions } from '@claude-audit/core';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  OWNER,
+  PIPELINE,
+  SECOND,
+  encrypted,
+  expectCleanLogs,
+  filesOf,
+  manifestOf,
+  sealedPair,
+  setup,
+  tempDir,
+} from '../../__tests__/encrypted-ledger.js';
 import {
   generateIdentity,
   generatePipelineKey,
   isEncryptedEnvelope,
 } from '../../adapters/storage/ledger-crypto.js';
 import { FsLedgerRepository } from '../../adapters/storage/ledger.js';
-import { fixedClock } from '../../infrastructure/runtime.js';
-import { createContainer } from '../container.js';
 import { ledgerCommand } from '../ledger.js';
 
 vi.setConfig({ testTimeout: 90_000 });
-
-const roots: string[] = [];
-const tempDir = async (name: string): Promise<string> => {
-  const dir = await mkdtemp(join(tmpdir(), `${name}-`));
-  roots.push(dir);
-  return dir;
-};
-afterAll(async () => {
-  await Promise.all(roots.map((dir) => rm(dir, { recursive: true, force: true })));
-});
-
-const NOW = new Date('2026-10-23T15:00:00.000Z');
-// Generated at run time: no key material in the repository.
-const OWNER = generateIdentity();
-const SECOND = generateIdentity();
-const PIPELINE = generatePipelineKey();
-
-const logger = (): Logger & { lines: string[] } => {
-  const lines: string[] = [];
-  return {
-    lines,
-    info: (m) => lines.push(`info ${m}`),
-    warn: (m) => lines.push(`warn ${m}`),
-    error: (m) => lines.push(`error ${m}`),
-  };
-};
-
-interface SetupOptions {
-  recipients?: string[];
-  pipelineKey?: string | undefined;
-  ci?: string;
-}
-
-async function setup(dir: string, options: SetupOptions = {}) {
-  const { timer, timing } = fakeTimer();
-  const tenant = backfillTenant(NOW, () => timer.t);
-  const log = logger();
-  const overrides = options.recipients
-    ? JSON.stringify({ ledger: { encryption: { recipients: options.recipients } } })
-    : undefined;
-  const c = await createContainer({
-    env: {
-      ANTHROPIC_ENTERPRISE_API_KEY: MOCK_KEY,
-      CONFIG_DIR: join(dir, 'no-config'),
-      ...(overrides ? { AUDIT_CONFIG_OVERRIDES: overrides } : {}),
-      ...(options.pipelineKey ? { LEDGER_PIPELINE_KEY: options.pipelineKey } : {}),
-      ...(options.ci ? { CI: options.ci } : {}),
-    },
-    cwd: dir,
-    dataDir: dir,
-    clock: fixedClock(NOW),
-    fetchImpl: tenant.fetch,
-    httpTiming: timing,
-    logger: log,
-  });
-  return { c, log };
-}
-
-const encrypted = (dir: string) =>
-  setup(dir, { recipients: [OWNER.recipient, SECOND.recipient], pipelineKey: PIPELINE });
-
-const manifestOf = async (dir: string, month: string) =>
-  JSON.parse(await readFile(join(dir, 'ledger', month, 'MANIFEST.json'), 'utf8')) as LedgerManifest;
-
-const filesOf = async (dir: string, month: string) =>
-  (await readdir(join(dir, 'ledger', month))).filter((n) => n !== 'MANIFEST.json').sort();
-
-/** No log line carries key material or ledger content (e-mail addresses of the synthetic tenant). */
-function expectCleanLogs(lines: readonly string[]): void {
-  for (const line of lines) {
-    expect(line).not.toMatch(/CADL-SECRET-|CADL-PIPELINE-|@example\.|192\.0\.2\./);
-  }
-}
-
-/** The tenant backfilled into a plain and an encrypted ledger, then the month sealed. */
-async function sealedPair() {
-  const plainDir = await tempDir('ledger-plain');
-  const encDir = await tempDir('ledger-enc');
-  const plain = await setup(plainDir);
-  const enc = await encrypted(encDir);
-  for (const { c } of [plain, enc]) {
-    await ledgerCommand.run(c, ['backfill', '--from', '2026-09', '--to', '2026-10']);
-    await ledgerCommand.run(c, ['seal', '--month', '2026-09']);
-  }
-  return { plainDir, encDir, plain, enc };
-}
 
 describe('encrypted ledger (#162 U8)', () => {
   it('backfills, seals and verifies with the same content hashes as a plain ledger', async () => {
