@@ -1,6 +1,6 @@
 Section,Id,Name,Severity,Base,Target,Change,Delta
 score,score,Compliance score,,73,65,decreased,-8
-score,assessed,Assessed rules,,25,30,increased,5
+score,assessed,Assessed rules,,27,32,increased,5
 rule,UA-001,Usage Spike Detection,high,pass,fail,regressed,
 rule,CF-003,IP Allowlist Enabled,medium,pass,fail,regressed,
 rule,AK-002,Over-privileged API Keys,high,,fail,added,

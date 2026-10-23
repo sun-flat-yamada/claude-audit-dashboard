@@ -47,7 +47,7 @@ describe('demo profiles', () => {
   });
 
   it('the default profile has no optional dataset and is the committed sample', async () => {
-    expect(Object.keys(coverageOf(standard))).toHaveLength(13);
+    expect(Object.keys(coverageOf(standard))).toHaveLength(14);
     for (const name of OPTIONAL_DATASET_NAMES)
       expect(coverageOf(standard)).not.toHaveProperty(name);
     expect(await demo('default')).toEqual(standard);
@@ -59,7 +59,7 @@ describe('demo profiles', () => {
     const coverage = coverageOf(optional);
     for (const name of OPTIONAL_DATASET_NAMES) expect(coverage[name]?.status).toBe('ok');
     const op = parseView(optional).compliance.results.find((r) => r.ruleId === 'OP-002');
-    expect(op).toMatchObject({ status: 'pass', message: 'All 23 datasets collected' });
+    expect(op).toMatchObject({ status: 'pass', message: 'All 24 datasets collected' });
   });
 
   it('is deterministic, valid, masked and synthetic (example.com only)', async () => {
@@ -70,10 +70,10 @@ describe('demo profiles', () => {
       expect(email).toMatch(/@example\.com$/);
   });
 
-  it('the empty profile collects 13 datasets with zero items and a valid detail bundle', async () => {
+  it('the empty profile collects 14 datasets with zero items and a valid detail bundle', async () => {
     const emptyFiles = await demo('empty');
     const coverage = coverageOf(emptyFiles);
-    expect(Object.keys(coverage)).toHaveLength(13);
+    expect(Object.keys(coverage)).toHaveLength(14);
     for (const meta of Object.values(coverage)) {
       expect(meta).toMatchObject({ status: 'ok', count: 0 });
     }
@@ -86,9 +86,12 @@ describe('demo profiles', () => {
   it('the unavailable profile marks datasets as unavailable/error and writes no detail bundle', async () => {
     const unavailFiles = await demo('unavailable');
     const coverage = coverageOf(unavailFiles);
-    expect(Object.keys(coverage)).toHaveLength(13);
+    expect(Object.keys(coverage)).toHaveLength(14);
+    // The local ledger health reads the data directory only, so it is never unavailable.
+    const { ledgerHealth, ...remote } = coverage;
+    expect(ledgerHealth?.status).toBe('ok');
     expect(
-      Object.values(coverage).every((m) => m.status === 'unavailable' || m.status === 'error'),
+      Object.values(remote).every((m) => m.status === 'unavailable' || m.status === 'error'),
     ).toBe(true);
     expect(Object.keys(detailOf(unavailFiles))).toHaveLength(0);
     expect(unavailFiles).toHaveProperty('dashboard.json');
@@ -152,11 +155,11 @@ describe('demo profiles', () => {
     const names = config.sources.datasets.map((d) => d.name);
     for (const name of OPTIONAL_DATASET_NAMES)
       expect(config.sources.datasets.find((d) => d.name === name)?.enabled).toBe(true);
-    expect(names).toHaveLength(23);
+    expect(names).toHaveLength(24);
     const standardConfig = detailConfigSchema.parse(
       JSON.parse(standard[DETAIL_CONFIG_PATH] ?? '{}'),
     );
-    expect(standardConfig.sources.datasets).toHaveLength(13);
+    expect(standardConfig.sources.datasets).toHaveLength(14);
   });
 
   it('publishes no per-person or per-key row of the optional sources (aggregate-only)', () => {
@@ -181,22 +184,22 @@ describe('demo profiles', () => {
 });
 
 describe('fixture tenant with the optional sources enabled', () => {
-  it('processes the optional datasets together with the 13 built-in ones', async () => {
+  it('processes the optional datasets together with the 14 built-in ones', async () => {
     const files = await runFixtureTenant({ fixtureDir, optionalSources: true });
     const coverage = coverageOf(files);
     expect(Object.values(coverage).every((c) => c.status === 'ok')).toBe(true);
     for (const name of OPTIONAL_DATASET_NAMES) expect(coverage[name]).toBeDefined();
-    expect(Object.keys(coverage)).toHaveLength(23);
+    expect(Object.keys(coverage)).toHaveLength(24);
     expect(coverage.claudeCodeActivity?.count).toBe(4);
     const op = parseView(files).compliance.results.find((r) => r.ruleId === 'OP-002');
-    expect(op?.message).toBe('All 23 datasets collected');
+    expect(op?.message).toBe('All 24 datasets collected');
     expect(checkDetailBundle(detailOf(files), { requireDemo: true })).toEqual([]);
     expect(await runFixtureTenant({ fixtureDir, optionalSources: true })).toEqual(files);
   });
 
-  it('leaves the default fixture run on the 13 datasets', async () => {
+  it('leaves the default fixture run on the 14 datasets', async () => {
     const files = await runFixtureTenant({ fixtureDir });
-    expect(Object.keys(coverageOf(files))).toHaveLength(13);
+    expect(Object.keys(coverageOf(files))).toHaveLength(14);
   });
 
   it('contains no real address and no key material', async () => {
@@ -227,14 +230,14 @@ describe('CLI flags', () => {
       const view = dashboardViewSchema.parse(
         JSON.parse(await readFile(join(target, 'dashboard.json'), 'utf8')),
       );
-      expect(view.coverage).toHaveLength(23);
+      expect(view.coverage).toHaveLength(24);
 
       const emptyTarget = join(out, 'profile-empty');
       expect(await runCli(['demo', '--profile', 'empty', '--out', emptyTarget], options)).toBe(0);
       const emptyView = dashboardViewSchema.parse(
         JSON.parse(await readFile(join(emptyTarget, 'dashboard.json'), 'utf8')),
       );
-      expect(emptyView.coverage).toHaveLength(13);
+      expect(emptyView.coverage).toHaveLength(14);
 
       const unavailTarget = join(out, 'profile-unavailable');
       expect(
@@ -243,7 +246,7 @@ describe('CLI flags', () => {
       const unavailView = dashboardViewSchema.parse(
         JSON.parse(await readFile(join(unavailTarget, 'dashboard.json'), 'utf8')),
       );
-      expect(unavailView.coverage).toHaveLength(13);
+      expect(unavailView.coverage).toHaveLength(14);
     } finally {
       await rm(out, { recursive: true, force: true });
     }
@@ -264,7 +267,7 @@ describe('CLI flags', () => {
           await readFile(join(out, 'data/fixture-optional-sources/dashboard.json'), 'utf8'),
         ),
       );
-      expect(view.coverage).toHaveLength(23);
+      expect(view.coverage).toHaveLength(24);
     } finally {
       await rm(out, { recursive: true, force: true });
     }

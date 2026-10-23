@@ -1,6 +1,6 @@
 Section,Id,Name,Severity,Base,Target,Change,Delta
 score,score,Compliance score,,68,65,decreased,-3
-score,assessed,Assessed rules,,27,30,increased,3
+score,assessed,Assessed rules,,29,32,increased,3
 rule,AK-003,API Key Age,medium,pass,fail,regressed,
 rule,AM-006,Authentication Failure Burst,medium,pass,warning,regressed,
 rule,CF-003,IP Allowlist Enabled,medium,pass,fail,regressed,

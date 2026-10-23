@@ -163,7 +163,7 @@ describe('multi-time-point demo history (F-015)', () => {
     expect(ids[1]?.has('DG-001')).toBe(true);
     expect(ids[1]?.has('AK-002')).toBe(false);
     expect(ids[2]?.has('AK-002')).toBe(true);
-    expect(ids[2]?.size).toBe(30);
+    expect(ids[2]?.size).toBe(32);
   });
 
   it.each(COVERAGE)('dataset %s is %s, %s, %s', (dataset, a, b, c) => {

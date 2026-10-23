@@ -137,12 +137,12 @@ describe('(a) default configuration: nothing changes for existing users', () => 
     expect(withKey.view.compliance.results).toEqual(without.view.compliance.results);
   });
 
-  it('keeps the OP-002 verdict of the 13 built-in datasets', async () => {
+  it('keeps the OP-002 verdict of the 14 built-in datasets', async () => {
     const out = await run(KEYS, undefined);
-    expect(Object.keys(out.coverage)).toHaveLength(13);
+    expect(Object.keys(out.coverage)).toHaveLength(14);
     expect(out.op002).toEqual({
       status: 'pass',
-      message: 'All 13 datasets collected',
+      message: 'All 14 datasets collected',
       evidence: [],
     });
   });
@@ -153,7 +153,7 @@ describe('(a) default configuration: nothing changes for existing users', () => 
       claudeCode: { enabled: false },
       featureUsage: { enabled: false },
     });
-    expect(Object.keys(explicit.coverage)).toHaveLength(13);
+    expect(Object.keys(explicit.coverage)).toHaveLength(14);
   });
 });
 
@@ -167,7 +167,7 @@ describe('(b) enabled with a valid key', () => {
     expect(out.coverage.consoleUsage?.count).toBe(4);
     expect(out.coverage.consoleCost?.count).toBe(4);
     expect(out.coverage.claudeCodeActivity?.count).toBe(4);
-    expect(out.op002).toMatchObject({ status: 'pass', message: 'All 18 datasets collected' });
+    expect(out.op002).toMatchObject({ status: 'pass', message: 'All 19 datasets collected' });
   });
 
   it('uses the Console key only for the optional endpoints and the Enterprise key for the rest', async () => {
@@ -205,7 +205,7 @@ describe('(c) enabled without usable access: unavailable, the rest continues', (
     // The Enterprise key is never sent to the Console endpoints.
     expect(out.keys.some(([path]) => CONSOLE_PATHS.includes(path))).toBe(false);
     expect(out.op002.status).toBe('fail');
-    expect(out.op002.message).toBe('5 of 18 dataset(s) not collected');
+    expect(out.op002.message).toBe('5 of 19 dataset(s) not collected');
     expect(out.op002.evidence).toHaveLength(5);
     expect(out.op002.evidence[0]).toContain('unavailable:');
   });
@@ -261,7 +261,7 @@ describe('(d) enabled with a schema mismatch: error, the rest continues', () => 
     expect(out.coverage.consoleWorkspaces?.status).toBe('ok');
     expect(out.coverage.members?.status).toBe('ok');
     expect(out.op002.status).toBe('fail');
-    expect(out.op002.message).toBe('2 of 18 dataset(s) not collected');
+    expect(out.op002.message).toBe('2 of 19 dataset(s) not collected');
   });
 
   it('reports another API error (400) as an error, not as unavailable', async () => {
@@ -286,7 +286,7 @@ describe('AN-6 feature usage (sources.featureUsage.enabled)', () => {
     for (const name of FEATURE_DATASETS) expect(out.coverage).not.toHaveProperty(name);
     expect(out.keys.some(([path]) => FEATURE_PATHS.includes(path))).toBe(false);
     expect(out.view).not.toHaveProperty('features');
-    expect(out.op002.message).toBe('All 13 datasets collected');
+    expect(out.op002.message).toBe('All 14 datasets collected');
   });
 
   it('(b) collects the four roll-ups with the Analytics key and publishes the aggregate', async () => {
@@ -297,7 +297,7 @@ describe('AN-6 feature usage (sources.featureUsage.enabled)', () => {
     expect(out.coverage.connectorUsage?.count).toBe(3);
     expect(out.coverage.pluginUsage?.count).toBe(2);
     expect(out.coverage.chatProjectUsage?.count).toBe(2);
-    expect(out.op002).toMatchObject({ status: 'pass', message: 'All 17 datasets collected' });
+    expect(out.op002).toMatchObject({ status: 'pass', message: 'All 18 datasets collected' });
     for (const [path, key] of out.keys)
       if (FEATURE_PATHS.includes(path)) expect(key).toBe(ENTERPRISE);
     const f = out.view.features;
@@ -338,7 +338,7 @@ describe('AN-6 feature usage (sources.featureUsage.enabled)', () => {
       expect(out.coverage.pluginUsage?.reason).toContain(String(status));
       expect(rest(out).every((s) => s === 'ok')).toBe(true);
       expect(out.op002.status).toBe('fail');
-      expect(out.op002.message).toBe('4 of 17 dataset(s) not collected');
+      expect(out.op002.message).toBe('4 of 18 dataset(s) not collected');
       expect(out.view).not.toHaveProperty('features');
     },
   );
@@ -363,6 +363,6 @@ describe('AN-6 feature usage (sources.featureUsage.enabled)', () => {
     expect(out.coverage.skillUsage?.reason).toContain('schema drift');
     expect(out.coverage.connectorUsage?.status).toBe('ok');
     expect(out.coverage.members?.status).toBe('ok');
-    expect(out.op002.message).toBe('1 of 17 dataset(s) not collected');
+    expect(out.op002.message).toBe('1 of 18 dataset(s) not collected');
   });
 });

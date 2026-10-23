@@ -123,6 +123,23 @@ export const appConfigSchema = z.object({
       windowDays: z.number().int().min(1).max(366).default(CAPACITY_DEFAULTS.windowDays),
     })
     .prefault({}),
+  /** Monthly ledger checks (`pnpm ledger verify`, #160). */
+  ledger: z
+    .object({
+      verify: z
+        .object({
+          /** Daily datasets expected to have rows for every UTC day. */
+          dailyDatasets: z.array(z.string()).default(['usage', 'cost']),
+          /** The last days are not checked yet (publication lag of the Analytics API). */
+          lagDays: z.number().int().min(0).max(31).default(3),
+          /** Hours since the latest recorded collection before it is a finding. */
+          maxStaleHours: z.number().positive().default(24),
+          /** Notify once the verification has failed on this many consecutive UTC days. */
+          notifyAfterDays: z.number().int().min(1).default(7),
+        })
+        .prefault({}),
+    })
+    .prefault({}),
 });
 
 export type AppConfig = z.output<typeof appConfigSchema>;

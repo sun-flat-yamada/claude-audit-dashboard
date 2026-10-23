@@ -13,17 +13,17 @@
     "base": 73,
     "target": 65,
     "delta": -8,
-    "baseAssessed": 25,
-    "targetAssessed": 30,
+    "baseAssessed": 27,
+    "targetAssessed": 32,
     "assessedDelta": 5,
-    "baseTotal": 29,
-    "targetTotal": 30
+    "baseTotal": 31,
+    "targetTotal": 32
   },
   "rules": {
     "counts": {
       "regressed": 2,
       "improved": 3,
-      "unchanged": 20,
+      "unchanged": 22,
       "added": 1,
       "removed": 0,
       "assessed": 4,
@@ -126,7 +126,7 @@
     "counts": {
       "regressed": 0,
       "improved": 3,
-      "unchanged": 10,
+      "unchanged": 11,
       "added": 0,
       "removed": 0,
       "assessed": 0,

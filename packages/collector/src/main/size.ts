@@ -4,12 +4,11 @@ import {
   errorMessage,
   formatBytes,
   judgeCapacity,
-  pruneLastSent,
   type CapacityVerdict,
 } from '@claude-audit/core';
 import { measureRepository, type Measured } from '../adapters/storage/git-size.js';
 import type { Container } from './container.js';
-import { deliver } from './deliver.js';
+import { notifyOnce } from './notify-once.js';
 
 export interface SizeOptions {
   /** Repository to measure (default: the current directory). */
@@ -48,31 +47,6 @@ export function describeMeasurement({ measurement: m, verdict }: SizeResult): st
   ];
 }
 
-async function notifyOnce(c: Container, verdict: CapacityVerdict): Promise<void> {
-  const alert = capacityAlert(verdict, c.env.dashboardUrl);
-  if (!alert) return;
-  const now = c.clock.now();
-  const { cooldownMinutes } = c.config.notifications;
-  const { lastSent } = (await c.state.load()).notifications;
-  if (alert.key in pruneLastSent(lastSent, now, cooldownMinutes)) {
-    c.logger.info(`Capacity alert ${alert.key} is within its cooldown`);
-    return;
-  }
-  await deliver(c, alert, now);
-  // Reload: `deliver` has appended the send record to the history.
-  const state = await c.state.load();
-  await c.state.save({
-    ...state,
-    notifications: {
-      ...state.notifications,
-      lastSent: {
-        ...pruneLastSent(lastSent, now, cooldownMinutes),
-        [alert.key]: now.toISOString(),
-      },
-    },
-  });
-}
-
 async function measure(c: Container, options: SizeOptions): Promise<SizeResult> {
   const { capacity } = c.config;
   const measurement = await measureRepository(resolve(c.env.baseDir, options.repo ?? '.'), {
@@ -93,7 +67,7 @@ export async function runSize(c: Container, options: SizeOptions): Promise<SizeR
     if (options.json)
       c.logger.info(JSON.stringify({ ...result.measurement, ...result.verdict }, null, 2));
     else for (const line of describeMeasurement(result)) c.logger.info(line);
-    if (options.notify) await notifyOnce(c, result.verdict);
+    if (options.notify) await notifyOnce(c, capacityAlert(result.verdict, c.env.dashboardUrl));
     return result;
   } catch (error) {
     if (!options.warnOnly) throw error;
