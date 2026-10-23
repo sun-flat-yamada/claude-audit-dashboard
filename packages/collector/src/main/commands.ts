@@ -17,6 +17,7 @@ import { writeDetail } from './detail.js';
 import { writeMonthlyView } from './monthly-report.js';
 import { DEMO_PROFILES, writeDemoSample, type DemoProfile } from './demo.js';
 import { writeFixtureTenant } from './fixture.js';
+import { ledgerCommand, ledgerPipelineStep } from './ledger.js';
 import { runSize } from './size.js';
 import { collectUsageMatrix } from './usage-matrix.js';
 import { sanitizeDirectory } from './sanitize.js';
@@ -110,7 +111,7 @@ const detailCommand: Command = {
 const pipelineCommand: Command = {
   name: 'pipeline',
   usage: 'pipeline',
-  description: 'collect, check, dashboard and detail in one run',
+  description: 'collect, check, dashboard, detail and ledger update in one run',
   async run(c, args) {
     for (const step of [
       collectCommand,
@@ -120,6 +121,8 @@ const pipelineCommand: Command = {
       detailCommand,
     ])
       await step.run(c, args);
+    // Last and never fatal: a ledger failure must not lose the collected snapshot.
+    await ledgerPipelineStep.run(c);
   },
 };
 
@@ -322,6 +325,7 @@ export const COMMANDS = new Registry<Command>((cmd) => cmd.name, 'command').addA
   archiveCommand,
   sizeCommand,
   restoreCommand,
+  ledgerCommand,
   alertsCommand,
   demoCommand,
   sanitizeCommand,

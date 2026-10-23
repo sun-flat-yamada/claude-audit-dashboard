@@ -42,6 +42,7 @@ export function describeMeasurement({ measurement: m, verdict }: SizeResult): st
     `Capacity ${verdict.status}: ${formatBytes(verdict.totalBytes)} reachable in ${String(m.commits)} commits (${String(m.snapshots)} snapshots)`,
     `  growth per 30 days ${growth === null ? 'unknown (history too short)' : formatBytes(growth)}; packs ${formatBytes(m.objects.packBytes)}, loose ${formatBytes(m.objects.looseBytes)}`,
     `  archive ${String(m.archive.snapshots)} snapshots in ${String(m.archive.years)} year(s), ${formatBytes(m.archive.bytes)}`,
+    `  ledger ${String(m.ledger.blobs)} blobs, ${formatBytes(m.ledger.bytes)}`,
     ...rows,
     ...verdict.findings.map((f) => `  [${f.level.toUpperCase()}] ${f.message}`),
   ];

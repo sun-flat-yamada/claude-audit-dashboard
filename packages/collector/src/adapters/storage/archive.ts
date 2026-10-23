@@ -59,8 +59,21 @@ async function archivedIds(source: FileStore, selector: string): Promise<string[
   return ids;
 }
 
+/** Every archived snapshot id (`archive/<year>/<id>.json.gz`), oldest first. */
+export async function allArchivedIds(source: FileStore): Promise<string[]> {
+  const years = (await source.list('archive')).filter((e) => e.directory && YEAR.test(e.name));
+  const ids: string[] = [];
+  for (const year of years) {
+    for (const e of await source.list(`archive/${year.name}`)) {
+      const id = e.name.slice(0, -SUFFIX.length);
+      if (!e.directory && e.name.endsWith(SUFFIX) && SNAPSHOT_ID.test(id)) ids.push(id);
+    }
+  }
+  return ids.sort();
+}
+
 /** Reads and validates one `archive/<year>/<id>.json.gz`. The id inside must match the name. */
-async function readArchived(source: FileStore, id: string): Promise<AuditSnapshot> {
+export async function readArchived(source: FileStore, id: string): Promise<AuditSnapshot> {
   const bytes = await source.readBytes(`archive/${id.slice(0, 4)}/${id}${SUFFIX}`);
   if (!bytes) throw new Error(`Archived snapshot not found: ${id}`);
   const parsed = archivedSnapshotSchema.safeParse(JSON.parse(gunzipSync(bytes).toString('utf8')));

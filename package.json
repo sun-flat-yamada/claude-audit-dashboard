@@ -56,6 +56,7 @@
     "notify": "pnpm --filter @claude-audit/collector cli notify",
     "archive": "pnpm --filter @claude-audit/collector cli archive",
     "restore": "pnpm --filter @claude-audit/collector cli restore",
+    "ledger": "pnpm --filter @claude-audit/collector cli ledger",
     "size": "pnpm --filter @claude-audit/collector cli size",
     "alerts": "pnpm --filter @claude-audit/collector cli alerts",
     "usage-matrix": "pnpm --filter @claude-audit/collector cli usage-matrix",
