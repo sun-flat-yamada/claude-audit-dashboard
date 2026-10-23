@@ -4,6 +4,9 @@ on:
   schedule:
     # Every 6 hours. The activity feed is polled by time window, so a missed run loses nothing.
     - cron: '0 */6 * * *'
+    # Last day of the month at 23:30 UTC (#160): the month-end state and spend-limit values for
+    # the monthly ledger. Fires on the 28th-31st; the month-end guard below skips all but the last.
+    - cron: '30 23 28-31 * *'
   workflow_dispatch:
     inputs:
       retention_days:
@@ -53,11 +56,21 @@ jobs:
           RETENTION_DAYS: ${{ inputs.retention_days }}
           DRY_RUN: ${{ inputs.dry_run }}
 
+      # Only the month-end schedule can be skipped (when tomorrow is not the 1st); every later step
+      # depends on the pipeline outcome and is skipped with it.
+      - name: Month-end guard
+        id: when
+        run: bash .github/scripts/month-end-guard.sh
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+
       - name: Restore stored data
+        if: steps.when.outputs.run == 'true'
         run: .github/scripts/data-branch.sh restore
 
       - name: Collect, evaluate and build dashboard data
         id: pipeline
+        if: steps.when.outputs.run == 'true'
         run: pnpm pipeline
         env:
           ANTHROPIC_ENTERPRISE_API_KEY: ${{ secrets.ANTHROPIC_ENTERPRISE_API_KEY }}

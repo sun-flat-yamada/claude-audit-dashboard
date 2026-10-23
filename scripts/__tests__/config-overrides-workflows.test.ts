@@ -10,6 +10,8 @@ const CONFIG_LOADING_WORKFLOWS = [
   'monthly-report.yml',
   'ack-alert.yml',
   'ledger-backfill.yml',
+  'ledger-seal.yml',
+  'ledger-verify.yml',
 ];
 
 describe('AUDIT_CONFIG_OVERRIDES wiring', () => {

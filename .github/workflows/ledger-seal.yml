@@ -1,0 +1,92 @@
+name: Ledger Seal
+
+# Seals the previous month of the monthly ledger (data/ledger/<yyyy-mm>/ on the data/audit branch)
+# on the 10th, after the Analytics revision period (#160): the whole month is re-fetched from the
+# APIs and compared with the ledger. A match seals it (MANIFEST.json sealed: true); a difference
+# leaves it unsealed and notifies. A manual run of an already sealed month re-verifies it (later
+# differences go to revisions/, the sealed files never change).
+on:
+  schedule:
+    # 10th of each month at 04:00 UTC (the previous month).
+    - cron: '0 4 10 * *'
+  workflow_dispatch:
+    inputs:
+      month:
+        description: 'Month to seal (yyyy-mm). Empty: the previous month. A sealed month is re-verified.'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+# Every workflow that writes the data/audit branch shares this group.
+concurrency:
+  group: audit-data
+  cancel-in-progress: false
+
+jobs:
+  seal:
+    name: Seal a ledger month
+    runs-on: ubuntu-latest
+    # Scheduled runs are opt-in (ENABLE_SCHEDULED_JOBS=true); the workflow file itself comes from
+    # the dispatched ref, so only main may run it.
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'schedule' || vars.ENABLE_SCHEDULED_JOBS == 'true')
+    # Analytics requests are paced to at most ~55 a minute: one month takes well under 10 minutes.
+    timeout-minutes: 60
+    # Optional JSON object merged over config/default.json (repository variable; docs/SETUP.md).
+    # Job-level so every step that loads the configuration sees the same settings.
+    env:
+      AUDIT_CONFIG_OVERRIDES: ${{ vars.AUDIT_CONFIG_OVERRIDES }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: ./.github/actions/setup
+        with:
+          build: build:collector
+
+      # The input reaches the script through the environment only and is checked against an
+      # allowlist; later steps read the validated output, never `inputs.*` directly.
+      - name: Validate manual inputs
+        id: inputs
+        run: bash .github/scripts/validate-ledger-inputs.sh
+        env:
+          MONTH: ${{ inputs.month }}
+
+      - name: Restore stored data
+        id: restore
+        run: .github/scripts/data-branch.sh restore
+
+      # Fails (after notifying) when the month stays unsealed; the attempt is still saved below.
+      - name: Seal the ledger month
+        id: seal
+        run: |
+          args=(--notify)
+          if [ -n "$MONTH" ]; then args+=(--month "$MONTH"); fi
+          pnpm ledger seal "${args[@]}"
+        env:
+          MONTH: ${{ steps.inputs.outputs.month }}
+          ANTHROPIC_ENTERPRISE_API_KEY: ${{ secrets.ANTHROPIC_ENTERPRISE_API_KEY }}
+          ANTHROPIC_COMPLIANCE_API_KEY: ${{ secrets.ANTHROPIC_COMPLIANCE_API_KEY }}
+          ANTHROPIC_ANALYTICS_API_KEY: ${{ secrets.ANTHROPIC_ANALYTICS_API_KEY }}
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+
+      # Saved also after a refused seal: ledger/STATUS.json records the attempt (OP-004) and the
+      # alert cooldown is kept in state.json.
+      - name: Save data to the data/audit branch
+        if: always() && steps.restore.outcome == 'success' && steps.seal.outcome != 'skipped'
+        run: |
+          .github/scripts/data-branch.sh save "chore: ledger seal $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+        env:
+          # Fork-safety: data-branch.sh refuses to save from a public repository.
+          REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
+          GH_TOKEN: ${{ github.token }}
