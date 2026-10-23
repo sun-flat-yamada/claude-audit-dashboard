@@ -5,3 +5,6 @@ export * from './ledger.js';
 export * from './manifest.js';
 export * from './reconcile.js';
 export * from './backfill.js';
+export * from './seal.js';
+export * from './verify.js';
+export * from './health.js';

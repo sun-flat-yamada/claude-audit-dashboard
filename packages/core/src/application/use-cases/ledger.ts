@@ -1,6 +1,7 @@
 import type { LedgerEntry, LedgerHasher } from '../../domain/ledger/entry.js';
 import { ledgerEntriesOf, mergeLedgerEntries } from '../../domain/ledger/ledger.js';
 import { snapshotBreakdownGaps, type BreakdownGap } from '../../domain/ledger/reconcile.js';
+import { revisionEntries } from '../../domain/ledger/seal.js';
 import type { AuditSnapshot } from '../../domain/model/snapshot.js';
 import type { LedgerRepository } from '../ports.js';
 
@@ -18,8 +19,10 @@ export interface LedgerUpdateResult {
   changed: string[];
   /** Months whose manifest was written. */
   manifests: string[];
-  /** Sealed months that new data would have touched (left unchanged; revisions are U6). */
+  /** Sealed months that new data touched (their files are left unchanged). */
   sealed: string[];
+  /** Entries that would have changed a sealed month, appended to its `revisions/` instead. */
+  revisions: LedgerRevisionNote[];
   /** Rows per dataset without a usable time (not recorded). */
   rejected: Record<string, number>;
   /**
@@ -27,6 +30,13 @@ export interface LedgerUpdateResult {
    * the total row (reported, never a failure; the newest snapshot's finding per day wins).
    */
   gaps: BreakdownGap[];
+}
+
+/** New revision entries of one sealed month's dataset. */
+export interface LedgerRevisionNote {
+  month: string;
+  dataset: string;
+  count: number;
 }
 
 /** New entries of the current batch: month -> dataset -> entries. */
@@ -64,16 +74,47 @@ function recordGaps(result: LedgerUpdateResult, snapshot: AuditSnapshot): void {
 const sorted = <T>(values: Iterable<[string, T]>): [string, T][] =>
   [...values].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
 
+/**
+ * Appends to `revisions/` the entries of `incoming` that would change the sealed file of
+ * `dataset` (merged by the kind's rule, so a repeated difference is stored once); the sealed file
+ * stays unchanged. Resolves the number of entries that are new to the revisions.
+ */
+export async function recordRevisions(
+  repository: LedgerRepository,
+  month: string,
+  dataset: string,
+  incoming: readonly LedgerEntry[],
+): Promise<number> {
+  const found = revisionEntries(dataset, await repository.read(month, dataset), incoming);
+  if (found.length === 0) return 0;
+  const held = await repository.readRevisions(month, dataset);
+  const fresh = revisionEntries(dataset, held, found);
+  if (fresh.length === 0) return 0;
+  await repository.writeRevisions(month, dataset, mergeLedgerEntries(dataset, [...held, ...found]));
+  return fresh.length;
+}
+
+async function flushSealed(
+  month: string,
+  byDataset: Map<string, LedgerEntry[]>,
+  repository: LedgerRepository,
+  result: LedgerUpdateResult,
+): Promise<void> {
+  if (!result.sealed.includes(month)) result.sealed.push(month);
+  for (const [dataset, incoming] of sorted(byDataset)) {
+    const count = await recordRevisions(repository, month, dataset, incoming);
+    if (count > 0) result.revisions.push({ month, dataset, count });
+  }
+}
+
 async function flushMonth(
   month: string,
   byDataset: Map<string, LedgerEntry[]>,
   repository: LedgerRepository,
   result: LedgerUpdateResult,
 ): Promise<void> {
-  if ((await repository.manifest(month))?.sealed) {
-    if (!result.sealed.includes(month)) result.sealed.push(month);
-    return;
-  }
+  if ((await repository.manifest(month))?.sealed)
+    return flushSealed(month, byDataset, repository, result);
   for (const [dataset, incoming] of sorted(byDataset)) {
     const merged = mergeLedgerEntries(dataset, [
       ...(await repository.read(month, dataset)),
@@ -105,6 +146,7 @@ export async function updateLedger(
     changed: [],
     manifests: [],
     sealed: [],
+    revisions: [],
     rejected: {},
     gaps: [],
   };

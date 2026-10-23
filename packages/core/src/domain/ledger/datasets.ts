@@ -13,11 +13,16 @@ const createdAt: LedgerKeyFn = (item) => String(item.createdAt ?? '');
 
 const STATE: LedgerDatasetSpec = { kind: 'state' };
 
+/** Datasets derived from the ledger itself; never recorded in it. */
+export const NON_LEDGER_DATASETS = ['ledgerHealth'] as const satisfies readonly DatasetName[];
+
+type LedgerDatasetName = Exclude<DatasetName, (typeof NON_LEDGER_DATASETS)[number]>;
+
 /**
- * The ledger kind of every dataset. The `Record<DatasetName, …>` type makes a new dataset fail
- * the type check until it is classified here (or registered with `registerLedgerDataset`).
+ * The ledger kind of every dataset. The `Record<…>` type makes a new dataset fail the type check
+ * until it is classified here (or listed in `NON_LEDGER_DATASETS`).
  */
-const BUILTIN_LEDGER_DATASETS: Readonly<Record<DatasetName, LedgerDatasetSpec>> = {
+const BUILTIN_LEDGER_DATASETS: Readonly<Record<LedgerDatasetName, LedgerDatasetSpec>> = {
   activities: { kind: 'event', time: createdAt },
   usage: { kind: 'daily', key: parts('date', 'dimension', 'key') },
   cost: { kind: 'daily', key: parts('date', 'dimension', 'key') },

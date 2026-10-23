@@ -15,8 +15,8 @@ import {
 } from '../model/optional-datasets.js';
 
 describe('optional dataset registration', () => {
-  it('keeps DATASET_NAMES on the 13 built-in datasets', () => {
-    expect(DATASET_NAMES).toHaveLength(13);
+  it('keeps DATASET_NAMES on the 14 built-in datasets', () => {
+    expect(DATASET_NAMES).toHaveLength(14);
     for (const name of OPTIONAL_DATASET_NAMES) expect(DATASET_NAMES).not.toContain(name);
   });
 
@@ -33,7 +33,7 @@ describe('optional dataset registration', () => {
       'chatProjectUsage',
       'memberActivityDaily',
     ]);
-    expect(ALL_DATASET_NAMES).toHaveLength(23);
+    expect(ALL_DATASET_NAMES).toHaveLength(24);
     for (const name of ALL_DATASET_NAMES) expect(isDatasetName(name)).toBe(true);
     expect(isDatasetName('unknownDataset')).toBe(false);
     expect(isOptionalDatasetName('members')).toBe(false);

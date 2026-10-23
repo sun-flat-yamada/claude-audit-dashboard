@@ -47,6 +47,8 @@ export * from './application/use-cases/alerts.js';
 export * from './application/use-cases/reports.js';
 export * from './application/use-cases/ledger.js';
 export * from './application/use-cases/ledger-backfill.js';
+export * from './application/use-cases/ledger-seal.js';
+export * from './application/use-cases/ledger-verify.js';
 export * from './application/presenters/dashboard-view.js';
 export * from './application/presenters/detail-view.js';
 export * from './application/presenters/monthly-report-view.js';
@@ -57,6 +59,7 @@ export * from './application/presenters/usage-matrix-view.js';
 export * from './application/presenters/time-point-summary.js';
 export * from './application/alerts-history.js';
 export * from './application/capacity-alert.js';
+export * from './application/ledger-alert.js';
 
 // ─── Contracts ───────────────────────────────────────────────────────────────
 export * from './contracts/index.js';
