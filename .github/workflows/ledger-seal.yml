@@ -4,7 +4,8 @@ name: Ledger Seal
 # on the 10th, after the Analytics revision period (#160): the whole month is re-fetched from the
 # APIs and compared with the ledger. A match seals it (MANIFEST.json sealed: true); a difference
 # leaves it unsealed and notifies. A manual run of an already sealed month re-verifies it (later
-# differences go to revisions/, the sealed files never change).
+# differences go to revisions/, the sealed files never change). With ledger.sink set (#161, off by
+# default), the sealed month is then copied to external storage and verified (pnpm ledger push).
 on:
   schedule:
     # 10th of each month at 04:00 UTC (the previous month).
@@ -19,6 +20,9 @@ on:
 
 permissions:
   contents: write
+  # GitHub OIDC token for the external storage of ledger.sink (#161): exchanged for a short-lived
+  # cloud token (Entra ID federated credential / Workload Identity Federation); no stored secret.
+  id-token: write
 
 # Every workflow that writes the data/audit branch shares this group.
 concurrency:
@@ -38,6 +42,15 @@ jobs:
     # Job-level so every step that loads the configuration sees the same settings.
     env:
       AUDIT_CONFIG_OVERRIDES: ${{ vars.AUDIT_CONFIG_OVERRIDES }}
+      # Identifiers of the ledger.sink storage (repository variables, not secrets; docs/SETUP.md).
+      LEDGER_SHAREPOINT_TENANT_ID: ${{ vars.LEDGER_SHAREPOINT_TENANT_ID }}
+      LEDGER_SHAREPOINT_CLIENT_ID: ${{ vars.LEDGER_SHAREPOINT_CLIENT_ID }}
+      LEDGER_SHAREPOINT_DRIVE_ID: ${{ vars.LEDGER_SHAREPOINT_DRIVE_ID }}
+      LEDGER_SHAREPOINT_FOLDER: ${{ vars.LEDGER_SHAREPOINT_FOLDER }}
+      LEDGER_GDRIVE_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.LEDGER_GDRIVE_WORKLOAD_IDENTITY_PROVIDER }}
+      LEDGER_GDRIVE_SERVICE_ACCOUNT: ${{ vars.LEDGER_GDRIVE_SERVICE_ACCOUNT }}
+      LEDGER_GDRIVE_DRIVE_ID: ${{ vars.LEDGER_GDRIVE_DRIVE_ID }}
+      LEDGER_GDRIVE_FOLDER_ID: ${{ vars.LEDGER_GDRIVE_FOLDER_ID }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -81,8 +94,31 @@ jobs:
           ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
           ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
 
-      # Saved also after a refused seal: ledger/STATUS.json records the attempt (OP-004) and the
-      # alert cooldown is kept in state.json.
+      # Copies the sealed month (and later revisions/) to ledger.sink and verifies the copy against
+      # MANIFEST.json; re-runs copy only what is missing. Logs one line and succeeds with the
+      # default sink none. Fails (after notifying) when the copy cannot be verified.
+      - name: Copy the sealed month to external storage
+        id: push
+        if: steps.seal.outcome == 'success'
+        run: |
+          args=(--notify)
+          if [ -n "$MONTH" ]; then args+=(--month "$MONTH"); fi
+          pnpm ledger push "${args[@]}"
+        env:
+          MONTH: ${{ steps.inputs.outputs.month }}
+          LEDGER_PIPELINE_KEY: ${{ secrets.LEDGER_PIPELINE_KEY }}
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+
+      # Saved also after a refused seal or a failed copy: ledger/STATUS.json records the attempt
+      # (OP-004), MANIFEST.json the verified copies, and the alert cooldown is kept in state.json.
       - name: Save data to the data/audit branch
         if: always() && steps.restore.outcome == 'success' && steps.seal.outcome != 'skipped'
         run: |

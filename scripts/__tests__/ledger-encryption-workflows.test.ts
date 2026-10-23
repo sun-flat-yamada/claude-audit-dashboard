@@ -13,6 +13,7 @@ const LEDGER_STEPS: readonly [string, string][] = [
   ['collect-audit.yml', 'Collect, evaluate and build dashboard data'],
   ['ledger-backfill.yml', 'Backfill the ledger'],
   ['ledger-seal.yml', 'Seal the ledger month'],
+  ['ledger-seal.yml', 'Copy the sealed month to external storage'],
   ['ledger-verify.yml', 'Verify the ledger'],
 ];
 

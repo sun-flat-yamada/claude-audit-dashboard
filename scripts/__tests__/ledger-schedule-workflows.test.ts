@@ -199,3 +199,53 @@ describe('ledger-seal.yml and ledger-verify.yml', () => {
     }
   });
 });
+
+describe('ledger-seal.yml external storage copy (#161)', () => {
+  const SINK_VARIABLES = [
+    'LEDGER_SHAREPOINT_TENANT_ID',
+    'LEDGER_SHAREPOINT_CLIENT_ID',
+    'LEDGER_SHAREPOINT_DRIVE_ID',
+    'LEDGER_SHAREPOINT_FOLDER',
+    'LEDGER_GDRIVE_WORKLOAD_IDENTITY_PROVIDER',
+    'LEDGER_GDRIVE_SERVICE_ACCOUNT',
+    'LEDGER_GDRIVE_DRIVE_ID',
+    'LEDGER_GDRIVE_FOLDER_ID',
+  ];
+
+  it('may request the OIDC token and keeps contents: write', () => {
+    assert.match(seal, /\npermissions:\n {2}contents: write\n(?: {2}#.*\n)* {2}id-token: write\n/);
+  });
+
+  it('passes the storage identifiers from repository variables (never secrets) at job level', () => {
+    const job = seal.slice(seal.indexOf('\n    env:\n'), seal.indexOf('\n    steps:\n') + 1);
+    assert.match(job, /AUDIT_CONFIG_OVERRIDES: \$\{\{ vars\.AUDIT_CONFIG_OVERRIDES \}\}/);
+    for (const name of SINK_VARIABLES) {
+      assert.match(job, new RegExp(`\\n {6}${name}: \\$\\{\\{ vars\\.${name} \\}\\}\\n`), name);
+      assert.doesNotMatch(seal, new RegExp(`secrets\\.${name}`), name);
+    }
+  });
+
+  it('copies after a successful seal and before the save, with the validated month', () => {
+    const step = stepOf(seal, 'Copy the sealed month to external storage');
+    assert.match(step, /if: steps\.seal\.outcome == 'success'/);
+    assert.match(step, /pnpm ledger push "\$\{args\[@\]\}"/);
+    assert.match(step, /args=\(--notify\)/);
+    assert.match(step, /MONTH: \$\{\{ steps\.inputs\.outputs\.month \}\}/);
+    assert.match(step, /SLACK_WEBHOOK_URL: \$\{\{ secrets\.SLACK_WEBHOOK_URL \}\}/);
+    assert.doesNotMatch(step, /ANTHROPIC_/);
+    const at = (name: string) => seal.indexOf(`- name: ${name}`);
+    assert.ok(at('Seal the ledger month') < at('Copy the sealed month to external storage'));
+    assert.ok(
+      at('Copy the sealed month to external storage') < at('Save data to the data/audit branch'),
+    );
+    const save = stepOf(seal, 'Save data to the data/audit branch');
+    assert.match(save, /REPOSITORY_VISIBILITY: \$\{\{ github\.event\.repository\.visibility \}\}/);
+    assert.match(save, /GH_TOKEN: \$\{\{ github\.token \}\}/);
+  });
+
+  it('lists the variables empty in .env.example', () => {
+    const example = readFileSync('.env.example', 'utf8');
+    for (const name of [...SINK_VARIABLES, 'LEDGER_SINK_DIR'])
+      assert.match(example, new RegExp(`^${name}=$`, 'm'), name);
+  });
+});
