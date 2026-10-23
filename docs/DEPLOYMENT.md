@@ -245,6 +245,31 @@ With `ENABLE_SCHEDULED_JOBS=true` three schedules keep the ledger final and comp
 
 Entries that arrive for a sealed month later (a revised value, a late activity) are kept apart in `ledger/<yyyy-mm>/revisions/` and listed in `MANIFEST.json`; review them when notified. The dashboard shows the state as rules OP-003 (Ledger Verification) and OP-004 (Ledger Month Sealing).
 
+#### Encryption at rest (#162, optional)
+
+The ledger is raw data. To keep it unreadable for anyone who can read `data/audit` but not the repository secrets (a fork of a fork that copied every branch, a mirror or storage with the wrong permissions), encrypt it. It is **off by default**.
+
+1. On your own machine (never on CI), create one key pair per person or vault that must be able to read the ledger, and the workflows' key:
+
+   ```bash
+   pnpm ledger keygen --out ~/secure/ledger-owner.key        # prints the public key cadl-pub-...
+   pnpm ledger keygen --pipeline --out ~/secure/pipeline.key  # the workflows' key
+   ```
+
+   Both refuse paths inside the data directory or the repository and never overwrite a file. Keep the private key files offline (password manager, hardware vault); they are never stored in GitHub.
+
+2. Add the content of `pipeline.key` (the `CADL-PIPELINE-...` line) as the Actions secret **`LEDGER_PIPELINE_KEY`**, then delete the file. Add the public keys to the repository variable `AUDIT_CONFIG_OVERRIDES`: `{"ledger":{"encryption":{"recipients":["cadl-pub-...","cadl-pub-..."]}}}`. The collection, backfill, seal and verify workflows pass the secret to the steps that read the ledger.
+3. From the next run on, every written file is `<dataset>.jsonl.gz.enc` (AES-256-GCM, the file key wrapped for each public key and the pipeline key; details in [BLUEPRINT.md](BLUEPRINT.md) section 6.5). `MANIFEST.json` keeps the hash of the plaintext (`sha256`, used by seal and verify) and adds the hash of the stored bytes (`encryptedSha256`).
+4. Encrypt the files written before: check out `data/audit` locally (`.github/scripts/data-branch.sh restore`), run `LEDGER_PIPELINE_KEY=... pnpm ledger encrypt` with the same `AUDIT_CONFIG_OVERRIDES`, and save it back (`.github/scripts/data-branch.sh save "chore: encrypt ledger"`). Sealed months stay sealed: their content and `sha256` do not change.
+5. The earlier plaintext versions remain in the git history of `data/audit`. Remove them with the yearly rotation below (create the new orphan branch after step 4).
+
+To read the ledger, decrypt it locally with a private key: `pnpm ledger decrypt --identity ~/secure/ledger-owner.key --out ~/ledger-plain [--month 2026-09]`. It writes `<yyyy-mm>/<dataset>.jsonl` and `MANIFEST.json`, checks every file against `sha256`, and refuses to run on CI or to write into the data directory or the repository. Delete the output when done.
+
+- **Adding or replacing a recipient**: update `recipients`, then `pnpm ledger encrypt --all` re-encrypts every file to the current list (also sealed months). A removed recipient can still read older copies in the git history.
+- **Rotating or recovering the pipeline key**: generate a new one (`pnpm ledger keygen --pipeline`), then locally run `LEDGER_PIPELINE_KEY=<new key> pnpm ledger encrypt --all --identity ~/secure/ledger-owner.key`: the files are read with your private key and re-encrypted to the recipients and the new pipeline key. Save, then replace the Actions secret. This also recovers a ledger whose pipeline key was lost.
+- **Recipients set without `LEDGER_PIPELINE_KEY`**: every ledger command stops before writing; `pnpm pipeline` only warns (the collection itself still succeeds). Snapshots under `data/snapshots/` are not encrypted.
+- Losing every private key and the pipeline key makes the ledger unreadable.
+
 ### Measuring
 
 ```bash

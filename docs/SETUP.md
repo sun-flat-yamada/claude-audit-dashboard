@@ -42,6 +42,7 @@ Missing scopes do not break collection: the affected datasets are reported as `u
 | `ANTHROPIC_ENTERPRISE_API_KEY`                                                             | Secret   | Yes      | The key from Step 1                                                                                                                                                    |
 | `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY` | Secret   | No       | Per-API overrides                                                                                                                                                      |
 | `ANTHROPIC_CONSOLE_ADMIN_API_KEY`                                                          | Secret   | No       | Console organization Admin key for the optional sources — see [Optional sources](#optional-sources-console-admin-api-and-claude-code-analytics)                        |
+| `LEDGER_PIPELINE_KEY`                                                                      | Secret   | No       | Only with ledger encryption: the workflows' key to read the encrypted ledger — see [Encrypting the ledger](#encrypting-the-ledger-optional)                            |
 | `SLACK_WEBHOOK_URL`                                                                        | Secret   | No       | Slack Incoming Webhook URL                                                                                                                                             |
 | `DISCORD_WEBHOOK_URL`                                                                      | Secret   | No       | Discord webhook URL                                                                                                                                                    |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`                                      | Secret   | No       | SMTP server (`SMTP_SECURE=true` is implied for port 465)                                                                                                               |
@@ -189,6 +190,21 @@ The run is slow on purpose: Analytics requests start at least 1.1 seconds apart 
 
 Details and remedies: [DEPLOYMENT.md](DEPLOYMENT.md) (_Sealing and verification_).
 
+### Encrypting the ledger (optional)
+
+The ledger holds raw data (e-mail and IP addresses). Encryption at rest (#162) is **off by default**; turn it on so that a copy of `data/audit` (a fork of a fork, a mirror, storage with the wrong permissions) is unreadable without your keys:
+
+1. Locally (refused on CI): `pnpm ledger keygen --out ~/secure/ledger-owner.key` prints a public key `cadl-pub-...` and writes the private key (`CADL-SECRET-...`, mode 0600) to the file. Repeat for each person who must be able to read the ledger. Keep the files offline; never commit them or store them in GitHub.
+2. `pnpm ledger keygen --pipeline --out ~/secure/pipeline.key`: store the `CADL-PIPELINE-...` line as the Actions secret `LEDGER_PIPELINE_KEY`, then delete the file. It lets the workflows read back what they wrote; it is not one of the private keys.
+3. Set the public keys in the repository variable `AUDIT_CONFIG_OVERRIDES`: `{"ledger":{"encryption":{"recipients":["cadl-pub-..."]}}}`.
+4. Encrypt the files written before with `pnpm ledger encrypt` on a local checkout of `data/audit` ([DEPLOYMENT.md](DEPLOYMENT.md), _Encryption at rest_).
+
+| Setting                        | Default | Meaning                                                                     |
+| ------------------------------ | ------- | --------------------------------------------------------------------------- |
+| `ledger.encryption.recipients` | `[]`    | Public keys every ledger file is encrypted to; empty leaves the files plain |
+
+To read it: `pnpm ledger decrypt --identity ~/secure/ledger-owner.key --out ~/ledger-plain [--month 2026-09]` (local only; the output directory must be outside the repository and the data directory). With recipients set but no `LEDGER_PIPELINE_KEY`, the ledger commands stop without writing and the collection only warns.
+
 ## Step 5: Tune the rules (optional)
 
 `config/default.json` — thresholds and switches (full list in [BLUEPRINT appendix A](BLUEPRINT.md#付録-a-設定スキーマ)):
@@ -256,6 +272,9 @@ pnpm ledger update      # record new snapshots in the ledger (idempotent); pnpm 
 pnpm ledger backfill --from 2026-01 [--to 2026-09] [--datasets usage,cost] [--force]   # past months from the APIs (within their retention), resumable
 pnpm ledger seal [--month 2026-09] [--notify]   # re-fetch a past month and seal it when it matches (default: the previous month)
 pnpm ledger verify [--notify] [--json]          # missing days, stale collection, sealed-month hashes (ledger/STATUS.json)
+pnpm ledger keygen --out <file> [--pipeline]    # local only: a recipient key pair (prints the public key) or the workflows' LEDGER_PIPELINE_KEY
+pnpm ledger encrypt [--all] [--identity <file>] # store the plain ledger files encrypted (--all: re-encrypt for new recipients / a new pipeline key)
+pnpm ledger decrypt --identity <file> --out <dir> [--month 2026-09]   # local only: decrypt with a private key, checked against MANIFEST.json
 pnpm build:data --snapshot <id>          # dashboard.json from a stored (e.g. restored) snapshot; pnpm build:detail accepts it too
 ```
 
