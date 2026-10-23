@@ -7,7 +7,7 @@ category: 'rules'
 type: 'specification'
 status: 'active'
 date: 2026-10-05
-updated: 2026-10-05
+updated: 2026-10-23
 lang: 'en'
 tags:
   - 'rules'
@@ -34,6 +34,7 @@ All AI agents operating in this workspace **MUST** adhere to the following non-n
      - Discord webhooks (`https://discord.com/api/webhooks/...`)
      - SMTP passwords and email credentials
      - Cloud keys (`AKIA...`, `AIza...`, OpenAI `sk-...`)
+     - Ledger encryption keys (`CADL-SECRET-...` recipient private keys, `CADL-PIPELINE-...` = `LEDGER_PIPELINE_KEY`; public keys `cadl-pub-...` are not secret)
 2. **Mock & Testing Credentials**:
    - If mock tokens or test data are required, you **MUST** use explicitly fake placeholders (e.g., `sk-ant-admin-mock000000000000000000000000`, `sk-ant-api-mock000000000000000000000000`).
    - Never use strings that resemble real high-entropy tokens.
