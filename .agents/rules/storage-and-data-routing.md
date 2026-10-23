@@ -5,7 +5,7 @@ category: 'rules'
 type: 'specification'
 status: 'active'
 date: 2026-10-05
-updated: 2026-10-06
+updated: 2026-10-23
 lang: 'en'
 tags:
   - 'rules'
@@ -50,7 +50,7 @@ data/audit        ← Orphan branch. Audit snapshots, reports and state (per for
 | Optional-source snapshots | `data/snapshots/<id>/{consoleWorkspaces,consoleApiKeys,consoleUsage,consoleCost,claudeCodeActivity}.json` (only with `sources.console.enabled` / `sources.claudeCode.enabled`; `claudeCodeActivity` rows are per user or per key name and are never published, aggregate-only)                                     | `data/audit` (orphan) | ❌ Never           |
 | Feature usage snapshots   | `data/snapshots/<id>/{skillUsage,connectorUsage,pluginUsage,chatProjectUsage}.json` (only with `sources.featureUsage.enabled`; range roll-ups per skill / connector / plugin / chat project, no user rows, no project creator; published only as the `features` aggregate of `dashboard.json`)                     | `data/audit` (orphan) | ❌ Never           |
 | Collector state           | `data/state.json` (cursors, projections, notifications incl. the alert send history)                                                                                                                                                                                                                               | `data/audit` (orphan) | ❌ Never           |
-| Monthly ledger            | `data/ledger/<yyyy-mm>/` (long-term retention, #154; gitignored and checked by `pnpm fork:verify`)                                                                                                                                                                                                                 | `data/audit` (orphan) | ❌ Never           |
+| Monthly ledger            | `data/ledger/<yyyy-mm>/<dataset>.jsonl.gz` + `MANIFEST.json` (long-term retention, #154; raw data incl. e-mail / IP addresses, never staged for Pages or `detail/`; written by `pnpm ledger update` at the end of `pipeline` and by `pnpm ledger bootstrap`; gitignored and checked by `pnpm fork:verify`)         | `data/audit` (orphan) | ❌ Never           |
 | Archived data             | `data/archive/<year>/<id>.json.gz`                                                                                                                                                                                                                                                                                 | `data/audit` (orphan) | ❌ Never           |
 
 ### Why Orphan Branch?
@@ -95,6 +95,7 @@ Locally, `pnpm dev` / `pnpm build:dashboard` stage `data/dashboard.json` when it
 - Raw snapshots: `retention.snapshotDays` (default 365), then `pnpm archive` moves them to `data/archive/<year>/` (gzip)
 - Archiving shrinks the working tree, **not the git history**: the archived snapshots' blobs stay in `data/audit` and the `.json.gz` files are added. `pnpm size --repo . --ref data/audit` measures the history (`git count-objects -v`, reachable size, growth per 30 days, blobs per dataset) against `capacity.*` in `config/default.json`; the collect workflow runs it before the save, notifies through the usual channels (key `capacity:<level>`, cooldown applies) and never fails the collection because of it (`--warn-only`). Bound the size with the yearly orphan-branch rotation in `docs/DEPLOYMENT.md`.
 - `pnpm cli restore <id|year> [--out <dir>]` writes `archive/<year>/<id>.json.gz` back to `snapshots/<id>/` (byte-identical, never overwriting); `pnpm build:data --snapshot <id>` / `pnpm build:detail --snapshot <id>` rebuild the dashboard and detail files from it.
+- Monthly ledger: retained indefinitely. One file per month and dataset with merge rules per kind (`event` keeps the first copy per id, `daily` keeps the newest `asOf` per date + breakdown, `rollup` keeps the latest per month + id, `state` adds a version only when the content hash changes); a month with `sealed: true` in its `MANIFEST.json` is never rewritten (details: `docs/BLUEPRINT.md` §6.5)
 - Compliance, weekly and monthly reports: retained indefinitely
 - Archived data: retained indefinitely
 - Anthropic Compliance API retains audit logs for 6 years, but this system stores independently for longer-term access

@@ -195,6 +195,8 @@ pnpm report:weekly
 pnpm report:monthly --month 2026-09   # also writes data/detail/monthly/ for the dashboard's monthly cost report
 pnpm size --repo . --ref data/audit      # size of the data/audit history against capacity.* in config/default.json
 pnpm restore 2024-05-01T06-00-00Z --out ./restored   # archive/<year>/<id>.json.gz back to snapshots/<id>/ (an id or a year)
+pnpm ledger bootstrap   # build the monthly ledger data/ledger/<yyyy-mm>/ once from snapshots/ and archive/ (raw data, data/audit only)
+pnpm ledger update      # record new snapshots in the ledger (idempotent); pnpm pipeline runs it as its last step
 pnpm build:data --snapshot <id>          # dashboard.json from a stored (e.g. restored) snapshot; pnpm build:detail accepts it too
 ```
 

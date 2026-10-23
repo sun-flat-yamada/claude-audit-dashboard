@@ -80,20 +80,21 @@ packages/
 │       │   ├── analysis/         Analyzer と組み込み分析
 │       │   ├── projections/      スナップショット間で状態を持つ導出データ (例: キー最終利用)
 │       │   ├── activity-window.ts  Activity Feed の取得窓と重複排除 (純粋関数)
+│       │   ├── ledger/           月次台帳の性質別マージ規則 (event / daily / rollup / state)、データセット登録、MANIFEST
 │       │   └── util/             日付・金額・マスク・集計
 │       ├── application/
 │       │   ├── ports.ts          外側が実装するインターフェース
 │       │   ├── registry.ts       Registry<T>
 │       │   ├── state.ts          コレクタ状態 (カーソル、投影、通知記録と送信履歴) のスキーマ
 │       │   ├── documents.ts      汎用レポート文書 (ReportDocument)
-│       │   ├── use-cases/        collect-snapshot / check-compliance / reports / alerts
+│       │   ├── use-cases/        collect-snapshot / check-compliance / reports / alerts / ledger
 │       │   └── presenters/       DashboardView への変換 (PII マスク)
 │       └── contracts/            UI 向け公開契約 (DashboardView v3 と zod スキーマ)
 ├── collector/                    @claude-audit/collector — Node 実行環境
 │   └── src/
 │       ├── adapters/
 │       │   ├── anthropic/        http-client, paginate, compliance-api, admin-api, analytics-api, collectors
-│       │   ├── storage/          file-store, repositories (決定的 JSON)
+│       │   ├── storage/          file-store, repositories (決定的 JSON), ledger (月次台帳 JSONL.gz)
 │       │   ├── notifiers/        channels (console, slack, discord), email, webhook (共通 POST)
 │       │   ├── renderers/        markdown, html, csv, json
 │       │   └── demo/             決定的な合成データソース (サンプル生成・テスト用)
@@ -241,12 +242,12 @@ export const inactiveMembers = defineRule({
 
 ### 7.2 その他
 
-| アダプタ  | 実装するポート                                                                          | 備考                                                                                                 |
-| --------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| storage   | `SnapshotRepository`, `ComplianceReportRepository`, `StateRepository`, `ArtifactWriter` | データセット単位ファイル、キー順固定の決定的 JSON、原子的書き込み、パス逸脱の拒否                    |
-| notifiers | `Notifier`                                                                              | console / Slack Incoming Webhook / Discord Webhook / SMTP (nodemailer)。未設定のチャネルは登録しない |
-| renderers | `DocumentRenderer`                                                                      | markdown / html / csv / json                                                                         |
-| demo      | `DatasetCollector`                                                                      | 固定シード・固定時刻の合成データ。`pnpm demo` でサンプルデータを生成し、テストのフィクスチャにも使う |
+| アダプタ  | 実装するポート                                                                                              | 備考                                                                                                                                                                                     |
+| --------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| storage   | `SnapshotRepository`, `ComplianceReportRepository`, `StateRepository`, `ArtifactWriter`, `LedgerRepository` | データセット単位ファイル、キー順固定の決定的 JSON、原子的書き込み、パス逸脱の拒否。台帳は `ledger/<yyyy-mm>/<dataset>.jsonl.gz` + `MANIFEST.json` (コーデック差し替え可、BLUEPRINT §6.5) |
+| notifiers | `Notifier`                                                                                                  | console / Slack Incoming Webhook / Discord Webhook / SMTP (nodemailer)。未設定のチャネルは登録しない                                                                                     |
+| renderers | `DocumentRenderer`                                                                                          | markdown / html / csv / json                                                                                                                                                             |
+| demo      | `DatasetCollector`                                                                                          | 固定シード・固定時刻の合成データ。`pnpm demo` でサンプルデータを生成し、テストのフィクスチャにも使う                                                                                     |
 
 ---
 
@@ -296,6 +297,7 @@ export const inactiveMembers = defineRule({
 4. 利用するルール・分析は `requires: ['newThing']` を宣言
 5. （必要に応じて）スナップショットの決定論的ソートキーを `registerStorageSortKey('newThing', fn)` で登録（未登録時は `id` 順）
 6. （テスト用）長期合成履歴の挙動を `registerSyntheticHistoryRule('newThing', { period, variant })` で登録
+7. 月次台帳での性質 (`event` / `daily` / `rollup` / `state`) とキーを `domain/ledger/datasets.ts` の表に 1 行追加する (表は `Record<DatasetName, …>` なので未分類のデータセットは型エラー)。外部からは `registerLedgerDataset('newThing', { kind, key, time })`
 
 **任意 (opt-in) のデータセット** にする場合 (既存の利用者に `unavailable` → OP-002 の fail という回帰を起こさないため):
 
@@ -342,7 +344,9 @@ export const inactiveMembers = defineRule({
 | `pnpm collect`           | `collect`           | スナップショット取得                                 | —                                |
 | `pnpm check:compliance`  | `check`             | 最新スナップショットを評価しレポート保存             | —                                |
 | `pnpm build:data`        | `dashboard`         | `data/dashboard.json` を生成                         | —                                |
-| `pnpm pipeline`          | `pipeline`          | collect → check → dashboard                          | `collect-audit.yml` (6 時間ごと) |
+| `pnpm pipeline`          | `pipeline`          | collect → check → dashboard → detail → ledger update | `collect-audit.yml` (6 時間ごと) |
+| `pnpm ledger update`     | `ledger update`     | 新しいスナップショットを月次台帳に納める (冪等)      | `pipeline` の最後 (非致命)       |
+| `pnpm ledger bootstrap`  | `ledger bootstrap`  | `snapshots/` と `archive/` から台帳を初期生成        | —                                |
 | `pnpm notify`            | `notify`            | アラートポリシーに従い通知                           | `collect-audit.yml`              |
 | `pnpm archive`           | `archive`           | 保持期間超過のスナップショットを圧縮                 | `collect-audit.yml` (commit 前)  |
 | `pnpm size`              | `size`              | `data/audit` のサイズ計測と `capacity.*` 閾値判定    | `collect-audit.yml` (非致命)     |

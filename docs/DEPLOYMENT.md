@@ -231,6 +231,10 @@ A downstream fork holds its own `data/audit`. When anyone forks **that** fork, G
 
 `data/audit` is a git branch, so its size only ever grows: a snapshot that `pnpm archive` moves to `archive/<year>/<id>.json.gz` stays in the history as the blobs it had before, and the `.json.gz` file is added on top (gzip output does not deduplicate or delta against other archives). **Archiving shrinks the working tree, not the repository.** To bound the repository size you rotate the branch (below). The numbers behind the defaults are in [CHANGE-PLAN.md](CHANGE-PLAN.md) section 9.4; they are measured on a synthetic tenant and must be re-validated with your own data.
 
+### Monthly ledger
+
+Besides the snapshots, `data/audit` holds the monthly ledger `data/ledger/<yyyy-mm>/` (#154): one `<dataset>.jsonl.gz` per month without duplicates (events once per id, daily rows once per day and breakdown with the newest value, state datasets only when they change) and a `MANIFEST.json` with counts and SHA-256 hashes. `pnpm pipeline` updates it as its last step (a failure is a warning; the next run catches up). Run `pnpm ledger bootstrap` once after upgrading to build it from the existing `snapshots/` and `archive/` (re-running it is harmless). The ledger is raw data (e-mail and IP addresses) and is never published to Pages. Rules and file format: [BLUEPRINT.md](BLUEPRINT.md) section 6.5.
+
 ### Measuring
 
 ```bash
