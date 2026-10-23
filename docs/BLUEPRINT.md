@@ -132,10 +132,11 @@ flowchart LR
 3. **Project** — 収集データから導出データを作る (例: Activity Feed の API 呼び出しからキーの最終利用)
 4. **Check** — ルールエンジンで評価し、コンプライアンスレポートを保存
 5. **Dashboard** — 集計済み・マスク済みの `dashboard.json` (契約 v3) を生成
-6. **Archive** — 保持期間を過ぎたスナップショットを gzip に移動
-7. **Notify** — アラートポリシーに合致する新しい結果を通知 (冷却時間付き)
-8. **Save** — `data/audit` に保存 (main には触れない)
-9. **Deploy** — `PAGES_DATA_SOURCE=live` の場合だけライブデータで Pages を再構築
+6. **Ledger** — 新しいスナップショットを月次台帳 `data/ledger/<yyyy-mm>/` に重複なく納める (§6.5。失敗しても収集は失敗させず、次回が追いつく)
+7. **Archive** — 保持期間を過ぎたスナップショットを gzip に移動
+8. **Notify** — アラートポリシーに合致する新しい結果を通知 (冷却時間付き)
+9. **Save** — `data/audit` に保存 (main には触れない)
+10. **Deploy** — `PAGES_DATA_SOURCE=live` の場合だけライブデータで Pages を再構築
 
 ---
 
@@ -162,7 +163,7 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 | 実効設定 (許可リスト)    | `data/detail/config.json` (シークレット・URL・メール・パスを含まない。`pnpm build:detail` が生成)                                                                                                                                                                             | `data/audit` | しない          |
 | 月次コスト公開データ     | `data/detail/monthly/{index,<id>}.json` (個人単位データなし。`report monthly` が生成)                                                                                                                                                                                         | `data/audit` | しない          |
 | コレクタ状態             | `data/state.json` (カーソル、投影状態、通知記録と送信履歴)                                                                                                                                                                                                                    | `data/audit` | しない          |
-| 月次台帳                 | `data/ledger/<yyyy-mm>/` (長期保管、#154。gitignore 済みで `pnpm fork:verify` が検査)                                                                                                                                                                                         | `data/audit` | しない          |
+| 月次台帳                 | `data/ledger/<yyyy-mm>/<dataset>.jsonl.gz` + `MANIFEST.json` (長期保管、#154、§6.5。生データ: Pages / detail には出さない。gitignore 済みで `pnpm fork:verify` が検査)                                                                                                        | `data/audit` | しない          |
 | アーカイブ               | `data/archive/<year>/<id>.json.gz`                                                                                                                                                                                                                                            | `data/audit` | しない          |
 | アラート履歴             | `data/detail/alerts.json` (ID・送信時刻・重大度・チャンネル種別・ルール ID・伏せ字処理済みタイトル・確認者ラベルのみ。`pnpm build:detail` が生成)                                                                                                                             | `data/audit` | しない          |
 | 時点サマリー (F-015)     | `data/summaries/<snapshot id>.json` (判定したスナップショットごとのスコア・評価済み件数・ルールとデータセットごとのステータス・KPI 値のみ。証跡・ラベル・個人単位データなし。`pnpm check` がレポートの隣に書き、スナップショットのアーカイブ後も残る。Pages には直接出さない) | `data/audit` | しない          |
@@ -290,6 +291,7 @@ interface DatasetMeta {
 | スナップショット         | 365 日を過ぎたら `archive/<year>/` へ gzip (在庫は `detail/archive.json`、§9) | `retention.snapshotDays` |
 | コンプライアンスレポート | 保持 (履歴はダッシュボードのスコア推移に使用)                                 | —                        |
 | Activity                 | スナップショットに差分として保持                                              | —                        |
+| 月次台帳                 | 無期限 (アーカイブ後も月単位で重複なく残る。§6.5)                             | —                        |
 | `data/audit` のサイズ    | 総量 1,024 MiB・30 日あたり増分 50 MiB を超える前 (80%) で警告 (§6.4)         | `capacity.*`             |
 
 ### 6.4 長期運用: 容量計測・復元・ローテーション
@@ -300,6 +302,26 @@ interface DatasetMeta {
 - **判定** (純粋関数 `judgeCapacity()`、`core/domain/capacity/capacity.ts`): 総量と 30 日あたり増分を `capacity.maxTotalMiB` / `maxMonthlyGrowthMiB` と比べ、`limit * warnRatio` 以上で警告、超過で `exceeded`。0 でその判定を無効化。通知は既存の経路 (`capacityAlert()` → `dispatchAlert`、キー `capacity:<level>`、`notifications.cooldownMinutes` の冷却) で、新しいコンプライアンスルールは追加しない。計測や通知の失敗は警告として扱い (`--warn-only`、ワークフローのステップは `continue-on-error`)、収集を失敗させない。
 - **復元** (`pnpm cli restore <id|year> [--out <dir>]`): `archive/<year>/<id>.json.gz` を展開・検証し (id がファイル名と一致、スキーマ v2)、収集時と同じライタで `snapshots/<id>/` に書く (全データセットがバイト単位で一致)。既存のスナップショットは上書きせず、アーカイブも変更しない。`pnpm build:data --snapshot <id>` / `pnpm build:detail --snapshot <id>` が復元したスナップショットから `dashboard.json` と詳細ファイルを再生成する (保存済みレポートが無ければその時点でルールをメモリ上で評価)。
 - **検証手段**: テストは `src/__tests__/synthetic-history.ts` が固定クロックでデモ合成テナントから任意日数 × 6 時間間隔の履歴を作り (データセットごとに変化頻度が異なる)、一時 git リポジトリにコミットごとに記録する (`git fast-import`)。`collect-audit.yml` の手動実行には `retention_days` (保持日数の上書き) と `dry_run` (通知・保存なし) があり、環境変数経由で厳格に検証する。
+
+### 6.5 月次台帳 (#154 U3)
+
+スナップショット (収集 1 回 = 1 件) とは別に、月単位で重複のない記録を `data/ledger/<yyyy-mm>/` に持つ。月境界は UTC。ファイルは `<dataset>.jsonl.gz` (1 行 1 エントリ、キー順固定の正規化 JSON、キーで整列、gzip) と `MANIFEST.json`。台帳は生データ (メールアドレス・IP を含む) であり、`data/audit` にだけ保存し、Pages / `detail/` には出さない。
+
+| 性質 (`LedgerKind`) | データセット                                                                                                                     | 一意キー                                                                     | 振り分ける月          | 同じキーが来たとき                                    |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------- | ----------------------------------------------------- |
+| `event`             | `activities`                                                                                                                     | `id`                                                                         | `createdAt` の UTC 月 | 初出 (収集時刻が早い方) を保持                        |
+| `daily`             | `usage`, `cost`, `adoption`, `consoleUsage`, `consoleCost`, `claudeCodeActivity`                                                 | `date` + `dimension` + `key` (任意データセットは workspace / model などの組) | `date` の月           | `asOf` (無ければ収集時刻) が新しい方で上書き          |
+| `rollup`            | `memberActivity`, `credentialUsage`, `skillUsage`, `connectorUsage`, `pluginUsage`, `chatProjectUsage`                           | 月 + 対象 ID                                                                 | 収集時刻の月          | 新しい収集で上書き                                    |
+| `state`             | `organizations`, `members`, `invites`, `groups`, `settings`, `credentials`, `spendLimits`, `consoleWorkspaces`, `consoleApiKeys` | `validFrom` (= 収集時刻)                                                     | 収集時刻の月          | 内容ハッシュ (SHA-256) が直前の版と同じなら記録しない |
+
+- エントリは `{ key, recordedAt, asOf?, validFrom?, hash?, window?, item }`。`state` の `item` はデータセット全体 (行は正規化 JSON 順。並び替えだけでは新しい版にならない)。各月は自分の期首の版から始まる (月単位で封印・転送できるように)。
+- coverage が `ok` のデータセットだけを納める (`unavailable` / `error` は欠落であり、空の状態として記録しない)。日付の無い行は納めずに件数を警告する。
+- マージ規則はすべて可換かつ冪等 (同点は収集時刻、次に正規化 JSON で決める)。入力の順序・分割・重複に関係なく、同じスナップショットの集合から同じバイト列になる。内容が変わらないファイルは書き直さない。
+- `MANIFEST.json`: `schemaVersion` 1、`month`、`sealed: false`、`lastRecordedAt`、データセットごとの `kind`・`count`・`sha256` (展開後の JSON Lines のハッシュ)・`window` (エントリが覆う期間)。ファイルの内容だけから決まる (時計を読まない)。`sealed: true` の月は `update` / `bootstrap` が変更せず警告する (封印と `revisions/` は U6)。
+- `pnpm ledger update [--snapshot <id>]`: 台帳の最新 `lastRecordedAt` 以降に保存されたスナップショットを納める (前回失敗した分も追いつく。台帳が空なら最新の 1 件)。`pipeline` の最後のステップで、失敗は警告に留める。
+- `pnpm ledger bootstrap`: `archive/<year>/*.json.gz` と `snapshots/` の全スナップショットを ID 順に (120 件ごとに書き出して) 納める。何度実行しても結果は同じ。
+- 読めないファイル・マニフェストがあれば処理を止め、上書きしない。
+- 規則は `@claude-audit/core` の `domain/ledger/` (純粋関数、データセットと性質の対応はレジストリ `registerLedgerDataset`)、`updateLedger` ユースケースと `LedgerRepository` ポート。ファイル形式は collector の `FsLedgerRepository` (`adapters/storage/ledger.ts`、差し替え可能なコーデック `LedgerCodec`)。`pnpm size` は台帳の blob 数とサイズも表示する (総量にも含まれる)。
 
 ---
 
@@ -526,7 +548,7 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 3、zod
 | ワークフロー         | トリガー                                                                     | 内容                                                                                       |
 | -------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `ci.yml`             | push / PR (main)                                                             | fork:verify、lint、typecheck、format:check、test、build、`pnpm audit --audit-level=high`   |
-| `collect-audit.yml`  | 6 時間ごと (要 `ENABLE_SCHEDULED_JOBS`) / 手動 (`retention_days`, `dry_run`) | restore → pipeline → archive → notify → size (非致命) → save                               |
+| `collect-audit.yml`  | 6 時間ごと (要 `ENABLE_SCHEDULED_JOBS`) / 手動 (`retention_days`, `dry_run`) | restore → pipeline (末尾で ledger update) → archive → notify → size (非致命) → save        |
 | `weekly-report.yml`  | 毎週月曜 09:00 UTC (同上) / 手動                                             | restore → `report:weekly --notify` → save                                                  |
 | `monthly-report.yml` | 毎月 1 日 03:00 UTC (同上) / 手動 (対象月指定可)                             | restore → `report:monthly --notify` → save                                                 |
 | `deploy-pages.yml`   | main への push、収集完了 (live 時のみ)、手動                                 | サンプルまたはライブデータでダッシュボードをビルドしデプロイ                               |
