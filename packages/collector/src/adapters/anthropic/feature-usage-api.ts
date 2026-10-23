@@ -6,9 +6,9 @@ import type {
   PluginUsage,
   SkillUsage,
 } from '@claude-audit/core';
-import { addDays, laterOf, startOfUtcDay, toIsoDate } from '@claude-audit/core';
+import { addDays, laterOf, startOfUtcDay, toIsoDate, type DateRange } from '@claude-audit/core';
 import { z } from 'zod';
-import { ANALYTICS_EPOCH } from './analytics-api.js';
+import { ANALYTICS_EPOCH, dateWindow, endingDate } from './analytics-api.js';
 import type { HttpClient } from './http-client.js';
 import { collectTokenPages, parseResponse, tokenPage } from './paginate.js';
 
@@ -156,46 +156,76 @@ const toProject = (r: z.output<typeof projectSchema>): ChatProjectUsage => ({
   createdAt: r.created_at ?? null,
 });
 
+/** Path, row schema and mapper of each feature endpoint. */
+const FEATURES = {
+  skills: { path: FEATURE_PATHS.skills, schema: skillSchema, map: toSkill },
+  connectors: { path: FEATURE_PATHS.connectors, schema: connectorSchema, map: toConnector },
+  plugins: { path: FEATURE_PATHS.plugins, schema: pluginSchema, map: toPlugin },
+  projects: { path: FEATURE_PATHS.projects, schema: projectSchema, map: toProject },
+} as const;
+
+type FeatureKind = keyof typeof FEATURES;
+
+/** Rows of each feature endpoint. */
+export interface FeatureRows {
+  skills: SkillUsage;
+  connectors: ConnectorUsage;
+  plugins: PluginUsage;
+  projects: ChatProjectUsage;
+}
+
 /**
  * Feature adoption endpoints of the Claude Enterprise Analytics API (`read:analytics`, the
  * Analytics key). Each list is a range roll-up: one row per skill / connector / plugin / chat
- * project over `starting_date` .. today (`ending_date` omitted, so the API uses today), paged with
- * `page` / `next_page`. No `group_by[]`: rows never carry a user.
+ * project over `starting_date` .. `ending_date` (omitted when the range reaches today, so the API
+ * uses today), paged with `page` / `next_page`. No `group_by[]`: rows never carry a user.
  */
 export class FeatureUsageApi {
   constructor(private readonly http: HttpClient) {}
 
-  private async rollup<S extends z.ZodType, T>(
-    path: string,
-    schema: S,
-    map: (row: z.output<S>) => T,
-    lookbackDays: number,
+  /** The roll-up of one endpoint over `range` (at most 366 days; ledger backfill, #159). */
+  async rollup<K extends FeatureKind>(
+    kind: K,
+    range: DateRange,
     now: Date,
-  ): Promise<CollectResult<T[]>> {
-    const start = laterOf(startOfUtcDay(addDays(now, -lookbackDays)), ANALYTICS_EPOCH);
+  ): Promise<CollectResult<FeatureRows[K][]>> {
+    const { path, schema, map } = FEATURES[kind];
+    const start = toIsoDate(laterOf(startOfUtcDay(range.start), ANALYTICS_EPOCH));
+    const ending = endingDate(range.end, now);
     const rows = await collectTokenPages(async (page) =>
       parseResponse(
         tokenPage(schema),
-        await this.http.getJson(path, { starting_date: toIsoDate(start), limit: 1000, page }),
+        await this.http.getJson(path, {
+          starting_date: start,
+          ending_date: ending,
+          limit: 1000,
+          page,
+        }),
         path,
       ),
     );
-    return { items: rows.map(map), window: { from: start.toISOString(), to: now.toISOString() } };
+    const items = rows.map((row) => (map as (r: unknown) => FeatureRows[K])(row));
+    return { items, window: dateWindow(start, ending, now) };
+  }
+
+  /** The last `lookbackDays` full days plus today. */
+  private recent<K extends FeatureKind>(kind: K, lookbackDays: number, now: Date) {
+    return this.rollup(kind, { start: startOfUtcDay(addDays(now, -lookbackDays)), end: now }, now);
   }
 
   skills(lookbackDays: number, now: Date) {
-    return this.rollup(FEATURE_PATHS.skills, skillSchema, toSkill, lookbackDays, now);
+    return this.recent('skills', lookbackDays, now);
   }
 
   connectors(lookbackDays: number, now: Date) {
-    return this.rollup(FEATURE_PATHS.connectors, connectorSchema, toConnector, lookbackDays, now);
+    return this.recent('connectors', lookbackDays, now);
   }
 
   plugins(lookbackDays: number, now: Date) {
-    return this.rollup(FEATURE_PATHS.plugins, pluginSchema, toPlugin, lookbackDays, now);
+    return this.recent('plugins', lookbackDays, now);
   }
 
   projects(lookbackDays: number, now: Date) {
-    return this.rollup(FEATURE_PATHS.projects, projectSchema, toProject, lookbackDays, now);
+    return this.recent('projects', lookbackDays, now);
   }
 }

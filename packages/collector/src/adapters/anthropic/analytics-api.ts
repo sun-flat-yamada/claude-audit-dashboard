@@ -153,6 +153,19 @@ const stringOrNull = (value: unknown): string | null => (typeof value === 'strin
 
 const clampStart = (date: Date): Date => laterOf(date, ANALYTICS_EPOCH);
 
+/**
+ * `ending_date` (exclusive, `YYYY-MM-DD`) of a date-granular range: the end date when the range
+ * ends before today, otherwise undefined (the parameter is omitted and the API uses today).
+ */
+export const endingDate = (end: Date, now: Date): string | undefined =>
+  end.getTime() < startOfUtcDay(now).getTime() ? toIsoDate(startOfUtcDay(end)) : undefined;
+
+/** The period a date-granular request covered: its dates, or up to `now` without an end date. */
+export const dateWindow = (start: string, ending: string | undefined, now: Date) => ({
+  from: `${start}T00:00:00.000Z`,
+  to: ending ? `${ending}T00:00:00.000Z` : now.toISOString(),
+});
+
 /** Consecutive windows of at most `days` days that cover `range` exactly (none when it is empty). */
 export function splitRange(range: DateRange, days = MAX_REPORT_RANGE_DAYS): DateRange[] {
   const windows: DateRange[] = [];
@@ -195,12 +208,26 @@ export class AnalyticsApi {
    * Range roll-up: one row per member with `last_activity_date` and the per-product metric blocks
    * (mapped to `engagement` when any is present; activity and last-active day do not depend on it).
    */
-  async listUserActivity(from: Date, now: Date): Promise<CollectResult<MemberActivity[]>> {
-    const start = toIsoDate(clampStart(from));
+  listUserActivity(from: Date, now: Date): Promise<CollectResult<MemberActivity[]>> {
+    return this.listUserActivityIn({ start: from, end: now }, now);
+  }
+
+  /**
+   * The roll-up over `range` (`starting_date` .. `ending_date`, at most 366 days); a range that
+   * reaches today omits `ending_date`, so the API uses today (ledger backfill, #159).
+   */
+  async listUserActivityIn(range: DateRange, now: Date): Promise<CollectResult<MemberActivity[]>> {
+    const start = toIsoDate(clampStart(range.start));
+    const ending = endingDate(range.end, now);
     const rows = await collectTokenPages(async (page) =>
       parseResponse(
         tokenPage(userActivitySchema),
-        await this.http.getJson(PATHS.users, { starting_date: start, limit: 1000, page }),
+        await this.http.getJson(PATHS.users, {
+          starting_date: start,
+          ending_date: ending,
+          limit: 1000,
+          page,
+        }),
         PATHS.users,
       ),
     );
@@ -208,14 +235,13 @@ export class AnalyticsApi {
       const activity = memberActivityOf(row);
       return activity ? [activity] : [];
     });
-    return { items, window: { from: `${start}T00:00:00.000Z`, to: now.toISOString() } };
+    return { items, window: dateWindow(start, ending, now) };
   }
 
   async listSummaries(range: DateRange, now: Date): Promise<CollectResult<AdoptionDay[]>> {
-    const endsInPast = range.end < startOfUtcDay(now);
     const query: Query = {
       starting_date: toIsoDate(clampStart(range.start)),
-      ending_date: endsInPast ? toIsoDate(range.end) : undefined,
+      ending_date: endingDate(range.end, now),
     };
     const body = parseResponse(
       tokenPage(summarySchema),

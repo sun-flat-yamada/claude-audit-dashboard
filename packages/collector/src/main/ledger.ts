@@ -8,6 +8,7 @@ import {
 import { allArchivedIds, readArchived } from '../adapters/storage/archive.js';
 import { FsLedgerRepository, sha256Hex } from '../adapters/storage/ledger.js';
 import type { Container } from './container.js';
+import { ledgerBackfill, parseBackfillArgs } from './ledger-backfill.js';
 
 /** Snapshots merged in memory per batch during a bootstrap (about one month at 6-hour runs). */
 export const BOOTSTRAP_BATCH = 120;
@@ -71,14 +72,27 @@ function report(c: Container, result: LedgerUpdateResult): void {
     );
 }
 
-const LEDGER_USAGE = 'ledger <update [--snapshot <id>]|bootstrap>';
+const LEDGER_USAGE =
+  'ledger <update [--snapshot <id>]|bootstrap|backfill --from <yyyy-mm> [--to <yyyy-mm>] [--datasets a,b] [--force]>';
+
+/**
+ * Records the stored snapshots first, then backfills: the backfilled entries carry the backfill
+ * time, from which the next `ledger update` continues, so nothing collected before it may be left.
+ */
+async function backfill(c: Container, args: readonly string[]): Promise<void> {
+  const request = parseBackfillArgs(c, args);
+  report(c, await ledgerUpdate(c));
+  await ledgerBackfill(c, request);
+}
 
 export const ledgerCommand = {
   name: 'ledger',
   usage: LEDGER_USAGE,
-  description: 'Merge snapshots into the monthly ledger (data/ledger/<yyyy-mm>/, data/audit only)',
+  description:
+    'Merge snapshots into the monthly ledger, or backfill it from the APIs (data/ledger/<yyyy-mm>/, data/audit only)',
   async run(c: Container, args: readonly string[]): Promise<void> {
     const [action] = args;
+    if (action === 'backfill') return backfill(c, args.slice(1));
     const at = args.indexOf('--snapshot');
     const snapshotId = at >= 0 ? args[at + 1] : undefined;
     if (at >= 0 && (!snapshotId || snapshotId.startsWith('--')))
