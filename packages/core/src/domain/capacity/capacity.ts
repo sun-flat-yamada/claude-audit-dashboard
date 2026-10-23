@@ -67,6 +67,12 @@ export interface DatasetFootprint {
   bytes: number;
 }
 
+/** Distinct blobs under `ledger/` (monthly ledger files and manifests) in the whole history. */
+export interface LedgerFootprint {
+  blobs: number;
+  bytes: number;
+}
+
 export interface ArchiveFootprint {
   snapshots: number;
   bytes: number;
@@ -88,6 +94,8 @@ export interface RepoSizeMeasurement {
   /** Distinct snapshot ids ever committed (manifests). */
   snapshots: number;
   datasets: DatasetFootprint[];
+  /** The monthly ledger (`ledger/<yyyy-mm>/`); also part of `reachableBytes`. */
+  ledger: LedgerFootprint;
   archive: ArchiveFootprint;
 }
 

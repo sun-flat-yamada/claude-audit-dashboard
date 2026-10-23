@@ -1,4 +1,6 @@
 import type { ComplianceReport, Severity } from '../domain/compliance/types.js';
+import type { LedgerEntry } from '../domain/ledger/entry.js';
+import type { LedgerManifest } from '../domain/ledger/manifest.js';
 import type { DatasetMap, DatasetName, TimeWindow } from '../domain/model/dataset.js';
 import type { AuditSnapshot } from '../domain/model/snapshot.js';
 import type { DateRange } from '../domain/util/time.js';
@@ -54,6 +56,23 @@ export interface ComplianceReportRepository {
   latest(): Promise<ComplianceReport | null>;
   /** Most recent reports, oldest first. */
   history(limit: number): Promise<ComplianceReport[]>;
+}
+
+/**
+ * The monthly ledger (`ledger/<yyyy-mm>/<dataset>.<ext>` + `MANIFEST.json`). Files hold entries
+ * in the order `mergeLedgerEntries` returns; an unreadable file must make `read` throw (never
+ * treat it as empty, or the next write would overwrite it).
+ */
+export interface LedgerRepository {
+  /** Months that have a ledger directory, oldest first. */
+  months(): Promise<string[]>;
+  /** Stored entries of one month file; empty when the file does not exist. */
+  read(month: string, dataset: string): Promise<LedgerEntry[]>;
+  /** Stores one month file; resolves true when its content changed. */
+  write(month: string, dataset: string, entries: readonly LedgerEntry[]): Promise<boolean>;
+  manifest(month: string): Promise<LedgerManifest | null>;
+  /** Recomputes `MANIFEST.json` from the month's files; resolves true when it changed. */
+  refreshManifest(month: string): Promise<boolean>;
 }
 
 export interface StateRepository {

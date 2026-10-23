@@ -28,6 +28,7 @@ function measurement(over: Partial<RepoSizeMeasurement> = {}): RepoSizeMeasureme
     windowGrowthBytes: 2 * MIB,
     snapshots: 10,
     datasets: [],
+    ledger: { blobs: 0, bytes: 0 },
     archive: { snapshots: 0, bytes: 0, years: 0 },
     ...over,
   };

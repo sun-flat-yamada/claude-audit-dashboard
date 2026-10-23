@@ -24,6 +24,9 @@ export * from './domain/analysis/analyzers.js';
 export * from './domain/projections/index.js';
 export * from './domain/activity-window.js';
 
+// ─── Domain: monthly ledger ──────────────────────────────────────────────────
+export * from './domain/ledger/index.js';
+
 // ─── Domain: capacity (data branch size) ─────────────────────────────────────
 export * from './domain/capacity/capacity.js';
 
@@ -42,6 +45,7 @@ export * from './application/use-cases/collect-snapshot.js';
 export * from './application/use-cases/check-compliance.js';
 export * from './application/use-cases/alerts.js';
 export * from './application/use-cases/reports.js';
+export * from './application/use-cases/ledger.js';
 export * from './application/presenters/dashboard-view.js';
 export * from './application/presenters/detail-view.js';
 export * from './application/presenters/monthly-report-view.js';
