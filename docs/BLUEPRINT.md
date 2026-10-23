@@ -163,7 +163,7 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 | 実効設定 (許可リスト)    | `data/detail/config.json` (シークレット・URL・メール・パスを含まない。`pnpm build:detail` が生成)                                                                                                                                                                             | `data/audit` | しない          |
 | 月次コスト公開データ     | `data/detail/monthly/{index,<id>}.json` (個人単位データなし。`report monthly` が生成)                                                                                                                                                                                         | `data/audit` | しない          |
 | コレクタ状態             | `data/state.json` (カーソル、投影状態、通知記録と送信履歴)                                                                                                                                                                                                                    | `data/audit` | しない          |
-| 月次台帳                 | `data/ledger/<yyyy-mm>/<dataset>.jsonl.gz` + `MANIFEST.json` (長期保管、#154、§6.5。生データ: Pages / detail には出さない。gitignore 済みで `pnpm fork:verify` が検査)                                                                                                        | `data/audit` | しない          |
+| 月次台帳                 | `data/ledger/<yyyy-mm>/<dataset>.jsonl.gz` + `MANIFEST.json` (封印後の差分は `revisions/`、検査と封印の状態は `data/ledger/STATUS.json`) (長期保管、#154、§6.5。生データ: Pages / detail には出さない。gitignore 済みで `pnpm fork:verify` が検査)                            | `data/audit` | しない          |
 | アーカイブ               | `data/archive/<year>/<id>.json.gz`                                                                                                                                                                                                                                            | `data/audit` | しない          |
 | アラート履歴             | `data/detail/alerts.json` (ID・送信時刻・重大度・チャンネル種別・ルール ID・伏せ字処理済みタイトル・確認者ラベルのみ。`pnpm build:detail` が生成)                                                                                                                             | `data/audit` | しない          |
 | 時点サマリー (F-015)     | `data/summaries/<snapshot id>.json` (判定したスナップショットごとのスコア・評価済み件数・ルールとデータセットごとのステータス・KPI 値のみ。証跡・ラベル・個人単位データなし。`pnpm check` がレポートの隣に書き、スナップショットのアーカイブ後も残る。Pages には直接出さない) | `data/audit` | しない          |
@@ -174,7 +174,7 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 
 `data/audit` への読み書きは `.github/scripts/data-branch.sh` (`restore` / `save`) に集約する。`save` は直前の `restore` を必須とし、アーカイブによる削除も反映する。サンプルと `.gitkeep` は保存しない。書き込むワークフローは同じ `concurrency` グループ (`audit-data`) で直列化する。
 
-データブランチの保護 (#155): `save` は `REPOSITORY_VISIBILITY` が `public` (または `private` / `internal` 以外) のとき `::error::` を出して非 0 で終了する。書き込む全ワークフロー (`collect-audit.yml`、`weekly-report.yml`、`monthly-report.yml`、`ack-alert.yml`、`ledger-backfill.yml`) は save ステップに `REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}` と `GH_TOKEN: ${{ github.token }}` を渡す。Actions 内で値が空 (`schedule` などペイロードにリポジトリ情報が無い場合) は `gh api repos/<owner>/<repo>` で取得し、判別できなければ保存しない (fail closed)。Actions 外で未設定ならローカル実行として従来どおり。削除・強制 push は `data/**` のリポジトリルールセットで防ぎ、fork の fork は "Copy the `main` branch only" で作る (手順は `docs/DEPLOYMENT.md`)。
+データブランチの保護 (#155): `save` は `REPOSITORY_VISIBILITY` が `public` (または `private` / `internal` 以外) のとき `::error::` を出して非 0 で終了する。書き込む全ワークフロー (`collect-audit.yml`、`weekly-report.yml`、`monthly-report.yml`、`ack-alert.yml`、`ledger-backfill.yml`、`ledger-seal.yml`、`ledger-verify.yml`) は save ステップに `REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}` と `GH_TOKEN: ${{ github.token }}` を渡す。Actions 内で値が空 (`schedule` などペイロードにリポジトリ情報が無い場合) は `gh api repos/<owner>/<repo>` で取得し、判別できなければ保存しない (fail closed)。Actions 外で未設定ならローカル実行として従来どおり。削除・強制 push は `data/**` のリポジトリルールセットで防ぎ、fork の fork は "Copy the `main` branch only" で作る (手順は `docs/DEPLOYMENT.md`)。
 
 ### 4.3 サンプルとライブの分離
 
@@ -232,8 +232,9 @@ data/audit    orphan ブランチ。ライブのスナップショット・レ�
 | `usage` / `cost`  | Analytics `usage_report` / `cost_report`                                 | 日次 × (総計 / product / model / rbac_group)                                       |
 | `adoption`        | Analytics `summaries`                                                    | DAU / WAU / MAU、シート、保留招待、製品別アクティブ                                |
 | `spendLimits`     | Spend Limits `GET /v1/organizations/spend_limits/effective`              | 実効上限 (null = 無制限) と当期支出                                                |
+| `ledgerHealth`    | ローカル: `data/ledger/STATUS.json` と各月の `MANIFEST.json` (§6.5)      | 最後の台帳検査と月ごとの封印状態 (OP-003 / OP-004)。常に `ok`、台帳には納めない    |
 
-任意アダプタのデータセットは §5.4 を参照 (Console / Claude Code / 機能別の採用状況。有効にしたときだけ登録され、既定では上表の 13 件のまま)。
+任意アダプタのデータセットは §5.4 を参照 (Console / Claude Code / 機能別の採用状況。有効にしたときだけ登録され、既定では上表の 14 件のまま)。
 
 ### 5.3 通信の契約
 
@@ -319,7 +320,7 @@ interface DatasetMeta {
 - エントリは `{ key, recordedAt, asOf?, validFrom?, hash?, window?, item }`。`state` の `item` はデータセット全体 (行は正規化 JSON 順。並び替えだけでは新しい版にならない)。各月は自分の期首の版から始まる (月単位で封印・転送できるように)。
 - coverage が `ok` のデータセットだけを納める (`unavailable` / `error` は欠落であり、空の状態として記録しない)。日付の無い行は納めずに件数を警告する。
 - マージ規則はすべて可換かつ冪等 (同点は収集時刻、次に正規化 JSON で決める)。入力の順序・分割・重複に関係なく、同じスナップショットの集合から同じバイト列になる。内容が変わらないファイルは書き直さない。
-- `MANIFEST.json`: `schemaVersion` 1、`month`、`sealed: false`、`lastRecordedAt`、データセットごとの `kind`・`count`・`sha256` (展開後の JSON Lines のハッシュ)・`window` (エントリが覆う期間)。ファイルの内容だけから決まる (時計を読まない)。`sealed: true` の月は `update` / `bootstrap` が変更せず警告する (封印と `revisions/` は U6)。
+- `MANIFEST.json`: `schemaVersion` 1、`month`、`sealed`、`lastRecordedAt`、データセットごとの `kind`・`count`・`sha256` (展開後の JSON Lines のハッシュ)・`window` (エントリが覆う期間)。ファイルの内容だけから決まる (時計を読まない)。封印した月は加えて `seal` (`sealedAt`、データセットごとの方針 `policy` と、取り直したものは取得窓 `window`・取得件数 `fetched`) と、封印後の差分があれば `revisions` (データセットごとの `count`・`sha256`・`lastRecordedAt`) を持つ。`sealed: true` の月のファイルは `update` / `bootstrap` / `backfill` が変更しない (下記の `revisions/`)。
 - `pnpm ledger update [--snapshot <id>]`: 台帳の最新 `lastRecordedAt` 以降に保存されたスナップショットを納める (前回失敗した分も追いつく。台帳が空なら最新の 1 件)。`pipeline` の最後のステップで、失敗は警告に留める。
 - `pnpm ledger bootstrap`: `archive/<year>/*.json.gz` と `snapshots/` の全スナップショットを ID 順に (120 件ごとに書き出して) 納める。何度実行しても結果は同じ。
 - 読めないファイル・マニフェストがあれば処理を止め、上書きしない。
@@ -329,6 +330,21 @@ interface DatasetMeta {
   - 再開: 単位ごとに取得 → 1 データセットだけのメモリ上のスナップショット (`collectedAt` = 実行開始時刻) → `updateLedger` → `ledger/BACKFILL.json` に記録 (`backfillLedger` ユースケース、`BackfillSource` / `BackfillProgressStore` ポート)。再実行は、同じ範囲を改訂期間 (終端 + 8 日) の後に取得済みの単位だけを飛ばし、他は取り直す (マージは冪等なので同じ内容なら変化しない)。`--force` は全単位を取り直す。失敗した単位は他の単位を止めず、最後に失敗として終了する。キーやスコープが無いデータセットは `unavailable` として警告する。読めない `BACKFILL.json` は処理を止め、上書きしない。
   - バックフィルの前に `ledger update` を実行する (バックフィルのエントリは実行時刻を `recordedAt` に持ち、次の `ledger update` はそこから続けるため、保存済みスナップショットを取りこぼさない)。
   - 手動ワークフロー `.github/workflows/ledger-backfill.yml` (`workflow_dispatch`、`main` のみ、`audit-data` 並行グループ): 入力 `from` / `to` / `datasets` / `force` は環境変数経由で `.github/scripts/validate-backfill-inputs.sh` が厳格に検証し、`data-branch.sh restore` → `pnpm ledger backfill` → `data-branch.sh save` (失敗した単位があっても取得済みの分は保存し、ジョブは失敗にする)。実テナントでの確認は #168。
+- **封印** `pnpm ledger seal [--month <yyyy-mm>] [--notify]` (#160 U6、既定は前月): 月末 + 8 日 (`BACKFILL_REVISION_DAYS`、Analytics の改訂期間) より前は拒否する。保存済みスナップショットを先に納め (`ledger update`)、U5 のバックフィルソースで月全体を API からメモリ上に取り直し (台帳には書かない。取得コードは共有)、性質ごとの方針 (`LEDGER_SEAL_POLICY`、レジストリ) で台帳と照合する。
+  - `event` / `daily` は `compare`: キーと行の内容 (`recordedAt` / `asOf` などのメタデータは無視) で比べ、API にあって台帳に無い行 (`missing`)、台帳にだけある行 (`extra`)、内容が違う行 (`changed`) を件数と UTC 日で返す (純粋関数 `compareLedgerContent()`、`domain/ledger/seal.ts`)。
+  - `rollup` は `replace`: 通常の収集は移動窓のロールアップを納めるため暦月の値と一致しない。封印時に API の暦月ロールアップでその月のファイルを置き換える (月の確定値)。
+  - `state` とバックフィルソースの無いデータセットは `keep` (API に履歴が無い): 記録どおり封印する。
+  - 台帳にファイルがあるのに月全体を取り直せないデータセット (キー・スコープ無し、要求の失敗、API の提供範囲外) は封印を止める (`blocked`)。台帳にも API にも無いものは飛ばす。台帳にその月のデータが何も無ければ封印しない。
+  - すべて一致すれば `replace` の書き込みの後に `MANIFEST.json` を `sealed: true` と `seal` で書き、封印済みの月の受け手 (`SealedMonthSink` ポート、U7 が外部保管先を追加する。既定は無し。失敗は報告するだけで封印は戻さない) に渡す。差異があれば何も書かず封印しない。結果は理由 (件数・データセット・日付のみ) とともに `ledger/STATUS.json` の `seals` に記録し、`--notify` で通知し (キー `ledger-seal:<month>:not-sealed`、High)、コマンドは失敗で終わる。解消手順: `pnpm ledger backfill --from <m> --to <m> --force` で API の値を納め直してから再封印する。
+  - 封印済みの月への `seal` は再検証: 差異は月のファイルに書かず `ledger/<yyyy-mm>/revisions/<dataset>.jsonl.gz` に追記し (`revised`、通知キー `ledger-seal:<month>:revised`)、一致すれば `verified`。
+- **封印後の差分** (`revisions/`): `update` / `bootstrap` / `backfill` が封印済みの月に新しいエントリを持ち込むと、その月のファイルを変えるエントリだけ (`revisionEntries()`: 性質のマージ規則でマージした結果のうち、封印時の内容 = キー + 行の内容に無いもの) を `revisions/<dataset>` に同じマージ規則で追記する (同じ差分は 1 回だけ)。月のファイルとその `datasets` は変わらず、`MANIFEST.json` の `revisions` に件数とハッシュが載る。収集の pipeline には通知の Secrets が無いため、通知は日次の `verify` が行う (キー `ledger-revision:<month>=<件数>,…`、`STATUS.json` の `notifiedRevisions` で同じ件数を繰り返さない)。暗号化 (U8) の `LedgerCodec` は `revisions/` にも同じく適用される。
+- **検査** `pnpm ledger verify [--notify] [--json]` (純粋関数 `domain/ledger/verify.ts`、`verifyLedger` ユースケース):
+  - 未封印の月の日次データの欠け: `ledger.verify.dailyDatasets` (既定 `usage`, `cost`) について、そのデータセットが初めて記録された日から `lagDays` (既定 3) 日前までの UTC 日のうち行の無い日 (月ディレクトリごと無い月も含む)。
+  - 最終収集からの経過時間: 全月の `lastRecordedAt` の最新が `maxStaleHours` (既定 24) 時間より古い、または記録が無い。
+  - 封印済みの月のハッシュ: 各ファイル (と `revisions/`) の SHA-256・件数を `MANIFEST.json` と照合し、欠けたファイルや載っていないファイルも報告する。
+  - 結果は `ledger/STATUS.json` (`schemaVersion` 1、`verify`: 時刻・`pass` / `fail`・所見・`failingSince`、`seals`、`notifiedRevisions`。読めなければ止まり上書きしない) に保存する。`--notify` は連続 `notifyAfterDays` (既定 7) UTC 日失敗したとき (キー `ledger-verify:fail`、High、通常の冷却時間) と新しい `revisions/` があるときに既存の通知経路で知らせる。所見は月・データセット・日付・件数だけで、個人を含まない。所見があっても終了コードは 0 (読めないファイルだけが失敗)。
+- **運用ルール**: ローカルのデータセット `ledgerHealth` (§5.2) を収集のたびに `STATUS.json` と各月の `MANIFEST.json` から作り (台帳が無ければ 0 行)、OP-003 (検査の結果と鮮度) と OP-004 (未封印のまま過ぎた月、封印後の差分、封印できなかった試行) が評価する (§7.1)。ダッシュボードは既存のルール表示に載せる。
+- **スケジュール** (§12.1、いずれも `audit-data` 並行グループ、`data-branch.sh` で restore / save): `collect-audit.yml` の月末実行 (毎月 28〜31 日 23:30 UTC に起動し、`.github/scripts/month-end-guard.sh` が翌日が 1 日のときだけ実行させる。月末の状態系と支出上限の値を台帳に残す)、`ledger-seal.yml` (毎月 10 日 04:00 UTC に前月、手動は `month` 入力を `validate-ledger-inputs.sh` で検証)、`ledger-verify.yml` (毎日 05:30 UTC)。実テナントでの確認 (使用量の無い日の行、公開の遅れ、10 日の取り直しと収集の一致) は #170。
 - 規則は `@claude-audit/core` の `domain/ledger/` (純粋関数、データセットと性質の対応はレジストリ `registerLedgerDataset`)、`updateLedger` ユースケースと `LedgerRepository` ポート。ファイル形式は collector の `FsLedgerRepository` (`adapters/storage/ledger.ts`、差し替え可能なコーデック `LedgerCodec`)。`pnpm size` は台帳の blob 数とサイズも表示する (総量にも含まれる)。
 
 ---
@@ -355,6 +371,8 @@ interface DatasetMeta {
 | DG-001 | Empty Groups                           | data-governance     | Low      | groups                       | メンバー 0 の直接作成 RBAC グループ → fail                                                                                                                                                  |
 | OP-001 | Collection Freshness                   | operational         | High     | —                            | 評価したスナップショットが `maxStaleHours` (24) 時間より古い → fail                                                                                                                         |
 | OP-002 | Data Source Coverage                   | operational         | High     | —                            | 取得できなかったデータセットがある → fail (`ignore` で除外可)                                                                                                                               |
+| OP-003 | Ledger Verification                    | operational         | High     | ledgerHealth                 | 最後の `ledger verify` に所見がある (日の欠け・収集の停滞・封印済みの月のハッシュ不一致)、または `maxVerifyAgeHours` (48) 時間より古い → fail。台帳・検査がまだ無い → skipped               |
+| OP-004 | Ledger Month Sealing                   | operational         | Medium   | ledgerHealth                 | 月末から `maxUnsealedDays` (20) 日を過ぎても未封印の月 → fail (`ignoreMonths` で除外可)。封印後の差分 (`revisions/`) や封印できなかった試行がある月 → warning                               |
 | CF-001 | SSO Enforced for claude.ai             | configuration       | High     | settings                     | `sso_claude_ai_enforced = true`                                                                                                                                                             |
 | CF-002 | SCIM Provisioning                      | configuration       | Medium   | settings                     | `sso_provisioning_mode` が `scim_advanced` / `scim_permissive`                                                                                                                              |
 | CF-003 | IP Allowlist Enabled                   | configuration       | Medium   | settings                     | `ip_allowlist_enabled = true`                                                                                                                                                               |
@@ -383,7 +401,7 @@ Score = max(0, 100 − Σ 重み(fail の重大度))      重み: Critical 10 / 
 ```
 
 - `warning` と `skipped` は減点しない (`skipped` は「判定できない」であって「準拠」ではない)。
-- `skipped` または `error` が 1 件でもある場合、スコアは**評価済みルール数と常にセットで表示する** (例: `95/100 (2 of 30 rules assessed)`)。ダッシュボード・通知・レポートは同じ書式関数 (`formatScore`) を使い、データ欠落による高スコアが単独で伝わらないようにする。データ欠落そのものは OP-002 (High) が fail として検出する。
+- `skipped` または `error` が 1 件でもある場合、スコアは**評価済みルール数と常にセットで表示する** (例: `95/100 (2 of 32 rules assessed)`)。ダッシュボード・通知・レポートは同じ書式関数 (`formatScore`) を使い、データ欠落による高スコアが単独で伝わらないようにする。データ欠落そのものは OP-002 (High) が fail として検出する。
 
 ### 7.3 カスタムルール (コード不要)
 
@@ -553,15 +571,18 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 3、zod
 
 ### 12.1 ワークフロー
 
-| ワークフロー         | トリガー                                                                     | 内容                                                                                       |
-| -------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `ci.yml`             | push / PR (main)                                                             | fork:verify、lint、typecheck、format:check、test、build、`pnpm audit --audit-level=high`   |
-| `collect-audit.yml`  | 6 時間ごと (要 `ENABLE_SCHEDULED_JOBS`) / 手動 (`retention_days`, `dry_run`) | restore → pipeline (末尾で ledger update) → archive → notify → size (非致命) → save        |
-| `weekly-report.yml`  | 毎週月曜 09:00 UTC (同上) / 手動                                             | restore → `report:weekly --notify` → save                                                  |
-| `monthly-report.yml` | 毎月 1 日 03:00 UTC (同上) / 手動 (対象月指定可)                             | restore → `report:monthly --notify` → save                                                 |
-| `deploy-pages.yml`   | main への push、収集完了 (live 時のみ)、手動                                 | サンプルまたはライブデータでダッシュボードをビルドしデプロイ                               |
-| `secret-scan.yml`    | push / PR                                                                    | 独自スキャナと gitleaks                                                                    |
-| `release.yml`        | `v*` タグの push                                                             | `pnpm verify:all` → タグと 4 つの version の一致検査 → CHANGELOG の該当節で GitHub Release |
+| ワークフロー          | トリガー                                                                                            | 内容                                                                                       |
+| --------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `ci.yml`              | push / PR (main)                                                                                    | fork:verify、lint、typecheck、format:check、test、build、`pnpm audit --audit-level=high`   |
+| `collect-audit.yml`   | 6 時間ごと + 月末最終日 23:30 UTC (要 `ENABLE_SCHEDULED_JOBS`) / 手動 (`retention_days`, `dry_run`) | restore → pipeline (末尾で ledger update) → archive → notify → size (非致命) → save        |
+| `weekly-report.yml`   | 毎週月曜 09:00 UTC (同上) / 手動                                                                    | restore → `report:weekly --notify` → save                                                  |
+| `monthly-report.yml`  | 毎月 1 日 03:00 UTC (同上) / 手動 (対象月指定可)                                                    | restore → `report:monthly --notify` → save                                                 |
+| `ledger-backfill.yml` | 手動のみ (`from` / `to` / `datasets` / `force`)                                                     | restore → `ledger backfill` → save (§6.5)                                                  |
+| `ledger-seal.yml`     | 毎月 10 日 04:00 UTC (同上) / 手動 (`month`)                                                        | restore → `ledger seal --notify` → save (封印しなかった試行も保存、§6.5)                   |
+| `ledger-verify.yml`   | 毎日 05:30 UTC (同上) / 手動                                                                        | restore → `ledger verify --notify` → save (§6.5)                                           |
+| `deploy-pages.yml`    | main への push、収集完了 (live 時のみ)、手動                                                        | サンプルまたはライブデータでダッシュボードをビルドしデプロイ                               |
+| `secret-scan.yml`     | push / PR                                                                                           | 独自スキャナと gitleaks                                                                    |
+| `release.yml`         | `v*` タグの push                                                                                    | `pnpm verify:all` → タグと 4 つの version の一致検査 → CHANGELOG の該当節で GitHub Release |
 
 共通のセットアップは複合アクション `.github/actions/setup` に集約し、Dependabot の更新対象に含める。
 
@@ -746,6 +767,10 @@ pnpm test:e2e --repeat-each=5      # 安定性の確認 (リトライなしで�
 | `capacity.maxMonthlyGrowthMiB`            | `50`                                | 30 日あたり増分の上限 MiB (0 = 判定しない)                                      |
 | `capacity.warnRatio`                      | `0.8`                               | 上限のこの割合以上で警告 (0 より大きく 1 以下)                                  |
 | `capacity.windowDays`                     | `30`                                | 増分を測る期間 (1〜366)                                                         |
+| `ledger.verify.dailyDatasets`             | `["usage", "cost"]`                 | 毎日行があるはずの日次データセット (`ledger verify`、§6.5)                      |
+| `ledger.verify.lagDays`                   | `3`                                 | まだ検査しない直近の日数 (公開の遅れ、0〜31)                                    |
+| `ledger.verify.maxStaleHours`             | `24`                                | 最終収集からの経過時間の上限                                                    |
+| `ledger.verify.notifyAfterDays`           | `7`                                 | この日数連続で失敗したら通知                                                    |
 
 環境変数: `ANTHROPIC_ENTERPRISE_API_KEY` ほか §12.2、`ANTHROPIC_BASE_URL` (テスト用)、`DATA_DIR` (既定 `data`)、`CONFIG_DIR` (既定 `config`)、`DASHBOARD_URL`、`SMTP_SECURE`。相対パスは pnpm を起動したディレクトリ基準で解決する。
 

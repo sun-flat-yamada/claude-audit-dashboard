@@ -15,7 +15,7 @@
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/sun.flat.yamada)
 
-An audit, compliance and analytics toolkit for **Claude Enterprise** tenants. GitHub Actions collects the Activity Feed, directory, effective settings, key inventory, usage, cost and spend limits; 30 built-in rules evaluate them; results reach you as a GitHub Pages dashboard, weekly and monthly reports, and Slack / Discord / e-mail alerts. No servers.
+An audit, compliance and analytics toolkit for **Claude Enterprise** tenants. GitHub Actions collects the Activity Feed, directory, effective settings, key inventory, usage, cost and spend limits; 32 built-in rules evaluate them; results reach you as a GitHub Pages dashboard, weekly and monthly reports, and Slack / Discord / e-mail alerts. No servers.
 
 > [!IMPORTANT]
 > **Status: Phase A implemented, awaiting validation against a live tenant (Phase B).**
@@ -35,8 +35,8 @@ An audit, compliance and analytics toolkit for **Claude Enterprise** tenants. Gi
 
 ### Rules that never confuse "no data" with "compliant"
 
-- 30 rules across access control, API keys, usage, governance, operations, configuration baselines and activity monitoring.
-- Every rule declares the datasets it needs. If one could not be collected, the rule is **skipped with the reason**, and `OP-002` reports the gap. The score always travels with its coverage, e.g. `95/100 (2 of 30 rules assessed)`.
+- 32 rules across access control, API keys, usage, governance, operations, configuration baselines and activity monitoring.
+- Every rule declares the datasets it needs. If one could not be collected, the rule is **skipped with the reason**, and `OP-002` reports the gap. The score always travels with its coverage, e.g. `95/100 (2 of 32 rules assessed)`.
 - Add configuration baselines (`CF-xxx`) and activity watches (`AM-xxx`) without code in `config/custom-rules.json`; tune thresholds in `config/default.json`.
 
 ### Dashboard, reports and alerts
@@ -131,6 +131,8 @@ claude-audit-dashboard/
 | DG-001 | Data governance     | Empty Groups                           | Directly created RBAC group without members                         | Low      |
 | OP-001 | Operations          | Collection Freshness                   | Evaluated snapshot older than 24 hours                              | High     |
 | OP-002 | Operations          | Data Source Coverage                   | Any dataset that could not be collected                             | High     |
+| OP-003 | Operations          | Ledger Verification                    | Daily ledger verify failed (missing days, stale, hash) or 48 h old  | High     |
+| OP-004 | Operations          | Ledger Month Sealing                   | Ledger month unsealed 20 days after its end (revisions: warning)    | Medium   |
 | CF-001 | Configuration       | SSO Enforced for claude.ai             | `sso_claude_ai_enforced = true`                                     | High     |
 | CF-002 | Configuration       | SCIM Provisioning                      | `sso_provisioning_mode` is a SCIM mode                              | Medium   |
 | CF-003 | Configuration       | IP Allowlist Enabled                   | `ip_allowlist_enabled = true`                                       | Medium   |

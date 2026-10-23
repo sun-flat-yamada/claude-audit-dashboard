@@ -15,7 +15,7 @@
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/sun.flat.yamada)
 
-**Claude Enterprise** テナント向けの監査・コンプライアンス・分析ツールキットです。GitHub Actions が Activity Feed、ディレクトリ、実効設定、キー台帳、利用量・コスト、利用上限を収集し、30 の組み込みルールで評価し、結果を GitHub Pages のダッシュボード、週次・月次レポート、Slack / Discord / メール通知で届けます。サーバーは不要です。
+**Claude Enterprise** テナント向けの監査・コンプライアンス・分析ツールキットです。GitHub Actions が Activity Feed、ディレクトリ、実効設定、キー台帳、利用量・コスト、利用上限を収集し、32 の組み込みルールで評価し、結果を GitHub Pages のダッシュボード、週次・月次レポート、Slack / Discord / メール通知で届けます。サーバーは不要です。
 
 > [!IMPORTANT]
 > **開発状況: Phase A 実装済み、実テナントでの検証 (Phase B) 待ち**
@@ -35,8 +35,8 @@
 
 ### 「データが無い」を「準拠」と誤判定しないルール
 
-- アクセス制御、API キー、利用、ガバナンス、運用、設定ベースライン、アクティビティ監視にわたる 30 ルール。
-- ルールは必要なデータセットを宣言します。取得できなかった場合は**理由付きで skipped** とし、`OP-002` が欠落を報告します。スコアは常に評価範囲と一緒に表示されます (例: `95/100 (2 of 30 rules assessed)`)。
+- アクセス制御、API キー、利用、ガバナンス、運用、設定ベースライン、アクティビティ監視にわたる 32 ルール。
+- ルールは必要なデータセットを宣言します。取得できなかった場合は**理由付きで skipped** とし、`OP-002` が欠落を報告します。スコアは常に評価範囲と一緒に表示されます (例: `95/100 (2 of 32 rules assessed)`)。
 - 設定ベースライン (`CF-xxx`) とアクティビティ監視 (`AM-xxx`) はコード不要で `config/custom-rules.json` に追加でき、閾値は `config/default.json` で調整できます。
 
 ### ダッシュボード・レポート・通知
@@ -115,38 +115,40 @@ claude-audit-dashboard/
 
 ## 組み込みコンプライアンスルール
 
-| ID     | カテゴリ           | ルール                                 | 既定の判定                                               | 重大度   |
-| :----- | :----------------- | :------------------------------------- | :------------------------------------------------------- | :------- |
-| AC-001 | アクセス制御       | Inactive Members                       | 90 日間活動の記録が無い                                  | Medium   |
-| AC-002 | アクセス制御       | Excessive Administrative Roles         | 管理系ロールが組織メンバーの 20% 超                      | High     |
-| AC-003 | アクセス制御       | Single Primary Owner                   | 組織ごとに primary owner がちょうど 1 名                 | Critical |
-| AC-004 | アクセス制御       | Stale Pending Invites                  | 30 日を超えて保留中の招待                                | Low      |
-| AK-001 | API キー           | Unused API Keys                        | Compliance スコープのキーが 30 日 API 呼び出しに現れない | Medium   |
-| AK-002 | API キー           | Over-privileged API Keys               | 書き込み・削除スコープを持つ有効キー                     | High     |
-| AK-003 | API キー           | API Key Age                            | 作成から 180 日を超えた有効キー                          | Medium   |
-| UA-001 | 利用               | Usage Spike Detection                  | 直近日が過去 7 日平均の 3 倍超                           | High     |
-| UA-002 | 利用               | Cost Budget Threshold                  | 当月コストが予算超過 (月末予測の超過は要確認)            | Critical |
-| UA-003 | 利用               | Members Without Spend Limit            | すべての期間で実効上限が無制限                           | Medium   |
-| UA-004 | 利用               | Spend Limit Nearly Exhausted           | 当期支出が上限の 90% 以上 (要確認)                       | Low      |
-| DG-001 | データガバナンス   | Empty Groups                           | メンバー 0 の直接作成 RBAC グループ                      | Low      |
-| OP-001 | 運用               | Collection Freshness                   | 評価したスナップショットが 24 時間より古い               | High     |
-| OP-002 | 運用               | Data Source Coverage                   | 取得できなかったデータセットがある                       | High     |
-| CF-001 | 設定               | SSO Enforced for claude.ai             | `sso_claude_ai_enforced = true`                          | High     |
-| CF-002 | 設定               | SCIM Provisioning                      | `sso_provisioning_mode` が SCIM 系                       | Medium   |
-| CF-003 | 設定               | IP Allowlist Enabled                   | `ip_allowlist_enabled = true`                            | Medium   |
-| CF-004 | 設定               | Session Duration Limited               | `account_session_duration_seconds <= 604800`             | Low      |
-| CF-005 | 設定               | Finite Data Retention                  | `data_retention_periods <= 365 日`                       | Medium   |
-| CF-006 | 設定               | Public Projects Disabled               | `public_projects_enabled = false`                        | Medium   |
-| CF-007 | 設定               | Code Execution Egress Restricted       | `code_execution_network_egress_enabled = false`          | Medium   |
-| CF-008 | 設定               | Claude Code Permission Bypass Disabled | `claude_code_desktop_bypass_permissions_enabled = false` | High     |
-| CF-009 | 設定               | Invite Domains Restricted              | `allowed_invite_domains` が空でない                      | Low      |
-| AM-001 | アクティビティ監視 | Privileged Role Changes                | オーナー移譲、ロール・権限の付与                         | High     |
-| AM-002 | アクティビティ監視 | Identity Provider Changes              | SSO、プロビジョニング、ディレクトリ同期の変更            | High     |
-| AM-003 | アクティビティ監視 | Network Restriction Changes            | IP 制限の作成・更新・削除                                | Medium   |
-| AM-004 | アクティビティ監視 | API Key Lifecycle                      | キーの作成・更新・削除、API 機能設定の変更               | Medium   |
-| AM-005 | アクティビティ監視 | Data Export Events                     | データ・メンバー・監査ログのエクスポート                 | Medium   |
-| AM-006 | アクティビティ監視 | Authentication Failure Burst           | 1 回の収集でログイン失敗が 20 件以上                     | Medium   |
-| AM-007 | アクティビティ監視 | Data Protection Changes                | ゼロデータ保持、データ所在地、推論データ保持の変更       | High     |
+| ID     | カテゴリ           | ルール                                 | 既定の判定                                                         | 重大度   |
+| :----- | :----------------- | :------------------------------------- | :----------------------------------------------------------------- | :------- |
+| AC-001 | アクセス制御       | Inactive Members                       | 90 日間活動の記録が無い                                            | Medium   |
+| AC-002 | アクセス制御       | Excessive Administrative Roles         | 管理系ロールが組織メンバーの 20% 超                                | High     |
+| AC-003 | アクセス制御       | Single Primary Owner                   | 組織ごとに primary owner がちょうど 1 名                           | Critical |
+| AC-004 | アクセス制御       | Stale Pending Invites                  | 30 日を超えて保留中の招待                                          | Low      |
+| AK-001 | API キー           | Unused API Keys                        | Compliance スコープのキーが 30 日 API 呼び出しに現れない           | Medium   |
+| AK-002 | API キー           | Over-privileged API Keys               | 書き込み・削除スコープを持つ有効キー                               | High     |
+| AK-003 | API キー           | API Key Age                            | 作成から 180 日を超えた有効キー                                    | Medium   |
+| UA-001 | 利用               | Usage Spike Detection                  | 直近日が過去 7 日平均の 3 倍超                                     | High     |
+| UA-002 | 利用               | Cost Budget Threshold                  | 当月コストが予算超過 (月末予測の超過は要確認)                      | Critical |
+| UA-003 | 利用               | Members Without Spend Limit            | すべての期間で実効上限が無制限                                     | Medium   |
+| UA-004 | 利用               | Spend Limit Nearly Exhausted           | 当期支出が上限の 90% 以上 (要確認)                                 | Low      |
+| DG-001 | データガバナンス   | Empty Groups                           | メンバー 0 の直接作成 RBAC グループ                                | Low      |
+| OP-001 | 運用               | Collection Freshness                   | 評価したスナップショットが 24 時間より古い                         | High     |
+| OP-002 | 運用               | Data Source Coverage                   | 取得できなかったデータセットがある                                 | High     |
+| OP-003 | 運用               | Ledger Verification                    | 台帳の日次検査が失敗 (日の欠け・停滞・ハッシュ) か 48 時間より古い | High     |
+| OP-004 | 運用               | Ledger Month Sealing                   | 月末から 20 日過ぎても未封印の月 (封印後の差分は warning)          | Medium   |
+| CF-001 | 設定               | SSO Enforced for claude.ai             | `sso_claude_ai_enforced = true`                                    | High     |
+| CF-002 | 設定               | SCIM Provisioning                      | `sso_provisioning_mode` が SCIM 系                                 | Medium   |
+| CF-003 | 設定               | IP Allowlist Enabled                   | `ip_allowlist_enabled = true`                                      | Medium   |
+| CF-004 | 設定               | Session Duration Limited               | `account_session_duration_seconds <= 604800`                       | Low      |
+| CF-005 | 設定               | Finite Data Retention                  | `data_retention_periods <= 365 日`                                 | Medium   |
+| CF-006 | 設定               | Public Projects Disabled               | `public_projects_enabled = false`                                  | Medium   |
+| CF-007 | 設定               | Code Execution Egress Restricted       | `code_execution_network_egress_enabled = false`                    | Medium   |
+| CF-008 | 設定               | Claude Code Permission Bypass Disabled | `claude_code_desktop_bypass_permissions_enabled = false`           | High     |
+| CF-009 | 設定               | Invite Domains Restricted              | `allowed_invite_domains` が空でない                                | Low      |
+| AM-001 | アクティビティ監視 | Privileged Role Changes                | オーナー移譲、ロール・権限の付与                                   | High     |
+| AM-002 | アクティビティ監視 | Identity Provider Changes              | SSO、プロビジョニング、ディレクトリ同期の変更                      | High     |
+| AM-003 | アクティビティ監視 | Network Restriction Changes            | IP 制限の作成・更新・削除                                          | Medium   |
+| AM-004 | アクティビティ監視 | API Key Lifecycle                      | キーの作成・更新・削除、API 機能設定の変更                         | Medium   |
+| AM-005 | アクティビティ監視 | Data Export Events                     | データ・メンバー・監査ログのエクスポート                           | Medium   |
+| AM-006 | アクティビティ監視 | Authentication Failure Burst           | 1 回の収集でログイン失敗が 20 件以上                               | Medium   |
+| AM-007 | アクティビティ監視 | Data Protection Changes                | ゼロデータ保持、データ所在地、推論データ保持の変更                 | High     |
 
 スコア = 100 − Σ fail の重大度の重み (Critical 10、High 5、Medium 3、Low 1)。skipped は合格として数えません。完全な仕様: [BLUEPRINT §7](docs/BLUEPRINT.md#7-コンプライアンス監査ルール)。
 

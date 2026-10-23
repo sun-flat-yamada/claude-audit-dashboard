@@ -148,11 +148,13 @@ Workflows (the schedules apply once enabled):
 
 | Workflow              | When                                                         | What                                                   |
 | --------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
-| `collect-audit.yml`   | Every 6 hours                                                | Collect, check, dashboard data, archive, alerts, size  |
+| `collect-audit.yml`   | Every 6 hours, and 23:30 UTC on the last day of the month    | Collect, check, dashboard data, archive, alerts, size  |
 | `weekly-report.yml`   | Mondays 09:00 UTC                                            | Weekly digest (previous 7 days), sent to every channel |
 | `monthly-report.yml`  | 1st of the month 03:00 UTC                                   | Cost report for the previous month (or a chosen month) |
 | `deploy-pages.yml`    | Push to main; after collection when `PAGES_DATA_SOURCE=live` | Dashboard build and deployment                         |
 | `ledger-backfill.yml` | Manual only                                                  | Past months into the monthly ledger (see below)        |
+| `ledger-seal.yml`     | 10th of the month 04:00 UTC                                  | Seal the previous ledger month (or a chosen month)     |
+| `ledger-verify.yml`   | Daily 05:30 UTC                                              | Missing days, stale collection, sealed-month hashes    |
 
 ### Backfilling the ledger
 
@@ -173,6 +175,19 @@ What it fetches, month by month, within what each API still serves:
 - Not backfilled: the state datasets (`members`, `settings`, `groups`, `credentials`, `invites`, `organizations`, `spendLimits`). The APIs keep no history of them; the ledger records them from the collections on.
 
 The run is slow on purpose: Analytics requests start at least 1.1 seconds apart (60 a minute are allowed), so a month takes about 15 seconds of Analytics requests for the default datasets plus the feature roll-ups, and about 35 seconds more with `memberActivityDaily` (one request per day); the Activity Feed adds one request per page (110 ms apart). If a run fails or times out, run it again with the same inputs: months completed after their revision period (the month's end + 8 days) are skipped (`ledger/BACKFILL.json`), everything else is fetched again and merged without duplicates. A dataset without a key or scope is reported as `unavailable` and does not fail the run.
+
+### Sealing and verifying the ledger
+
+**Ledger Seal** re-fetches a whole month from the APIs on the 10th of the next month (after the Analytics revision period) and seals it when it equals the ledger; from then on the month's files never change, and later entries for it are kept apart in `revisions/`. If it differs, the month stays unsealed, you are notified and the run fails: run **Ledger Backfill** for that month with `force` and then **Ledger Seal** with `month` set to it. **Ledger Verify** checks the ledger every day and notifies after 7 consecutive failing days. The dashboard shows both as rules OP-003 and OP-004. Settings (`config/default.json` or `AUDIT_CONFIG_OVERRIDES`):
+
+| Key                             | Default             | Meaning                                                    |
+| ------------------------------- | ------------------- | ---------------------------------------------------------- |
+| `ledger.verify.dailyDatasets`   | `["usage", "cost"]` | Daily datasets expected to have rows for every UTC day     |
+| `ledger.verify.lagDays`         | `3`                 | The most recent days that are not checked yet (0-31)       |
+| `ledger.verify.maxStaleHours`   | `24`                | Hours since the latest recorded collection before it fails |
+| `ledger.verify.notifyAfterDays` | `7`                 | Consecutive failing days before a notification             |
+
+Details and remedies: [DEPLOYMENT.md](DEPLOYMENT.md) (_Sealing and verification_).
 
 ## Step 5: Tune the rules (optional)
 
@@ -239,6 +254,8 @@ pnpm restore 2024-05-01T06-00-00Z --out ./restored   # archive/<year>/<id>.json.
 pnpm ledger bootstrap   # build the monthly ledger data/ledger/<yyyy-mm>/ once from snapshots/ and archive/ (raw data, data/audit only)
 pnpm ledger update      # record new snapshots in the ledger (idempotent); pnpm pipeline runs it as its last step
 pnpm ledger backfill --from 2026-01 [--to 2026-09] [--datasets usage,cost] [--force]   # past months from the APIs (within their retention), resumable
+pnpm ledger seal [--month 2026-09] [--notify]   # re-fetch a past month and seal it when it matches (default: the previous month)
+pnpm ledger verify [--notify] [--json]          # missing days, stale collection, sealed-month hashes (ledger/STATUS.json)
 pnpm build:data --snapshot <id>          # dashboard.json from a stored (e.g. restored) snapshot; pnpm build:detail accepts it too
 ```
 
@@ -288,7 +305,7 @@ Every alert sent is listed on the dashboard's **Alerts** page (`#/alerts`, a rea
 | `unavailable` with a 403 message                   | The key lacks the scope named in the message — add it in claude.ai (a new key may be required)                                                                      |
 | `settings` / `credentials` unavailable with 404    | The Compliance API organization settings endpoint is not available for your tenant yet                                                                              |
 | OP-001 fails                                       | No successful collection in the last 24 hours — check the collect workflow                                                                                          |
-| Score shows `(N of 30 rules assessed)`             | Some rules lacked data; see the dashboard's Data coverage section                                                                                                   |
+| Score shows `(N of 32 rules assessed)`             | Some rules lacked data; see the dashboard's Data coverage section                                                                                                   |
 | `Invalid config/default.json`                      | The message lists each invalid field; fix it or remove the field to use the default                                                                                 |
 | `Invalid AUDIT_CONFIG_OVERRIDES`                   | The repository variable is not a valid JSON object or sets an invalid field (path and issue code in the message, the value is not shown); fix or clear the variable |
 | `This project is configured to use v9.x.y of pnpm` | A globally installed pnpm of another version ran. Run `corepack enable` (remove the global pnpm with `npm uninstall -g pnpm` if it still shadows Corepack)          |

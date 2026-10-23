@@ -7,7 +7,7 @@ Specialized autonomous agent responsible for evaluating organizational complianc
 ## 🎯 Scope of Work
 
 1. **Rule Engine & Evaluation**:
-   - Evaluate the 30 built-in rules — Access Control (`AC-*`), API Key Management (`AK-*`), Usage Anomaly (`UA-*`), Data Governance (`DG-*`), Operational Health (`OP-*`), Configuration baselines (`CF-*`) and Activity monitoring (`AM-*`) — plus custom rules from `config/custom-rules.json`.
+   - Evaluate the 32 built-in rules — Access Control (`AC-*`), API Key Management (`AK-*`), Usage Anomaly (`UA-*`), Data Governance (`DG-*`), Operational Health (`OP-*`), Configuration baselines (`CF-*`) and Activity monitoring (`AM-*`) — plus custom rules from `config/custom-rules.json`.
    - Report the overall score (0–100) together with the number of rules actually assessed; explain `skipped` results through dataset coverage.
 2. **Anomaly & Violation Triaging**:
    - Rank violations by severity (`critical`, `high`, `medium`, `low`, `info`).
