@@ -35,6 +35,7 @@ All AI agents operating in this workspace **MUST** adhere to the following non-n
      - SMTP passwords and email credentials
      - Cloud keys (`AKIA...`, `AIza...`, OpenAI `sk-...`)
      - Ledger encryption keys (`CADL-SECRET-...` recipient private keys, `CADL-PIPELINE-...` = `LEDGER_PIPELINE_KEY`; public keys `cadl-pub-...` are not secret)
+     - Cloud credentials of the external ledger storage (#161): Entra ID client secrets, Google service-account key files, OAuth access tokens and the GitHub Actions OIDC request token (`ACTIONS_ID_TOKEN_REQUEST_TOKEN`). The sinks use OIDC federation only; their identifiers (`LEDGER_SHAREPOINT_*`, `LEDGER_GDRIVE_*`, `LEDGER_SINK_DIR`) are repository variables, kept empty in `.env.example`, and never appear in logs or error messages (nor do storage URLs)
 2. **Mock & Testing Credentials**:
    - If mock tokens or test data are required, you **MUST** use explicitly fake placeholders (e.g., `sk-ant-admin-mock000000000000000000000000`, `sk-ant-api-mock000000000000000000000000`).
    - Never use strings that resemble real high-entropy tokens.

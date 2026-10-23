@@ -242,12 +242,12 @@ export const inactiveMembers = defineRule({
 
 ### 7.2 その他
 
-| アダプタ  | 実装するポート                                                                                                                                      | 備考                                                                                                                                                                                                                                                                                                          |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| storage   | `SnapshotRepository`, `ComplianceReportRepository`, `StateRepository`, `ArtifactWriter`, `LedgerRepository`, `LedgerStatusStore`, `SealedMonthSink` | データセット単位ファイル、キー順固定の決定的 JSON、原子的書き込み、パス逸脱の拒否。台帳は `ledger/<yyyy-mm>/<dataset>.jsonl.gz` + `MANIFEST.json` (コーデック差し替え可、封印後の差分は `revisions/`、検査と封印の状態は `ledger/STATUS.json`、封印済みの月の受け手は `SealedMonthSink` (U7)、BLUEPRINT §6.5) |
-| notifiers | `Notifier`                                                                                                                                          | console / Slack Incoming Webhook / Discord Webhook / SMTP (nodemailer)。未設定のチャネルは登録しない                                                                                                                                                                                                          |
-| renderers | `DocumentRenderer`                                                                                                                                  | markdown / html / csv / json                                                                                                                                                                                                                                                                                  |
-| demo      | `DatasetCollector`                                                                                                                                  | 固定シード・固定時刻の合成データ。`pnpm demo` でサンプルデータを生成し、テストのフィクスチャにも使う                                                                                                                                                                                                          |
+| アダプタ  | 実装するポート                                                                                                                                                                        | 備考                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| storage   | `SnapshotRepository`, `ComplianceReportRepository`, `StateRepository`, `ArtifactWriter`, `LedgerRepository`, `LedgerStatusStore`, `SealedMonthSink`, `LedgerFileAccess`, `LedgerSink` | データセット単位ファイル、キー順固定の決定的 JSON、原子的書き込み、パス逸脱の拒否。台帳は `ledger/<yyyy-mm>/<dataset>.jsonl.gz` + `MANIFEST.json` (コーデック差し替え可、封印後の差分は `revisions/`、検査と封印の状態は `ledger/STATUS.json`、封印済みの月の受け手は `SealedMonthSink`。外部保管先 `LedgerSink` (`filesystem` / `gdrive` / `sharepoint`、レジストリ `LEDGER_SINKS`、OIDC 連携、U7) へは保存されたバイト列のまま複製し `MANIFEST.json` と照合する、BLUEPRINT §6.5) |
+| notifiers | `Notifier`                                                                                                                                                                            | console / Slack Incoming Webhook / Discord Webhook / SMTP (nodemailer)。未設定のチャネルは登録しない                                                                                                                                                                                                                                                                                                                                                                               |
+| renderers | `DocumentRenderer`                                                                                                                                                                    | markdown / html / csv / json                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| demo      | `DatasetCollector`                                                                                                                                                                    | 固定シード・固定時刻の合成データ。`pnpm demo` でサンプルデータを生成し、テストのフィクスチャにも使う                                                                                                                                                                                                                                                                                                                                                                               |
 
 ---
 
@@ -339,24 +339,25 @@ export const inactiveMembers = defineRule({
 
 ## 10. CLI とワークフロー
 
-| npm script               | CLI                 | 内容                                                 | ワークフロー                     |
-| ------------------------ | ------------------- | ---------------------------------------------------- | -------------------------------- |
-| `pnpm collect`           | `collect`           | スナップショット取得                                 | —                                |
-| `pnpm check:compliance`  | `check`             | 最新スナップショットを評価しレポート保存             | —                                |
-| `pnpm build:data`        | `dashboard`         | `data/dashboard.json` を生成                         | —                                |
-| `pnpm pipeline`          | `pipeline`          | collect → check → dashboard → detail → ledger update | `collect-audit.yml` (6 時間ごと) |
-| `pnpm ledger update`     | `ledger update`     | 新しいスナップショットを月次台帳に納める (冪等)      | `pipeline` の最後 (非致命)       |
-| `pnpm ledger bootstrap`  | `ledger bootstrap`  | `snapshots/` と `archive/` から台帳を初期生成        | —                                |
-| `pnpm ledger backfill`   | `ledger backfill`   | API の保持期間内で過去の月を台帳に取得 (再開可能)    | `ledger-backfill.yml` (手動)     |
-| `pnpm ledger seal`       | `ledger seal`       | 前月を取り直して照合し、一致すれば封印               | `ledger-seal.yml` (毎月 10 日)   |
-| `pnpm ledger verify`     | `ledger verify`     | 日の欠け・収集の停滞・封印済みの月のハッシュを検査   | `ledger-verify.yml` (毎日)       |
-| `pnpm notify`            | `notify`            | アラートポリシーに従い通知                           | `collect-audit.yml`              |
-| `pnpm archive`           | `archive`           | 保持期間超過のスナップショットを圧縮                 | `collect-audit.yml` (commit 前)  |
-| `pnpm size`              | `size`              | `data/audit` のサイズ計測と `capacity.*` 閾値判定    | `collect-audit.yml` (非致命)     |
-| `pnpm restore`           | `restore`           | `archive/*.json.gz` を `snapshots/<id>/` へ復元      | —                                |
-| `pnpm report:compliance` | `report compliance` | 最新評価のレポート                                   | —                                |
-| `pnpm report:weekly`     | `report weekly`     | 週次レポート生成・配信 (`--notify`)                  | `weekly-report.yml`              |
-| `pnpm report:monthly`    | `report monthly`    | 月次コストレポート生成・配信 (`--month`, `--notify`) | `monthly-report.yml`             |
-| `pnpm demo`              | `demo`              | 合成データで全処理を実行し `data/sample/` を再生成   | —                                |
+| npm script               | CLI                 | 内容                                                    | ワークフロー                     |
+| ------------------------ | ------------------- | ------------------------------------------------------- | -------------------------------- |
+| `pnpm collect`           | `collect`           | スナップショット取得                                    | —                                |
+| `pnpm check:compliance`  | `check`             | 最新スナップショットを評価しレポート保存                | —                                |
+| `pnpm build:data`        | `dashboard`         | `data/dashboard.json` を生成                            | —                                |
+| `pnpm pipeline`          | `pipeline`          | collect → check → dashboard → detail → ledger update    | `collect-audit.yml` (6 時間ごと) |
+| `pnpm ledger update`     | `ledger update`     | 新しいスナップショットを月次台帳に納める (冪等)         | `pipeline` の最後 (非致命)       |
+| `pnpm ledger bootstrap`  | `ledger bootstrap`  | `snapshots/` と `archive/` から台帳を初期生成           | —                                |
+| `pnpm ledger backfill`   | `ledger backfill`   | API の保持期間内で過去の月を台帳に取得 (再開可能)       | `ledger-backfill.yml` (手動)     |
+| `pnpm ledger seal`       | `ledger seal`       | 前月を取り直して照合し、一致すれば封印                  | `ledger-seal.yml` (毎月 10 日)   |
+| `pnpm ledger verify`     | `ledger verify`     | 日の欠け・収集の停滞・封印済みの月のハッシュを検査      | `ledger-verify.yml` (毎日)       |
+| `pnpm ledger push`       | `ledger push`       | 封印済みの月を `ledger.sink` へ複製し照合 (既定 `none`) | `ledger-seal.yml` (封印の後)     |
+| `pnpm notify`            | `notify`            | アラートポリシーに従い通知                              | `collect-audit.yml`              |
+| `pnpm archive`           | `archive`           | 保持期間超過のスナップショットを圧縮                    | `collect-audit.yml` (commit 前)  |
+| `pnpm size`              | `size`              | `data/audit` のサイズ計測と `capacity.*` 閾値判定       | `collect-audit.yml` (非致命)     |
+| `pnpm restore`           | `restore`           | `archive/*.json.gz` を `snapshots/<id>/` へ復元         | —                                |
+| `pnpm report:compliance` | `report compliance` | 最新評価のレポート                                      | —                                |
+| `pnpm report:weekly`     | `report weekly`     | 週次レポート生成・配信 (`--notify`)                     | `weekly-report.yml`              |
+| `pnpm report:monthly`    | `report monthly`    | 月次コストレポート生成・配信 (`--month`, `--notify`)    | `monthly-report.yml`             |
+| `pnpm demo`              | `demo`              | 合成データで全処理を実行し `data/sample/` を再生成      | —                                |
 
 ワークフローは共通セットアップ (`.github/actions/setup`) の後、`.github/scripts/data-branch.sh restore` で `data/audit` から復元し、コマンド実行後に `save` で書き戻す。書き込むワークフローは `concurrency: audit-data` で直列化し、API キーと通知用シークレットはそれを使うステップの `env` にだけ渡す。
