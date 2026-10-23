@@ -339,25 +339,26 @@ export const inactiveMembers = defineRule({
 
 ## 10. CLI とワークフロー
 
-| npm script               | CLI                 | 内容                                                    | ワークフロー                     |
-| ------------------------ | ------------------- | ------------------------------------------------------- | -------------------------------- |
-| `pnpm collect`           | `collect`           | スナップショット取得                                    | —                                |
-| `pnpm check:compliance`  | `check`             | 最新スナップショットを評価しレポート保存                | —                                |
-| `pnpm build:data`        | `dashboard`         | `data/dashboard.json` を生成                            | —                                |
-| `pnpm pipeline`          | `pipeline`          | collect → check → dashboard → detail → ledger update    | `collect-audit.yml` (6 時間ごと) |
-| `pnpm ledger update`     | `ledger update`     | 新しいスナップショットを月次台帳に納める (冪等)         | `pipeline` の最後 (非致命)       |
-| `pnpm ledger bootstrap`  | `ledger bootstrap`  | `snapshots/` と `archive/` から台帳を初期生成           | —                                |
-| `pnpm ledger backfill`   | `ledger backfill`   | API の保持期間内で過去の月を台帳に取得 (再開可能)       | `ledger-backfill.yml` (手動)     |
-| `pnpm ledger seal`       | `ledger seal`       | 前月を取り直して照合し、一致すれば封印                  | `ledger-seal.yml` (毎月 10 日)   |
-| `pnpm ledger verify`     | `ledger verify`     | 日の欠け・収集の停滞・封印済みの月のハッシュを検査      | `ledger-verify.yml` (毎日)       |
-| `pnpm ledger push`       | `ledger push`       | 封印済みの月を `ledger.sink` へ複製し照合 (既定 `none`) | `ledger-seal.yml` (封印の後)     |
-| `pnpm notify`            | `notify`            | アラートポリシーに従い通知                              | `collect-audit.yml`              |
-| `pnpm archive`           | `archive`           | 保持期間超過のスナップショットを圧縮                    | `collect-audit.yml` (commit 前)  |
-| `pnpm size`              | `size`              | `data/audit` のサイズ計測と `capacity.*` 閾値判定       | `collect-audit.yml` (非致命)     |
-| `pnpm restore`           | `restore`           | `archive/*.json.gz` を `snapshots/<id>/` へ復元         | —                                |
-| `pnpm report:compliance` | `report compliance` | 最新評価のレポート                                      | —                                |
-| `pnpm report:weekly`     | `report weekly`     | 週次レポート生成・配信 (`--notify`)                     | `weekly-report.yml`              |
-| `pnpm report:monthly`    | `report monthly`    | 月次コストレポート生成・配信 (`--month`, `--notify`)    | `monthly-report.yml`             |
-| `pnpm demo`              | `demo`              | 合成データで全処理を実行し `data/sample/` を再生成      | —                                |
+| npm script               | CLI                 | 内容                                                     | ワークフロー                     |
+| ------------------------ | ------------------- | -------------------------------------------------------- | -------------------------------- |
+| `pnpm collect`           | `collect`           | スナップショット取得                                     | —                                |
+| `pnpm check:compliance`  | `check`             | 最新スナップショットを評価しレポート保存                 | —                                |
+| `pnpm build:data`        | `dashboard`         | `data/dashboard.json` を生成                             | —                                |
+| `pnpm pipeline`          | `pipeline`          | collect → check → dashboard → detail → ledger update     | `collect-audit.yml` (6 時間ごと) |
+| `pnpm ledger update`     | `ledger update`     | 新しいスナップショットを月次台帳に納める (冪等)          | `pipeline` の最後 (非致命)       |
+| `pnpm ledger bootstrap`  | `ledger bootstrap`  | `snapshots/` と `archive/` から台帳を初期生成            | —                                |
+| `pnpm ledger backfill`   | `ledger backfill`   | API の保持期間内で過去の月を台帳に取得 (再開可能)        | `ledger-backfill.yml` (手動)     |
+| `pnpm ledger seal`       | `ledger seal`       | 前月を取り直して照合し、一致すれば封印                   | `ledger-seal.yml` (毎月 10 日)   |
+| `pnpm ledger verify`     | `ledger verify`     | 日の欠け・収集の停滞・封印済みの月のハッシュを検査       | `ledger-verify.yml` (毎日)       |
+| `pnpm ledger push`       | `ledger push`       | 封印済みの月を `ledger.sink` へ複製し照合 (既定 `none`)  | `ledger-seal.yml` (封印の後)     |
+| `pnpm ledger key-check`  | `ledger key-check`  | 鍵 1 つで全ファイルを読めるかと MANIFEST を照合 (無出力) | `ledger-key-check.yml` (毎月)    |
+| `pnpm notify`            | `notify`            | アラートポリシーに従い通知                               | `collect-audit.yml`              |
+| `pnpm archive`           | `archive`           | 保持期間超過のスナップショットを圧縮                     | `collect-audit.yml` (commit 前)  |
+| `pnpm size`              | `size`              | `data/audit` のサイズ計測と `capacity.*` 閾値判定        | `collect-audit.yml` (非致命)     |
+| `pnpm restore`           | `restore`           | `archive/*.json.gz` を `snapshots/<id>/` へ復元          | —                                |
+| `pnpm report:compliance` | `report compliance` | 最新評価のレポート                                       | —                                |
+| `pnpm report:weekly`     | `report weekly`     | 週次レポート生成・配信 (`--notify`)                      | `weekly-report.yml`              |
+| `pnpm report:monthly`    | `report monthly`    | 月次コストレポート生成・配信 (`--month`, `--notify`)     | `monthly-report.yml`             |
+| `pnpm demo`              | `demo`              | 合成データで全処理を実行し `data/sample/` を再生成       | —                                |
 
 ワークフローは共通セットアップ (`.github/actions/setup`) の後、`.github/scripts/data-branch.sh restore` で `data/audit` から復元し、コマンド実行後に `save` で書き戻す。書き込むワークフローは `concurrency: audit-data` で直列化し、API キーと通知用シークレットはそれを使うステップの `env` にだけ渡す。
