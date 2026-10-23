@@ -147,7 +147,7 @@ interface DatasetMeta {
 }
 ```
 
-任意アダプタ (B4) のデータセット (`consoleWorkspaces` / `consoleApiKeys` / `consoleUsage` / `consoleCost` / `claudeCodeActivity`) も `DatasetMap` に登録されるが、`OptionalDatasetMap` (`domain/model/optional-datasets.ts`) に分けて持ち、`DATASET_NAMES` は組み込み 13 件のまま。設定の `sources.<flag>.enabled` が真のときだけコレクタが登録されるため、無効の間は coverage に現れない (§8.3)。
+任意アダプタ (B4) のデータセット (`consoleWorkspaces` / `consoleApiKeys` / `consoleUsage` / `consoleCost` / `claudeCodeActivity`)、機能別の採用状況 (AN-6) と台帳用の日単位のメンバー活動 (`memberActivityDaily`、#158) も `DatasetMap` に登録されるが、`OptionalDatasetMap` (`domain/model/optional-datasets.ts`) に分けて持ち、`DATASET_NAMES` は組み込み 13 件のまま。設定の `sources.<flag>.enabled` が真のときだけコレクタが登録されるため、無効の間は coverage に現れない (§8.3)。
 
 `status` の意味:
 

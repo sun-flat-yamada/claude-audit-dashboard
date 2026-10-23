@@ -93,6 +93,25 @@ What happens when something is missing:
 
 The Console datasets appear as aggregates on the Console API page (`#/console`: daily spend, spend by model, workspace and cost type, token types, the cache read share and workspace / key counts; API keys are counted by status, never named).
 
+## Optional source: daily member activity for the ledger
+
+`sources.memberActivityDaily.enabled` (#158, **off by default**) records each member's activity per UTC day for the monthly ledger (`pnpm ledger update`, `data/ledger/<yyyy-mm>/memberActivityDaily.jsonl.gz` on `data/audit`). It reads `GET /v1/organizations/analytics/users?date=<YYYY-MM-DD>` with the key of the built-in analytics datasets (`read:analytics`, **no new secret**) for the last `lookbackDays` published days (default 3, 1-31). A day is assumed to be published from 13:30 UTC on the next day; every run fetches the days again so the ledger keeps the newest values while the API still revises them. The requests run one after the other, at least 1.5 seconds apart (at most 40 a minute of the 60 a minute the Analytics API allows).
+
+```json
+{
+  "sources": {
+    "memberActivityDaily": { "enabled": true, "lookbackDays": 3 }
+  }
+}
+```
+
+In GitHub Actions the same works without editing the file: `AUDIT_CONFIG_OVERRIDES={"sources":{"memberActivityDaily":{"enabled":true}}}` (repository variable).
+
+> [!IMPORTANT]
+> The rows are per member (user id, e-mail address). They are stored only in the snapshot files and the ledger on the `data/audit` branch and are **never published**: the dashboard shows only the Data coverage row (status and record count).
+
+The model breakdown of cost and token usage needs no setting: the built-in `usage` / `cost` datasets already request the model-only series (`group_by[]=model`), and the ledger keeps one entry per day and model. `pnpm ledger update` warns when the model rows of a day do not add up to that day's total.
+
 ## Optional source: skill, connector, plugin and chat project adoption
 
 `sources.featureUsage.enabled` (AN-6, **off by default**) collects how many people used each skill, connector (MCP), plugin and claude.ai chat project over the last `lookbackDays` days (default 30, 1-366), as one range roll-up per endpoint of the Enterprise Analytics API (`GET /v1/organizations/analytics/skills`, `/connectors`, `/plugins`, `/apps/chat/projects`). It needs **no new secret**: it uses the key of the built-in analytics datasets (`ANTHROPIC_ENTERPRISE_API_KEY`, or `ANTHROPIC_ANALYTICS_API_KEY`) with the `read:analytics` scope.
