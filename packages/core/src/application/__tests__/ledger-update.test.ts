@@ -116,3 +116,36 @@ describe('updateLedger', () => {
     expect(result.changed.every((path) => path.startsWith('2026-02/'))).toBe(true);
   });
 });
+
+describe('updateLedger breakdown checks', () => {
+  const cost = (date: string, dimension: string, key: string | null, amount: number) => ({
+    date,
+    dimension,
+    key,
+    amount,
+    listAmount: null,
+    currency: 'USD',
+  });
+
+  it('reports a day whose model costs do not add up to the total once, newest finding first', async () => {
+    const older = snapshotOf('2026-03-02T06:00:00Z', {
+      cost: [cost('2026-03-01', 'total', null, 10), cost('2026-03-01', 'model', 'claude-a', 9)],
+    });
+    const newer = snapshotOf('2026-03-02T12:00:00Z', {
+      cost: [cost('2026-03-01', 'total', null, 10), cost('2026-03-01', 'model', 'claude-a', 8)],
+    });
+    const result = await updateLedger([older, newer], {
+      repository: new MemoryLedger(),
+      hash: fnv,
+    });
+    expect(result.gaps).toEqual([
+      { dataset: 'cost', dimension: 'model', date: '2026-03-01', total: 10, sum: 8 },
+    ]);
+    const clean = snapshotOf('2026-03-02T18:00:00Z', {
+      cost: [cost('2026-03-01', 'total', null, 10), cost('2026-03-01', 'model', 'claude-a', 10)],
+    });
+    expect(
+      (await updateLedger([clean], { repository: new MemoryLedger(), hash: fnv })).gaps,
+    ).toEqual([]);
+  });
+});
