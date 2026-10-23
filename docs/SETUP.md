@@ -149,15 +149,16 @@ To try the optional sources without a key: `pnpm demo --profile optional-sources
 
 Workflows (the schedules apply once enabled):
 
-| Workflow              | When                                                         | What                                                   |
-| --------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
-| `collect-audit.yml`   | Every 6 hours, and 23:30 UTC on the last day of the month    | Collect, check, dashboard data, archive, alerts, size  |
-| `weekly-report.yml`   | Mondays 09:00 UTC                                            | Weekly digest (previous 7 days), sent to every channel |
-| `monthly-report.yml`  | 1st of the month 03:00 UTC                                   | Cost report for the previous month (or a chosen month) |
-| `deploy-pages.yml`    | Push to main; after collection when `PAGES_DATA_SOURCE=live` | Dashboard build and deployment                         |
-| `ledger-backfill.yml` | Manual only                                                  | Past months into the monthly ledger (see below)        |
-| `ledger-seal.yml`     | 10th of the month 04:00 UTC                                  | Seal the previous ledger month (or a chosen month)     |
-| `ledger-verify.yml`   | Daily 05:30 UTC                                              | Missing days, stale collection, sealed-month hashes    |
+| Workflow               | When                                                         | What                                                            |
+| ---------------------- | ------------------------------------------------------------ | --------------------------------------------------------------- |
+| `collect-audit.yml`    | Every 6 hours, and 23:30 UTC on the last day of the month    | Collect, check, dashboard data, archive, alerts, size           |
+| `weekly-report.yml`    | Mondays 09:00 UTC                                            | Weekly digest (previous 7 days), sent to every channel          |
+| `monthly-report.yml`   | 1st of the month 03:00 UTC                                   | Cost report for the previous month (or a chosen month)          |
+| `deploy-pages.yml`     | Push to main; after collection when `PAGES_DATA_SOURCE=live` | Dashboard build and deployment                                  |
+| `ledger-backfill.yml`  | Manual only                                                  | Past months into the monthly ledger (see below)                 |
+| `ledger-seal.yml`      | 10th of the month 04:00 UTC                                  | Seal the previous ledger month (or a chosen month)              |
+| `ledger-verify.yml`    | Daily 05:30 UTC                                              | Missing days, stale collection, sealed-month hashes             |
+| `ledger-key-check.yml` | 11th of the month 05:00 UTC                                  | `LEDGER_PIPELINE_KEY` still reads every ledger file (read-only) |
 
 ### Backfilling the ledger
 
@@ -196,8 +197,8 @@ Details and remedies: [DEPLOYMENT.md](DEPLOYMENT.md) (_Sealing and verification_
 
 The ledger holds raw data (e-mail and IP addresses). Encryption at rest (#162) is **off by default**; turn it on so that a copy of `data/audit` (a fork of a fork, a mirror, storage with the wrong permissions) is unreadable without your keys:
 
-1. Locally (refused on CI): `pnpm ledger keygen --out ~/secure/ledger-owner.key` prints a public key `cadl-pub-...` and writes the private key (`CADL-SECRET-...`, mode 0600) to the file. Repeat for each person who must be able to read the ledger. Keep the files offline; never commit them or store them in GitHub.
-2. `pnpm ledger keygen --pipeline --out ~/secure/pipeline.key`: store the `CADL-PIPELINE-...` line as the Actions secret `LEDGER_PIPELINE_KEY`, then delete the file. It lets the workflows read back what they wrote; it is not one of the private keys.
+1. On your own machine (refused on CI and in a Claude Code cloud session): `pnpm ledger keygen --out ~/secure/ledger-owner.key` prints a public key `cadl-pub-...` and writes the private key (`CADL-SECRET-...`, mode 0600) to the file. Create **at least two** (two people, or a person and a vault), so that losing one does not lose the ledger. Keep the files offline; never commit them or store them in GitHub.
+2. `pnpm ledger keygen --pipeline --out ~/secure/pipeline.key`: store the `CADL-PIPELINE-...` line as the Actions secret `LEDGER_PIPELINE_KEY` and **keep the file offline as its backup** (GitHub secrets are write-only and cannot be read back). It lets the workflows read back what they wrote; it is not one of the private keys.
 3. Set the public keys in the repository variable `AUDIT_CONFIG_OVERRIDES`: `{"ledger":{"encryption":{"recipients":["cadl-pub-..."]}}}`.
 4. Encrypt the files written before with `pnpm ledger encrypt` on a local checkout of `data/audit` ([DEPLOYMENT.md](DEPLOYMENT.md), _Encryption at rest_).
 
@@ -205,7 +206,7 @@ The ledger holds raw data (e-mail and IP addresses). Encryption at rest (#162) i
 | ------------------------------ | ------- | --------------------------------------------------------------------------- |
 | `ledger.encryption.recipients` | `[]`    | Public keys every ledger file is encrypted to; empty leaves the files plain |
 
-To read it: `pnpm ledger decrypt --identity ~/secure/ledger-owner.key --out ~/ledger-plain [--month 2026-09]` (local only; the output directory must be outside the repository and the data directory). With recipients set but no `LEDGER_PIPELINE_KEY`, the ledger commands stop without writing and the collection only warns.
+To read it: `pnpm ledger decrypt --identity ~/secure/ledger-owner.key --out ~/ledger-plain [--month 2026-09]`, or with the pipeline-key backup `--pipeline-key ~/secure/pipeline.key` (local only; the output directory must be outside the repository and the data directory). `pnpm ledger key-check [--identity <file> | --pipeline-key <file>]` checks that a key reads every file and that every file matches `MANIFEST.json`, without writing anything; the **Ledger Key Check** workflow runs it with the Actions secret every month (opt-in schedule) and on demand. The whole procedure, from data/audit or external storage, is the _Manual restore runbook_ in [DEPLOYMENT.md](DEPLOYMENT.md). With recipients set but no `LEDGER_PIPELINE_KEY`, the ledger commands stop without writing and the collection only warns.
 
 ### Copying sealed months to external storage (optional)
 
@@ -213,7 +214,7 @@ A Git branch can be deleted or force-pushed, so `data/audit` alone cannot guaran
 
 How it works: right after a month is sealed, and again in the step _Copy the sealed month to external storage_ (`pnpm ledger push --notify`), every stored file of the month is uploaded **as stored** (an encrypted ledger stays encrypted), read back and checked against `MANIFEST.json` (`encryptedSha256` of an encrypted file, otherwise the `sha256` of the decompressed content); `MANIFEST.json` is copied last. A re-run copies only what is missing or changed (for example a new `revisions/` file) and never deletes anything in the copy. A verified copy is recorded in the local `MANIFEST.json` as `transfers.<kind>` (time and file count; no URL or ID). A failed copy fails the step and notifies; run **Ledger Seal** for the month again (a sealed month is re-verified and copied).
 
-The copy has the ledger's own layout, so it can be restored by hand: `<folder>/<yyyy-mm>/<dataset>.jsonl.gz[.enc]`, `<folder>/<yyyy-mm>/revisions/...` and `<folder>/<yyyy-mm>/MANIFEST.json`. Copy a month back into `data/ledger/<yyyy-mm>/` of a `data/audit` checkout and run `pnpm ledger verify` (encrypted files need `LEDGER_PIPELINE_KEY` or `pnpm ledger decrypt`).
+The copy has the ledger's own layout, so it can be restored by hand: `<folder>/<yyyy-mm>/<dataset>.jsonl.gz[.enc]`, `<folder>/<yyyy-mm>/revisions/...` and `<folder>/<yyyy-mm>/MANIFEST.json`. Copy a month back into `data/ledger/<yyyy-mm>/` of a `data/audit` checkout and run `pnpm ledger verify` (encrypted files need `LEDGER_PIPELINE_KEY`), or read it on your own machine with `pnpm ledger key-check` / `pnpm ledger decrypt` (_Manual restore runbook_ in [DEPLOYMENT.md](DEPLOYMENT.md)).
 
 | Setting       | Default | Meaning                                                    |
 | ------------- | ------- | ---------------------------------------------------------- |
@@ -315,8 +316,9 @@ pnpm ledger seal [--month 2026-09] [--notify]   # re-fetch a past month and seal
 pnpm ledger verify [--notify] [--json]          # missing days, stale collection, sealed-month hashes (ledger/STATUS.json)
 pnpm ledger push [--month 2026-09|--all] [--notify]   # copy sealed months to ledger.sink and verify the copy (default: the previous month; none: no-op)
 pnpm ledger keygen --out <file> [--pipeline]    # local only: a recipient key pair (prints the public key) or the workflows' LEDGER_PIPELINE_KEY
-pnpm ledger encrypt [--all] [--identity <file>] # store the plain ledger files encrypted (--all: re-encrypt for new recipients / a new pipeline key)
-pnpm ledger decrypt --identity <file> --out <dir> [--month 2026-09]   # local only: decrypt with a private key, checked against MANIFEST.json
+pnpm ledger encrypt [--all] [--identity <file>|--pipeline-key <file>]   # store the plain ledger files encrypted (--all: re-encrypt for new recipients / a new pipeline key)
+pnpm ledger decrypt (--identity <file>|--pipeline-key <file>) --out <dir> [--month 2026-09]   # local only: decrypt with a private key or the pipeline-key backup, checked against MANIFEST.json
+pnpm ledger key-check [--identity <file>|--pipeline-key <file>] [--month 2026-09]   # does the key read every file, does every file match MANIFEST.json (writes nothing; default: LEDGER_PIPELINE_KEY)
 pnpm build:data --snapshot <id>          # dashboard.json from a stored (e.g. restored) snapshot; pnpm build:detail accepts it too
 ```
 

@@ -249,7 +249,7 @@ Entries that arrive for a sealed month later (a revised value, a late activity) 
 
 The ledger is raw data. To keep it unreadable for anyone who can read `data/audit` but not the repository secrets (a fork of a fork that copied every branch, a mirror or storage with the wrong permissions), encrypt it. It is **off by default**.
 
-1. On your own machine (never on CI), create one key pair per person or vault that must be able to read the ledger, and the workflows' key:
+1. On your own machine (never on CI or in a Claude Code cloud session: both are refused), create one key pair per person or vault that must be able to read the ledger (**at least two**, see _Manual restore runbook_), and the workflows' key:
 
    ```bash
    pnpm ledger keygen --out ~/secure/ledger-owner.key        # prints the public key cadl-pub-...
@@ -258,15 +258,15 @@ The ledger is raw data. To keep it unreadable for anyone who can read `data/audi
 
    Both refuse paths inside the data directory or the repository and never overwrite a file. Keep the private key files offline (password manager, hardware vault); they are never stored in GitHub.
 
-2. Add the content of `pipeline.key` (the `CADL-PIPELINE-...` line) as the Actions secret **`LEDGER_PIPELINE_KEY`**, then delete the file. Add the public keys to the repository variable `AUDIT_CONFIG_OVERRIDES`: `{"ledger":{"encryption":{"recipients":["cadl-pub-...","cadl-pub-..."]}}}`. The collection, backfill, seal and verify workflows pass the secret to the steps that read the ledger.
+2. Add the content of `pipeline.key` (the `CADL-PIPELINE-...` line) as the Actions secret **`LEDGER_PIPELINE_KEY`**, and keep `pipeline.key` offline as its backup (GitHub secrets are write-only: the value can never be read back from GitHub). Add the public keys to the repository variable `AUDIT_CONFIG_OVERRIDES`: `{"ledger":{"encryption":{"recipients":["cadl-pub-...","cadl-pub-..."]}}}`. The collection, backfill, seal and verify workflows pass the secret to the steps that read the ledger.
 3. From the next run on, every written file is `<dataset>.jsonl.gz.enc` (AES-256-GCM, the file key wrapped for each public key and the pipeline key; details in [BLUEPRINT.md](BLUEPRINT.md) section 6.5). `MANIFEST.json` keeps the hash of the plaintext (`sha256`, used by seal and verify) and adds the hash of the stored bytes (`encryptedSha256`).
 4. Encrypt the files written before: check out `data/audit` locally (`.github/scripts/data-branch.sh restore`), run `LEDGER_PIPELINE_KEY=... pnpm ledger encrypt` with the same `AUDIT_CONFIG_OVERRIDES`, and save it back (`.github/scripts/data-branch.sh save "chore: encrypt ledger"`). Sealed months stay sealed: their content and `sha256` do not change.
 5. The earlier plaintext versions remain in the git history of `data/audit`. Remove them with the yearly rotation below (create the new orphan branch after step 4).
 
-To read the ledger, decrypt it locally with a private key: `pnpm ledger decrypt --identity ~/secure/ledger-owner.key --out ~/ledger-plain [--month 2026-09]`. It writes `<yyyy-mm>/<dataset>.jsonl` and `MANIFEST.json`, checks every file against `sha256`, and refuses to run on CI or to write into the data directory or the repository. Delete the output when done.
+To read the ledger, decrypt it locally with a private key or the pipeline-key backup: `pnpm ledger decrypt --identity ~/secure/ledger-owner.key --out ~/ledger-plain [--month 2026-09]` (or `--pipeline-key ~/secure/pipeline.key`). It writes `<yyyy-mm>/<dataset>.jsonl` and `MANIFEST.json`, checks every file against `sha256`, and refuses to run on CI, in a Claude Code cloud session or to write into the data directory or the repository. Delete the output when done. The full procedure is the _Manual restore runbook_ below.
 
 - **Adding or replacing a recipient**: update `recipients`, then `pnpm ledger encrypt --all` re-encrypts every file to the current list (also sealed months). A removed recipient can still read older copies in the git history.
-- **Rotating or recovering the pipeline key**: generate a new one (`pnpm ledger keygen --pipeline`), then locally run `LEDGER_PIPELINE_KEY=<new key> pnpm ledger encrypt --all --identity ~/secure/ledger-owner.key`: the files are read with your private key and re-encrypted to the recipients and the new pipeline key. Save, then replace the Actions secret. This also recovers a ledger whose pipeline key was lost.
+- **Rotating or recovering the pipeline key**: see _Manual restore runbook_ (steps R2 and L1).
 - **Recipients set without `LEDGER_PIPELINE_KEY`**: every ledger command stops before writing; `pnpm pipeline` only warns (the collection itself still succeeds). Snapshots under `data/snapshots/` are not encrypted.
 - Losing every private key and the pipeline key makes the ledger unreadable.
 
@@ -276,8 +276,80 @@ To read the ledger, decrypt it locally with a private key: `pnpm ledger decrypt 
 
 - **A failed copy** fails the step and notifies (`ledger-push:<month>:<kind>`); the seal itself and the save are not affected. Run **Ledger Seal** again with `month` set: the sealed month is re-verified and only missing or changed files are copied.
 - **Months sealed before the sink was set**: run `pnpm ledger push --all` on a local checkout of `data/audit` with the same settings and save it back, or run **Ledger Seal** once per month. Locally only `filesystem` works without further setup (the cloud sinks need the workflow's OIDC token).
-- **Restoring by hand**: copy a month folder from the storage into `data/ledger/<yyyy-mm>/` of a `data/audit` checkout, run `pnpm ledger verify`, and save it back. Nothing in the copy is ever deleted by the tools; files that only the copy has are reported.
+- **Restoring by hand**: copy a month folder from the storage into `data/ledger/<yyyy-mm>/` of a `data/audit` checkout, run `pnpm ledger verify`, and save it back; to read it without Actions follow the _Manual restore runbook_ below. Nothing in the copy is ever deleted by the tools; files that only the copy has are reported.
 - **Re-encrypting a sealed month** (`pnpm ledger encrypt --all`) changes its stored bytes; the next push replaces those files (the storage keeps the previous versions where versioning is on).
+
+### Manual restore runbook (#174)
+
+The workflows read the encrypted ledger with the Actions secret `LEDGER_PIPELINE_KEY`. GitHub secrets are write-only, so the ledger must also be readable **without GitHub Actions**: from your own terminal, with a recipient private key or the offline backup of the pipeline key. Everything below runs on an operator's machine; the key and plaintext commands refuse to run on CI and in a Claude Code cloud session (`CLAUDE_CODE_REMOTE=true`), so that keys and decrypted data never land on a shared or agent-operated machine. Rehearse it once a year with one month.
+
+Prerequisites: a clone of this repository (`main`) with `pnpm install --frozen-lockfile && pnpm build:collector`, and a working directory **outside** the clone for the data (here `~/restore`) and for the output (here `~/ledger-plain`). Without encryption, skip the key steps: the files are plain gzip JSON Lines (`gunzip -c <dataset>.jsonl.gz`).
+
+#### K. Key custody
+
+| Key                                      | Where it lives                                                                                                                                                        | Who can read the ledger with it                                                           |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Recipient identities (`CADL-SECRET-...`) | **Two or more**, each offline in a different place (two people's password managers, a hardware vault, a sealed offline copy). Never in GitHub, never in a repository. | Any one of them, alone, for every file encrypted while its public key was in `recipients` |
+| Pipeline key (`CADL-PIPELINE-...`)       | The Actions secret `LEDGER_PIPELINE_KEY` (write-only) **and** the offline backup file `pipeline.key` from `keygen --pipeline`, kept like an identity                  | The workflows (secret) and you (backup file)                                              |
+| Public keys (`cadl-pub-...`)             | `ledger.encryption.recipients` in `AUDIT_CONFIG_OVERRIDES`; not secret                                                                                                | Nobody (they only encrypt)                                                                |
+
+- Keep a written list of the recipients' fingerprints and custodians outside GitHub; `pnpm ledger key-check --identity <file>` prints the fingerprint of the identity it used.
+- After every key change run **Ledger Key Check** (manual run) and, locally, `pnpm ledger key-check --identity <file>` once per identity and `--pipeline-key ~/secure/pipeline.key`: each must pass.
+- The **Ledger Key Check** workflow (`ledger-key-check.yml`, the 11th of each month with `ENABLE_SCHEDULED_JOBS=true`, and on demand) restores `data/audit` (read-only, never saved) and runs `pnpm ledger key-check` with the secret: it decodes every file in memory, compares it with `MANIFEST.json` and fails on any mismatch, logging only counts, fingerprints and file names. A failure means the secret no longer matches the ledger: use step L1 before anything else is written.
+
+#### G. Get a month
+
+1. **From `data/audit` (git)**:
+
+   ```bash
+   git clone --single-branch --branch data/audit --depth 1 <repository URL> ~/restore-src
+   mkdir -p ~/restore/ledger && cp -R ~/restore-src/data/ledger/2026-09 ~/restore/ledger/
+   ```
+
+   A month that was later changed or deleted on the branch: clone without `--depth`, find the commit with `git log -- data/ledger/2026-09/MANIFEST.json` and copy it with `git archive <commit> data/ledger/2026-09 | tar -x -C ~/restore-src`.
+
+2. **From external storage** (`ledger.sink`, #161): the copy has the ledger's layout (`<yyyy-mm>/<dataset>.jsonl.gz[.enc]`, `<yyyy-mm>/revisions/`, `<yyyy-mm>/MANIFEST.json`); put the month folder at `~/restore/ledger/<yyyy-mm>/` unchanged.
+   - `sharepoint`: in the document library of `LEDGER_SHAREPOINT_DRIVE_ID`, open the folder `LEDGER_SHAREPOINT_FOLDER` (default `claude-audit-ledger`), select the `<yyyy-mm>` folder and **Download** (a zip), then extract it into `~/restore/ledger/`. With versioning, an earlier version of a file is under _Version history_.
+   - `gdrive`: in the shared drive, open the folder `LEDGER_GDRIVE_FOLDER_ID`, right-click the `<yyyy-mm>` folder and **Download** (a zip), then extract it into `~/restore/ledger/`. A file Vault holds is exported through Google Vault.
+   - `filesystem`: copy `<LEDGER_SINK_DIR>/<yyyy-mm>/`.
+
+   Check that the zip did not rename anything (`revisions/` stays a sub-folder, file names keep `.jsonl.gz.enc`).
+
+#### D. Check and decrypt
+
+```bash
+cd <clone of main>
+export DATA_DIR=~/restore            # the folder that holds ledger/<yyyy-mm>/
+pnpm ledger key-check --identity ~/secure/ledger-owner.key --month 2026-09    # or --pipeline-key ~/secure/pipeline.key
+pnpm ledger decrypt  --identity ~/secure/ledger-owner.key --month 2026-09 --out ~/ledger-plain
+```
+
+- `key-check` writes nothing; it passes when the key opens every file and every file matches `MANIFEST.json` (`encryptedSha256` of the stored bytes, `sha256` of the content, nothing missing or unlisted). Without `--month` it checks every month under `~/restore/ledger/`.
+- `decrypt` writes `~/ledger-plain/2026-09/<dataset>.jsonl`, `revisions/<dataset>.jsonl` and `MANIFEST.json` (mode 0600, never overwriting) and fails when a decrypted file differs from its `sha256`. It refuses an output directory inside the data directory or the clone.
+
+#### V. Verify by hand (independent of the tool)
+
+```bash
+cd ~/restore/ledger/2026-09
+sha256sum usage.jsonl.gz.enc                       # = datasets.usage.encryptedSha256 in MANIFEST.json
+sha256sum ~/ledger-plain/2026-09/usage.jsonl        # = datasets.usage.sha256 (the decompressed JSON Lines)
+wc -l ~/ledger-plain/2026-09/usage.jsonl            # = datasets.usage.count
+```
+
+Revision files are listed under `revisions.<dataset>` in the same way. A plain (`.jsonl.gz`) file: `gunzip -c usage.jsonl.gz | sha256sum` equals `sha256`. A sealed month (`sealed: true`) has the same hashes as when it was sealed. Delete `~/ledger-plain` when done.
+
+#### R. Rotate keys
+
+- **R1 Recipients** (a custodian leaves, a new vault): create the new identity (`pnpm ledger keygen --out ...`), update `recipients` in `AUDIT_CONFIG_OVERRIDES`, then on a local `data/audit` checkout (`.github/scripts/data-branch.sh restore`) run `LEDGER_PIPELINE_KEY="$(grep -v '^#' ~/secure/pipeline.key)" AUDIT_CONFIG_OVERRIDES='<same JSON>' pnpm ledger encrypt --all` and save it back (`.github/scripts/data-branch.sh save "chore: re-encrypt ledger"`). The removed identity can still read older copies in the git history and in external storage: rotate the branch (_Yearly rotation_) when that matters.
+- **R2 Pipeline key**: `pnpm ledger keygen --pipeline --out ~/secure/pipeline-new.key`; then locally `LEDGER_PIPELINE_KEY="$(grep -v '^#' ~/secure/pipeline-new.key)" pnpm ledger encrypt --all --pipeline-key ~/secure/pipeline.key` (the old backup reads, the new key and the recipients wrap); save, replace the Actions secret with the new key, run **Ledger Key Check**, and only then retire the old backup. `--identity <file>` works in place of `--pipeline-key`.
+- After R1 / R2 the next push of a sealed month replaces the stored files in external storage (where versioning keeps the previous ones).
+
+#### L. Lost keys
+
+- **L1 Pipeline key lost, or the secret no longer matches** (Ledger Key Check fails): if the backup file still exists, put it back as the secret. Otherwise generate a new pipeline key and run R2 with `--identity <file>` instead of `--pipeline-key` (a recipient identity reads every file). Until then the collection only warns about the ledger and seal / verify / backfill fail without writing.
+- **L2 One identity lost**: the other identities and the pipeline key still read everything. Remove its public key and run R1 to re-encrypt without it; add a replacement so that two or more remain.
+- **L3 Every identity lost, pipeline key known** (secret or backup): the ledger is still readable. Generate new identities, set them as `recipients` and run R1 (`encrypt --all` reads with the pipeline key).
+- **L4 Every identity and the pipeline key (secret and backup) lost**: the encrypted files cannot be decrypted by anyone. Snapshots under `data/snapshots/` and `archive/` are not encrypted; move the unreadable `data/ledger/` aside (unreadable files are never overwritten), set new keys (K), then rebuild the months they cover with `pnpm ledger bootstrap` and the ones still within the API retention with **Ledger Backfill**. Older months are lost. This is why K asks for two or more identities and an offline pipeline-key backup.
 
 ### Measuring
 
