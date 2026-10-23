@@ -78,6 +78,7 @@ jobs:
           ANTHROPIC_ANALYTICS_API_KEY: ${{ secrets.ANTHROPIC_ANALYTICS_API_KEY }}
           ANTHROPIC_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_ADMIN_API_KEY }}
           ANTHROPIC_CONSOLE_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_CONSOLE_ADMIN_API_KEY }}
+          LEDGER_PIPELINE_KEY: ${{ secrets.LEDGER_PIPELINE_KEY }}
 
       - name: Archive snapshots past retention
         if: steps.pipeline.outcome == 'success'

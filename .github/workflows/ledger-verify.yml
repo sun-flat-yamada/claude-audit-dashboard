@@ -48,6 +48,7 @@ jobs:
         id: verify
         run: pnpm ledger verify --notify
         env:
+          LEDGER_PIPELINE_KEY: ${{ secrets.LEDGER_PIPELINE_KEY }}
           DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
