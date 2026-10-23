@@ -4,6 +4,7 @@ import { ClaudeCodeApi } from '../claude-code-api.js';
 import { ConsoleAdminApi } from '../console-admin-api.js';
 import { FeatureUsageApi } from '../feature-usage-api.js';
 import { HttpClient } from '../http-client.js';
+import { MemberDailyActivityApi } from '../member-daily-api.js';
 import {
   createOptionalCollectors,
   type OptionalApis,
@@ -18,8 +19,14 @@ const off: OptionalSettings = {
   console: { enabled: false, lookbackDays: 30 },
   claudeCode: { enabled: false, lookbackDays: 7 },
   featureUsage: { enabled: false, lookbackDays: 30 },
+  memberActivityDaily: { enabled: false, lookbackDays: 3 },
 };
-const none: OptionalApis = { console: null, claudeCode: null, featureUsage: null };
+const none: OptionalApis = {
+  console: null,
+  claudeCode: null,
+  featureUsage: null,
+  memberActivityDaily: null,
+};
 
 const names = (collectors: { dataset: string }[]) => collectors.map((c) => c.dataset);
 
@@ -34,6 +41,7 @@ describe('createOptionalCollectors (registration)', () => {
       console: new ConsoleAdminApi(http),
       claudeCode: new ClaudeCodeApi(http),
       featureUsage: new FeatureUsageApi(http),
+      memberActivityDaily: new MemberDailyActivityApi(http),
     };
     expect(createOptionalCollectors(apis, off)).toEqual([]);
   });
@@ -55,6 +63,8 @@ describe('createOptionalCollectors (registration)', () => {
       'pluginUsage',
       'chatProjectUsage',
     ]);
+    const dailyOn = { ...off, memberActivityDaily: { enabled: true, lookbackDays: 3 } };
+    expect(names(createOptionalCollectors(none, dailyOn))).toEqual(['memberActivityDaily']);
   });
 
   it('skips datasets listed in sources.disabled', () => {
@@ -63,6 +73,7 @@ describe('createOptionalCollectors (registration)', () => {
       console: { enabled: true, lookbackDays: 30 },
       claudeCode: { enabled: true, lookbackDays: 7 },
       featureUsage: { enabled: false, lookbackDays: 30 },
+      memberActivityDaily: { enabled: false, lookbackDays: 3 },
     };
     expect(names(createOptionalCollectors(none, { ...on, disabled: [...on.disabled] }))).toEqual([
       'consoleWorkspaces',
@@ -106,5 +117,12 @@ describe('createOptionalCollectors (registration)', () => {
       expect(meta.reason).toContain('ANTHROPIC_ANALYTICS_API_KEY');
       expect(meta.reason).not.toContain('ANTHROPIC_CONSOLE_ADMIN_API_KEY');
     }
+  });
+
+  it('daily member activity without the Analytics key is unavailable', async () => {
+    const on = { ...off, memberActivityDaily: { enabled: true, lookbackDays: 3 } };
+    const gathered = await gatherDatasets(createOptionalCollectors(none, on), context);
+    expect(gathered.coverage.memberActivityDaily).toMatchObject({ status: 'unavailable' });
+    expect(gathered.coverage.memberActivityDaily?.reason).toContain('ANTHROPIC_ANALYTICS_API_KEY');
   });
 });

@@ -34,6 +34,7 @@ const patchFixtureConfig = (config: AppConfig, optional: boolean): AppConfig => 
           console: { enabled: true, lookbackDays: 30 },
           claudeCode: { enabled: true, lookbackDays: 1 },
           featureUsage: { enabled: true, lookbackDays: 30 },
+          memberActivityDaily: { enabled: true, lookbackDays: 1 },
         }
       : {}),
   },
@@ -42,8 +43,9 @@ const patchFixtureConfig = (config: AppConfig, optional: boolean): AppConfig => 
 export interface FixtureTenantOptions {
   fixtureDir: string;
   /**
-   * Also enable the optional sources (Console Admin, Claude Code Analytics, feature usage) with
-   * a synthetic Console key and replay their official-shape fixtures next to the tenant.
+   * Also enable the optional sources (Console Admin, Claude Code Analytics, feature usage, daily
+   * member activity) with a synthetic Console key and replay their official-shape fixtures next
+   * to the tenant.
    */
   optionalSources?: boolean | undefined;
   cwd?: string | undefined;

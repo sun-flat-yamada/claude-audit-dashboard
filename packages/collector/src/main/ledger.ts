@@ -65,6 +65,10 @@ function report(c: Container, result: LedgerUpdateResult): void {
     c.logger.warn(`Ledger: sealed month(s) left unchanged: ${result.sealed.join(', ')}`);
   for (const [dataset, count] of Object.entries(result.rejected))
     c.logger.warn(`Ledger: ${String(count)} ${dataset} row(s) without a usable date were skipped`);
+  for (const gap of result.gaps)
+    c.logger.warn(
+      `Ledger: ${gap.dataset} ${gap.date}: the ${gap.dimension} rows add up to ${String(gap.sum)}, the total row is ${String(gap.total)}`,
+    );
 }
 
 const LEDGER_USAGE = 'ledger <update [--snapshot <id>]|bootstrap>';

@@ -27,6 +27,10 @@ import { ComplianceApi } from '../adapters/anthropic/compliance-api.js';
 import { ConsoleAdminApi } from '../adapters/anthropic/console-admin-api.js';
 import { HttpClient } from '../adapters/anthropic/http-client.js';
 import { FeatureUsageApi } from '../adapters/anthropic/feature-usage-api.js';
+import {
+  MEMBER_DAILY_MIN_INTERVAL_MS,
+  MemberDailyActivityApi,
+} from '../adapters/anthropic/member-daily-api.js';
 import { createOptionalCollectors } from '../adapters/anthropic/optional-collectors.js';
 import {
   FileRawCapture,
@@ -97,9 +101,12 @@ export function createHttpClientForFamily(
   familyId: string,
   fetchImpl?: typeof fetch,
   capture?: RawCapture,
+  minIntervalMs?: number,
 ): HttpClient | null {
   const apiKey = env.keys[familyId];
-  return apiKey ? new HttpClient({ apiKey, baseUrl: env.baseUrl, fetchImpl, capture }) : null;
+  return apiKey
+    ? new HttpClient({ apiKey, baseUrl: env.baseUrl, fetchImpl, capture, minIntervalMs })
+    : null;
 }
 
 function anthropicApis(
@@ -119,7 +126,8 @@ function anthropicApis(
 
 /**
  * Opt-in sources: registered only when enabled in config. One Console Admin key serves the B4
- * sources; feature usage (AN-6) reads the Analytics API with the Analytics key.
+ * sources; feature usage (AN-6) and the per-day member activity (ledger, #158) read the
+ * Analytics API with the Analytics key.
  */
 function optionalCollectors(
   env: Environment,
@@ -127,16 +135,31 @@ function optionalCollectors(
   fetchImpl: typeof fetch | undefined,
   capture: RawCapture | undefined,
 ): DatasetCollector[] {
-  const { console: consoleSource, claudeCode, featureUsage } = config.sources;
+  const { console: consoleSource, claudeCode, featureUsage, memberActivityDaily } = config.sources;
   const http = createHttpClientForFamily(env, 'console', fetchImpl, capture);
   const analytics = createHttpClientForFamily(env, 'analytics', fetchImpl, capture);
+  // The daily series has its own paced client so that it stays within the 60 requests/minute.
+  const paced = createHttpClientForFamily(
+    env,
+    'analytics',
+    fetchImpl,
+    capture,
+    MEMBER_DAILY_MIN_INTERVAL_MS,
+  );
   return createOptionalCollectors(
     {
       console: http && new ConsoleAdminApi(http),
       claudeCode: http && new ClaudeCodeApi(http),
       featureUsage: analytics && new FeatureUsageApi(analytics),
+      memberActivityDaily: paced && new MemberDailyActivityApi(paced),
     },
-    { disabled: disabledDatasets(config), console: consoleSource, claudeCode, featureUsage },
+    {
+      disabled: disabledDatasets(config),
+      console: consoleSource,
+      claudeCode,
+      featureUsage,
+      memberActivityDaily,
+    },
   );
 }
 

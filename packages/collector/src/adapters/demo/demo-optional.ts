@@ -15,6 +15,7 @@ import {
   demoPluginUsage,
   demoSkillUsage,
 } from './demo-feature-usage.js';
+import { demoMemberDaily } from './demo-member-daily.js';
 
 /**
  * Deterministic synthetic data of the OPTIONAL sources (B4), used only by the
@@ -289,7 +290,7 @@ const fixed = <K extends OptionalDatasetName>(
   },
 });
 
-/** Demo equivalents of the optional collectors (all nine datasets). */
+/** Demo equivalents of the optional collectors (all ten datasets). */
 export function createDemoOptionalCollectors(): DatasetCollector[] {
   return [
     fixed('consoleWorkspaces', 'demo:consoleWorkspaces', (now) => workspaces(now), 30),
@@ -301,5 +302,6 @@ export function createDemoOptionalCollectors(): DatasetCollector[] {
     fixed('connectorUsage', 'demo:connectorUsage', demoConnectorUsage, 30),
     fixed('pluginUsage', 'demo:pluginUsage', demoPluginUsage, 30),
     fixed('chatProjectUsage', 'demo:chatProjectUsage', (now) => demoChatProjectUsage(now), 30),
+    fixed('memberActivityDaily', 'demo:memberActivityDaily', (now) => demoMemberDaily(now, 3), 3),
   ];
 }

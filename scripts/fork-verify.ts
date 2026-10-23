@@ -284,11 +284,15 @@ console.log('\n🧪 Check 3b: Tenant fixtures');
 
 const FIXTURES_ROOT = join(ROOT, 'packages/collector/src/adapters/anthropic/__tests__/fixtures');
 const FIXTURE_DIR = join(FIXTURES_ROOT, 'tenant');
-/** Official-shape captures of the optional APIs (B4, AN-6): same synthetic-only rules as the tenant. */
+/**
+ * Official-shape captures of the optional APIs (B4, AN-6, the daily member activity of #158):
+ * same synthetic-only rules as the tenant.
+ */
 const OPTIONAL_FIXTURE_DIRS = [
   join(FIXTURES_ROOT, 'console'),
   join(FIXTURES_ROOT, 'claude-code'),
   join(FIXTURES_ROOT, 'feature-usage'),
+  join(FIXTURES_ROOT, 'member-daily'),
 ];
 const IPV4 = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
 
