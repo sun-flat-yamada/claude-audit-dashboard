@@ -42,8 +42,8 @@ jobs:
     runs-on: ubuntu-latest
     # The workflow file itself comes from the dispatched ref, so only main may run it.
     if: github.ref == 'refs/heads/main'
-    # Analytics requests are paced to at most ~55 a minute: about one minute per month and
-    # dataset group, longer with memberActivityDaily (one request per day).
+    # Analytics requests are paced to at most ~55 a minute: about 15 s per month for the default
+    # datasets and the feature roll-ups, about 35 s more with memberActivityDaily (one per day).
     timeout-minutes: 300
     # Optional JSON object merged over config/default.json (repository variable; docs/SETUP.md).
     # Job-level so every step that loads the configuration sees the same settings.

@@ -87,7 +87,7 @@ packages/
 │       │   ├── registry.ts       Registry<T>
 │       │   ├── state.ts          コレクタ状態 (カーソル、投影、通知記録と送信履歴) のスキーマ
 │       │   ├── documents.ts      汎用レポート文書 (ReportDocument)
-│       │   ├── use-cases/        collect-snapshot / check-compliance / reports / alerts / ledger
+│       │   ├── use-cases/        collect-snapshot / check-compliance / reports / alerts / ledger / ledger-backfill
 │       │   └── presenters/       DashboardView への変換 (PII マスク)
 │       └── contracts/            UI 向け公開契約 (DashboardView v3 と zod スキーマ)
 ├── collector/                    @claude-audit/collector — Node 実行環境
@@ -347,6 +347,7 @@ export const inactiveMembers = defineRule({
 | `pnpm pipeline`          | `pipeline`          | collect → check → dashboard → detail → ledger update | `collect-audit.yml` (6 時間ごと) |
 | `pnpm ledger update`     | `ledger update`     | 新しいスナップショットを月次台帳に納める (冪等)      | `pipeline` の最後 (非致命)       |
 | `pnpm ledger bootstrap`  | `ledger bootstrap`  | `snapshots/` と `archive/` から台帳を初期生成        | —                                |
+| `pnpm ledger backfill`   | `ledger backfill`   | API の保持期間内で過去の月を台帳に取得 (再開可能)    | `ledger-backfill.yml` (手動)     |
 | `pnpm notify`            | `notify`            | アラートポリシーに従い通知                           | `collect-audit.yml`              |
 | `pnpm archive`           | `archive`           | 保持期間超過のスナップショットを圧縮                 | `collect-audit.yml` (commit 前)  |
 | `pnpm size`              | `size`              | `data/audit` のサイズ計測と `capacity.*` 閾値判定    | `collect-audit.yml` (非致命)     |

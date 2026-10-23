@@ -142,15 +142,37 @@ To try the optional sources without a key: `pnpm demo --profile optional-sources
 2. The run restores stored data from the `data/audit` branch (created on the first successful run), collects every dataset, evaluates the rules, writes the dashboard data, archives old snapshots, sends alerts and saves everything back to `data/audit`.
 3. Check the log line `Snapshot …: N/13 datasets collected` and the warnings that follow it. Each `unavailable` dataset names its reason (missing key or scope, API not enabled, …).
 4. When coverage looks right, set `ENABLE_SCHEDULED_JOBS=true`.
+5. **Backfill the monthly ledger once** (first-time setup, #159): **Actions → Ledger Backfill → Run workflow** with `from` = `2026-01` (or the first month you need). The collections only fetch recent data (Activity Feed 7 days at first, Analytics 30 / 90 days), so earlier months are missing from the ledger until this runs. Do it soon: `usage_report` / `cost_report` serve only the last 365 days, so the 2026-01 usage and cost can no longer be fetched after 2026-12-31.
 
-Schedules once enabled:
+Workflows (the schedules apply once enabled):
 
-| Workflow             | When                                                         | What                                                   |
-| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
-| `collect-audit.yml`  | Every 6 hours                                                | Collect, check, dashboard data, archive, alerts, size  |
-| `weekly-report.yml`  | Mondays 09:00 UTC                                            | Weekly digest (previous 7 days), sent to every channel |
-| `monthly-report.yml` | 1st of the month 03:00 UTC                                   | Cost report for the previous month (or a chosen month) |
-| `deploy-pages.yml`   | Push to main; after collection when `PAGES_DATA_SOURCE=live` | Dashboard build and deployment                         |
+| Workflow              | When                                                         | What                                                   |
+| --------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
+| `collect-audit.yml`   | Every 6 hours                                                | Collect, check, dashboard data, archive, alerts, size  |
+| `weekly-report.yml`   | Mondays 09:00 UTC                                            | Weekly digest (previous 7 days), sent to every channel |
+| `monthly-report.yml`  | 1st of the month 03:00 UTC                                   | Cost report for the previous month (or a chosen month) |
+| `deploy-pages.yml`    | Push to main; after collection when `PAGES_DATA_SOURCE=live` | Dashboard build and deployment                         |
+| `ledger-backfill.yml` | Manual only                                                  | Past months into the monthly ledger (see below)        |
+
+### Backfilling the ledger
+
+The **Ledger Backfill** workflow (manual only, `main` only) runs `pnpm ledger backfill` and saves the result to `data/audit` like the other writing workflows. Inputs:
+
+| Input      | Value                                                                                                                                                                                         |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`     | First month, `yyyy-mm` (required)                                                                                                                                                             |
+| `to`       | Last month, `yyyy-mm` (empty: the current month)                                                                                                                                              |
+| `datasets` | Comma-separated dataset names (empty: `activities`, `usage`, `cost`, `adoption`, `memberActivity`, plus `memberActivityDaily` and the feature datasets when their optional source is enabled) |
+| `force`    | Fetch again the months a previous run already completed                                                                                                                                       |
+
+What it fetches, month by month, within what each API still serves:
+
+- `usage` / `cost`: only the last 365 days and not before 2026-01-01; anything older is skipped with a warning (`... excluded: older than the last 365 days ...`).
+- `adoption`, `memberActivity`, the feature roll-ups and `memberActivityDaily`: from 2026-01-01.
+- `activities`: every month; nothing exists before the Compliance API was enabled for the organization.
+- Not backfilled: the state datasets (`members`, `settings`, `groups`, `credentials`, `invites`, `organizations`, `spendLimits`). The APIs keep no history of them; the ledger records them from the collections on.
+
+The run is slow on purpose: Analytics requests start at least 1.1 seconds apart (60 a minute are allowed), so a month takes about 15 seconds of Analytics requests for the default datasets plus the feature roll-ups, and about 35 seconds more with `memberActivityDaily` (one request per day); the Activity Feed adds one request per page (110 ms apart). If a run fails or times out, run it again with the same inputs: months completed after their revision period (the month's end + 8 days) are skipped (`ledger/BACKFILL.json`), everything else is fetched again and merged without duplicates. A dataset without a key or scope is reported as `unavailable` and does not fail the run.
 
 ## Step 5: Tune the rules (optional)
 
@@ -216,6 +238,7 @@ pnpm size --repo . --ref data/audit      # size of the data/audit history agains
 pnpm restore 2024-05-01T06-00-00Z --out ./restored   # archive/<year>/<id>.json.gz back to snapshots/<id>/ (an id or a year)
 pnpm ledger bootstrap   # build the monthly ledger data/ledger/<yyyy-mm>/ once from snapshots/ and archive/ (raw data, data/audit only)
 pnpm ledger update      # record new snapshots in the ledger (idempotent); pnpm pipeline runs it as its last step
+pnpm ledger backfill --from 2026-01 [--to 2026-09] [--datasets usage,cost] [--force]   # past months from the APIs (within their retention), resumable
 pnpm build:data --snapshot <id>          # dashboard.json from a stored (e.g. restored) snapshot; pnpm build:detail accepts it too
 ```
 
