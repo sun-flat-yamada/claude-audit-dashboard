@@ -84,3 +84,25 @@ export function ledgerRevisionAlert(
     link,
   };
 }
+
+/**
+ * The alert for a sealed month that could not be copied to external storage (#161 U7). The
+ * reason names files and HTTP statuses only (sinks never report tokens, URLs or IDs).
+ */
+export function ledgerPushAlert(
+  month: string,
+  sink: string,
+  reason: string,
+  link?: string,
+): AlertMessage {
+  return {
+    key: `ledger-push:${month}:${sink}`,
+    title: `Ledger ${month} not copied to ${sink}`,
+    severity: 'high',
+    lines: [
+      reason,
+      `Run pnpm ledger push --month ${month} again (a re-run copies only what is missing).`,
+    ],
+    link,
+  };
+}

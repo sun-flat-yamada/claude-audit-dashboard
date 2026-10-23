@@ -1,7 +1,12 @@
 import type { ComplianceReport, Severity } from '../domain/compliance/types.js';
 import type { LedgerEntry } from '../domain/ledger/entry.js';
 import type { LedgerStatus } from '../domain/ledger/health.js';
-import type { LedgerManifest, LedgerSealRecord } from '../domain/ledger/manifest.js';
+import type {
+  LedgerManifest,
+  LedgerSealRecord,
+  LedgerTransferRecord,
+} from '../domain/ledger/manifest.js';
+import type { LedgerStoredDigest } from '../domain/ledger/transfer.js';
 import type { LedgerFileDigest } from '../domain/ledger/verify.js';
 import type { DatasetMap, DatasetName, TimeWindow } from '../domain/model/dataset.js';
 import type { AuditSnapshot } from '../domain/model/snapshot.js';
@@ -98,7 +103,46 @@ export interface LedgerStatusStore {
 }
 
 /**
- * Receives a month right after it was sealed (U7 adds external storage sinks; none is built in).
+ * External storage for sealed months (#161 U7): local directory, Google Drive, SharePoint /
+ * OneDrive. Paths are `<yyyy-mm>/<name>` or `<yyyy-mm>/revisions/<name>` (`assertSinkPath`).
+ * Errors never carry tokens, URLs or storage IDs.
+ */
+export interface LedgerSink {
+  /** The registered kind (`filesystem`, `gdrive`, `sharepoint`); recorded in `MANIFEST.json`. */
+  readonly kind: string;
+  /** Stores the bytes at `path`, replacing a file that is there. */
+  put(path: string, bytes: Uint8Array): Promise<void>;
+  /** The stored bytes; null when there is no file at `path`. */
+  get(path: string): Promise<Uint8Array | null>;
+  /** Every file under the month `prefix` (`yyyy-mm`), recursively, as full paths. */
+  list(prefix: string): Promise<string[]>;
+}
+
+/** One ledger file as stored (`<dataset>.jsonl.gz[.enc]`, `revisions/...`), for a copy. */
+export interface StoredLedgerFile {
+  /** Path inside the month, e.g. `usage.jsonl.gz` or `revisions/usage.jsonl.gz.enc`. */
+  name: string;
+  /** Dataset of a dataset or revision file; undefined for the manifest. */
+  dataset?: string | undefined;
+  revision: boolean;
+  bytes: Uint8Array;
+}
+
+/** The stored form of the ledger, as `ledger push` needs it (implemented by the ledger store). */
+export interface LedgerFileAccess {
+  manifest(month: string): Promise<LedgerManifest | null>;
+  /** Dataset files, then revision files, of a month, each in the form stored. */
+  storedFiles(month: string): Promise<StoredLedgerFile[]>;
+  /** `MANIFEST.json` as copied (the manifest given, serialized as the ledger stores it). */
+  manifestFile(manifest: LedgerManifest): StoredLedgerFile;
+  /** Hashes of stored bytes; `content` only for a readable plain file. Never throws. */
+  digest(name: string, bytes: Uint8Array): LedgerStoredDigest;
+  /** Records a verified copy in `MANIFEST.json` (`transfers.<kind>`); the files stay. */
+  recordTransfer(month: string, kind: string, record: LedgerTransferRecord): Promise<void>;
+}
+
+/**
+ * Receives a month right after it was sealed (U7: the configured `ledger.sink` copies it).
  * A failing sink is reported; it never unseals the month.
  */
 export interface SealedMonthSink {

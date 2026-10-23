@@ -33,6 +33,15 @@ const revisionSchema = z.looseObject({
   lastRecordedAt: z.string().nullable(),
 });
 
+/**
+ * One copy of the month in external storage (#161 U7): when it was last transferred and how many
+ * files it held (incl. `MANIFEST.json`). The sink kind is the key; no URL or ID is recorded.
+ */
+const transferSchema = z.looseObject({
+  transferredAt: z.string(),
+  files: z.number().int().nonnegative(),
+});
+
 export const ledgerManifestSchema = z.looseObject({
   schemaVersion: z.literal(LEDGER_MANIFEST_SCHEMA_VERSION),
   month: z.string(),
@@ -54,11 +63,14 @@ export const ledgerManifestSchema = z.looseObject({
   seal: sealSchema.optional(),
   /** Entries that arrived after the seal and would have changed a file (never merged into it). */
   revisions: z.record(z.string(), revisionSchema).optional(),
+  /** Copies in external storage per sink kind (U7); never part of the copied manifest. */
+  transfers: z.record(z.string(), transferSchema).optional(),
 });
 
 export type LedgerManifest = z.infer<typeof ledgerManifestSchema>;
 export type LedgerSealRecord = z.infer<typeof sealSchema>;
 export type LedgerRevisionSummary = z.infer<typeof revisionSchema>;
+export type LedgerTransferRecord = z.infer<typeof transferSchema>;
 
 export interface LedgerManifestFile {
   dataset: string;
@@ -68,8 +80,10 @@ export interface LedgerManifestFile {
   encryptedSha256?: string | undefined;
 }
 
-/** What a refreshed manifest keeps of the previous one (the seal and the revisions). */
-export type LedgerManifestCarry = Partial<Pick<LedgerManifest, 'sealed' | 'seal' | 'revisions'>>;
+/** What a refreshed manifest keeps of the previous one (the seal, revisions and transfers). */
+export type LedgerManifestCarry = Partial<
+  Pick<LedgerManifest, 'sealed' | 'seal' | 'revisions' | 'transfers'>
+>;
 
 /**
  * `MANIFEST.json` of one month: per dataset its kind, entry count, content hash and covered
@@ -96,12 +110,16 @@ function summarizeFiles(files: readonly LedgerManifestFile[]) {
   return { datasets, lastRecordedAt };
 }
 
-/** The seal record and a non-empty revision list of `carry`, when present. */
-const carried = (carry: LedgerManifestCarry): Pick<LedgerManifest, 'seal' | 'revisions'> => ({
+const nonEmpty = <T extends object>(record: T | undefined): record is T =>
+  record !== undefined && Object.keys(record).length > 0;
+
+/** The seal record and non-empty revision and transfer lists of `carry`, when present. */
+const carried = (
+  carry: LedgerManifestCarry,
+): Pick<LedgerManifest, 'seal' | 'revisions' | 'transfers'> => ({
   ...(carry.seal ? { seal: carry.seal } : {}),
-  ...(carry.revisions && Object.keys(carry.revisions).length > 0
-    ? { revisions: carry.revisions }
-    : {}),
+  ...(nonEmpty(carry.revisions) ? { revisions: carry.revisions } : {}),
+  ...(nonEmpty(carry.transfers) ? { transfers: carry.transfers } : {}),
 });
 
 export function buildLedgerManifest(

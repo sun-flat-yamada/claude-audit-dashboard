@@ -8,3 +8,4 @@ export * from './backfill.js';
 export * from './seal.js';
 export * from './verify.js';
 export * from './health.js';
+export * from './transfer.js';
