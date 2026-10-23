@@ -25,6 +25,8 @@ const DATA_WRITING_WORKFLOWS = [
   'monthly-report.yml',
   'ack-alert.yml',
   'ledger-backfill.yml',
+  'ledger-seal.yml',
+  'ledger-verify.yml',
 ];
 
 interface Run {

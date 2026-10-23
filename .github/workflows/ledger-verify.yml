@@ -1,0 +1,68 @@
+name: Ledger Verify
+
+# Daily check of the monthly ledger (data/ledger/ on the data/audit branch, #160): missing days of
+# the daily datasets in unsealed months, the age of the latest recorded collection, and the hashes
+# of every sealed month. The result is kept in ledger/STATUS.json (rule OP-003 on the dashboard);
+# a notification goes out once the check has failed on ledger.verify.notifyAfterDays (7)
+# consecutive days, and when a sealed month received revisions. No API key is needed.
+on:
+  schedule:
+    # Every day at 05:30 UTC.
+    - cron: '30 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Every workflow that writes the data/audit branch shares this group.
+concurrency:
+  group: audit-data
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify the monthly ledger
+    runs-on: ubuntu-latest
+    # Scheduled runs are opt-in (ENABLE_SCHEDULED_JOBS=true); the workflow file itself comes from
+    # the dispatched ref, so only main may run it.
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'schedule' || vars.ENABLE_SCHEDULED_JOBS == 'true')
+    timeout-minutes: 30
+    # Optional JSON object merged over config/default.json (repository variable; docs/SETUP.md).
+    # Job-level so every step that loads the configuration sees the same settings.
+    env:
+      AUDIT_CONFIG_OVERRIDES: ${{ vars.AUDIT_CONFIG_OVERRIDES }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: ./.github/actions/setup
+        with:
+          build: build:collector
+
+      - name: Restore stored data
+        id: restore
+        run: .github/scripts/data-branch.sh restore
+
+      # Findings are recorded and alerted, never an exit code; only an unreadable file fails.
+      - name: Verify the ledger
+        id: verify
+        run: pnpm ledger verify --notify
+        env:
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+
+      - name: Save data to the data/audit branch
+        if: always() && steps.restore.outcome == 'success' && steps.verify.outcome != 'skipped'
+        run: |
+          .github/scripts/data-branch.sh save "chore: ledger verify $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+        env:
+          # Fork-safety: data-branch.sh refuses to save from a public repository.
+          REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
+          GH_TOKEN: ${{ github.token }}
