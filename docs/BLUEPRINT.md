@@ -335,7 +335,7 @@ interface DatasetMeta {
   - `rollup` は `replace`: 通常の収集は移動窓のロールアップを納めるため暦月の値と一致しない。封印時に API の暦月ロールアップでその月のファイルを置き換える (月の確定値)。
   - `state` とバックフィルソースの無いデータセットは `keep` (API に履歴が無い): 記録どおり封印する。
   - 台帳にファイルがあるのに月全体を取り直せないデータセット (キー・スコープ無し、要求の失敗、API の提供範囲外) は封印を止める (`blocked`)。台帳にも API にも無いものは飛ばす。台帳にその月のデータが何も無ければ封印しない。
-  - すべて一致すれば `replace` の書き込みの後に `MANIFEST.json` を `sealed: true` と `seal` で書き、封印済みの月の受け手 (`SealedMonthSink` ポート、U7 が外部保管先を追加する。既定は無し。失敗は報告するだけで封印は戻さない) に渡す。差異があれば何も書かず封印しない。結果は理由 (件数・データセット・日付のみ) とともに `ledger/STATUS.json` の `seals` に記録し、`--notify` で通知し (キー `ledger-seal:<month>:not-sealed`、High)、コマンドは失敗で終わる。解消手順: `pnpm ledger backfill --from <m> --to <m> --force` で API の値を納め直してから再封印する。
+  - すべて一致すれば `replace` の書き込みの後に `MANIFEST.json` を `sealed: true` と `seal` で書き、封印済みの月の受け手 (`SealedMonthSink` ポート。`ledger.sink` を設定したときだけ、その外部保管先へ複製する (U7、下記)。失敗は報告するだけで封印は戻さない) に渡す。差異があれば何も書かず封印しない。結果は理由 (件数・データセット・日付のみ) とともに `ledger/STATUS.json` の `seals` に記録し、`--notify` で通知し (キー `ledger-seal:<month>:not-sealed`、High)、コマンドは失敗で終わる。解消手順: `pnpm ledger backfill --from <m> --to <m> --force` で API の値を納め直してから再封印する。
   - 封印済みの月への `seal` は再検証: 差異は月のファイルに書かず `ledger/<yyyy-mm>/revisions/<dataset>.jsonl.gz` に追記し (`revised`、通知キー `ledger-seal:<month>:revised`)、一致すれば `verified`。
 - **封印後の差分** (`revisions/`): `update` / `bootstrap` / `backfill` が封印済みの月に新しいエントリを持ち込むと、その月のファイルを変えるエントリだけ (`revisionEntries()`: 性質のマージ規則でマージした結果のうち、封印時の内容 = キー + 行の内容に無いもの) を `revisions/<dataset>` に同じマージ規則で追記する (同じ差分は 1 回だけ)。月のファイルとその `datasets` は変わらず、`MANIFEST.json` の `revisions` に件数とハッシュが載る。収集の pipeline には通知の Secrets が無いため、通知は日次の `verify` が行う (キー `ledger-revision:<month>=<件数>,…`、`STATUS.json` の `notifiedRevisions` で同じ件数を繰り返さない)。暗号化 (U8) の `LedgerCodec` は `revisions/` にも同じく適用される。
 - **検査** `pnpm ledger verify [--notify] [--json]` (純粋関数 `domain/ledger/verify.ts`、`verifyLedger` ユースケース):
@@ -352,6 +352,13 @@ interface DatasetMeta {
   - 平文 (`.jsonl.gz`) と暗号化ファイルは混在できる。書き込みは設定の形式で保存し、同じファイルの別形式を消す。`pnpm ledger encrypt [--all]` が既存の平文ファイルを (封印済みの月も、内容と `sha256` を変えずに) 暗号化し直す。`--all` は暗号化済みのファイルも現在の受信者で暗号化し直す (鍵の追加・交換)。平文の版は `data/audit` の履歴に残るため、ブランチのローテーション (`docs/DEPLOYMENT.md`) で消す。
   - `pnpm ledger keygen --out <file> [--pipeline]`: 受信者の鍵対 (秘密鍵をファイルに、公開鍵だけを表示) またはパイプライン鍵を新しいファイル (mode 0600、上書きしない) に書く。`pnpm ledger decrypt --identity <file> --out <dir> [--month <yyyy-mm>]`: 手元の秘密鍵でだけ復号し、`<dir>/<yyyy-mm>/<dataset>.jsonl` と `MANIFEST.json` を書き、`sha256` と照合する。どちらも CI では実行を拒否し、データディレクトリとリポジトリ (pnpm を起動したディレクトリ) の中の出力先を拒否する。ログには月・データセット・件数・鍵の指紋と公開鍵だけを出す。`pnpm secret-scan` は 2 種類の秘密の鍵の形を検出する。
   - スナップショット (`data/snapshots/`) は暗号化しない (対象外)。実テナントでの確認は #172。
+- **外部保管先への複製** (#161 U7、**既定オフ**): Git ブランチは削除・強制 push ができ保持期限を担保できないため、封印した月を組織が保持ポリシーを設定できる保管先にも置く。`ledger.sink` (既定 `none`) で種類を選ぶ: `filesystem` (ローカルディレクトリ。テスト・検証用。リポジトリとデータディレクトリの中は拒否)、`gdrive` (Google Drive 共有ドライブ)、`sharepoint` (SharePoint / OneDrive のドキュメントライブラリ)。
+  - ポート `LedgerSink` (`put` / `get` / `list`、パスは `<yyyy-mm>/<name>` と `<yyyy-mm>/revisions/<name>` だけ (`assertSinkPath`)) と、台帳の保存形式を渡す `LedgerFileAccess` (`FsLedgerRepository` が実装)。アダプタは collector の `adapters/ledger-sinks/` にあり、レジストリ `LEDGER_SINKS` に登録する (switch なし。追加はアダプタ 1 つと登録 1 行)。
+  - `pnpm ledger push [--month <yyyy-mm> | --all] [--notify]` (`pushLedgerMonth` ユースケース、既定は前月): 封印済みの月だけを扱う。各ファイルを先に手元で `MANIFEST.json` と照合し (食い違えば何も転送しない)、**保存されたバイト列のまま** (暗号化ファイルは暗号化のまま) 転送し、読み戻して照合する (暗号化ファイルは `encryptedSha256`、平文は展開後の `sha256`)。`MANIFEST.json` は最後に転送する。照合に失敗した転送は 3 回まで (ファイル単位で) やり直し、HTTP の 408 / 429 / 5xx とネットワークエラーは `Retry-After` に従うバックオフで再試行する。冪等: 既に一致するファイルは転送せず、手元に無い転送先のファイルは報告するだけで消さない。転送が一致したら `MANIFEST.json` に `transfers.<種類>` (`transferredAt`、`files` = 件数。URL や ID は記録しない) を書く (何か転送したとき、または記録が無いときだけ)。転送する `MANIFEST.json` は `transfers` を除いたもの (`transferManifestOf`) なので、記録しても転送先が古くならない。`transfers` は以後のマニフェストの書き直し (`update` / `revisions/` / 再暗号化) で引き継ぐ。
+  - 転送先の配置は台帳と同じ (`<フォルダ>/<yyyy-mm>/<dataset>.jsonl.gz[.enc]`、`revisions/`、`MANIFEST.json`) で独自の梱包をしないため、月のフォルダを `data/ledger/<yyyy-mm>/` に戻せば `pnpm ledger verify` で検査できる (手作業での復元。復元用のツールは別 Issue)。
+  - 資格情報はシークレットを使わず GitHub Actions の OIDC トークン (`ACTIONS_ID_TOKEN_REQUEST_URL` / `_TOKEN`、`permissions: id-token: write`) を交換する。`sharepoint`: audience `api://AzureADTokenExchange` のトークンを Entra ID のフェデレーション資格情報で `client_credentials` の `client_assertion` に使い、Microsoft Graph (`Sites.Selected`) で `PUT .../content` (4 MiB 以下) またはアップロードセッション (320 KiB の倍数のチャンク、事前認証済み URL にはトークンを送らない) で書く。読み戻しは `GET .../content` の 302 先をトークン無しで取得する。`gdrive`: Workload Identity Federation (Google STS のトークン交換 → IAM Credentials `generateAccessToken` でサービスアカウントを代理、スコープ `drive`) で Drive API v3 (`supportsAllDrives`) を使い、ルートフォルダの下に月ごとのフォルダを作り、再開可能アップロードで書く。識別子はリポジトリ変数 (`LEDGER_SHAREPOINT_*`、`LEDGER_GDRIVE_*`、`LEDGER_SINK_DIR`)。依存は追加せず `fetch` だけ。
+  - ログとエラーには操作・月・ファイル名・HTTP ステータス・API のエラーコード (識別子の形のものだけ) を出し、トークン・URL・応答本文・保管先の ID は出さない。
+  - `ledger-seal.yml` は `id-token: write` を持ち、封印のフック (`sealSinks`) が封印直後に複製し、続く手順 _Copy the sealed month to external storage_ (`pnpm ledger push --notify`) が複製を照合し後から増えた `revisions/` も送る (失敗は通知してジョブを失敗させる。キー `ledger-push:<month>:<種類>`、High)。`none` では 1 行記録して成功する。保管先側の設定 (Entra ID アプリと保持ラベル、Workload Identity と Google Vault の保持ルール) は `docs/SETUP.md`。保持期間は利用組織が決める。実テナントでの確認は #175。
 - 規則は `@claude-audit/core` の `domain/ledger/` (純粋関数、データセットと性質の対応はレジストリ `registerLedgerDataset`)、`updateLedger` ユースケースと `LedgerRepository` ポート。ファイル形式は collector の `FsLedgerRepository` (`adapters/storage/ledger.ts`、差し替え可能なコーデック `LedgerCodec`)。`pnpm size` は台帳の blob 数とサイズも表示する (総量にも含まれる)。
 
 ---
@@ -578,35 +585,37 @@ UI は `@claude-audit/core/contracts` の `DashboardView` (schemaVersion 3、zod
 
 ### 12.1 ワークフロー
 
-| ワークフロー          | トリガー                                                                                            | 内容                                                                                       |
-| --------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `ci.yml`              | push / PR (main)                                                                                    | fork:verify、lint、typecheck、format:check、test、build、`pnpm audit --audit-level=high`   |
-| `collect-audit.yml`   | 6 時間ごと + 月末最終日 23:30 UTC (要 `ENABLE_SCHEDULED_JOBS`) / 手動 (`retention_days`, `dry_run`) | restore → pipeline (末尾で ledger update) → archive → notify → size (非致命) → save        |
-| `weekly-report.yml`   | 毎週月曜 09:00 UTC (同上) / 手動                                                                    | restore → `report:weekly --notify` → save                                                  |
-| `monthly-report.yml`  | 毎月 1 日 03:00 UTC (同上) / 手動 (対象月指定可)                                                    | restore → `report:monthly --notify` → save                                                 |
-| `ledger-backfill.yml` | 手動のみ (`from` / `to` / `datasets` / `force`)                                                     | restore → `ledger backfill` → save (§6.5)                                                  |
-| `ledger-seal.yml`     | 毎月 10 日 04:00 UTC (同上) / 手動 (`month`)                                                        | restore → `ledger seal --notify` → save (封印しなかった試行も保存、§6.5)                   |
-| `ledger-verify.yml`   | 毎日 05:30 UTC (同上) / 手動                                                                        | restore → `ledger verify --notify` → save (§6.5)                                           |
-| `deploy-pages.yml`    | main への push、収集完了 (live 時のみ)、手動                                                        | サンプルまたはライブデータでダッシュボードをビルドしデプロイ                               |
-| `secret-scan.yml`     | push / PR                                                                                           | 独自スキャナと gitleaks                                                                    |
-| `release.yml`         | `v*` タグの push                                                                                    | `pnpm verify:all` → タグと 4 つの version の一致検査 → CHANGELOG の該当節で GitHub Release |
+| ワークフロー          | トリガー                                                                                            | 内容                                                                                                                  |
+| --------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `ci.yml`              | push / PR (main)                                                                                    | fork:verify、lint、typecheck、format:check、test、build、`pnpm audit --audit-level=high`                              |
+| `collect-audit.yml`   | 6 時間ごと + 月末最終日 23:30 UTC (要 `ENABLE_SCHEDULED_JOBS`) / 手動 (`retention_days`, `dry_run`) | restore → pipeline (末尾で ledger update) → archive → notify → size (非致命) → save                                   |
+| `weekly-report.yml`   | 毎週月曜 09:00 UTC (同上) / 手動                                                                    | restore → `report:weekly --notify` → save                                                                             |
+| `monthly-report.yml`  | 毎月 1 日 03:00 UTC (同上) / 手動 (対象月指定可)                                                    | restore → `report:monthly --notify` → save                                                                            |
+| `ledger-backfill.yml` | 手動のみ (`from` / `to` / `datasets` / `force`)                                                     | restore → `ledger backfill` → save (§6.5)                                                                             |
+| `ledger-seal.yml`     | 毎月 10 日 04:00 UTC (同上) / 手動 (`month`)                                                        | restore → `ledger seal --notify` → `ledger push --notify` (`ledger.sink`、U7) → save (封印しなかった試行も保存、§6.5) |
+| `ledger-verify.yml`   | 毎日 05:30 UTC (同上) / 手動                                                                        | restore → `ledger verify --notify` → save (§6.5)                                                                      |
+| `deploy-pages.yml`    | main への push、収集完了 (live 時のみ)、手動                                                        | サンプルまたはライブデータでダッシュボードをビルドしデプロイ                                                          |
+| `secret-scan.yml`     | push / PR                                                                                           | 独自スキャナと gitleaks                                                                                               |
+| `release.yml`         | `v*` タグの push                                                                                    | `pnpm verify:all` → タグと 4 つの version の一致検査 → CHANGELOG の該当節で GitHub Release                            |
 
 共通のセットアップは複合アクション `.github/actions/setup` に集約し、Dependabot の更新対象に含める。
 
 ### 12.2 Secrets と Variables
 
-| 名前                                                                                          | 種別     | 必須 | 内容                                                                                             |
-| --------------------------------------------------------------------------------------------- | -------- | ---- | ------------------------------------------------------------------------------------------------ |
-| `ANTHROPIC_ENTERPRISE_API_KEY`                                                                | Secret   | 必須 | §5.1 の Enterprise キー                                                                          |
-| `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY`    | Secret   | 任意 | 系統ごとの上書き                                                                                 |
-| `ANTHROPIC_CONSOLE_ADMIN_API_KEY`                                                             | Secret   | 任意 | 任意アダプタ (§5.4) 用の Console 組織 Admin キー。他のキーにはフォールバックしない               |
-| `LEDGER_PIPELINE_KEY`                                                                         | Secret   | 任意 | 暗号化した台帳 (§6.5、U8) をワークフローが読むための対称鍵。受信者の秘密鍵ではない               |
-| `SLACK_WEBHOOK_URL` / `DISCORD_WEBHOOK_URL`                                                   | Secret   | 任意 | 通知先                                                                                           |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO` | Secret   | 任意 | メール通知                                                                                       |
-| `ENABLE_SCHEDULED_JOBS`                                                                       | Variable | 任意 | `true` で定期実行を有効化 (既定は手動のみ)                                                       |
-| `PAGES_DATA_SOURCE`                                                                           | Variable | 任意 | `live` でライブデータを Pages に公開 (既定はサンプル)                                            |
-| `PAGES_DETAIL_DATA`                                                                           | Variable | 任意 | `true` かつ `PAGES_DATA_SOURCE=live` で個人単位の詳細データも公開 (Private Pages のみ。既定オフ) |
-| `DASHBOARD_URL`                                                                               | Variable | 任意 | 通知に載せるダッシュボードの URL                                                                 |
+| 名前                                                                                          | 種別     | 必須 | 内容                                                                                                                    |
+| --------------------------------------------------------------------------------------------- | -------- | ---- | ----------------------------------------------------------------------------------------------------------------------- |
+| `ANTHROPIC_ENTERPRISE_API_KEY`                                                                | Secret   | 必須 | §5.1 の Enterprise キー                                                                                                 |
+| `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY`    | Secret   | 任意 | 系統ごとの上書き                                                                                                        |
+| `ANTHROPIC_CONSOLE_ADMIN_API_KEY`                                                             | Secret   | 任意 | 任意アダプタ (§5.4) 用の Console 組織 Admin キー。他のキーにはフォールバックしない                                      |
+| `LEDGER_PIPELINE_KEY`                                                                         | Secret   | 任意 | 暗号化した台帳 (§6.5、U8) をワークフローが読むための対称鍵。受信者の秘密鍵ではない                                      |
+| `SLACK_WEBHOOK_URL` / `DISCORD_WEBHOOK_URL`                                                   | Secret   | 任意 | 通知先                                                                                                                  |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO` | Secret   | 任意 | メール通知                                                                                                              |
+| `LEDGER_SHAREPOINT_TENANT_ID` / `_CLIENT_ID` / `_DRIVE_ID` / `_FOLDER`                        | Variable | 任意 | `ledger.sink` が `sharepoint` のときの Entra ID アプリとドキュメントライブラリの識別子 (§6.5、U7。シークレットではない) |
+| `LEDGER_GDRIVE_WORKLOAD_IDENTITY_PROVIDER` / `_SERVICE_ACCOUNT` / `_DRIVE_ID` / `_FOLDER_ID`  | Variable | 任意 | `ledger.sink` が `gdrive` のときの Workload Identity プロバイダ・サービスアカウント・共有ドライブのフォルダ (§6.5、U7)  |
+| `ENABLE_SCHEDULED_JOBS`                                                                       | Variable | 任意 | `true` で定期実行を有効化 (既定は手動のみ)                                                                              |
+| `PAGES_DATA_SOURCE`                                                                           | Variable | 任意 | `live` でライブデータを Pages に公開 (既定はサンプル)                                                                   |
+| `PAGES_DETAIL_DATA`                                                                           | Variable | 任意 | `true` かつ `PAGES_DATA_SOURCE=live` で個人単位の詳細データも公開 (Private Pages のみ。既定オフ)                        |
+| `DASHBOARD_URL`                                                                               | Variable | 任意 | 通知に載せるダッシュボードの URL                                                                                        |
 
 ---
 
@@ -780,6 +789,7 @@ pnpm test:e2e --repeat-each=5      # 安定性の確認 (リトライなしで�
 | `ledger.verify.maxStaleHours`             | `24`                                | 最終収集からの経過時間の上限                                                    |
 | `ledger.verify.notifyAfterDays`           | `7`                                 | この日数連続で失敗したら通知                                                    |
 | `ledger.encryption.recipients`            | `[]`                                | 台帳ファイルを暗号化する公開鍵 (`cadl-pub-...`)。空なら平文 (§6.5、U8)          |
+| `ledger.sink`                             | `"none"`                            | 封印した月の複製先 (`none` / `filesystem` / `gdrive` / `sharepoint`、§6.5、U7)  |
 
 環境変数: `ANTHROPIC_ENTERPRISE_API_KEY` ほか §12.2、`ANTHROPIC_BASE_URL` (テスト用)、`DATA_DIR` (既定 `data`)、`CONFIG_DIR` (既定 `config`)、`DASHBOARD_URL`、`SMTP_SECURE`。相対パスは pnpm を起動したディレクトリ基準で解決する。
 

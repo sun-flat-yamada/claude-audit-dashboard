@@ -37,21 +37,23 @@ Missing scopes do not break collection: the affected datasets are reported as `u
 
 **Settings → Secrets and variables → Actions**:
 
-| Name                                                                                       | Kind     | Required | Value                                                                                                                                                                  |
-| ------------------------------------------------------------------------------------------ | -------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ANTHROPIC_ENTERPRISE_API_KEY`                                                             | Secret   | Yes      | The key from Step 1                                                                                                                                                    |
-| `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY` | Secret   | No       | Per-API overrides                                                                                                                                                      |
-| `ANTHROPIC_CONSOLE_ADMIN_API_KEY`                                                          | Secret   | No       | Console organization Admin key for the optional sources — see [Optional sources](#optional-sources-console-admin-api-and-claude-code-analytics)                        |
-| `LEDGER_PIPELINE_KEY`                                                                      | Secret   | No       | Only with ledger encryption: the workflows' key to read the encrypted ledger — see [Encrypting the ledger](#encrypting-the-ledger-optional)                            |
-| `SLACK_WEBHOOK_URL`                                                                        | Secret   | No       | Slack Incoming Webhook URL                                                                                                                                             |
-| `DISCORD_WEBHOOK_URL`                                                                      | Secret   | No       | Discord webhook URL                                                                                                                                                    |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`                                      | Secret   | No       | SMTP server (`SMTP_SECURE=true` is implied for port 465)                                                                                                               |
-| `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO`                                                      | Secret   | No       | Sender and comma-separated recipients                                                                                                                                  |
-| `DASHBOARD_URL`                                                                            | Variable | No       | Dashboard link included in alerts and reports                                                                                                                          |
-| `ENABLE_SCHEDULED_JOBS`                                                                    | Variable | No       | `true` enables the schedules (set it after Step 4)                                                                                                                     |
-| `AUDIT_CONFIG_OVERRIDES`                                                                   | Variable | No       | JSON object merged over `config/default.json` without editing `main` — see [Configuration overrides](#configuration-overrides-without-editing-main)                    |
-| `PAGES_DATA_SOURCE`                                                                        | Variable | No       | `live` publishes live data to Pages — see [DEPLOYMENT.md](DEPLOYMENT.md)                                                                                               |
-| `PAGES_DETAIL_DATA`                                                                        | Variable | No       | `true` (with `PAGES_DATA_SOURCE=live`) also publishes per-person detail files and the effective configuration; Private Pages only — see [DEPLOYMENT.md](DEPLOYMENT.md) |
+| Name                                                                                         | Kind     | Required | Value                                                                                                                                                                                                |
+| -------------------------------------------------------------------------------------------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ANTHROPIC_ENTERPRISE_API_KEY`                                                               | Secret   | Yes      | The key from Step 1                                                                                                                                                                                  |
+| `ANTHROPIC_COMPLIANCE_API_KEY` / `ANTHROPIC_ANALYTICS_API_KEY` / `ANTHROPIC_ADMIN_API_KEY`   | Secret   | No       | Per-API overrides                                                                                                                                                                                    |
+| `ANTHROPIC_CONSOLE_ADMIN_API_KEY`                                                            | Secret   | No       | Console organization Admin key for the optional sources — see [Optional sources](#optional-sources-console-admin-api-and-claude-code-analytics)                                                      |
+| `LEDGER_PIPELINE_KEY`                                                                        | Secret   | No       | Only with ledger encryption: the workflows' key to read the encrypted ledger — see [Encrypting the ledger](#encrypting-the-ledger-optional)                                                          |
+| `SLACK_WEBHOOK_URL`                                                                          | Secret   | No       | Slack Incoming Webhook URL                                                                                                                                                                           |
+| `DISCORD_WEBHOOK_URL`                                                                        | Secret   | No       | Discord webhook URL                                                                                                                                                                                  |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`                                        | Secret   | No       | SMTP server (`SMTP_SECURE=true` is implied for port 465)                                                                                                                                             |
+| `ALERT_EMAIL_FROM` / `ALERT_EMAIL_TO`                                                        | Secret   | No       | Sender and comma-separated recipients                                                                                                                                                                |
+| `LEDGER_SHAREPOINT_TENANT_ID` / `_CLIENT_ID` / `_DRIVE_ID` / `_FOLDER`                       | Variable | No       | Only with `ledger.sink` `sharepoint`: identifiers of the Entra ID app and the document library (no secret) — see [Copying sealed months](#copying-sealed-months-to-external-storage-optional)        |
+| `LEDGER_GDRIVE_WORKLOAD_IDENTITY_PROVIDER` / `_SERVICE_ACCOUNT` / `_DRIVE_ID` / `_FOLDER_ID` | Variable | No       | Only with `ledger.sink` `gdrive`: Workload Identity provider, service account and shared drive folder (no secret) — see [Copying sealed months](#copying-sealed-months-to-external-storage-optional) |
+| `DASHBOARD_URL`                                                                              | Variable | No       | Dashboard link included in alerts and reports                                                                                                                                                        |
+| `ENABLE_SCHEDULED_JOBS`                                                                      | Variable | No       | `true` enables the schedules (set it after Step 4)                                                                                                                                                   |
+| `AUDIT_CONFIG_OVERRIDES`                                                                     | Variable | No       | JSON object merged over `config/default.json` without editing `main` — see [Configuration overrides](#configuration-overrides-without-editing-main)                                                  |
+| `PAGES_DATA_SOURCE`                                                                          | Variable | No       | `live` publishes live data to Pages — see [DEPLOYMENT.md](DEPLOYMENT.md)                                                                                                                             |
+| `PAGES_DETAIL_DATA`                                                                          | Variable | No       | `true` (with `PAGES_DATA_SOURCE=live`) also publishes per-person detail files and the effective configuration; Private Pages only — see [DEPLOYMENT.md](DEPLOYMENT.md)                               |
 
 Workflows declare their own token permissions; no change to the repository's default workflow permissions is needed.
 
@@ -205,6 +207,45 @@ The ledger holds raw data (e-mail and IP addresses). Encryption at rest (#162) i
 
 To read it: `pnpm ledger decrypt --identity ~/secure/ledger-owner.key --out ~/ledger-plain [--month 2026-09]` (local only; the output directory must be outside the repository and the data directory). With recipients set but no `LEDGER_PIPELINE_KEY`, the ledger commands stop without writing and the collection only warns.
 
+### Copying sealed months to external storage (optional)
+
+A Git branch can be deleted or force-pushed, so `data/audit` alone cannot guarantee a retention period. With `ledger.sink` (#161, **`none` by default**) every sealed month is also copied to storage where your organization sets the retention: a SharePoint / OneDrive document library (`sharepoint`) or a Google Drive shared drive (`gdrive`); `filesystem` copies to a local directory (tests, verification). **No secret is stored in GitHub**: the **Ledger Seal** workflow (`permissions: id-token: write`) exchanges its GitHub OIDC token for a short-lived cloud token, and the identifiers below are repository **variables**.
+
+How it works: right after a month is sealed, and again in the step _Copy the sealed month to external storage_ (`pnpm ledger push --notify`), every stored file of the month is uploaded **as stored** (an encrypted ledger stays encrypted), read back and checked against `MANIFEST.json` (`encryptedSha256` of an encrypted file, otherwise the `sha256` of the decompressed content); `MANIFEST.json` is copied last. A re-run copies only what is missing or changed (for example a new `revisions/` file) and never deletes anything in the copy. A verified copy is recorded in the local `MANIFEST.json` as `transfers.<kind>` (time and file count; no URL or ID). A failed copy fails the step and notifies; run **Ledger Seal** for the month again (a sealed month is re-verified and copied).
+
+The copy has the ledger's own layout, so it can be restored by hand: `<folder>/<yyyy-mm>/<dataset>.jsonl.gz[.enc]`, `<folder>/<yyyy-mm>/revisions/...` and `<folder>/<yyyy-mm>/MANIFEST.json`. Copy a month back into `data/ledger/<yyyy-mm>/` of a `data/audit` checkout and run `pnpm ledger verify` (encrypted files need `LEDGER_PIPELINE_KEY` or `pnpm ledger decrypt`).
+
+| Setting       | Default | Meaning                                                    |
+| ------------- | ------- | ---------------------------------------------------------- |
+| `ledger.sink` | `none`  | `none`, `filesystem`, `gdrive` or `sharepoint` (see below) |
+
+Set it with `AUDIT_CONFIG_OVERRIDES`, e.g. `{"ledger":{"sink":"sharepoint"}}`. How long the copies are kept is your organization's decision (for example 3 years); set it on the storage side as below.
+
+**SharePoint / OneDrive (`sharepoint`)** — Microsoft Graph with the `Sites.Selected` permission:
+
+1. Microsoft Entra admin center → **App registrations → New registration** (single tenant). Note the _Application (client) ID_ and the _Directory (tenant) ID_.
+2. The app → **Certificates & secrets → Federated credentials → Add credential** → _GitHub Actions deploying Azure resources_: your organization and repository, entity type **Branch**, branch `main` (subject `repo:<owner>/<repo>:ref:refs/heads/main`, audience `api://AzureADTokenExchange`). Do not create a client secret.
+3. **API permissions → Add a permission → Microsoft Graph → Application permissions → `Sites.Selected`**, then **Grant admin consent**.
+4. Give the app access to the one site (an administrator, e.g. in Graph Explorer): `POST https://graph.microsoft.com/v1.0/sites/{site-id}/permissions` with `{"roles":["write"],"grantedToIdentities":[{"application":{"id":"<client id>","displayName":"claude-audit ledger"}}]}`.
+5. Find the document library's drive ID: `GET https://graph.microsoft.com/v1.0/sites/{site-id}/drives`.
+6. Retention: in Microsoft Purview create a **retention label** (e.g. retain 3 years from creation) and apply it as the default label of the folder or library, or a retention policy for the site. Prefer a label that keeps items (and their versions) over a record label that locks them: a `revisions/` file of a sealed month is replaced when later revisions arrive.
+7. Repository variables: `LEDGER_SHAREPOINT_TENANT_ID`, `LEDGER_SHAREPOINT_CLIENT_ID`, `LEDGER_SHAREPOINT_DRIVE_ID` and optionally `LEDGER_SHAREPOINT_FOLDER` (folder path in the library, default `claude-audit-ledger`).
+
+Files up to 4 MiB are uploaded in one request, larger ones in an upload session.
+
+**Google Drive shared drive (`gdrive`)** — Workload Identity Federation and a service account without keys:
+
+1. In a Google Cloud project enable the **IAM Service Account Credentials API**, the **Security Token Service API** and the **Google Drive API**.
+2. **IAM → Workload Identity Federation → Create pool** and an **OIDC provider**: issuer `https://token.actions.githubusercontent.com`, attribute mapping `google.subject=assertion.sub`, `attribute.repository=assertion.repository`, `attribute.ref=assertion.ref`, condition `assertion.repository == '<owner>/<repo>' && assertion.ref == 'refs/heads/main'`. Keep the default audience.
+3. Create a service account (no key). Grant `roles/iam.workloadIdentityUser` on it to `principalSet://iam.googleapis.com/projects/<number>/locations/global/workloadIdentityPools/<pool>/attribute.repository/<owner>/<repo>`.
+4. In Google Drive add the service account's e-mail address to the shared drive as **Content manager** and create a folder for the copies. The drive ID and the folder ID are the last part of their URLs.
+5. Retention: in **Google Vault → Retention → Custom rule** for Drive, scope the shared drive, retain for your period (e.g. 3 years).
+6. Repository variables: `LEDGER_GDRIVE_WORKLOAD_IDENTITY_PROVIDER` (`projects/<number>/locations/global/workloadIdentityPools/<pool>/providers/<provider>`), `LEDGER_GDRIVE_SERVICE_ACCOUNT` (its e-mail address), `LEDGER_GDRIVE_DRIVE_ID`, `LEDGER_GDRIVE_FOLDER_ID`.
+
+**Local directory (`filesystem`)**: `LEDGER_SINK_DIR=<directory>` (outside the repository and the data directory, refused otherwise), then `pnpm ledger push --month 2026-09`.
+
+Logs and errors name the month, the file and the HTTP status (plus an API error code such as `accessDenied`), never a token, a URL or a storage ID.
+
 ## Step 5: Tune the rules (optional)
 
 `config/default.json` — thresholds and switches (full list in [BLUEPRINT appendix A](BLUEPRINT.md#付録-a-設定スキーマ)):
@@ -272,6 +313,7 @@ pnpm ledger update      # record new snapshots in the ledger (idempotent); pnpm 
 pnpm ledger backfill --from 2026-01 [--to 2026-09] [--datasets usage,cost] [--force]   # past months from the APIs (within their retention), resumable
 pnpm ledger seal [--month 2026-09] [--notify]   # re-fetch a past month and seal it when it matches (default: the previous month)
 pnpm ledger verify [--notify] [--json]          # missing days, stale collection, sealed-month hashes (ledger/STATUS.json)
+pnpm ledger push [--month 2026-09|--all] [--notify]   # copy sealed months to ledger.sink and verify the copy (default: the previous month; none: no-op)
 pnpm ledger keygen --out <file> [--pipeline]    # local only: a recipient key pair (prints the public key) or the workflows' LEDGER_PIPELINE_KEY
 pnpm ledger encrypt [--all] [--identity <file>] # store the plain ledger files encrypted (--all: re-encrypt for new recipients / a new pipeline key)
 pnpm ledger decrypt --identity <file> --out <dir> [--month 2026-09]   # local only: decrypt with a private key, checked against MANIFEST.json

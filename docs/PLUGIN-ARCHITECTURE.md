@@ -30,6 +30,7 @@
 | 8   | Output format          | `DocumentRenderer` (core port)     | `BUILTIN_RENDERERS` in `collector/src/adapters/renderers/index.ts`     |
 | 9   | Notification channel   | `Notifier` (core port)             | `notifiers()` in `collector/src/main/container.ts`                     |
 | 10  | CLI command            | `Command` (collector)              | `COMMANDS` in `collector/src/main/commands.ts`                         |
+| 11  | Ledger storage sink    | `LedgerSink` (core port)           | `LEDGER_SINKS` in `collector/src/adapters/ledger-sinks/registry.ts`    |
 
 ---
 
@@ -202,6 +203,19 @@ export interface Command {
 
 Commands receive the composed `Container` (configuration, repositories, collectors, registries) and stay thin: they call use cases and log.
 
+## 11. Ledger storage sink
+
+```ts
+export interface LedgerSink {
+  readonly kind: string; // the value of ledger.sink; recorded in MANIFEST.json transfers
+  put(path: string, bytes: Uint8Array): Promise<void>; // path: <yyyy-mm>/<name> or <yyyy-mm>/revisions/<name>
+  get(path: string): Promise<Uint8Array | null>;
+  list(prefix: string): Promise<string[]>; // every file of the month, recursively
+}
+```
+
+Built in: `filesystem`, `gdrive` (Drive API v3, Workload Identity Federation), `sharepoint` (Microsoft Graph, Entra ID federated credential). Add one adapter and one `LedgerSinkDefinition` (`kind`, the variables it reads, `create(context)`) to `LEDGER_SINKS`; `ledger.sink` then accepts its kind. The `pushLedgerMonth` use case does the rest (local check, transfer of the stored bytes, read-back verification against `MANIFEST.json`, retries, idempotency, the `transfers` record), so a sink only stores and returns bytes. Use OIDC federation or another keyless exchange rather than a stored secret, read identifiers from `context.variables` (`LEDGER_*`), call `assertSinkPath` on every path, and keep tokens, URLs and storage IDs out of every error message (`sinkFetch` in `ledger-sinks/http.ts` does that and retries transient HTTP failures).
+
 ---
 
 ## What does not change when you extend
@@ -214,3 +228,4 @@ Commands receive the composed `Container` (configuration, repositories, collecto
 | a report                      | renderers, notifiers, CLI (`report <id>`)                                |
 | a renderer or channel         | reports and alert planning                                               |
 | an API field / version change | everything outside the gateway's schema and mapper                       |
+| a ledger storage sink         | `ledger push`, the seal hook, verification and the workflow              |
