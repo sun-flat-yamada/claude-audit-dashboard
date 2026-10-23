@@ -1,0 +1,51 @@
+name: Ledger Key Check
+
+# Checks that the Actions secret LEDGER_PIPELINE_KEY still reads every file of the encrypted
+# monthly ledger (data/ledger/ on the data/audit branch, #174) and that every file matches the
+# sha256 / encryptedSha256 of its MANIFEST.json, so a wrong, rotated or lost key is found before a
+# restore needs it. Read-only: the data branch is restored, never saved; nothing is decrypted to
+# disk, and neither the key nor any ledger content reaches the log or an artifact. A failed check
+# fails the run. Private keys and the offline key backup are never used here (docs/DEPLOYMENT.md,
+# Manual restore runbook).
+on:
+  schedule:
+    # The 11th of every month at 05:00 UTC (the day after the seal).
+    - cron: '0 5 11 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Reads only: it does not join the audit-data group of the writing workflows.
+concurrency:
+  group: ledger-key-check
+  cancel-in-progress: false
+
+jobs:
+  key-check:
+    name: Check the ledger pipeline key
+    runs-on: ubuntu-latest
+    # Scheduled runs are opt-in (ENABLE_SCHEDULED_JOBS=true); the workflow file itself comes from
+    # the dispatched ref, so only main may run it.
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'schedule' || vars.ENABLE_SCHEDULED_JOBS == 'true')
+    timeout-minutes: 30
+    # Optional JSON object merged over config/default.json (repository variable; docs/SETUP.md).
+    # Job-level so every step that loads the configuration sees the same settings.
+    env:
+      AUDIT_CONFIG_OVERRIDES: ${{ vars.AUDIT_CONFIG_OVERRIDES }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: ./.github/actions/setup
+        with:
+          build: build:collector
+
+      - name: Restore stored data
+        run: .github/scripts/data-branch.sh restore
+
+      # Counts, key fingerprints and file names only; exits non-zero on any finding.
+      - name: Check the ledger key
+        run: pnpm ledger key-check
+        env:
+          LEDGER_PIPELINE_KEY: ${{ secrets.LEDGER_PIPELINE_KEY }}
