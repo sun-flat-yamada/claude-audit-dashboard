@@ -88,6 +88,7 @@ jobs:
           ANTHROPIC_ENTERPRISE_API_KEY: ${{ secrets.ANTHROPIC_ENTERPRISE_API_KEY }}
           ANTHROPIC_COMPLIANCE_API_KEY: ${{ secrets.ANTHROPIC_COMPLIANCE_API_KEY }}
           ANTHROPIC_ANALYTICS_API_KEY: ${{ secrets.ANTHROPIC_ANALYTICS_API_KEY }}
+          LEDGER_PIPELINE_KEY: ${{ secrets.LEDGER_PIPELINE_KEY }}
 
       # Saved also after a failed unit: every unit already merged is kept and recorded in
       # ledger/BACKFILL.json, so the next run continues from there (the job still fails).

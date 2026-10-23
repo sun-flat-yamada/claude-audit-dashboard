@@ -42,6 +42,9 @@ const PATTERNS: { name: string; pattern: RegExp }[] = [
   { name: 'Google API Key', pattern: /AIza[A-Za-z0-9_-]{35}/ },
   { name: 'OpenAI Key', pattern: /sk-[A-Za-z0-9]{48,}/ },
   { name: 'Private Key Header', pattern: /-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----/ },
+  // Ledger encryption keys (#162 U8); the public key form (`cadl-pub-...`) is not secret.
+  { name: 'Ledger identity (private key)', pattern: /CADL-SECRET-[A-Za-z0-9_-]{43}/ },
+  { name: 'Ledger pipeline key', pattern: /CADL-PIPELINE-[A-Za-z0-9_-]{43}/ },
 ];
 
 /**
