@@ -10,6 +10,7 @@ import type {
   Projection,
   ReportDefinition,
   Rule,
+  SealedMonthSink,
 } from '@claude-audit/core';
 import {
   BUILTIN_ANALYZERS,
@@ -46,6 +47,7 @@ import { consoleNotifier, discordNotifier, slackNotifier } from '../adapters/not
 import { emailNotifier } from '../adapters/notifiers/email.js';
 import { BUILTIN_RENDERERS } from '../adapters/renderers/index.js';
 import { FileStore } from '../adapters/storage/file-store.js';
+import { ledgerHealthCollector } from '../adapters/storage/ledger-status.js';
 import {
   FsComplianceReportRepository,
   FsSnapshotRepository,
@@ -76,6 +78,8 @@ export interface Container {
   matrix: MatrixSource | null;
   /** Datasets `ledger backfill` can fetch, over paced clients per API family (#159). */
   backfill: Registry<BackfillDefinition>;
+  /** Receivers of a freshly sealed ledger month (U7 adds external storage; none yet). */
+  sealSinks: readonly SealedMonthSink[];
   projections: readonly Projection[];
   rules: Rule[];
   analyzers: readonly Analyzer[];
@@ -285,6 +289,23 @@ function resolveSources(
   };
 }
 
+/**
+ * Collectors that read the data directory (`ledgerHealth`, #160) join every source, live, demo or
+ * injected, unless the source brings its own (the demo tenant) or the dataset is disabled.
+ */
+function withLocalCollectors(
+  sources: Pick<Container, 'collectors' | 'matrix'>,
+  store: FileStore,
+  config: AppConfig,
+): Pick<Container, 'collectors' | 'matrix'> {
+  const local = [ledgerHealthCollector(store)].filter(
+    (local) =>
+      !disabledDatasets(config).includes(local.dataset) &&
+      !sources.collectors.some((c) => c.dataset === local.dataset),
+  );
+  return { ...sources, collectors: [...sources.collectors, ...local] };
+}
+
 export async function createContainer(options: ContainerOptions = {}): Promise<Container> {
   const env = readEnvironment(options.env, options.cwd);
   const loaded = await loadConfig(env.configDir, env.configOverrides);
@@ -296,7 +317,7 @@ export async function createContainer(options: ContainerOptions = {}): Promise<C
   if (unknown.length)
     logger.warn(`Activity watches reference unknown activity types: ${unknown.join(', ')}`);
   const store = new FileStore(options.dataDir ?? env.dataDir);
-  const sources = resolveSources(options, env, config, logger);
+  const sources = withLocalCollectors(resolveSources(options, env, config, logger), store, config);
   return {
     env,
     config,
@@ -311,6 +332,7 @@ export async function createContainer(options: ContainerOptions = {}): Promise<C
     artifacts: fileArtifacts(store),
     ...sources,
     backfill: backfillSources(env, config, options.fetchImpl, options.httpTiming),
+    sealSinks: [],
     projections: BUILTIN_PROJECTIONS,
     rules: catalog.rules,
     analyzers: BUILTIN_ANALYZERS,

@@ -173,6 +173,7 @@ const withSuffix = (row: Row, key: string, suffix: string): Row => ({
 
 const DEFAULT_HISTORY_RULES: Record<DatasetName, DatasetHistoryRule> = {
   organizations: { period: Infinity, variant: (base) => base },
+  ledgerHealth: { period: Infinity, variant: (base) => base },
   settings: {
     period: 240,
     variant: (base, epoch) =>

@@ -34,6 +34,7 @@ import {
 } from '@claude-audit/core';
 import { activityHistory } from './demo-activity-history.js';
 import { demoEngagement } from './demo-engagement.js';
+import { demoLedgerHealth } from './demo-ledger.js';
 
 /**
  * Deterministic synthetic tenant for `pnpm demo`, sample data and tests.
@@ -551,6 +552,7 @@ export function createDemoCollectors(): DatasetCollector[] {
     fixed('settings', settings),
     fixed('credentials', credentials),
     fixed('spendLimits', spendLimits),
+    fixed('ledgerHealth', demoLedgerHealth),
     {
       dataset: 'activities',
       source: 'demo:activities',

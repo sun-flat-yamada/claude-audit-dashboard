@@ -134,9 +134,9 @@ describe('B3 archive and restore with the optional datasets', () => {
       expect(await readTree(join(out, 'snapshots', id)), id).toEqual(originals.get(id));
   });
 
-  it('keeps the default history on the 13 built-in datasets', async () => {
+  it('keeps the default history on the 14 built-in datasets', async () => {
     const history = await createHistory({ days: 2 });
-    expect(Object.keys(history.at(0).data)).toHaveLength(13);
+    expect(Object.keys(history.at(0).data)).toHaveLength(14);
   });
 });
 
@@ -172,6 +172,6 @@ describe('B3 size measurement counts the optional datasets', () => {
     const withOptional = await measureRepository(repo, { ref: HISTORY_BRANCH });
     const without = await measureRepository(plain, { ref: HISTORY_BRANCH });
     expect(withOptional.reachableBytes).toBeGreaterThan(without.reachableBytes);
-    expect(without.datasets).toHaveLength(13);
+    expect(without.datasets).toHaveLength(14);
   });
 });

@@ -9,6 +9,8 @@ import { allArchivedIds, readArchived } from '../adapters/storage/archive.js';
 import { FsLedgerRepository, sha256Hex } from '../adapters/storage/ledger.js';
 import type { Container } from './container.js';
 import { ledgerBackfill, parseBackfillArgs } from './ledger-backfill.js';
+import { ledgerSeal, parseSealArgs } from './ledger-seal.js';
+import { ledgerVerify, parseVerifyArgs } from './ledger-verify.js';
 
 /** Snapshots merged in memory per batch during a bootstrap (about one month at 6-hour runs). */
 export const BOOTSTRAP_BATCH = 120;
@@ -64,6 +66,10 @@ function report(c: Container, result: LedgerUpdateResult): void {
   );
   if (result.sealed.length > 0)
     c.logger.warn(`Ledger: sealed month(s) left unchanged: ${result.sealed.join(', ')}`);
+  for (const r of result.revisions)
+    c.logger.warn(
+      `Ledger: ${String(r.count)} ${r.dataset} entr(ies) for sealed ${r.month} added to revisions/`,
+    );
   for (const [dataset, count] of Object.entries(result.rejected))
     c.logger.warn(`Ledger: ${String(count)} ${dataset} row(s) without a usable date were skipped`);
   for (const gap of result.gaps)
@@ -73,7 +79,7 @@ function report(c: Container, result: LedgerUpdateResult): void {
 }
 
 const LEDGER_USAGE =
-  'ledger <update [--snapshot <id>]|bootstrap|backfill --from <yyyy-mm> [--to <yyyy-mm>] [--datasets a,b] [--force]>';
+  'ledger <update [--snapshot <id>]|bootstrap|backfill --from <yyyy-mm> [--to <yyyy-mm>] [--datasets a,b] [--force]|seal [--month <yyyy-mm>] [--notify]|verify [--notify] [--json]>';
 
 /**
  * Records the stored snapshots first, then backfills: the backfilled entries carry the backfill
@@ -85,14 +91,32 @@ async function backfill(c: Container, args: readonly string[]): Promise<void> {
   await ledgerBackfill(c, request);
 }
 
+/** Records the stored snapshots first, so the seal compares the API with everything collected. */
+async function seal(c: Container, args: readonly string[]): Promise<void> {
+  const request = parseSealArgs(args);
+  report(c, await ledgerUpdate(c));
+  await ledgerSeal(c, request);
+}
+
+/** The actions besides `update` / `bootstrap` (registry, no switch). */
+const ACTIONS: Readonly<Record<string, (c: Container, args: readonly string[]) => Promise<void>>> =
+  {
+    backfill,
+    seal,
+    verify: async (c, args) => {
+      await ledgerVerify(c, parseVerifyArgs(args));
+    },
+  };
+
 export const ledgerCommand = {
   name: 'ledger',
   usage: LEDGER_USAGE,
   description:
-    'Merge snapshots into the monthly ledger, or backfill it from the APIs (data/ledger/<yyyy-mm>/, data/audit only)',
+    'Merge snapshots into the monthly ledger, backfill, seal or verify it (data/ledger/<yyyy-mm>/, data/audit only)',
   async run(c: Container, args: readonly string[]): Promise<void> {
     const [action] = args;
-    if (action === 'backfill') return backfill(c, args.slice(1));
+    const handler = action ? ACTIONS[action] : undefined;
+    if (handler) return handler(c, args.slice(1));
     const at = args.indexOf('--snapshot');
     const snapshotId = at >= 0 ? args[at + 1] : undefined;
     if (at >= 0 && (!snapshotId || snapshotId.startsWith('--')))
