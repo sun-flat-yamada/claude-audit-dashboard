@@ -26,6 +26,8 @@ export interface LedgerFileDigest {
   dataset: string;
   sha256: string;
   count: number;
+  /** SHA-256 of the stored bytes when the file is encrypted (U8). */
+  encryptedSha256?: string | undefined;
 }
 
 /** At most this many dates are spelled out in a message. */
@@ -94,7 +96,23 @@ export function staleFinding(
   };
 }
 
-type Listed = Readonly<Record<string, { sha256: string; count: number }>>;
+type Listed = Readonly<
+  Record<string, { sha256: string; count: number; encryptedSha256?: string | undefined }>
+>;
+
+/** What differs between a listed and a stored file; null when they match. */
+function fileDifference(expected: Listed[string], file: LedgerFileDigest): string | null {
+  if (file.sha256 !== expected.sha256) return 'content hash differs from MANIFEST.json';
+  if (file.count !== expected.count)
+    return `${String(file.count)} entries, ${String(expected.count)} listed`;
+  if (!expected.encryptedSha256 !== !file.encryptedSha256)
+    return file.encryptedSha256
+      ? 'stored encrypted, listed as a plain file'
+      : 'stored as a plain file, listed as encrypted';
+  if (expected.encryptedSha256 !== file.encryptedSha256)
+    return 'encrypted file hash differs from MANIFEST.json';
+  return null;
+}
 
 /** Differences between the listed files (manifest) and the files as read now. */
 function compareListed(
@@ -113,13 +131,8 @@ function compareListed(
   const findings: LedgerFinding[] = [];
   for (const [dataset, expected] of Object.entries(listed)) {
     const file = found.get(dataset);
-    if (!file) findings.push(finding(dataset, 'file missing'));
-    else if (file.sha256 !== expected.sha256)
-      findings.push(finding(dataset, 'content hash differs from MANIFEST.json'));
-    else if (file.count !== expected.count)
-      findings.push(
-        finding(dataset, `${String(file.count)} entries, ${String(expected.count)} listed`),
-      );
+    const difference = file ? fileDifference(expected, file) : 'file missing';
+    if (difference) findings.push(finding(dataset, difference));
   }
   for (const file of actual)
     if (!(file.dataset in listed))

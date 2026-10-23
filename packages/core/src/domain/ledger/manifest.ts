@@ -28,6 +28,8 @@ const revisionSchema = z.looseObject({
   count: z.number().int().nonnegative(),
   /** SHA-256 (hex) of the uncompressed JSON Lines content of `revisions/<dataset>`. */
   sha256: z.string(),
+  /** SHA-256 (hex) of the stored bytes when the file is encrypted (U8); absent for a plain file. */
+  encryptedSha256: z.string().optional(),
   lastRecordedAt: z.string().nullable(),
 });
 
@@ -44,6 +46,8 @@ export const ledgerManifestSchema = z.looseObject({
       count: z.number().int().nonnegative(),
       /** SHA-256 (hex) of the uncompressed JSON Lines content of the file. */
       sha256: z.string(),
+      /** SHA-256 (hex) of the stored bytes when the file is encrypted (U8); absent for a plain file. */
+      encryptedSha256: z.string().optional(),
       window: windowSchema,
     }),
   ),
@@ -60,6 +64,8 @@ export interface LedgerManifestFile {
   dataset: string;
   entries: readonly LedgerEntry[];
   sha256: string;
+  /** SHA-256 of the stored bytes of an encrypted file (U8). */
+  encryptedSha256?: string | undefined;
 }
 
 /** What a refreshed manifest keeps of the previous one (the seal and the revisions). */
@@ -81,6 +87,7 @@ function summarizeFiles(files: readonly LedgerManifestFile[]) {
       kind: spec.kind,
       count: summary.count,
       sha256: file.sha256,
+      ...(file.encryptedSha256 ? { encryptedSha256: file.encryptedSha256 } : {}),
       window: summary.window,
     };
     const last = summary.lastRecordedAt;

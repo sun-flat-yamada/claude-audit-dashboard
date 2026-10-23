@@ -100,6 +100,34 @@ describe('digestFindings', () => {
     ).toEqual([]);
   });
 
+  it('compares the stored hash of encrypted files (#162 U8)', () => {
+    const encrypted = (): LedgerManifest => {
+      const m = manifest();
+      return {
+        ...m,
+        datasets: {
+          usage: { ...m.datasets.usage!, encryptedSha256: 'e1' },
+          cost: { ...m.datasets.cost!, encryptedSha256: 'e2' },
+          members: m.datasets.members!,
+        },
+      };
+    };
+    const files = [
+      { dataset: 'usage', sha256: 'aa', count: 2, encryptedSha256: 'e1' },
+      { dataset: 'cost', sha256: 'bb', count: 1, encryptedSha256: 'zz' },
+      { dataset: 'members', sha256: 'cc', count: 1, encryptedSha256: 'e3' },
+    ];
+    const revisions = [{ dataset: 'usage', sha256: 'dd', count: 1 }];
+    expect(digestFindings(encrypted(), files, revisions).map((f) => f.message)).toEqual([
+      '2026-08 cost: encrypted file hash differs from MANIFEST.json',
+      '2026-08 members: stored encrypted, listed as a plain file',
+    ]);
+    const plainCost = [files[0]!, { dataset: 'cost', sha256: 'bb', count: 1 }, files[2]!];
+    expect(digestFindings(encrypted(), plainCost, revisions).map((f) => f.message)).toContain(
+      '2026-08 cost: stored as a plain file, listed as encrypted',
+    );
+  });
+
   it('reports changed, missing, miscounted and unlisted files', () => {
     const files = [
       { dataset: 'usage', sha256: 'xx', count: 2 },
