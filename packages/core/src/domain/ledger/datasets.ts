@@ -29,6 +29,7 @@ const BUILTIN_LEDGER_DATASETS: Readonly<Record<DatasetName, LedgerDatasetSpec>> 
     key: parts('date', 'actorKind', 'actor', 'terminalType', 'customerType'),
   },
   memberActivity: { kind: 'rollup', key: parts('userId') },
+  memberActivityDaily: { kind: 'daily', key: parts('date', 'userId') },
   credentialUsage: { kind: 'rollup', key: parts('credentialId') },
   skillUsage: { kind: 'rollup', key: parts('name') },
   connectorUsage: { kind: 'rollup', key: parts('name') },

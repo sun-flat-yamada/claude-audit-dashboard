@@ -4,6 +4,8 @@
  * names never leak past the adapters.
  */
 
+import type { MemberEngagement } from './entities.js';
+
 /** A workspace of the linked Claude Console organization. */
 export interface ConsoleWorkspace {
   id: string;
@@ -154,4 +156,22 @@ export interface ChatProjectUsage {
   /** Distinct conversations; null when the API could not compute it. */
   conversations: number | null;
   createdAt: string | null;
+}
+
+/**
+ * One member's activity on one UTC day (Enterprise Analytics `users` in single-day mode, `date=`),
+ * recorded for the monthly ledger. Same mapping as `MemberActivity`, for one day instead of a
+ * range. Per-person data: it stays in the snapshot files and the ledger on `data/audit` and is
+ * never published (docs/BLUEPRINT.md section 9).
+ */
+export interface MemberDayActivity {
+  /** The UTC day, `YYYY-MM-DD`. */
+  date: string;
+  userId: string;
+  email: string | null;
+  active: boolean;
+  /** The day itself when last-activity reporting is enabled and the member was active; else null. */
+  lastActiveOn: string | null;
+  /** Per-product counters of that day; absent when the source reported none. */
+  engagement?: MemberEngagement;
 }

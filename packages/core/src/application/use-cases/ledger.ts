@@ -1,5 +1,6 @@
 import type { LedgerEntry, LedgerHasher } from '../../domain/ledger/entry.js';
 import { ledgerEntriesOf, mergeLedgerEntries } from '../../domain/ledger/ledger.js';
+import { snapshotBreakdownGaps, type BreakdownGap } from '../../domain/ledger/reconcile.js';
 import type { AuditSnapshot } from '../../domain/model/snapshot.js';
 import type { LedgerRepository } from '../ports.js';
 
@@ -21,6 +22,11 @@ export interface LedgerUpdateResult {
   sealed: string[];
   /** Rows per dataset without a usable time (not recorded). */
   rejected: Record<string, number>;
+  /**
+   * Days of the recorded snapshots whose model breakdown of `usage` / `cost` does not add up to
+   * the total row (reported, never a failure; the newest snapshot's finding per day wins).
+   */
+  gaps: BreakdownGap[];
 }
 
 /** New entries of the current batch: month -> dataset -> entries. */
@@ -42,6 +48,17 @@ function addSnapshot(
   }
   for (const [dataset, count] of Object.entries(rejected))
     result.rejected[dataset] = (result.rejected[dataset] ?? 0) + count;
+  recordGaps(result, snapshot);
+}
+
+const gapKey = (gap: BreakdownGap): string => `${gap.dataset}|${gap.dimension}|${gap.date}`;
+
+/** Keeps one finding per dataset, dimension and day: the later snapshot replaces the earlier. */
+function recordGaps(result: LedgerUpdateResult, snapshot: AuditSnapshot): void {
+  const found = snapshotBreakdownGaps(snapshot);
+  if (found.length === 0) return;
+  const keys = new Set(found.map(gapKey));
+  result.gaps = [...result.gaps.filter((gap) => !keys.has(gapKey(gap))), ...found];
 }
 
 const sorted = <T>(values: Iterable<[string, T]>): [string, T][] =>
@@ -89,6 +106,7 @@ export async function updateLedger(
     manifests: [],
     sealed: [],
     rejected: {},
+    gaps: [],
   };
   const batchSize = Math.max(1, deps.batchSize ?? Number.POSITIVE_INFINITY);
   const pending: Pending = new Map();
@@ -99,6 +117,7 @@ export async function updateLedger(
   }
   await flush(pending, deps, result);
   result.sealed.sort();
+  result.gaps.sort((a, b) => (gapKey(a) < gapKey(b) ? -1 : gapKey(a) > gapKey(b) ? 1 : 0));
   return result;
 }
 

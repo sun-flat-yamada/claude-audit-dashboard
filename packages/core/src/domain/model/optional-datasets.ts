@@ -6,6 +6,7 @@ import type {
   ConsoleUsageRow,
   ConsoleWorkspace,
   ConnectorUsage,
+  MemberDayActivity,
   PluginUsage,
   SkillUsage,
 } from './optional-entities.js';
@@ -13,7 +14,8 @@ import type {
 /**
  * Datasets of the optional sources. They are registered (collected, covered, checked by
  * OP-002) only when their source is enabled in config (`sources.console.enabled`,
- * `sources.claudeCode.enabled`, `sources.featureUsage.enabled`, default off), so a tenant that never enables them sees no
+ * `sources.claudeCode.enabled`, `sources.featureUsage.enabled`,
+ * `sources.memberActivityDaily.enabled`, default off), so a tenant that never enables them sees no
  * difference in coverage, OP-002 or score.
  */
 export interface OptionalDatasetMap {
@@ -26,6 +28,7 @@ export interface OptionalDatasetMap {
   connectorUsage: ConnectorUsage[];
   pluginUsage: PluginUsage[];
   chatProjectUsage: ChatProjectUsage[];
+  memberActivityDaily: MemberDayActivity[];
 }
 
 export type OptionalDatasetName = keyof OptionalDatasetMap;
@@ -41,6 +44,7 @@ export const OPTIONAL_SOURCES = {
   connectorUsage: 'featureUsage',
   pluginUsage: 'featureUsage',
   chatProjectUsage: 'featureUsage',
+  memberActivityDaily: 'memberActivityDaily',
 } as const satisfies Record<OptionalDatasetName, string>;
 
 export type OptionalSource = (typeof OPTIONAL_SOURCES)[OptionalDatasetName];
@@ -55,6 +59,7 @@ export const emptyOptionalData = (): OptionalDatasetMap => ({
   connectorUsage: [],
   pluginUsage: [],
   chatProjectUsage: [],
+  memberActivityDaily: [],
 });
 
 export const OPTIONAL_DATASET_NAMES = Object.keys(OPTIONAL_SOURCES) as OptionalDatasetName[];
