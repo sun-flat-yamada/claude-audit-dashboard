@@ -12,7 +12,7 @@ import {
   type LedgerBackfillResult,
 } from '@claude-audit/core';
 import { FsBackfillProgressStore } from '../adapters/storage/backfill-progress.js';
-import { FsLedgerRepository, sha256Hex } from '../adapters/storage/ledger.js';
+import { sha256Hex } from '../adapters/storage/ledger.js';
 import { disabledDatasets } from '../infrastructure/config.js';
 import type { Container } from './container.js';
 
@@ -108,7 +108,7 @@ export async function ledgerBackfill(
   reportPlan(c, plan);
   const result = await backfillLedger(plan, {
     source: (dataset) => c.backfill.get(dataset),
-    repository: new FsLedgerRepository(c.store),
+    repository: c.ledger(),
     hash: sha256Hex,
     progress: new FsBackfillProgressStore(c.store),
     clock: c.clock,

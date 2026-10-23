@@ -6,16 +6,17 @@ import {
   type LedgerUpdateResult,
 } from '@claude-audit/core';
 import { allArchivedIds, readArchived } from '../adapters/storage/archive.js';
-import { FsLedgerRepository, sha256Hex } from '../adapters/storage/ledger.js';
+import { sha256Hex } from '../adapters/storage/ledger.js';
 import type { Container } from './container.js';
 import { ledgerBackfill, parseBackfillArgs } from './ledger-backfill.js';
+import { LEDGER_KEY_ACTIONS } from './ledger-keys.js';
 import { ledgerSeal, parseSealArgs } from './ledger-seal.js';
 import { ledgerVerify, parseVerifyArgs } from './ledger-verify.js';
 
 /** Snapshots merged in memory per batch during a bootstrap (about one month at 6-hour runs). */
 export const BOOTSTRAP_BATCH = 120;
 
-const repositoryOf = (c: Container) => new FsLedgerRepository(c.store);
+const repositoryOf = (c: Container) => c.ledger();
 
 /**
  * Snapshots `ledger update` records: the one asked for, else every stored snapshot from the
@@ -79,7 +80,7 @@ function report(c: Container, result: LedgerUpdateResult): void {
 }
 
 const LEDGER_USAGE =
-  'ledger <update [--snapshot <id>]|bootstrap|backfill --from <yyyy-mm> [--to <yyyy-mm>] [--datasets a,b] [--force]|seal [--month <yyyy-mm>] [--notify]|verify [--notify] [--json]>';
+  'ledger <update [--snapshot <id>]|bootstrap|backfill --from <yyyy-mm> [--to <yyyy-mm>] [--datasets a,b] [--force]|seal [--month <yyyy-mm>] [--notify]|verify [--notify] [--json]|keygen --out <file> [--pipeline]|encrypt [--all] [--identity <file>]|decrypt --identity <file> --out <dir> [--month <yyyy-mm>]>';
 
 /**
  * Records the stored snapshots first, then backfills: the backfilled entries carry the backfill
@@ -103,6 +104,7 @@ const ACTIONS: Readonly<Record<string, (c: Container, args: readonly string[]) =
   {
     backfill,
     seal,
+    ...LEDGER_KEY_ACTIONS,
     verify: async (c, args) => {
       await ledgerVerify(c, parseVerifyArgs(args));
     },
@@ -112,7 +114,7 @@ export const ledgerCommand = {
   name: 'ledger',
   usage: LEDGER_USAGE,
   description:
-    'Merge snapshots into the monthly ledger, backfill, seal or verify it (data/ledger/<yyyy-mm>/, data/audit only)',
+    'Merge snapshots into the monthly ledger, backfill, seal, verify, encrypt or decrypt it (data/ledger/<yyyy-mm>/, data/audit only)',
   async run(c: Container, args: readonly string[]): Promise<void> {
     const [action] = args;
     const handler = action ? ACTIONS[action] : undefined;

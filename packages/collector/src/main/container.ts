@@ -47,6 +47,7 @@ import { consoleNotifier, discordNotifier, slackNotifier } from '../adapters/not
 import { emailNotifier } from '../adapters/notifiers/email.js';
 import { BUILTIN_RENDERERS } from '../adapters/renderers/index.js';
 import { FileStore } from '../adapters/storage/file-store.js';
+import { FsLedgerRepository, ledgerCodecsFor } from '../adapters/storage/ledger.js';
 import { ledgerHealthCollector } from '../adapters/storage/ledger-status.js';
 import {
   FsComplianceReportRepository,
@@ -80,6 +81,12 @@ export interface Container {
   backfill: Registry<BackfillDefinition>;
   /** Receivers of a freshly sealed ledger month (U7 adds external storage; none yet). */
   sealSinks: readonly SealedMonthSink[];
+  /**
+   * The monthly ledger with the configured codecs (#162 U8: plain, or encrypted to
+   * `ledger.encryption.recipients` + `LEDGER_PIPELINE_KEY`). Throws when encryption is configured
+   * without the pipeline key, before anything is read or written.
+   */
+  ledger: () => FsLedgerRepository;
   projections: readonly Projection[];
   rules: Rule[];
   analyzers: readonly Analyzer[];
@@ -333,6 +340,14 @@ export async function createContainer(options: ContainerOptions = {}): Promise<C
     ...sources,
     backfill: backfillSources(env, config, options.fetchImpl, options.httpTiming),
     sealSinks: [],
+    ledger: () =>
+      new FsLedgerRepository(
+        store,
+        ledgerCodecsFor({
+          recipients: config.ledger.encryption.recipients,
+          pipelineKey: env.ledgerPipelineKey,
+        }),
+      ),
     projections: BUILTIN_PROJECTIONS,
     rules: catalog.rules,
     analyzers: BUILTIN_ANALYZERS,
