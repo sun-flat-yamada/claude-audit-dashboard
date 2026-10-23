@@ -1,0 +1,101 @@
+name: Ledger Backfill
+
+# Fills the monthly ledger (data/ledger/<yyyy-mm>/ on the data/audit branch) with past months the
+# collections never fetched, straight from the APIs and within what they still serve (#159):
+# usage / cost only for the last 365 days and not before 2026-01-01, the other Analytics datasets
+# from 2026-01-01, the Activity Feed since the Compliance API was enabled. State datasets have no
+# history and are not backfilled. Re-running continues where a run stopped. Manual runs only.
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'First month to backfill (yyyy-mm), e.g. 2026-01.'
+        required: true
+        type: string
+      to:
+        description: 'Last month (yyyy-mm). Empty: the current month.'
+        required: false
+        type: string
+        default: ''
+      datasets:
+        description: 'Comma-separated datasets (e.g. usage,cost). Empty: activities, usage, cost, adoption, memberActivity and the enabled optional ones.'
+        required: false
+        type: string
+        default: ''
+      force:
+        description: 'Fetch again the months a previous backfill already completed'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# Every workflow that writes the data/audit branch shares this group.
+concurrency:
+  group: audit-data
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    name: Backfill the monthly ledger
+    runs-on: ubuntu-latest
+    # The workflow file itself comes from the dispatched ref, so only main may run it.
+    if: github.ref == 'refs/heads/main'
+    # Analytics requests are paced to at most ~55 a minute: about one minute per month and
+    # dataset group, longer with memberActivityDaily (one request per day).
+    timeout-minutes: 300
+    # Optional JSON object merged over config/default.json (repository variable; docs/SETUP.md).
+    # Job-level so every step that loads the configuration sees the same settings.
+    env:
+      AUDIT_CONFIG_OVERRIDES: ${{ vars.AUDIT_CONFIG_OVERRIDES }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: ./.github/actions/setup
+        with:
+          build: build:collector
+
+      # Inputs reach the script through the environment only and are checked against an
+      # allowlist; later steps read the validated outputs, never `inputs.*` directly.
+      - name: Validate manual inputs
+        id: inputs
+        run: bash .github/scripts/validate-backfill-inputs.sh
+        env:
+          FROM: ${{ inputs.from }}
+          TO: ${{ inputs.to }}
+          DATASETS: ${{ inputs.datasets }}
+          FORCE: ${{ inputs.force }}
+
+      - name: Restore stored data
+        id: restore
+        run: .github/scripts/data-branch.sh restore
+
+      - name: Backfill the ledger
+        id: backfill
+        run: |
+          args=(--from "$FROM")
+          if [ -n "$TO" ]; then args+=(--to "$TO"); fi
+          if [ -n "$DATASETS" ]; then args+=(--datasets "$DATASETS"); fi
+          if [ "$FORCE" = "true" ]; then args+=(--force); fi
+          pnpm ledger backfill "${args[@]}"
+        env:
+          FROM: ${{ steps.inputs.outputs.from }}
+          TO: ${{ steps.inputs.outputs.to }}
+          DATASETS: ${{ steps.inputs.outputs.datasets }}
+          FORCE: ${{ steps.inputs.outputs.force }}
+          ANTHROPIC_ENTERPRISE_API_KEY: ${{ secrets.ANTHROPIC_ENTERPRISE_API_KEY }}
+          ANTHROPIC_COMPLIANCE_API_KEY: ${{ secrets.ANTHROPIC_COMPLIANCE_API_KEY }}
+          ANTHROPIC_ANALYTICS_API_KEY: ${{ secrets.ANTHROPIC_ANALYTICS_API_KEY }}
+
+      # Saved also after a failed unit: every unit already merged is kept and recorded in
+      # ledger/BACKFILL.json, so the next run continues from there (the job still fails).
+      - name: Save data to the data/audit branch
+        if: always() && steps.restore.outcome == 'success' && steps.backfill.outcome != 'skipped'
+        run: |
+          .github/scripts/data-branch.sh save "chore: ledger backfill $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+        env:
+          # Fork-safety: data-branch.sh refuses to save from a public repository.
+          REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
+          GH_TOKEN: ${{ github.token }}
