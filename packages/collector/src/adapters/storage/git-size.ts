@@ -5,6 +5,7 @@ import {
   type ArchiveEntry,
   type ArchiveSummary,
   type DatasetFootprint,
+  type LedgerFootprint,
   type RepoSizeMeasurement,
 } from '@claude-audit/core';
 
@@ -144,6 +145,16 @@ const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/
 interface DatasetTotals {
   footprints: DatasetFootprint[];
   snapshots: number;
+  ledger: LedgerFootprint;
+}
+
+/** Not a dataset name (those are camelCase letters only), so it cannot collide with one. */
+const LEDGER_GROUP = 'ledger/';
+
+/** Group of a blob path: a snapshot dataset name, `manifest`, `ledger`, or null (not counted). */
+function blobGroup(path: string, snapshotFile: RegExp, ledgerFile: RegExp): string | null {
+  if (ledgerFile.test(path)) return LEDGER_GROUP;
+  return snapshotFile.exec(path)?.[1] ?? null;
 }
 
 /**
@@ -159,9 +170,10 @@ async function datasetFootprints(
 ): Promise<DatasetTotals> {
   const dir = prefix ? `${escapeRegExp(prefix)}/` : '';
   const pattern = new RegExp(`^${dir}snapshots/[^/]+/([A-Za-z]+)\\.json$`);
+  const ledgerFile = new RegExp(`^${dir}ledger/\\d{4}-\\d{2}/[^/]+$`);
   const blobs: { sha: string; dataset: string }[] = [];
   for (const { sha, path } of await listObjects(git, repo, rev)) {
-    const dataset = pattern.exec(path)?.[1];
+    const dataset = blobGroup(path, pattern, ledgerFile);
     if (dataset) blobs.push({ sha, dataset });
   }
   const sizes = await diskSizes(
@@ -178,10 +190,16 @@ async function datasetFootprints(
       bytes: row.bytes + (sizes.get(sha) ?? 0),
     });
   }
-  const { manifest, ...datasets } = Object.fromEntries(byDataset);
+  return splitTotals(byDataset);
+}
+
+/** Snapshot datasets, manifests (one per snapshot) and the ledger out of the per-group totals. */
+function splitTotals(byGroup: ReadonlyMap<string, DatasetFootprint>): DatasetTotals {
+  const { manifest, [LEDGER_GROUP]: ledger, ...datasets } = Object.fromEntries(byGroup);
   return {
     footprints: Object.values(datasets).sort((a, b) => a.dataset.localeCompare(b.dataset)),
     snapshots: manifest?.blobs ?? 0,
+    ledger: { blobs: ledger?.blobs ?? 0, bytes: ledger?.bytes ?? 0 },
   };
 }
 
@@ -255,6 +273,7 @@ export async function measureRepository(
     windowGrowthBytes: await windowGrowth(git, repoDir, commits, windowDays, reachableBytes),
     snapshots: totals.snapshots,
     datasets: totals.footprints,
+    ledger: totals.ledger,
     archive: {
       snapshots: archiveSummary.totals.snapshots,
       bytes: archiveSummary.totals.bytes,
@@ -275,6 +294,7 @@ function emptyMeasurement(objects: RepoSizeMeasurement['objects'], windowDays: n
     windowGrowthBytes: null,
     snapshots: 0,
     datasets: [],
+    ledger: { blobs: 0, bytes: 0 },
     archive: { snapshots: 0, bytes: 0, years: 0 },
     archiveSummary: summarizeArchiveEntries([]),
   };
