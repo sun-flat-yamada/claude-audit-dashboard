@@ -16,6 +16,7 @@ const envSchema = z.object({
   ANTHROPIC_BASE_URL: optional,
   CAPTURE_RAW_DIR: optional,
   CI: optional,
+  CLAUDE_CODE_REMOTE: optional,
   DATA_DIR: optional,
   CONFIG_DIR: optional,
   AUDIT_CONFIG_OVERRIDES: optional,
@@ -85,6 +86,11 @@ export interface Environment {
   captureRawDir: string | undefined;
   /** The `CI` variable; raw capture refuses to run when it is true. */
   ci: string | undefined;
+  /**
+   * `CLAUDE_CODE_REMOTE`: `true` in a Claude Code cloud session (an ephemeral, agent-operated
+   * machine). The ledger key commands refuse to run there, as on CI (`key-host.ts`).
+   */
+  claudeCodeRemote: string | undefined;
   /** Directory relative paths resolve against (pnpm's INIT_CWD, else the process cwd). */
   baseDir: string;
   dataDir: string;
@@ -169,6 +175,7 @@ export function readEnvironment(
     baseUrl: env.ANTHROPIC_BASE_URL,
     captureRawDir: env.CAPTURE_RAW_DIR,
     ci: env.CI,
+    claudeCodeRemote: env.CLAUDE_CODE_REMOTE,
     baseDir: base,
     dataDir: resolve(base, env.DATA_DIR ?? 'data'),
     configDir: resolve(base, env.CONFIG_DIR ?? 'config'),
