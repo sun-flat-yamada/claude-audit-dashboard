@@ -1,6 +1,6 @@
 ---
 name: compliance-checker
-description: Evaluate the 30 built-in compliance rules (plus custom CF/AM rules) against the latest snapshot, explain skipped results through dataset coverage, tune thresholds, and add or change rules while keeping docs in sync.
+description: Evaluate the 32 built-in compliance rules (plus custom CF/AM rules) against the latest snapshot, explain skipped results through dataset coverage, tune thresholds, and add or change rules while keeping docs in sync.
 ---
 
 # 🔍 Compliance Checker Skill (`compliance-checker`)
@@ -13,7 +13,7 @@ Use this skill when auditing compliance results, implementing or changing rules,
 
 | What                         | Where                                                                                   |
 | :--------------------------- | :-------------------------------------------------------------------------------------- |
-| Rule list (normative)        | `docs/BLUEPRINT.md` §7.1 (30 rules: AC, AK, UA, DG, OP, CF, AM)                         |
+| Rule list (normative)        | `docs/BLUEPRINT.md` §7.1 (32 rules: AC, AK, UA, DG, OP, CF, AM)                         |
 | Code rules                   | `packages/core/src/domain/compliance/rules/<category>.ts`                               |
 | Baselines and watches (data) | `packages/core/src/domain/compliance/factories/defaults.ts`, `config/custom-rules.json` |
 | Engine, scoring              | `packages/core/src/domain/compliance/engine.ts`, `scoring.ts`                           |
