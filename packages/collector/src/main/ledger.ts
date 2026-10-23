@@ -10,6 +10,7 @@ import { sha256Hex } from '../adapters/storage/ledger.js';
 import type { Container } from './container.js';
 import { ledgerBackfill, parseBackfillArgs } from './ledger-backfill.js';
 import { LEDGER_KEY_ACTIONS } from './ledger-keys.js';
+import { ledgerPush, parsePushArgs } from './ledger-push.js';
 import { ledgerSeal, parseSealArgs } from './ledger-seal.js';
 import { ledgerVerify, parseVerifyArgs } from './ledger-verify.js';
 
@@ -80,7 +81,7 @@ function report(c: Container, result: LedgerUpdateResult): void {
 }
 
 const LEDGER_USAGE =
-  'ledger <update [--snapshot <id>]|bootstrap|backfill --from <yyyy-mm> [--to <yyyy-mm>] [--datasets a,b] [--force]|seal [--month <yyyy-mm>] [--notify]|verify [--notify] [--json]|keygen --out <file> [--pipeline]|encrypt [--all] [--identity <file>]|decrypt --identity <file> --out <dir> [--month <yyyy-mm>]>';
+  'ledger <update [--snapshot <id>]|bootstrap|backfill --from <yyyy-mm> [--to <yyyy-mm>] [--datasets a,b] [--force]|seal [--month <yyyy-mm>] [--notify]|verify [--notify] [--json]|push [--month <yyyy-mm>|--all] [--notify]|keygen --out <file> [--pipeline]|encrypt [--all] [--identity <file>]|decrypt --identity <file> --out <dir> [--month <yyyy-mm>]>';
 
 /**
  * Records the stored snapshots first, then backfills: the backfilled entries carry the backfill
@@ -108,13 +109,16 @@ const ACTIONS: Readonly<Record<string, (c: Container, args: readonly string[]) =
     verify: async (c, args) => {
       await ledgerVerify(c, parseVerifyArgs(args));
     },
+    push: async (c, args) => {
+      await ledgerPush(c, parsePushArgs(args));
+    },
   };
 
 export const ledgerCommand = {
   name: 'ledger',
   usage: LEDGER_USAGE,
   description:
-    'Merge snapshots into the monthly ledger, backfill, seal, verify, encrypt or decrypt it (data/ledger/<yyyy-mm>/, data/audit only)',
+    'Merge snapshots into the monthly ledger, backfill, seal, verify, copy sealed months to external storage, encrypt or decrypt it (data/ledger/<yyyy-mm>/, data/audit only)',
   async run(c: Container, args: readonly string[]): Promise<void> {
     const [action] = args;
     const handler = action ? ACTIONS[action] : undefined;
