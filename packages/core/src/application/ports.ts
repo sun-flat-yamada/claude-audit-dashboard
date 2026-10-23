@@ -75,6 +75,35 @@ export interface LedgerRepository {
   refreshManifest(month: string): Promise<boolean>;
 }
 
+/**
+ * Fetches one period of one dataset straight from its API for the ledger backfill (#159 U5).
+ * Throws `DataUnavailableError` when the dataset cannot be fetched here (no key, missing scope).
+ */
+export interface BackfillSource {
+  readonly dataset: DatasetName;
+  readonly source: string;
+  fetch(range: DateRange, now: Date): Promise<CollectResult<unknown[]>>;
+}
+
+/** What `ledger/BACKFILL.json` remembers of one fetched unit (key `yyyy-mm/<dataset>`). */
+export interface BackfillUnitRecord {
+  from: string;
+  to: string;
+  completedAt: string;
+  count: number;
+}
+
+export interface BackfillProgress {
+  schemaVersion: 1;
+  units: Record<string, BackfillUnitRecord>;
+}
+
+/** Progress of the ledger backfill; an unreadable store must make `load` throw. */
+export interface BackfillProgressStore {
+  load(): Promise<BackfillProgress>;
+  save(progress: BackfillProgress): Promise<void>;
+}
+
 export interface StateRepository {
   load(): Promise<CollectorState>;
   save(state: CollectorState): Promise<void>;
