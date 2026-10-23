@@ -12,6 +12,7 @@ const CONFIG_LOADING_WORKFLOWS = [
   'ledger-backfill.yml',
   'ledger-seal.yml',
   'ledger-verify.yml',
+  'ledger-key-check.yml',
 ];
 
 describe('AUDIT_CONFIG_OVERRIDES wiring', () => {

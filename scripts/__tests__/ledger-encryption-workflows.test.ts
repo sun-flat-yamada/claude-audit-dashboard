@@ -15,6 +15,7 @@ const LEDGER_STEPS: readonly [string, string][] = [
   ['ledger-seal.yml', 'Seal the ledger month'],
   ['ledger-seal.yml', 'Copy the sealed month to external storage'],
   ['ledger-verify.yml', 'Verify the ledger'],
+  ['ledger-key-check.yml', 'Check the ledger key'],
 ];
 
 describe('ledger encryption wiring (#162)', () => {
@@ -45,5 +46,38 @@ describe('ledger encryption wiring (#162)', () => {
       assert.ok(source, prefix);
       assert.match(['CADL', prefix, body].join('-'), new RegExp(source));
     }
+  });
+});
+
+describe('ledger-key-check.yml (#174)', () => {
+  const workflow = read('ledger-key-check.yml');
+
+  it('runs monthly (opt-in) and manually, from main only, with read-only permissions', () => {
+    assert.match(workflow, /\n {4}- cron: '0 5 11 \* \*'\n/);
+    assert.match(workflow, /\n {2}workflow_dispatch:/);
+    assert.match(workflow, /\npermissions:\n {2}contents: read\n/);
+    assert.match(
+      workflow,
+      /if: github\.ref == 'refs\/heads\/main' && \(github\.event_name != 'schedule' \|\| vars\.ENABLE_SCHEDULED_JOBS == 'true'\)/,
+    );
+  });
+
+  it('restores data/audit, checks the key, and never saves', () => {
+    assert.match(
+      stepOf(workflow, 'Restore stored data'),
+      /run: \.github\/scripts\/data-branch\.sh restore\n/,
+    );
+    assert.match(stepOf(workflow, 'Check the ledger key'), /run: pnpm ledger key-check\n/);
+    assert.ok(workflow.indexOf('Restore stored data') < workflow.indexOf('Check the ledger key'));
+    assert.doesNotMatch(workflow, /data-branch\.sh save|contents: write|git push/);
+  });
+
+  it('never uses a key file, writes plaintext or uploads an artifact', () => {
+    assert.doesNotMatch(
+      workflow,
+      /--identity|--pipeline-key|--out|upload-artifact|GITHUB_STEP_SUMMARY|LEDGER_IDENTITY/,
+    );
+    for (const line of workflow.split('\n').filter((l) => /^\s+run:/.test(l)))
+      assert.ok(!line.includes('${{'), `expression in a run line: ${line}`);
   });
 });
