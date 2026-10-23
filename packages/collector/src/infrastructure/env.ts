@@ -96,6 +96,12 @@ export interface Environment {
    * with (an Actions secret). Never a recipient's private key.
    */
   ledgerPipelineKey: string | undefined;
+  /**
+   * Variables of the external ledger storage (#161 U7): every non-blank `LEDGER_*` variable other
+   * than `LEDGER_PIPELINE_KEY` (identifiers from repository variables, no secrets) and the
+   * GitHub Actions OIDC request (`ACTIONS_ID_TOKEN_REQUEST_URL` / `_TOKEN`).
+   */
+  ledgerSinkVariables: Readonly<Record<string, string>>;
   dashboardUrl: string | undefined;
   slackWebhookUrl: string | undefined;
   discordWebhookUrl: string | undefined;
@@ -124,6 +130,18 @@ function smtpFrom(env: Env): SmtpEnvironment | null {
  * Relative directories resolve against the directory pnpm was started from (`INIT_CWD`),
  * so `pnpm collect` at the repository root writes to `<root>/data`.
  */
+/** The variables a ledger sink may read (see `Environment.ledgerSinkVariables`). */
+function ledgerSinkVariablesOf(source: NodeJS.ProcessEnv): Record<string, string> {
+  const variables: Record<string, string> = {};
+  for (const [name, value] of Object.entries(source)) {
+    const sink =
+      (name.startsWith('LEDGER_') && name !== 'LEDGER_PIPELINE_KEY') ||
+      name.startsWith('ACTIONS_ID_TOKEN_REQUEST_');
+    if (sink && value !== undefined && value.trim() !== '') variables[name] = value.trim();
+  }
+  return variables;
+}
+
 const sanitizeSecret = (val: string | undefined): string | undefined =>
   val && val.trim() !== '' ? val.trim() : undefined;
 
@@ -156,6 +174,7 @@ export function readEnvironment(
     configDir: resolve(base, env.CONFIG_DIR ?? 'config'),
     configOverrides: env.AUDIT_CONFIG_OVERRIDES,
     ledgerPipelineKey: env.LEDGER_PIPELINE_KEY,
+    ledgerSinkVariables: ledgerSinkVariablesOf(source),
     dashboardUrl: env.DASHBOARD_URL,
     slackWebhookUrl: env.SLACK_WEBHOOK_URL,
     discordWebhookUrl: env.DISCORD_WEBHOOK_URL,

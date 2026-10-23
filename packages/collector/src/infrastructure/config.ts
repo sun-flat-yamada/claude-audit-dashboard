@@ -144,6 +144,12 @@ export const appConfigSchema = z.object({
        * `pnpm ledger keygen`) and to the workflows' `LEDGER_PIPELINE_KEY`.
        */
       encryption: z.object({ recipients: z.array(z.string().min(1)).default([]) }).prefault({}),
+      /**
+       * External storage sealed months are copied to (#161 U7): `none` (the default, nothing is
+       * copied), `filesystem`, `gdrive` or `sharepoint` (the registered kinds,
+       * `adapters/ledger-sinks/registry.ts`). Identifiers come from repository variables.
+       */
+      sink: z.string().min(1).default('none'),
     })
     .prefault({}),
 });

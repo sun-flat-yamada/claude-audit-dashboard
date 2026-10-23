@@ -9,6 +9,7 @@ import type {
   Notifier,
   Projection,
   ReportDefinition,
+  LedgerSink,
   Rule,
   SealedMonthSink,
 } from '@claude-audit/core';
@@ -45,6 +46,7 @@ import {
 } from '../adapters/anthropic/raw-capture.js';
 import { consoleNotifier, discordNotifier, slackNotifier } from '../adapters/notifiers/channels.js';
 import { emailNotifier } from '../adapters/notifiers/email.js';
+import { createLedgerSink, NO_LEDGER_SINK } from '../adapters/ledger-sinks/registry.js';
 import { BUILTIN_RENDERERS } from '../adapters/renderers/index.js';
 import { FileStore } from '../adapters/storage/file-store.js';
 import { FsLedgerRepository, ledgerCodecsFor } from '../adapters/storage/ledger.js';
@@ -58,6 +60,7 @@ import {
 import { disabledDatasets, loadConfig, type AppConfig } from '../infrastructure/config.js';
 import { readEnvironment, type Environment } from '../infrastructure/env.js';
 import { consoleLogger, systemClock } from '../infrastructure/runtime.js';
+import { pushMonth } from './ledger-push.js';
 import type { MatrixSource } from './usage-matrix.js';
 
 /** Everything a command needs, wired once. The only place that knows concrete classes. */
@@ -79,8 +82,13 @@ export interface Container {
   matrix: MatrixSource | null;
   /** Datasets `ledger backfill` can fetch, over paced clients per API family (#159). */
   backfill: Registry<BackfillDefinition>;
-  /** Receivers of a freshly sealed ledger month (U7 adds external storage; none yet). */
+  /** Receivers of a freshly sealed ledger month: the configured `ledger.sink` (U7), if any. */
   sealSinks: readonly SealedMonthSink[];
+  /**
+   * The external storage of `ledger.sink` (#161 U7), created on first use; null for `none`.
+   * Throws for an unknown kind or missing variables (only the commands that copy fail).
+   */
+  ledgerSink: () => LedgerSink | null;
   /**
    * The monthly ledger with the configured codecs (#162 U8: plain, or encrypted to
    * `ledger.encryption.recipients` + `LEDGER_PIPELINE_KEY`). Throws when encryption is configured
@@ -313,6 +321,32 @@ function withLocalCollectors(
   return { ...sources, collectors: [...sources.collectors, ...local] };
 }
 
+/** The lazily created sink of `ledger.sink` and the seal hook that copies with it. */
+function ledgerSinks(
+  env: Environment,
+  config: AppConfig,
+  options: ContainerOptions,
+  self: () => Container,
+): Pick<Container, 'ledgerSink' | 'sealSinks'> {
+  let sink: LedgerSink | null | undefined;
+  const ledgerSink = () =>
+    (sink ??= createLedgerSink(config.ledger.sink, {
+      variables: env.ledgerSinkVariables,
+      baseDir: env.baseDir,
+      dataDir: options.dataDir ?? env.dataDir,
+      http: { fetchImpl: options.fetchImpl, sleep: options.httpTiming?.sleep },
+    }));
+  const kind = config.ledger.sink;
+  const hook: SealedMonthSink = {
+    id: kind,
+    deliver: async (month) => {
+      const target = ledgerSink();
+      if (target) await pushMonth(self(), target, month);
+    },
+  };
+  return { ledgerSink, sealSinks: kind === NO_LEDGER_SINK ? [] : [hook] };
+}
+
 export async function createContainer(options: ContainerOptions = {}): Promise<Container> {
   const env = readEnvironment(options.env, options.cwd);
   const loaded = await loadConfig(env.configDir, env.configOverrides);
@@ -325,7 +359,7 @@ export async function createContainer(options: ContainerOptions = {}): Promise<C
     logger.warn(`Activity watches reference unknown activity types: ${unknown.join(', ')}`);
   const store = new FileStore(options.dataDir ?? env.dataDir);
   const sources = withLocalCollectors(resolveSources(options, env, config, logger), store, config);
-  return {
+  const container: Container = {
     env,
     config,
     customRules,
@@ -339,7 +373,7 @@ export async function createContainer(options: ContainerOptions = {}): Promise<C
     artifacts: fileArtifacts(store),
     ...sources,
     backfill: backfillSources(env, config, options.fetchImpl, options.httpTiming),
-    sealSinks: [],
+    ...ledgerSinks(env, config, options, () => container),
     ledger: () =>
       new FsLedgerRepository(
         store,
@@ -357,4 +391,5 @@ export async function createContainer(options: ContainerOptions = {}): Promise<C
     renderers: BUILTIN_RENDERERS,
     notifiers: notifiers(env, logger, options.fetchImpl),
   };
+  return container;
 }

@@ -15,6 +15,10 @@ import {
   type LedgerRevisionSummary,
   type LedgerRepository,
   type LedgerSealRecord,
+  type LedgerFileAccess,
+  type LedgerStoredDigest,
+  type LedgerTransferRecord,
+  type StoredLedgerFile,
 } from '@claude-audit/core';
 import { stableStringify, type FileStore } from './file-store.js';
 import {
@@ -95,7 +99,7 @@ export const LEDGER_REVISIONS = 'revisions';
  * stores the `write` codec's form and removes the other form of the same file. An unreadable file
  * (also an encrypted one without the key) throws and is never overwritten.
  */
-export class FsLedgerRepository implements LedgerRepository {
+export class FsLedgerRepository implements LedgerRepository, LedgerFileAccess {
   private readonly codecs: readonly LedgerCodec[];
 
   constructor(
@@ -287,6 +291,60 @@ export class FsLedgerRepository implements LedgerRepository {
       stableStringify({ ...manifest, revisions }),
     );
     return true;
+  }
+
+  /** The stored form of `base` (first suffix in read order); null when none exists. */
+  private async storedForm(base: string): Promise<{ suffix: string; bytes: Uint8Array } | null> {
+    for (const suffix of this.suffixOrder()) {
+      const bytes = await this.store.readBytes(`${base}${suffix}`);
+      if (bytes) return { suffix, bytes };
+    }
+    return null;
+  }
+
+  /** Dataset files, then revision files, of a month as stored (`ledger push`, #161 U7). */
+  async storedFiles(month: string): Promise<StoredLedgerFile[]> {
+    const files: StoredLedgerFile[] = [];
+    for (const sub of ['', LEDGER_REVISIONS]) {
+      const dir = this.monthDir(month, sub);
+      for (const dataset of await this.datasetsIn(dir)) {
+        const form = await this.storedForm(`${dir}/${dataset}`);
+        if (!form) continue;
+        const name = `${sub ? `${sub}/` : ''}${dataset}${form.suffix}`;
+        files.push({ name, dataset, revision: sub !== '', bytes: form.bytes });
+      }
+    }
+    return files;
+  }
+
+  /** `MANIFEST.json` serialized as the ledger stores it. */
+  manifestFile(manifest: LedgerManifest): StoredLedgerFile {
+    return {
+      name: LEDGER_MANIFEST,
+      revision: false,
+      bytes: Buffer.from(stableStringify(manifest), 'utf8'),
+    };
+  }
+
+  /** Hash of the bytes and, for a readable plain file, of its decompressed text. */
+  digest(name: string, bytes: Uint8Array): LedgerStoredDigest {
+    const stored = bytesSha256(bytes);
+    if (!name.endsWith(gzipLedgerCodec.suffix)) return { stored };
+    try {
+      return { stored, content: sha256Hex(gzipLedgerCodec.decode(bytes)) };
+    } catch {
+      return { stored };
+    }
+  }
+
+  /** Lists a verified copy under `transfers.<kind>`; the files and their entries stay. */
+  async recordTransfer(month: string, kind: string, record: LedgerTransferRecord): Promise<void> {
+    const manifest = await this.manifest(month);
+    if (!manifest) throw new Error(`Ledger ${month} has no manifest to record a copy in`);
+    await this.putManifest(month, {
+      ...manifest,
+      transfers: { ...manifest.transfers, [kind]: record },
+    });
   }
 
   /** Decoded text of every dataset and revision file of a month (`pnpm ledger decrypt`). */
