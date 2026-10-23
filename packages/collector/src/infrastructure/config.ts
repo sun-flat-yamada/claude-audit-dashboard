@@ -74,6 +74,17 @@ export const appConfigSchema = z.object({
           lookbackDays: z.number().int().min(1).max(366).default(30),
         })
         .prefault({}),
+      memberActivityDaily: z
+        .object({
+          /**
+           * Opt-in per-day member activity for the monthly ledger (Analytics `users?date=`);
+           * absent from coverage when off. One paced request series per day, oldest first.
+           */
+          enabled: z.boolean().default(false),
+          /** Published days fetched per run (re-fetched while the API may still revise them). */
+          lookbackDays: z.number().int().min(1).max(31).default(3),
+        })
+        .prefault({}),
       groups: z.object({ maxMemberRequests: z.number().int().min(0).default(200) }).prefault({}),
       activities: z
         .object({

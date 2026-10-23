@@ -84,6 +84,7 @@ async function collectWithOptionalSources(dataDir: string): Promise<string> {
         console: { enabled: true, lookbackDays: 30 },
         claudeCode: { enabled: true, lookbackDays: 1 },
         featureUsage: { enabled: true, lookbackDays: 30 },
+        memberActivityDaily: { enabled: true, lookbackDays: 1 },
       },
     }),
   });

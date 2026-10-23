@@ -37,6 +37,13 @@ export interface HttpClientOptions {
   sleep?: ((ms: number) => Promise<void>) | undefined;
   /** Opt-in sink for the final response of every request (never headers or the key). */
   capture?: RawCapture | undefined;
+  /**
+   * Minimum time between the starts of two requests of this client (retries included), so a
+   * request series stays under a per-minute rate limit. 0 or unset: no pacing.
+   */
+  minIntervalMs?: number | undefined;
+  /** Clock of the pacing (milliseconds); default `Date.now`. */
+  now?: (() => number) | undefined;
 }
 
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504, 529]);
@@ -109,6 +116,9 @@ export class HttpClient {
   private readonly maxRetries: number;
   private readonly fetchImpl: typeof fetch;
   private readonly sleep: (ms: number) => Promise<void>;
+  private readonly clock: () => number;
+  /** Earliest start of the next request (pacing); 0 before the first one. */
+  private nextSlot = 0;
 
   constructor(private readonly options: HttpClientOptions) {
     this.baseUrl = options.baseUrl ?? ANTHROPIC_API_BASE_URL;
@@ -116,11 +126,13 @@ export class HttpClient {
     this.maxRetries = options.maxRetries ?? 5;
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.sleep = options.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+    this.clock = options.now ?? Date.now;
   }
 
   async getJson(path: string, query: Query = {}): Promise<unknown> {
     const url = buildUrl(this.baseUrl, path, query);
     for (let attempt = 0; ; attempt++) {
+      await this.pace();
       const outcome = await this.request(url).catch((error: unknown) => error);
       const verdict = this.verdict(outcome, attempt);
       if (outcome instanceof Response && verdict !== 'retry') await this.capture(outcome, url);
@@ -130,6 +142,16 @@ export class HttpClient {
         outcome instanceof Response ? retryDelayMs(outcome, attempt) : backoffMs(attempt),
       );
     }
+  }
+
+  /** Reserves the next start slot, then waits for it; concurrent callers queue in call order. */
+  private async pace(): Promise<void> {
+    const interval = this.options.minIntervalMs ?? 0;
+    if (interval <= 0) return;
+    const now = this.clock();
+    const slot = Math.max(now, this.nextSlot);
+    this.nextSlot = slot + interval;
+    if (slot > now) await this.sleep(slot - now);
   }
 
   private verdict(outcome: unknown, attempt: number): 'ok' | 'retry' | 'fail' {

@@ -38,6 +38,7 @@ const settings = {
   console: { enabled: false, lookbackDays: 30 },
   claudeCode: { enabled: false, lookbackDays: 7 },
   featureUsage: { enabled: true, lookbackDays: 30 },
+  memberActivityDaily: { enabled: false, lookbackDays: 3 },
 };
 const context = { now: NOW, range: { start: new Date('2026-08-31T00:00:00Z'), end: NOW } };
 
@@ -166,7 +167,7 @@ describe('FeatureUsageApi request window and errors', () => {
         : json({ data: [], next_page: null }),
     );
     const collectors = createOptionalCollectors(
-      { console: null, claudeCode: null, featureUsage: api },
+      { console: null, claudeCode: null, featureUsage: api, memberActivityDaily: null },
       settings,
     );
     const connector = collectors.find((c) => c.dataset === 'connectorUsage');

@@ -55,11 +55,11 @@ describe('demo profiles', () => {
       expect(await readFile(join(ROOT, 'data/sample', name), 'utf8'), name).toBe(content);
   });
 
-  it('the optional-sources profile collects all nine datasets and OP-002 passes', () => {
+  it('the optional-sources profile collects all ten datasets and OP-002 passes', () => {
     const coverage = coverageOf(optional);
     for (const name of OPTIONAL_DATASET_NAMES) expect(coverage[name]?.status).toBe('ok');
     const op = parseView(optional).compliance.results.find((r) => r.ruleId === 'OP-002');
-    expect(op).toMatchObject({ status: 'pass', message: 'All 22 datasets collected' });
+    expect(op).toMatchObject({ status: 'pass', message: 'All 23 datasets collected' });
   });
 
   it('is deterministic, valid, masked and synthetic (example.com only)', async () => {
@@ -152,7 +152,7 @@ describe('demo profiles', () => {
     const names = config.sources.datasets.map((d) => d.name);
     for (const name of OPTIONAL_DATASET_NAMES)
       expect(config.sources.datasets.find((d) => d.name === name)?.enabled).toBe(true);
-    expect(names).toHaveLength(22);
+    expect(names).toHaveLength(23);
     const standardConfig = detailConfigSchema.parse(
       JSON.parse(standard[DETAIL_CONFIG_PATH] ?? '{}'),
     );
@@ -186,10 +186,10 @@ describe('fixture tenant with the optional sources enabled', () => {
     const coverage = coverageOf(files);
     expect(Object.values(coverage).every((c) => c.status === 'ok')).toBe(true);
     for (const name of OPTIONAL_DATASET_NAMES) expect(coverage[name]).toBeDefined();
-    expect(Object.keys(coverage)).toHaveLength(22);
+    expect(Object.keys(coverage)).toHaveLength(23);
     expect(coverage.claudeCodeActivity?.count).toBe(4);
     const op = parseView(files).compliance.results.find((r) => r.ruleId === 'OP-002');
-    expect(op?.message).toBe('All 22 datasets collected');
+    expect(op?.message).toBe('All 23 datasets collected');
     expect(checkDetailBundle(detailOf(files), { requireDemo: true })).toEqual([]);
     expect(await runFixtureTenant({ fixtureDir, optionalSources: true })).toEqual(files);
   });
@@ -227,7 +227,7 @@ describe('CLI flags', () => {
       const view = dashboardViewSchema.parse(
         JSON.parse(await readFile(join(target, 'dashboard.json'), 'utf8')),
       );
-      expect(view.coverage).toHaveLength(22);
+      expect(view.coverage).toHaveLength(23);
 
       const emptyTarget = join(out, 'profile-empty');
       expect(await runCli(['demo', '--profile', 'empty', '--out', emptyTarget], options)).toBe(0);
@@ -264,7 +264,7 @@ describe('CLI flags', () => {
           await readFile(join(out, 'data/fixture-optional-sources/dashboard.json'), 'utf8'),
         ),
       );
-      expect(view.coverage).toHaveLength(22);
+      expect(view.coverage).toHaveLength(23);
     } finally {
       await rm(out, { recursive: true, force: true });
     }

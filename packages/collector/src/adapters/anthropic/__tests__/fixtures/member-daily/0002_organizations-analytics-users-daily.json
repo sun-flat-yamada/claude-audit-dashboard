@@ -1,0 +1,47 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/organizations/analytics/users",
+    "query": {
+      "date": ["2026-09-28"],
+      "limit": ["1000"],
+      "page": ["page_fx_daily_2"]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "data": [
+        {
+          "user": {
+            "id": "user_fx_daily_03",
+            "email_address": "carol.designer@example.com",
+            "type": "user"
+          },
+          "chat_metrics": {
+            "message_count": 0,
+            "distinct_conversation_count": 0,
+            "distinct_projects_created_count": 0,
+            "distinct_artifacts_created_count": 0,
+            "distinct_files_uploaded_count": 0,
+            "connectors_used_count": 0,
+            "thinking_message_count": 0
+          },
+          "claude_code_metrics": {
+            "core_metrics": {
+              "commit_count": 0,
+              "pull_request_count": 0,
+              "distinct_session_count": 0,
+              "lines_of_code": {
+                "added_count": 0,
+                "removed_count": 0
+              }
+            }
+          },
+          "web_search_count": 0
+        }
+      ],
+      "next_page": null
+    }
+  }
+}

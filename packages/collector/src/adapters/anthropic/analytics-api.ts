@@ -36,7 +36,7 @@ export const GROUP_ROW_CAP = 100;
 
 const nullableNumber = z.number().nullish();
 
-const userActivitySchema = z.looseObject({
+export const userActivitySchema = z.looseObject({
   user: z.looseObject({ id: z.string(), email_address: z.string().nullish() }).nullish(),
   last_activity_date: z.string().nullish(),
   ...engagementShape,
@@ -122,6 +122,22 @@ function hasActivity(value: unknown, depth = 0): boolean {
   return Object.values(value).some((v) => hasActivity(v, depth + 1));
 }
 
+/**
+ * One `users` row as member activity (range roll-up or single day); null for a row without a
+ * user (grouped rows). `active` also holds when last-activity reporting is off but a counter moved.
+ */
+export function memberActivityOf(row: z.output<typeof userActivitySchema>): MemberActivity | null {
+  if (!row.user) return null;
+  const engagement = memberEngagement(row);
+  return {
+    userId: row.user.id,
+    email: row.user.email_address ?? null,
+    active: row.last_activity_date != null || hasActivity(row),
+    lastActiveOn: row.last_activity_date ?? null,
+    ...(engagement ? { engagement } : {}),
+  };
+}
+
 const keyOf = (row: Record<string, unknown>, dimension: UsageDimension): string | null => {
   const field = GROUP_FIELD[dimension];
   const value = field ? row[field] : null;
@@ -188,18 +204,9 @@ export class AnalyticsApi {
         PATHS.users,
       ),
     );
-    const items = rows.flatMap((row): MemberActivity[] => {
-      if (!row.user) return [];
-      const engagement = memberEngagement(row);
-      return [
-        {
-          userId: row.user.id,
-          email: row.user.email_address ?? null,
-          active: row.last_activity_date != null || hasActivity(row),
-          lastActiveOn: row.last_activity_date ?? null,
-          ...(engagement ? { engagement } : {}),
-        },
-      ];
+    const items = rows.flatMap((row) => {
+      const activity = memberActivityOf(row);
+      return activity ? [activity] : [];
     });
     return { items, window: { from: `${start}T00:00:00.000Z`, to: now.toISOString() } };
   }
@@ -265,12 +272,38 @@ export class AnalyticsApi {
     return { rows, asOf, capped };
   }
 
+  /**
+   * `buckets` over consecutive windows of at most 31 days (a longer range is HTTP 400), one
+   * window after the other; the oldest watermark of the windows wins.
+   */
+  private async windowedBuckets<T extends z.ZodType>(
+    path: string,
+    result: T,
+    range: DateRange,
+    now: Date,
+    request: BucketRequest,
+  ) {
+    const parts: Awaited<ReturnType<typeof this.buckets<T>>>[] = [];
+    for (const window of splitRange({
+      start: clampStart(range.start),
+      end: earlierOf(range.end, now),
+    })) {
+      parts.push(await this.buckets(path, result, window, now, request));
+    }
+    return { rows: parts.flatMap((p) => p.rows), asOf: oldestMark(parts.map((p) => p.asOf)) };
+  }
+
+  /** Total, product, model (`group_by[]=model` alone) and RBAC group series, 31-day windows. */
   async usageReport(range: DateRange, now: Date): Promise<CollectResult<UsageRow[]>> {
     const parts = await Promise.all(
       DIMENSIONS.map(async (dimension) => {
-        const { rows, asOf } = await this.buckets(PATHS.usage, usageResultSchema, range, now, {
-          groupBy: fieldsOf(dimension),
-        });
+        const { rows, asOf } = await this.windowedBuckets(
+          PATHS.usage,
+          usageResultSchema,
+          range,
+          now,
+          { groupBy: fieldsOf(dimension) },
+        );
         const items: UsageRow[] = rows.map(({ date, record, raw }) => ({
           date,
           dimension,
@@ -290,12 +323,17 @@ export class AnalyticsApi {
     return collate(parts, range);
   }
 
+  /** Same series as `usageReport`; the model rows add up to the total row of each day. */
   async costReport(range: DateRange, now: Date): Promise<CollectResult<CostRow[]>> {
     const parts = await Promise.all(
       DIMENSIONS.map(async (dimension) => {
-        const { rows, asOf } = await this.buckets(PATHS.cost, costResultSchema, range, now, {
-          groupBy: fieldsOf(dimension),
-        });
+        const { rows, asOf } = await this.windowedBuckets(
+          PATHS.cost,
+          costResultSchema,
+          range,
+          now,
+          { groupBy: fieldsOf(dimension) },
+        );
         const items: CostRow[] = rows.map(({ date, record, raw }) => ({
           date,
           dimension,

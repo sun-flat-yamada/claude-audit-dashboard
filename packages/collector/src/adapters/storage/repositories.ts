@@ -23,6 +23,7 @@ export const SORT_KEYS: Partial<Record<DatasetName, StorageSortKeyFn>> = {
   cost: (r) => `${String(r.date)}|${String(r.dimension)}|${String(r.key ?? '')}`,
   adoption: (r) => String(r.date),
   memberActivity: (r) => String(r.userId),
+  memberActivityDaily: (r) => `${String(r.date)}|${String(r.userId)}`,
   credentialUsage: (r) => String(r.credentialId),
   settings: (r) => String(r.organizationId),
   spendLimits: (r) => `${String(r.userId)}|${String(r.period)}`,

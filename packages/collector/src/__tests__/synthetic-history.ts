@@ -267,6 +267,7 @@ const DEFAULT_HISTORY_RULES: Record<DatasetName, DatasetHistoryRule> = {
   consoleUsage: { period: 4, variant: (base, _epoch, _step, now) => rollingRows(base, now) },
   consoleCost: { period: 4, variant: (base, _epoch, _step, now) => rollingRows(base, now) },
   claudeCodeActivity: { period: 4, variant: (base, _epoch, _step, now) => rollingRows(base, now) },
+  memberActivityDaily: { period: 4, variant: (base, _epoch, _step, now) => rollingRows(base, now) },
   activities: { period: 1, variant: (base, _epoch, step, now) => newActivities(base, step, now) },
   skillUsage: {
     period: 4,

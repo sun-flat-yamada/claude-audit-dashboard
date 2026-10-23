@@ -12,15 +12,17 @@ import type { ClaudeCodeApi } from './claude-code-api.js';
 import { classify } from './classify-error.js';
 import type { ConsoleAdminApi } from './console-admin-api.js';
 import { FEATURE_PATHS, type FeatureUsageApi } from './feature-usage-api.js';
+import { MEMBER_DAILY_PATH, type MemberDailyActivityApi } from './member-daily-api.js';
 
 /**
  * Gateways of the optional sources; null when their key is missing (a Console Admin key for
- * `console` / `claudeCode`, the Analytics key for `featureUsage`).
+ * `console` / `claudeCode`, the Analytics key for `featureUsage` / `memberActivityDaily`).
  */
 export interface OptionalApis {
   console: ConsoleAdminApi | null;
   claudeCode: ClaudeCodeApi | null;
   featureUsage: FeatureUsageApi | null;
+  memberActivityDaily: MemberDailyActivityApi | null;
 }
 
 export interface SourceFlag {
@@ -33,6 +35,7 @@ export interface OptionalSettings {
   console: SourceFlag;
   claudeCode: SourceFlag;
   featureUsage: SourceFlag;
+  memberActivityDaily: SourceFlag;
 }
 
 export const CONSOLE_KEY_VARIABLE = 'ANTHROPIC_CONSOLE_ADMIN_API_KEY';
@@ -137,6 +140,22 @@ function featureUsageCollectors(api: FeatureUsageApi | null, flag: SourceFlag): 
   ];
 }
 
+/** Per-day member activity for the monthly ledger (Analytics key, never published). */
+function memberDailyCollectors(
+  api: MemberDailyActivityApi | null,
+  flag: SourceFlag,
+): DatasetCollector[] {
+  return [
+    via(
+      api,
+      'memberActivityDaily',
+      `GET ${MEMBER_DAILY_PATH}?date`,
+      (a, { now }) => a.listDailyActivity(flag.lookbackDays, now),
+      noAnalyticsKey,
+    ),
+  ];
+}
+
 const isEnabled = (source: OptionalSource, settings: OptionalSettings): boolean =>
   settings[source].enabled;
 
@@ -153,6 +172,7 @@ export function createOptionalCollectors(
     ...consoleCollectors(apis.console, settings.console),
     ...claudeCodeCollectors(apis.claudeCode, settings.claudeCode),
     ...featureUsageCollectors(apis.featureUsage, settings.featureUsage),
+    ...memberDailyCollectors(apis.memberActivityDaily, settings.memberActivityDaily),
   ].filter(
     (collector) =>
       isEnabled(OPTIONAL_SOURCES[collector.dataset as OptionalDatasetName], settings) &&
