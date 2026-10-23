@@ -46,6 +46,7 @@ export * from './application/use-cases/check-compliance.js';
 export * from './application/use-cases/alerts.js';
 export * from './application/use-cases/reports.js';
 export * from './application/use-cases/ledger.js';
+export * from './application/use-cases/ledger-backfill.js';
 export * from './application/presenters/dashboard-view.js';
 export * from './application/presenters/detail-view.js';
 export * from './application/presenters/monthly-report-view.js';

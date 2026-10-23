@@ -140,12 +140,29 @@ const dailyKind: LedgerKindStrategy = {
   timeOf: (entry, spec) => (spec.time ?? dateTime)(entry.item as Row),
 };
 
+/** UTC month of the last instant of a half-open window (`to` is exclusive); null when unusable. */
+function windowEndMonth(window: TimeWindow): string | null {
+  const end = Date.parse(window.to) - 1;
+  return Number.isNaN(end) ? null : ledgerMonthOf(new Date(end).toISOString());
+}
+
+/**
+ * A roll-up belongs to the collection month, unless its window ended in an earlier month: then it
+ * is that month's roll-up (a backfill fetches past months, U5). Regular collections end their
+ * window at the collection time, so they keep the collection month.
+ */
+function rollupMonth(recordedAt: string, window: TimeWindow | undefined): string | null {
+  const collected = ledgerMonthOf(recordedAt);
+  const ended = window ? windowEndMonth(window) : null;
+  return collected && ended && ended < collected ? ended : collected;
+}
+
 const rollupKind: LedgerKindStrategy = {
   kind: 'rollup',
   record: (items, spec, { recordedAt, window }) =>
     recordRows(
       items,
-      () => ledgerMonthOf(recordedAt),
+      () => rollupMonth(recordedAt, window),
       (item) => ({
         key: (spec.key ?? idKey)(item),
         recordedAt,
