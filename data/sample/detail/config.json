@@ -376,6 +376,52 @@
       "severity": "high"
     },
     {
+      "category": "operational",
+      "enabled": true,
+      "id": "OP-003",
+      "name": "Ledger Verification",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 48,
+          "key": "maxVerifyAgeHours",
+          "overridden": false,
+          "value": 48
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "ledgerHealth"
+      ],
+      "severity": "high"
+    },
+    {
+      "category": "operational",
+      "enabled": true,
+      "id": "OP-004",
+      "name": "Ledger Month Sealing",
+      "origin": "builtin",
+      "parameters": [
+        {
+          "defaultValue": 20,
+          "key": "maxUnsealedDays",
+          "overridden": false,
+          "value": 20
+        },
+        {
+          "defaultValue": [],
+          "key": "ignoreMonths",
+          "overridden": false,
+          "value": []
+        }
+      ],
+      "paramsValid": true,
+      "requires": [
+        "ledgerHealth"
+      ],
+      "severity": "medium"
+    },
+    {
       "category": "configuration",
       "enabled": true,
       "id": "CF-001",
@@ -728,6 +774,10 @@
       {
         "enabled": true,
         "name": "spendLimits"
+      },
+      {
+        "enabled": true,
+        "name": "ledgerHealth"
       }
     ],
     "groupMemberRequestLimit": 200,

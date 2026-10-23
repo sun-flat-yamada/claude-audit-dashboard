@@ -226,12 +226,34 @@
           "label": "unavailable: Usage credits are disabled for this period"
         }
       ],
-      "message": "3 of 13 dataset(s) not collected",
+      "message": "3 of 14 dataset(s) not collected",
       "remediation": "Grant the scopes listed in docs/SETUP.md, enable the API in claude.ai, or disable the data source in config.",
       "ruleId": "OP-002",
       "ruleName": "Data Source Coverage",
       "severity": "high",
       "status": "fail"
+    },
+    {
+      "category": "operational",
+      "details": {},
+      "evidence": [],
+      "message": "Ledger verified 6h ago",
+      "remediation": null,
+      "ruleId": "OP-003",
+      "ruleName": "Ledger Verification",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "category": "operational",
+      "details": {},
+      "evidence": [],
+      "message": "2 of 3 month(s) sealed, none overdue",
+      "remediation": null,
+      "ruleId": "OP-004",
+      "ruleName": "Ledger Month Sealing",
+      "severity": "medium",
+      "status": "pass"
     },
     {
       "category": "configuration",
@@ -612,7 +634,7 @@
       },
       "operational": {
         "failed": 1,
-        "total": 2
+        "total": 4
       },
       "usage-anomaly": {
         "failed": 0,
@@ -628,10 +650,10 @@
       "low": 0,
       "medium": 4
     },
-    "passed": 13,
+    "passed": 15,
     "score": 73,
     "skipped": 4,
-    "total": 29,
+    "total": 31,
     "warnings": 5
   }
 }

@@ -846,7 +846,7 @@
       {
         "category": "operational",
         "failed": 1,
-        "total": 2
+        "total": 4
       },
       {
         "category": "usage-anomaly",
@@ -866,7 +866,7 @@
         "score": 73
       }
     ],
-    "passed": 13,
+    "passed": 15,
     "results": [
       {
         "category": "access-control",
@@ -1044,12 +1044,32 @@
             "label": "unavailable: Usage credits are disabled for this period"
           }
         ],
-        "message": "3 of 13 dataset(s) not collected",
+        "message": "3 of 14 dataset(s) not collected",
         "remediation": "Grant the scopes listed in docs/SETUP.md, enable the API in claude.ai, or disable the data source in config.",
         "ruleId": "OP-002",
         "ruleName": "Data Source Coverage",
         "severity": "high",
         "status": "fail"
+      },
+      {
+        "category": "operational",
+        "evidence": [],
+        "message": "Ledger verified 6h ago",
+        "remediation": null,
+        "ruleId": "OP-003",
+        "ruleName": "Ledger Verification",
+        "severity": "high",
+        "status": "pass"
+      },
+      {
+        "category": "operational",
+        "evidence": [],
+        "message": "2 of 3 month(s) sealed, none overdue",
+        "remediation": null,
+        "ruleId": "OP-004",
+        "ruleName": "Ledger Month Sealing",
+        "severity": "medium",
+        "status": "pass"
       },
       {
         "category": "configuration",
@@ -1385,6 +1405,14 @@
     },
     {
       "asOf": null,
+      "count": 1,
+      "dataset": "ledgerHealth",
+      "reason": null,
+      "source": "demo:ledgerHealth",
+      "status": "ok"
+    },
+    {
+      "asOf": null,
       "count": 36,
       "dataset": "memberActivity",
       "reason": null,
@@ -1635,7 +1663,7 @@
   ],
   "kpis": [
     {
-      "hint": "25 of 29 rules assessed",
+      "hint": "27 of 31 rules assessed",
       "id": "score",
       "label": "Compliance score",
       "unit": "score",

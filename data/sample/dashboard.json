@@ -846,7 +846,7 @@
       {
         "category": "operational",
         "failed": 0,
-        "total": 2
+        "total": 4
       },
       {
         "category": "usage-anomaly",
@@ -870,7 +870,7 @@
         "score": 65
       }
     ],
-    "passed": 14,
+    "passed": 16,
     "results": [
       {
         "category": "access-control",
@@ -1069,11 +1069,31 @@
       {
         "category": "operational",
         "evidence": [],
-        "message": "All 13 datasets collected",
+        "message": "All 14 datasets collected",
         "remediation": null,
         "ruleId": "OP-002",
         "ruleName": "Data Source Coverage",
         "severity": "high",
+        "status": "pass"
+      },
+      {
+        "category": "operational",
+        "evidence": [],
+        "message": "Ledger verified 6h ago",
+        "remediation": null,
+        "ruleId": "OP-003",
+        "ruleName": "Ledger Verification",
+        "severity": "high",
+        "status": "pass"
+      },
+      {
+        "category": "operational",
+        "evidence": [],
+        "message": "2 of 3 month(s) sealed, none overdue",
+        "remediation": null,
+        "ruleId": "OP-004",
+        "ruleName": "Ledger Month Sealing",
+        "severity": "medium",
         "status": "pass"
       },
       {
@@ -1411,6 +1431,14 @@
       "dataset": "invites",
       "reason": null,
       "source": "demo:invites",
+      "status": "ok"
+    },
+    {
+      "asOf": null,
+      "count": 1,
+      "dataset": "ledgerHealth",
+      "reason": null,
+      "source": "demo:ledgerHealth",
       "status": "ok"
     },
     {
