@@ -1,0 +1,39 @@
+name: Commit E-mail Check
+
+# Every commit that can reach main records noreply e-mail addresses only: author, committer and every
+# `*-by:` trailer (#179, .agents/rules/git-rules-commit.md §5). Runs for pull requests from forks too
+# (read-only token, no secrets). Offending addresses are logged masked.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  commit-email:
+    name: Commit e-mails are noreply
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      - name: Check the commits of the pull request or push
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.event.after }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            pnpm commit-email:check --range "$PR_BASE..$PR_HEAD"
+          elif git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
+            pnpm commit-email:check --range "$PUSH_BEFORE..$PUSH_AFTER"
+          else
+            # New branch or a before-commit that is gone: check the pushed head commit alone.
+            pnpm commit-email:check -- -1 "$PUSH_AFTER"
+          fi
