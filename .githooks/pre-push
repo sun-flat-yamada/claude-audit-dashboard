@@ -1,0 +1,21 @@
+#!/bin/sh
+# Checks every commit about to be pushed for non-noreply e-mail addresses (#179), including commits made by
+# rebase or cherry-pick, which skip the commit-msg hook. Enable with `pnpm hooks:install`.
+root=$(git rev-parse --show-toplevel) || exit 1
+tsx="$root/node_modules/.bin/tsx"
+if [ ! -x "$tsx" ]; then
+  echo "[commit-email] node_modules is missing: run 'pnpm install' (or 'git config --unset core.hooksPath' to disable the hooks)." >&2
+  exit 1
+fi
+remote="$1"
+status=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$local_sha" in *[!0]*) ;; *) continue ;; esac # branch deletion
+  # A known remote tip bounds the range; a new branch (or an unknown tip) checks what no remote branch has.
+  if git cat-file -e "$remote_sha^{commit}" 2>/dev/null; then
+    "$tsx" "$root/scripts/commit-email-check.ts" --range "$remote_sha..$local_sha" || status=1
+  else
+    "$tsx" "$root/scripts/commit-email-check.ts" -- "$local_sha" --not "--remotes=$remote" || status=1
+  fi
+done
+exit $status
