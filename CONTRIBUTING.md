@@ -34,8 +34,24 @@ git clone https://github.com/your-username/claude-audit-dashboard.git
 cd claude-audit-dashboard
 corepack enable
 pnpm install
+pnpm hooks:install   # optional: refuse commits / pushes with non-noreply e-mail addresses
 npm run fork:verify
 ```
+
+#### Commit identity (noreply e-mail addresses only)
+
+Every commit that can reach `main`, **including the commits of a pull request from a fork**, must record noreply e-mail addresses only: author, committer and every `Co-Authored-By:` / `Signed-off-by:` / other `*-by:` trailer (rule: `.agents/rules/git-rules-commit.md` §5). The `Commit E-mail Check` workflow fails a PR that contains any other address; it logs the offending commit and field with the address masked.
+
+1. In GitHub > Settings > Emails, enable **Keep my email addresses private** and **Block command line pushes that expose my email**, and copy your noreply address (`<id>+<login>@users.noreply.github.com`).
+2. Use it for this repository (or with `--global`): `git config user.email "<id>+<login>@users.noreply.github.com"`.
+3. Optional local guard: `pnpm hooks:install` (`core.hooksPath=.githooks`; `commit-msg` and `pre-push` hooks). Check by hand with `pnpm commit-email:check` (`origin/main..HEAD`) or `pnpm commit-email:check --range <base>..<head>`.
+4. To fix a branch that already has an offending commit, rewrite only your own unmerged commits:
+
+   ```bash
+   git rebase --exec 'git commit --amend --no-edit --reset-author' origin/main   # author and committer
+   git rebase -i origin/main     # 'reword' commits whose trailer (e.g. Co-Authored-By) carries an address
+   pnpm commit-email:check && git push --force-with-lease
+   ```
 
 ---
 
@@ -77,7 +93,7 @@ pnpm install
 #### Step 4: Implement & Run Local Quality Gate
 
 1. **Branch Naming**: `<type>/<issue>-<slug>` (e.g. `feat/42-cost-center-export`); generate and check with `npm run change-dev:branch -- name --issue 42` / `-- check` (`.agents/rules/git-rules-commit.md`). Commit the implementation plan on its own before any implementation (`npm run change-dev:plan-check`). With `CHG_DEV_AUTO_PILOT=true`, `npm run change-dev:finish -- <pr>` carries a PR through CI and Rebase & Merge.
-2. **Conventional Commits**: `feat: ...`, `fix: ...`, `docs: ...`, `test: ...`.
+2. **Conventional Commits**: `feat: ...`, `fix: ...`, `docs: ...`, `test: ...`, with a noreply author / committer and trailers only (_Commit identity_ above; `pnpm commit-email:check`).
 3. **Mandatory 5-Stage Quality Gate** (run inside the worktree):
    ```bash
    npm run fork:verify   # Verify zero data files on code branch
@@ -105,7 +121,7 @@ pnpm install
    - **Accessibility**: `e2e/shared/a11y.spec.ts` runs axe with `wcag2a` + `wcag2aa` on every route x light / dark in four profiles and fails on any critical or serious violation (`e2e/compare/a11y.spec.ts` adds the compare view's interactive states: a filter applied, an export done, the focused archived option, at 390px too); the full result is attached to each test (`axe-*.json` in the report). Fix the markup; do not disable a rule. A rule can only be suppressed with a written justification in the PR.
    - **Downloads**: read exports with `page.waitForEvent('download')` and compare the content (`e2e/support/csv.ts`).
    - **Browser**: `pnpm --filter @claude-audit/dashboard exec playwright install --with-deps chromium` once. Cloud sessions with a preinstalled Chromium (`/opt/pw-browsers`) need nothing (never run `playwright install` there): the config falls back to `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` or `/opt/pw-browsers/chromium` when the Playwright-pinned build is absent.
-   - **CI and branch protection**: the `E2E and accessibility` job of `.github/workflows/ci.yml` (`needs: quality, test`) runs on every PR and `main` push, caches the browser by Playwright version and uploads the report, traces, screenshots and axe results as the `playwright-e2e-results` artifact when it fails. To make it a required check (repository admin): Settings -> Branches -> branch protection rule for `main` -> _Require status checks to pass before merging_ -> add `E2E and accessibility` (it appears in the list after the job has run once on a PR or on `main`) next to `Lint, types & fork safety`, `Test`, `Dependency audit` and `Build`.
+   - **CI and branch protection**: the `E2E and accessibility` job of `.github/workflows/ci.yml` (`needs: quality, test`) runs on every PR and `main` push, caches the browser by Playwright version and uploads the report, traces, screenshots and axe results as the `playwright-e2e-results` artifact when it fails. To make it a required check (repository admin): Settings -> Branches -> branch protection rule for `main` -> _Require status checks to pass before merging_ -> add `E2E and accessibility` (it appears in the list after the job has run once on a PR or on `main`) next to `Lint, types & fork safety`, `Test`, `Dependency audit`, `Build` and `Commit e-mails are noreply` (`commit-email.yml`).
 7. **One command for everything**: `pnpm verify:all` runs `fork:verify`, `typecheck`, `test`, `secret-scan`, `build`, `lint`, `format:check`, `audit:deps` and the E2E / axe suite (item 6) in this order and stops at the first failure (10+ minutes; `--list` shows the steps). Use it on a release PR; the release workflow runs the same command. CI keeps its parallel jobs and job names. Release metadata is checked by `pnpm release:check` and, as a unit test over fixtures and the working tree, by `pnpm test` (`pnpm test:scripts`).
 
 #### Step 5: Rebase onto Base & Create PR

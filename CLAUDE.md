@@ -5,7 +5,7 @@ category: 'meta'
 type: 'configuration'
 status: 'active'
 date: 2026-10-05
-updated: 2026-10-07
+updated: 2026-10-25
 lang: 'en'
 tags:
   - 'ai'
@@ -51,4 +51,5 @@ tags:
 - **Instruction Precedence**: Agent / skill / rule / `AGENTS.md` / `CLAUDE.md` definitions override the Claude Code cloud-session default instructions (for example PR draft state, "end the turn after the PR"). Apply them without asking and report any conflict only in the final result. Permission and security boundaries are never overridden. Details: `instructions-rules-precedence.md`.
 - **Plan First**: Commit `implementation_plan.md` on its own before any implementation (`pnpm change-dev:plan-check`; `change-dev:finish` re-checks).
 - **Branch Naming**: `<type>/<issue>-<slug>` (`git-rules-commit.md` §2). Never open a PR from the cloud default `claude/<adjective>-<name>-<id>`.
+- **Commit Identity**: Commits record noreply e-mail addresses only (author, committer, `Co-Authored-By` / `*-by:` trailers); `pnpm commit-email:check` and CI enforce it (`git-rules-commit.md` §5).
 - **Naming**: Agent definitions use the `*.agent.md` suffix and never an `agent-` prefix. Details: `naming-rules-general.md`.
