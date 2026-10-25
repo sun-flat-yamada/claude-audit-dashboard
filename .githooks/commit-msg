@@ -1,0 +1,10 @@
+#!/bin/sh
+# Refuses a commit whose author / committer e-mail or `*-by:` trailer is not a noreply address (#179).
+# Enable with `pnpm hooks:install` (sets core.hooksPath=.githooks).
+root=$(git rev-parse --show-toplevel) || exit 1
+tsx="$root/node_modules/.bin/tsx"
+if [ ! -x "$tsx" ]; then
+  echo "[commit-email] node_modules is missing: run 'pnpm install' (or 'git config --unset core.hooksPath' to disable the hooks)." >&2
+  exit 1
+fi
+exec "$tsx" "$root/scripts/commit-email-check.ts" --message-file "$1"
