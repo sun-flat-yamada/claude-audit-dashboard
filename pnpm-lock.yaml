@@ -45,8 +45,8 @@ importers:
         specifier: workspace:*
         version: link:../core
       nodemailer:
-        specifier: ^10.1.2
-        version: 10.1.2
+        specifier: ^10.2.1
+        version: 10.2.1
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -1416,8 +1416,8 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
-  nodemailer@10.1.2:
-    resolution: {integrity: sha512-rnQn9Rzh8RAwcp42MVsIvxbsv6YZ2a2/av+uyJ/LPU1+2QSlrRgFsWWZTKenyRUqkIl8urOI0c4+CEcmFdsvQw==}
+  nodemailer@10.2.1:
+    resolution: {integrity: sha512-ZrDNsPFoDMwefNs7sJwrYiEJ/CG4ClJWDZv05iNJsEBWa8GRDry1QJHTJxsuTAY9eDDKjX4k+q3SxslXJOao7w==}
     engines: {node: '>=20.0.0'}
 
   obug@3.0.0:
@@ -2922,7 +2922,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  nodemailer@10.1.2: {}
+  nodemailer@10.2.1: {}
 
   obug@3.0.0: {}
 
