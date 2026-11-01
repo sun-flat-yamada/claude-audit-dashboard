@@ -66,7 +66,7 @@ jobs:
         run: echo "version=$(pnpm --filter @claude-audit/dashboard exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
       - name: Cache the Playwright browser
         id: browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
@@ -83,7 +83,7 @@ jobs:
       # Traces, screenshots and the axe results (attached to each test) are only kept for a failed run.
       - name: Upload the Playwright report and traces
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-e2e-results
           path: |
