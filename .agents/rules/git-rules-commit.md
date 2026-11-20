@@ -5,7 +5,7 @@ category: 'rules'
 type: 'specification'
 status: 'active'
 date: 2026-10-03
-updated: 2026-10-25
+updated: 2026-11-20
 lang: 'en'
 tags:
   - 'rules'
@@ -74,5 +74,6 @@ The message text may also mention reserved example domains (`example.com` / `.or
 
 - **Set up once**: `git config --global user.email "<id>+<login>@users.noreply.github.com"` (the address is shown in GitHub > Settings > Emails), and enable _Keep my email addresses private_ and _Block command line pushes that expose my email_ there.
 - **Local hooks** (opt-in): `pnpm hooks:install` sets `core.hooksPath=.githooks`; `commit-msg` refuses a commit with a non-noreply identity or trailer and `pre-push` checks every commit about to be pushed. Check a range by hand with `pnpm commit-email:check [--range <base>..<head>]` (default `origin/main..HEAD`).
+- **No Claude attribution**: the committed project setting `.claude/settings.json` (`attribution.commit` / `attribution.pr` empty, legacy `includeCoAuthoredBy: false`) stops Claude Code from adding `Co-Authored-By` / session trailers to commits and a "Generated with Claude Code" line to pull request descriptions. Personal overrides belong in the uncommitted `.claude/settings.local.json`.
 - **Enforcement**: the `Commit E-mail Check` workflow (`.github/workflows/commit-email.yml`, job `Commit e-mails are noreply`) checks `base..head` of every pull request (forks included) and every push to `main`. Offending addresses are logged masked (`j***@c***.example`).
 - **Fixing a branch**: set the noreply address, then rewrite only your own unmerged commits: `git rebase --exec 'git commit --amend --no-edit --reset-author' origin/main` (author and committer), edit any offending trailer with `git rebase -i origin/main` (`reword`), and `git push --force-with-lease`. The history of `main` is never rewritten for this.

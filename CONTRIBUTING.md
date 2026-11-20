@@ -42,6 +42,8 @@ npm run fork:verify
 
 Every commit that can reach `main`, **including the commits of a pull request from a fork**, must record noreply e-mail addresses only: author, committer and every `Co-Authored-By:` / `Signed-off-by:` / other `*-by:` trailer (rule: `.agents/rules/git-rules-commit.md` §5). The `Commit E-mail Check` workflow fails a PR that contains any other address; it logs the offending commit and field with the address masked.
 
+Claude Code adds no attribution here: the committed `.claude/settings.json` empties `attribution.commit` / `attribution.pr` (and sets the legacy `includeCoAuthoredBy: false`), so its commits carry no `Co-Authored-By` / session trailer and its pull requests no "Generated with Claude Code" line.
+
 1. In GitHub > Settings > Emails, enable **Keep my email addresses private** and **Block command line pushes that expose my email**, and copy your noreply address (`<id>+<login>@users.noreply.github.com`).
 2. Use it for this repository (or with `--global`): `git config user.email "<id>+<login>@users.noreply.github.com"`.
 3. Optional local guard: `pnpm hooks:install` (`core.hooksPath=.githooks`; `commit-msg` and `pre-push` hooks). Check by hand with `pnpm commit-email:check` (`origin/main..HEAD`) or `pnpm commit-email:check --range <base>..<head>`.
